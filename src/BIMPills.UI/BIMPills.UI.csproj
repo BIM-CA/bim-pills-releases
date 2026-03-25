@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AssemblyName>BIMPills.UI</AssemblyName>
+    <RootNamespace>BIMPills.UI</RootNamespace>
+    <UseWPF>true</UseWPF>
+    <!-- WPF requires windows target on SDK-style projects with net48 -->
+    <TargetFramework>net48-windows</TargetFramework>
+  </PropertyGroup>
+
+  <!-- Import after overriding TargetFramework -->
+  <Import Project="..\..\build\common.props" />
+
+  <ItemGroup>
+    <ProjectReference Include="..\BIMPills.Core\BIMPills.Core.csproj" />
+    <ProjectReference Include="..\BIMPills.Commands\BIMPills.Commands.csproj" />
+  </ItemGroup>
+
+</Project>

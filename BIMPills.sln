@@ -1,0 +1,58 @@
+
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BIMPills.Core", "src\BIMPills.Core\BIMPills.Core.csproj", "{6D7479BC-C562-4CB6-924C-56C6EF50F28A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BIMPills.Infrastructure", "src\BIMPills.Infrastructure\BIMPills.Infrastructure.csproj", "{6A394683-87E2-441F-A900-D5A05734F098}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BIMPills.Revit", "src\BIMPills.Revit\BIMPills.Revit.csproj", "{9B47C350-EFF5-4F8E-B1CF-C3108F7B2358}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BIMPills.Commands", "src\BIMPills.Commands\BIMPills.Commands.csproj", "{4F2A4FF9-0077-41BF-A406-A9CDDB770B15}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BIMPills.UI", "src\BIMPills.UI\BIMPills.UI.csproj", "{991541D4-F5D4-4FC4-BA0D-9F3E0380D4D3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BIMPills.Core.Tests", "tests\BIMPills.Core.Tests\BIMPills.Core.Tests.csproj", "{5EA3AB68-8655-4046-B6C9-FA2D20D799E5}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+		Debug-2024|Any CPU = Debug-2024|Any CPU
+		Release-2024|Any CPU = Release-2024|Any CPU
+		Debug-2025|Any CPU = Debug-2025|Any CPU
+		Release-2025|Any CPU = Release-2025|Any CPU
+		Debug-2026|Any CPU = Debug-2026|Any CPU
+		Release-2026|Any CPU = Release-2026|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6D7479BC-C562-4CB6-924C-56C6EF50F28A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6D7479BC-C562-4CB6-924C-56C6EF50F28A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6D7479BC-C562-4CB6-924C-56C6EF50F28A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6D7479BC-C562-4CB6-924C-56C6EF50F28A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6A394683-87E2-441F-A900-D5A05734F098}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6A394683-87E2-441F-A900-D5A05734F098}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6A394683-87E2-441F-A900-D5A05734F098}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6A394683-87E2-441F-A900-D5A05734F098}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9B47C350-EFF5-4F8E-B1CF-C3108F7B2358}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9B47C350-EFF5-4F8E-B1CF-C3108F7B2358}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9B47C350-EFF5-4F8E-B1CF-C3108F7B2358}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9B47C350-EFF5-4F8E-B1CF-C3108F7B2358}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4F2A4FF9-0077-41BF-A406-A9CDDB770B15}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4F2A4FF9-0077-41BF-A406-A9CDDB770B15}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4F2A4FF9-0077-41BF-A406-A9CDDB770B15}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4F2A4FF9-0077-41BF-A406-A9CDDB770B15}.Release|Any CPU.Build.0 = Release|Any CPU
+		{991541D4-F5D4-4FC4-BA0D-9F3E0380D4D3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{991541D4-F5D4-4FC4-BA0D-9F3E0380D4D3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{991541D4-F5D4-4FC4-BA0D-9F3E0380D4D3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{991541D4-F5D4-4FC4-BA0D-9F3E0380D4D3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5EA3AB68-8655-4046-B6C9-FA2D20D799E5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5EA3AB68-8655-4046-B6C9-FA2D20D799E5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5EA3AB68-8655-4046-B6C9-FA2D20D799E5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5EA3AB68-8655-4046-B6C9-FA2D20D799E5}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AssemblyName>BIMPills.Revit</AssemblyName>
+    <RootNamespace>BIMPills.Revit</RootNamespace>
+    <IncludeRevitRefs>true</IncludeRevitRefs>
+    <!-- WPF for TaskDialog and ribbon icons -->
+    <UseWPF>true</UseWPF>
+    <TargetFramework>net48-windows</TargetFramework>
+  </PropertyGroup>
+
+  <Import Project="..\..\build\common.props" />
+
+  <ItemGroup>
+    <ProjectReference Include="..\BIMPills.Core\BIMPills.Core.csproj" />
+    <ProjectReference Include="..\BIMPills.Infrastructure\BIMPills.Infrastructure.csproj" />
+    <ProjectReference Include="..\BIMPills.Commands\BIMPills.Commands.csproj" />
+    <ProjectReference Include="..\BIMPills.UI\BIMPills.UI.csproj" />
+  </ItemGroup>
+
+  <!-- Post-build: deploy to Revit Addins folder (Debug only) -->
+  <Target Name="DeployToRevit" AfterTargets="Build" Condition="'$(Configuration)' == 'Debug'">
+    <PropertyGroup>
+      <AddinDir>$(APPDATA)\Autodesk\Revit\Addins\$(RevitVersion)</AddinDir>
+      <DeployDir>$(AddinDir)\BIMPills</DeployDir>
+    </PropertyGroup>
+    <MakeDir Directories="$(DeployDir)" />
+    <Copy SourceFiles="$(OutputPath)BIMPills.Revit.dll"        DestinationFolder="$(DeployDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="$(OutputPath)BIMPills.Core.dll"         DestinationFolder="$(DeployDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="$(OutputPath)BIMPills.Infrastructure.dll" DestinationFolder="$(DeployDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="$(OutputPath)BIMPills.Commands.dll"     DestinationFolder="$(DeployDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="$(OutputPath)BIMPills.UI.dll"           DestinationFolder="$(DeployDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="$(SolutionDir)manifests\Revit$(RevitVersion)\BIMPills.addin"
+          DestinationFolder="$(AddinDir)" SkipUnchangedFiles="true" />
+    <Message Text="BIM Pills deployed to $(DeployDir)" Importance="high" />
+  </Target>
+
+</Project>

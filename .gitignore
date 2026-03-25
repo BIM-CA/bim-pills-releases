@@ -1,0 +1,20 @@
+## .NET / MSBuild
+bin/
+obj/
+*.user
+*.suo
+.vs/
+dist/
+
+## NuGet
+packages/
+*.nupkg
+project.lock.json
+
+## OS
+.DS_Store
+Thumbs.db
+
+## Logs
+*.log
+logs/

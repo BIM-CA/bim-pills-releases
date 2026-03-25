@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AssemblyName>BIMPills.Infrastructure</AssemblyName>
+    <RootNamespace>BIMPills.Infrastructure</RootNamespace>
+  </PropertyGroup>
+
+  <Import Project="..\..\build\common.props" />
+
+  <ItemGroup>
+    <ProjectReference Include="..\BIMPills.Core\BIMPills.Core.csproj" />
+  </ItemGroup>
+
+</Project>

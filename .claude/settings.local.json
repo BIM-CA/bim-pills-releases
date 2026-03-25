@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet --version)",
+      "Bash(git --version)",
+      "Bash(where dotnet:*)",
+      "Read(//c/Program Files/dotnet//**)",
+      "Read(//c/Program Files \\(x86\\)/**)",
+      "Read(//c/Program Files/**)",
+      "Bash(ls \"/c/Program Files \\(x86\\)/Microsoft Visual Studio/\")",
+      "Bash(ls '/c/Program Files \\(x86\\)/MSBuild/')",
+      "Bash(where git:*)",
+      "Bash(powershell -Command \"[System.Guid]::NewGuid\\(\\).ToString\\(\\).ToUpper\\(\\); [System.Guid]::NewGuid\\(\\).ToString\\(\\).ToUpper\\(\\); [System.Guid]::NewGuid\\(\\).ToString\\(\\).ToUpper\\(\\); [System.Guid]::NewGuid\\(\\).ToString\\(\\).ToUpper\\(\\); [System.Guid]::NewGuid\\(\\).ToString\\(\\).ToUpper\\(\\); [System.Guid]::NewGuid\\(\\).ToString\\(\\).ToUpper\\(\\); [System.Guid]::NewGuid\\(\\).ToString\\(\\).ToUpper\\(\\)\")"
+    ]
+  }
+}

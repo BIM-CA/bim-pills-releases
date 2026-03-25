@@ -1,0 +1,37 @@
+<Project>
+
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>9</LangVersion>
+    <Nullable>enable</Nullable>
+    <Deterministic>true</Deterministic>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    <Company>BIM-CA</Company>
+    <Copyright>Copyright © BIM-CA 2025</Copyright>
+  </PropertyGroup>
+
+  <!-- Default to latest version if not specified -->
+  <PropertyGroup Condition="'$(RevitVersion)' == ''">
+    <RevitVersion>2026</RevitVersion>
+  </PropertyGroup>
+
+  <!-- Compilation symbol: REVIT2024, REVIT2025, or REVIT2026 -->
+  <PropertyGroup>
+    <DefineConstants>$(DefineConstants);REVIT$(RevitVersion)</DefineConstants>
+    <RevitInstallDir>C:\Program Files\Autodesk\Revit $(RevitVersion)</RevitInstallDir>
+  </PropertyGroup>
+
+  <!-- Revit API references — only included in BIMPills.Revit project -->
+  <ItemGroup Condition="'$(IncludeRevitRefs)' == 'true'">
+    <Reference Include="RevitAPI">
+      <HintPath>$(RevitInstallDir)\RevitAPI.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="RevitAPIUI">
+      <HintPath>$(RevitInstallDir)\RevitAPIUI.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+</Project>

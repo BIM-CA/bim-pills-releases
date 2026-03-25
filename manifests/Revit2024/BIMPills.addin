@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RevitAddIns>
+  <AddIn Type="Application">
+    <Name>BIM Pills</Name>
+    <Assembly>BIMPills\BIMPills.Revit.dll</Assembly>
+    <FullClassName>BIMPills.Revit.Application.RevitApplication</FullClassName>
+    <ClientId>01169856-4595-4375-A268-B623C7665091</ClientId>
+    <VendorId>BIM-CA</VendorId>
+    <VendorDescription>BIM-CA — https://bim-ca.com</VendorDescription>
+  </AddIn>
+</RevitAddIns>
