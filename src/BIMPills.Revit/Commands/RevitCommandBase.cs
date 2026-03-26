@@ -46,7 +46,7 @@ namespace BIMPills.Revit.Commands
             catch (Exception ex)
             {
                 message = ex.Message;
-                logger?.Error($"Unhandled exception in {GetType().Name}", ex);
+                logger?.Error($"Excepción no controlada en {GetType().Name}", ex);
                 return Result.Failed;
             }
         }

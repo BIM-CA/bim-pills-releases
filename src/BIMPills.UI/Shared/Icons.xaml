@@ -1,0 +1,88 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ══════════════════════════════════════════════
+         BIM Pills — Iconos vectoriales 32x32
+         ══════════════════════════════════════════════ -->
+
+    <!-- Icono de Auditoría: lupa sobre documento con checklist -->
+    <DrawingImage x:Key="AuditIcon">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <!-- Documento -->
+                <GeometryDrawing Brush="#1A1A2E">
+                    <GeometryDrawing.Geometry>
+                        <PathGeometry Figures="M 6,2 L 20,2 L 24,6 L 24,28 C 24,29.1 23.1,30 22,30 L 8,30 C 6.9,30 6,29.1 6,28 Z"/>
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+                <!-- Esquina doblada del documento -->
+                <GeometryDrawing Brush="#2A2A4E">
+                    <GeometryDrawing.Geometry>
+                        <PathGeometry Figures="M 20,2 L 20,6 L 24,6 Z"/>
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+                <!-- Lineas de checklist -->
+                <GeometryDrawing Brush="White">
+                    <GeometryDrawing.Geometry>
+                        <RectangleGeometry Rect="9,10,10,1.5"/>
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+                <GeometryDrawing Brush="White">
+                    <GeometryDrawing.Geometry>
+                        <RectangleGeometry Rect="9,15,10,1.5"/>
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+                <GeometryDrawing Brush="White">
+                    <GeometryDrawing.Geometry>
+                        <RectangleGeometry Rect="9,20,7,1.5"/>
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+                <!-- Lupa: circulo -->
+                <GeometryDrawing>
+                    <GeometryDrawing.Pen>
+                        <Pen Brush="#E74C3C" Thickness="2.5"/>
+                    </GeometryDrawing.Pen>
+                    <GeometryDrawing.Geometry>
+                        <EllipseGeometry Center="23,21" RadiusX="6" RadiusY="6"/>
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+                <!-- Lupa: mango -->
+                <GeometryDrawing>
+                    <GeometryDrawing.Pen>
+                        <Pen Brush="#E74C3C" Thickness="2.5" StartLineCap="Round" EndLineCap="Round"/>
+                    </GeometryDrawing.Pen>
+                    <GeometryDrawing.Geometry>
+                        <LineGeometry StartPoint="27.2,25.2" EndPoint="31,29"/>
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+    <!-- Icono Acerca de: circulo con "i" de informacion -->
+    <DrawingImage x:Key="AboutIcon">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <!-- Circulo de fondo -->
+                <GeometryDrawing Brush="#3498DB">
+                    <GeometryDrawing.Geometry>
+                        <EllipseGeometry Center="16,16" RadiusX="14" RadiusY="14"/>
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+                <!-- Punto de la "i" -->
+                <GeometryDrawing Brush="White">
+                    <GeometryDrawing.Geometry>
+                        <EllipseGeometry Center="16,9" RadiusX="2" RadiusY="2"/>
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+                <!-- Cuerpo de la "i" -->
+                <GeometryDrawing Brush="White">
+                    <GeometryDrawing.Geometry>
+                        <RectangleGeometry Rect="14,13.5,4,12" RadiusX="1" RadiusY="1"/>
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+</ResourceDictionary>

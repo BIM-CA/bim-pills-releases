@@ -1,4 +1,5 @@
 using Autodesk.Revit.UI;
+using BIMPills.Commands.About;
 using BIMPills.Commands.ModelAudit;
 using BIMPills.Core.Modules;
 using BIMPills.Core.Services;
@@ -62,6 +63,7 @@ namespace BIMPills.Revit.Application
         private static IEnumerable<IPluginModule> GetModules()
         {
             yield return new ModelAuditModule();
+            yield return new AboutModule();
             // yield return new ExportSchedulesModule();
             // yield return new MaintenanceModule();
         }
