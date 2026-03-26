@@ -1,15 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <Import Project="..\..\build\common.props" />
+
   <PropertyGroup>
+    <TargetFramework>$(RevitTargetFramework)</TargetFramework>
     <AssemblyName>BIMPills.Revit</AssemblyName>
     <RootNamespace>BIMPills.Revit</RootNamespace>
     <IncludeRevitRefs>true</IncludeRevitRefs>
-    <!-- WPF for TaskDialog and ribbon icons -->
     <UseWPF>true</UseWPF>
-    <TargetFramework>net48-windows</TargetFramework>
   </PropertyGroup>
-
-  <Import Project="..\..\build\common.props" />
 
   <ItemGroup>
     <ProjectReference Include="..\BIMPills.Core\BIMPills.Core.csproj" />
@@ -25,12 +24,12 @@
       <DeployDir>$(AddinDir)\BIMPills</DeployDir>
     </PropertyGroup>
     <MakeDir Directories="$(DeployDir)" />
-    <Copy SourceFiles="$(OutputPath)BIMPills.Revit.dll"        DestinationFolder="$(DeployDir)" SkipUnchangedFiles="true" />
-    <Copy SourceFiles="$(OutputPath)BIMPills.Core.dll"         DestinationFolder="$(DeployDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="$(OutputPath)BIMPills.Revit.dll"          DestinationFolder="$(DeployDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="$(OutputPath)BIMPills.Core.dll"           DestinationFolder="$(DeployDir)" SkipUnchangedFiles="true" />
     <Copy SourceFiles="$(OutputPath)BIMPills.Infrastructure.dll" DestinationFolder="$(DeployDir)" SkipUnchangedFiles="true" />
-    <Copy SourceFiles="$(OutputPath)BIMPills.Commands.dll"     DestinationFolder="$(DeployDir)" SkipUnchangedFiles="true" />
-    <Copy SourceFiles="$(OutputPath)BIMPills.UI.dll"           DestinationFolder="$(DeployDir)" SkipUnchangedFiles="true" />
-    <Copy SourceFiles="$(SolutionDir)manifests\Revit$(RevitVersion)\BIMPills.addin"
+    <Copy SourceFiles="$(OutputPath)BIMPills.Commands.dll"       DestinationFolder="$(DeployDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="$(OutputPath)BIMPills.UI.dll"             DestinationFolder="$(DeployDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="$(MSBuildThisFileDirectory)..\..\manifests\Revit$(RevitVersion)\BIMPills.addin"
           DestinationFolder="$(AddinDir)" SkipUnchangedFiles="true" />
     <Message Text="BIM Pills deployed to $(DeployDir)" Importance="high" />
   </Target>

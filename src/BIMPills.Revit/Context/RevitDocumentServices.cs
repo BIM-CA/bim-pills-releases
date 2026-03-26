@@ -79,8 +79,16 @@ namespace BIMPills.Revit.Context
             return new FilteredElementCollector(_doc)
                 .WhereElementIsNotElementType()
                 .Where(e => e.Category == null)
-                .Select(e => new ElementInfo(e.Id.IntegerValue, e.Name ?? "(sin nombre)", null))
+                .Select(e => new ElementInfo(GetElementIdValue(e.Id), e.Name ?? "(sin nombre)", null))
                 .ToList();
+        }
+        private static int GetElementIdValue(ElementId id)
+        {
+#if REVIT2024
+            return id.IntegerValue;
+#else
+            return (int)id.Value;
+#endif
         }
     }
 }

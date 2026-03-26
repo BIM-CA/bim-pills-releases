@@ -1,7 +1,6 @@
 <Project>
 
   <PropertyGroup>
-    <TargetFramework>net48</TargetFramework>
     <LangVersion>9</LangVersion>
     <Nullable>enable</Nullable>
     <Deterministic>true</Deterministic>
@@ -16,13 +15,22 @@
     <RevitVersion>2026</RevitVersion>
   </PropertyGroup>
 
+  <!-- Framework selection based on Revit version -->
+  <!-- Revit 2024 = .NET Framework 4.8, Revit 2025+ = .NET 8 -->
+  <PropertyGroup Condition="'$(RevitVersion)' == '2024'">
+    <RevitTargetFramework>net48-windows</RevitTargetFramework>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(RevitVersion)' == '2025' Or '$(RevitVersion)' == '2026'">
+    <RevitTargetFramework>net8.0-windows</RevitTargetFramework>
+  </PropertyGroup>
+
   <!-- Compilation symbol: REVIT2024, REVIT2025, or REVIT2026 -->
   <PropertyGroup>
     <DefineConstants>$(DefineConstants);REVIT$(RevitVersion)</DefineConstants>
     <RevitInstallDir>C:\Program Files\Autodesk\Revit $(RevitVersion)</RevitInstallDir>
   </PropertyGroup>
 
-  <!-- Revit API references — only included in BIMPills.Revit project -->
+  <!-- Revit API references — only included when IncludeRevitRefs=true -->
   <ItemGroup Condition="'$(IncludeRevitRefs)' == 'true'">
     <Reference Include="RevitAPI">
       <HintPath>$(RevitInstallDir)\RevitAPI.dll</HintPath>

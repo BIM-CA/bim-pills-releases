@@ -10,8 +10,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 
-[assembly: Autodesk.Revit.Attributes.Transaction(Autodesk.Revit.Attributes.TransactionMode.Manual)]
-
 namespace BIMPills.Revit.Application
 {
     public class RevitApplication : IExternalApplication
