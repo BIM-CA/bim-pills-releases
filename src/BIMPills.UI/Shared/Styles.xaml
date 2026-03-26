@@ -2,18 +2,20 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <!-- ══════════════════════════════════════════════
-         BIM Pills — Identidad Visual
+         BIMPills — Identidad Visual (macOS-inspired)
          ══════════════════════════════════════════════ -->
 
-    <!-- Colores -->
-    <Color x:Key="PrimaryColor">#1A1A2E</Color>
-    <Color x:Key="AccentColor">#E74C3C</Color>
-    <Color x:Key="SecondaryAccentColor">#3498DB</Color>
-    <Color x:Key="BackgroundColor">#F5F5F5</Color>
+    <!-- Colores BIM-CA (paleta oficial) -->
+    <Color x:Key="PrimaryColor">#212B37</Color>          <!-- Azul BIM-CA -->
+    <Color x:Key="AccentColor">#EF6337</Color>           <!-- Naranja BIM-CA -->
+    <Color x:Key="SecondaryAccentColor">#FECA29</Color>  <!-- Amarillo BIM-CA -->
+    <Color x:Key="BackgroundColor">#F0F0F0</Color>
     <Color x:Key="SuccessColor">#27AE60</Color>
-    <Color x:Key="TextSecondaryColor">#666666</Color>
-    <Color x:Key="WhiteColor">#FFFFFF</Color>
-    <Color x:Key="AlternateRowColor">#F9F9F9</Color>
+    <Color x:Key="TextSecondaryColor">#86868B</Color>
+    <Color x:Key="WhiteColor">#FBFAF8</Color>            <!-- Blanco BIM-CA -->
+    <Color x:Key="AlternateRowColor">#FAFAFA</Color>
+    <Color x:Key="SeparatorColor">#E5E5EA</Color>
+    <Color x:Key="CardShadowColor">#1A000000</Color>
 
     <SolidColorBrush x:Key="PrimaryBrush" Color="{StaticResource PrimaryColor}"/>
     <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}"/>
@@ -23,15 +25,16 @@
     <SolidColorBrush x:Key="TextSecondaryBrush" Color="{StaticResource TextSecondaryColor}"/>
     <SolidColorBrush x:Key="WhiteBrush" Color="{StaticResource WhiteColor}"/>
     <SolidColorBrush x:Key="AlternateRowBrush" Color="{StaticResource AlternateRowColor}"/>
+    <SolidColorBrush x:Key="SeparatorBrush" Color="{StaticResource SeparatorColor}"/>
 
     <!-- ══════════════════════════════════════════════
-         Tipografía
+         Tipografía — macOS-inspired (Segoe UI as SF Pro substitute)
          ══════════════════════════════════════════════ -->
 
-    <!-- Encabezado principal -->
+    <!-- Encabezado principal — grande y ligero como macOS -->
     <Style x:Key="HeaderText" TargetType="TextBlock">
-        <Setter Property="FontSize" Value="18"/>
-        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="FontSize" Value="20"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
         <Setter Property="FontFamily" Value="Segoe UI"/>
     </Style>
@@ -39,15 +42,15 @@
     <!-- Subencabezado -->
     <Style x:Key="SubHeaderText" TargetType="TextBlock">
         <Setter Property="FontSize" Value="13"/>
-        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="FontWeight" Value="Medium"/>
         <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
         <Setter Property="FontFamily" Value="Segoe UI"/>
-        <Setter Property="Margin" Value="0,8,0,4"/>
+        <Setter Property="Margin" Value="0,4,0,4"/>
     </Style>
 
     <!-- Texto de cuerpo -->
     <Style x:Key="BodyText" TargetType="TextBlock">
-        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontSize" Value="13"/>
         <Setter Property="FontWeight" Value="Normal"/>
         <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
         <Setter Property="FontFamily" Value="Segoe UI"/>
@@ -55,45 +58,45 @@
 
     <!-- Texto secundario / leyenda -->
     <Style x:Key="CaptionText" TargetType="TextBlock">
-        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="FontSize" Value="12"/>
         <Setter Property="FontWeight" Value="Normal"/>
         <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
         <Setter Property="FontFamily" Value="Segoe UI"/>
     </Style>
 
     <!-- ══════════════════════════════════════════════
-         Botones
+         Botones — macOS-style rounded, subtle
          ══════════════════════════════════════════════ -->
 
     <!-- Boton primario (acento) -->
     <Style x:Key="PrimaryButton" TargetType="Button">
         <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
         <Setter Property="Foreground" Value="White"/>
-        <Setter Property="FontSize" Value="12"/>
-        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="FontWeight" Value="Medium"/>
         <Setter Property="FontFamily" Value="Segoe UI"/>
-        <Setter Property="Padding" Value="16,8"/>
+        <Setter Property="Padding" Value="20,8"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
                     <Border Background="{TemplateBinding Background}"
-                            CornerRadius="4"
+                            CornerRadius="6"
                             Padding="{TemplateBinding Padding}">
                         <ContentPresenter HorizontalAlignment="Center"
                                           VerticalAlignment="Center"/>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter Property="Background" Value="#C0392B"/>
+                            <Setter Property="Background" Value="#D9552D"/>
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter Property="Background" Value="#A93226"/>
+                            <Setter Property="Background" Value="#C44A25"/>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
-                            <Setter Property="Background" Value="#CCCCCC"/>
-                            <Setter Property="Foreground" Value="#999999"/>
+                            <Setter Property="Background" Value="#E0E0E0"/>
+                            <Setter Property="Foreground" Value="#A0A0A0"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -101,15 +104,15 @@
         </Setter>
     </Style>
 
-    <!-- Boton secundario (borde) -->
+    <!-- Boton secundario — macOS ghost button style -->
     <Style x:Key="SecondaryButton" TargetType="Button">
-        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Background" Value="#FFFFFF"/>
         <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
-        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontSize" Value="13"/>
         <Setter Property="FontWeight" Value="Normal"/>
         <Setter Property="FontFamily" Value="Segoe UI"/>
-        <Setter Property="Padding" Value="16,8"/>
-        <Setter Property="BorderBrush" Value="#CCCCCC"/>
+        <Setter Property="Padding" Value="20,8"/>
+        <Setter Property="BorderBrush" Value="#D1D1D6"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="Template">
@@ -118,17 +121,20 @@
                     <Border Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="4"
+                            CornerRadius="6"
                             Padding="{TemplateBinding Padding}">
+                        <Border.Effect>
+                            <DropShadowEffect ShadowDepth="0.5" BlurRadius="2" Opacity="0.08" Color="Black"/>
+                        </Border.Effect>
                         <ContentPresenter HorizontalAlignment="Center"
                                           VerticalAlignment="Center"/>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter Property="Background" Value="#EEEEEE"/>
+                            <Setter Property="Background" Value="#F5F5F5"/>
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter Property="Background" Value="#DDDDDD"/>
+                            <Setter Property="Background" Value="#ECECEC"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -137,7 +143,7 @@
     </Style>
 
     <!-- ══════════════════════════════════════════════
-         DataGrid
+         DataGrid — Clean macOS table style
          ══════════════════════════════════════════════ -->
 
     <Style x:Key="BIMPillsDataGrid" TargetType="DataGrid">
@@ -146,29 +152,30 @@
         <Setter Property="RowBackground" Value="White"/>
         <Setter Property="AlternatingRowBackground" Value="{StaticResource AlternateRowBrush}"/>
         <Setter Property="GridLinesVisibility" Value="Horizontal"/>
-        <Setter Property="HorizontalGridLinesBrush" Value="#E0E0E0"/>
-        <Setter Property="BorderBrush" Value="#E0E0E0"/>
-        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="HorizontalGridLinesBrush" Value="{StaticResource SeparatorBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource SeparatorBrush}"/>
+        <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="HeadersVisibility" Value="Column"/>
         <Setter Property="SelectionMode" Value="Single"/>
         <Setter Property="FontFamily" Value="Segoe UI"/>
         <Setter Property="FontSize" Value="12"/>
         <Setter Property="Background" Value="White"/>
         <Setter Property="CanUserResizeRows" Value="False"/>
+        <Setter Property="RowHeight" Value="36"/>
     </Style>
 
     <Style x:Key="BIMPillsColumnHeader" TargetType="DataGridColumnHeader">
-        <Setter Property="Background" Value="{StaticResource PrimaryBrush}"/>
-        <Setter Property="Foreground" Value="White"/>
-        <Setter Property="FontWeight" Value="SemiBold"/>
-        <Setter Property="FontSize" Value="12"/>
-        <Setter Property="Padding" Value="8,6"/>
-        <Setter Property="BorderBrush" Value="#2A2A4E"/>
-        <Setter Property="BorderThickness" Value="0,0,1,0"/>
+        <Setter Property="Background" Value="#F5F5F7"/>
+        <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="Padding" Value="12,8"/>
+        <Setter Property="BorderBrush" Value="{StaticResource SeparatorBrush}"/>
+        <Setter Property="BorderThickness" Value="0,0,0,1"/>
     </Style>
 
     <!-- ══════════════════════════════════════════════
-         TabControl / TabItem
+         TabControl / TabItem — macOS segmented control feel
          ══════════════════════════════════════════════ -->
 
     <Style x:Key="BIMPillsTabControl" TargetType="TabControl">
@@ -180,14 +187,15 @@
     <Style x:Key="BIMPillsTabItem" TargetType="TabItem">
         <Setter Property="FontFamily" Value="Segoe UI"/>
         <Setter Property="FontSize" Value="12"/>
-        <Setter Property="Padding" Value="12,6"/>
+        <Setter Property="Padding" Value="14,7"/>
         <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="TabItem">
                     <Border x:Name="TabBorder"
                             Padding="{TemplateBinding Padding}"
-                            Margin="0,0,4,0"
+                            Margin="0,0,2,0"
+                            CornerRadius="6,6,0,0"
                             BorderThickness="0,0,0,2"
                             BorderBrush="Transparent"
                             Background="Transparent"
@@ -199,11 +207,12 @@
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsSelected" Value="True">
                             <Setter TargetName="TabBorder" Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                            <Setter TargetName="TabBorder" Property="Background" Value="#08EF6337"/>
                             <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
                             <Setter Property="FontWeight" Value="SemiBold"/>
                         </Trigger>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="TabBorder" Property="Background" Value="#F0F0F0"/>
+                            <Setter TargetName="TabBorder" Property="Background" Value="#06000000"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -212,7 +221,7 @@
     </Style>
 
     <!-- ══════════════════════════════════════════════
-         Border — Insignia / Tarjeta
+         Border — Tarjetas macOS-style
          ══════════════════════════════════════════════ -->
 
     <!-- Insignia de conteo (badge) -->
@@ -224,16 +233,16 @@
         <Setter Property="HorizontalAlignment" Value="Center"/>
     </Style>
 
-    <!-- Tarjeta con sombra -->
+    <!-- Tarjeta con sombra suave — macOS card style -->
     <Style x:Key="CardBorder" TargetType="Border">
         <Setter Property="Background" Value="White"/>
-        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="CornerRadius" Value="10"/>
         <Setter Property="Padding" Value="16"/>
-        <Setter Property="BorderBrush" Value="#E0E0E0"/>
-        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="#E5E5EA"/>
+        <Setter Property="BorderThickness" Value="0.5"/>
         <Setter Property="Effect">
             <Setter.Value>
-                <DropShadowEffect ShadowDepth="1" BlurRadius="6" Opacity="0.1" Color="Black"/>
+                <DropShadowEffect ShadowDepth="1" BlurRadius="8" Opacity="0.06" Color="Black"/>
             </Setter.Value>
         </Setter>
     </Style>

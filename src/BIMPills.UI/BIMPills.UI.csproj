@@ -14,4 +14,9 @@
     <ProjectReference Include="..\BIMPills.Commands\BIMPills.Commands.csproj" />
   </ItemGroup>
 
+  <!-- Imágenes embebidas como Resource (accesibles via pack URI) -->
+  <ItemGroup>
+    <Resource Include="Resources\pill-icon.png" />
+  </ItemGroup>
+
 </Project>

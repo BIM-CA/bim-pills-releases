@@ -10,13 +10,13 @@
         <DrawingImage.Drawing>
             <DrawingGroup>
                 <!-- Documento -->
-                <GeometryDrawing Brush="#1A1A2E">
+                <GeometryDrawing Brush="#212B37">
                     <GeometryDrawing.Geometry>
                         <PathGeometry Figures="M 6,2 L 20,2 L 24,6 L 24,28 C 24,29.1 23.1,30 22,30 L 8,30 C 6.9,30 6,29.1 6,28 Z"/>
                     </GeometryDrawing.Geometry>
                 </GeometryDrawing>
                 <!-- Esquina doblada del documento -->
-                <GeometryDrawing Brush="#2A2A4E">
+                <GeometryDrawing Brush="#2D3A49">
                     <GeometryDrawing.Geometry>
                         <PathGeometry Figures="M 20,2 L 20,6 L 24,6 Z"/>
                     </GeometryDrawing.Geometry>
@@ -40,7 +40,7 @@
                 <!-- Lupa: circulo -->
                 <GeometryDrawing>
                     <GeometryDrawing.Pen>
-                        <Pen Brush="#E74C3C" Thickness="2.5"/>
+                        <Pen Brush="#EF6337" Thickness="2.5"/>
                     </GeometryDrawing.Pen>
                     <GeometryDrawing.Geometry>
                         <EllipseGeometry Center="23,21" RadiusX="6" RadiusY="6"/>
@@ -49,7 +49,7 @@
                 <!-- Lupa: mango -->
                 <GeometryDrawing>
                     <GeometryDrawing.Pen>
-                        <Pen Brush="#E74C3C" Thickness="2.5" StartLineCap="Round" EndLineCap="Round"/>
+                        <Pen Brush="#EF6337" Thickness="2.5" StartLineCap="Round" EndLineCap="Round"/>
                     </GeometryDrawing.Pen>
                     <GeometryDrawing.Geometry>
                         <LineGeometry StartPoint="27.2,25.2" EndPoint="31,29"/>
@@ -64,7 +64,7 @@
         <DrawingImage.Drawing>
             <DrawingGroup>
                 <!-- Circulo de fondo -->
-                <GeometryDrawing Brush="#3498DB">
+                <GeometryDrawing Brush="#FECA29">
                     <GeometryDrawing.Geometry>
                         <EllipseGeometry Center="16,16" RadiusX="14" RadiusY="14"/>
                     </GeometryDrawing.Geometry>
@@ -79,6 +79,50 @@
                 <GeometryDrawing Brush="White">
                     <GeometryDrawing.Geometry>
                         <RectangleGeometry Rect="14,13.5,4,12" RadiusX="1" RadiusY="1"/>
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+    <!-- Icono de Píldora BIMPills: cápsula half-white half-orange -->
+    <DrawingImage x:Key="PillIcon">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <!-- Mitad superior de la cápsula — blanca -->
+                <GeometryDrawing Brush="#FFFFFF">
+                    <GeometryDrawing.Geometry>
+                        <PathGeometry Figures="M 10,16 L 10,8 C 10,3.58 13.58,0 18,0 L 18,0 C 22.42,0 26,3.58 26,8 L 26,16 Z"/>
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+                <!-- Mitad inferior de la cápsula — naranja/coral BIM-CA -->
+                <GeometryDrawing Brush="#EF6337">
+                    <GeometryDrawing.Geometry>
+                        <PathGeometry Figures="M 10,16 L 26,16 L 26,24 C 26,28.42 22.42,32 18,32 L 18,32 C 13.58,32 10,28.42 10,24 Z"/>
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+                <!-- Contorno de la cápsula completa -->
+                <GeometryDrawing>
+                    <GeometryDrawing.Pen>
+                        <Pen Brush="#212B37" Thickness="1.2"/>
+                    </GeometryDrawing.Pen>
+                    <GeometryDrawing.Geometry>
+                        <PathGeometry Figures="M 10,8 C 10,3.58 13.58,0 18,0 C 22.42,0 26,3.58 26,8 L 26,24 C 26,28.42 22.42,32 18,32 C 13.58,32 10,28.42 10,24 Z"/>
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+                <!-- Línea divisoria central -->
+                <GeometryDrawing>
+                    <GeometryDrawing.Pen>
+                        <Pen Brush="#212B37" Thickness="0.8"/>
+                    </GeometryDrawing.Pen>
+                    <GeometryDrawing.Geometry>
+                        <LineGeometry StartPoint="10,16" EndPoint="26,16"/>
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+                <!-- Reflejo brillante en la mitad superior -->
+                <GeometryDrawing Brush="#20FFFFFF">
+                    <GeometryDrawing.Geometry>
+                        <PathGeometry Figures="M 13,4 C 14,2.5 15.5,1.5 18,1.5 C 16,1.5 14.5,3 13.5,5 Z"/>
                     </GeometryDrawing.Geometry>
                 </GeometryDrawing>
             </DrawingGroup>

@@ -25,8 +25,16 @@ namespace BIMPills.Revit.Application
                     "Autodesk", "Revit", "Addins", "BIMPills", "Logs");
                 ServiceLocator.Register<ILogger>(new FileLogger(logDir));
 
+                var logger = ServiceLocator.Get<ILogger>();
+                logger.Info("═══════════════════════════════════════════════════");
+                logger.Info("BIMPills — Iniciando plugin");
+                logger.Info($"Directorio de logs: {logDir}");
+                logger.Info($"Ensamblado: {Assembly.GetExecutingAssembly().Location}");
+
                 // 2. Version adapter (compiled per-version via #if REVIT20XX)
                 ServiceLocator.Register<IRevitVersionAdapter>(new RevitVersionAdapterImpl());
+                var versionLabel = new RevitVersionAdapterImpl().VersionLabel;
+                logger.Info($"Versión de Revit: {versionLabel}");
 
                 // 3. Ribbon builder
                 var ribbon = new RibbonBuilder(app);
@@ -34,18 +42,23 @@ namespace BIMPills.Revit.Application
                 // 4. Load modules — add new modules here as the plugin grows
                 foreach (var module in GetModules())
                 {
+                    logger.Info($"Cargando módulo: {module.GetType().Name} (Tab: {module.TabName}, Panel: {module.PanelName})");
                     ribbon.EnsureTab(module.TabName);
                     ribbon.EnsurePanel(module.TabName, module.PanelName);
                     module.BuildRibbon(ribbon);
                 }
 
-                ServiceLocator.Get<ILogger>().Info(
-                    $"BIMPills iniciado ({new RevitVersionAdapterImpl().VersionLabel})");
+                logger.Info($"BIMPills iniciado correctamente ({versionLabel})");
+                logger.Info("═══════════════════════════════════════════════════");
 
                 return Result.Succeeded;
             }
             catch (Exception ex)
             {
+                // Intentar escribir al log incluso si hay error
+                if (ServiceLocator.IsRegistered<ILogger>())
+                    ServiceLocator.Get<ILogger>().Error("Error fatal al iniciar BIMPills", ex);
+
                 TaskDialog.Show("BIMPills — Error de inicio", ex.ToString());
                 return Result.Failed;
             }

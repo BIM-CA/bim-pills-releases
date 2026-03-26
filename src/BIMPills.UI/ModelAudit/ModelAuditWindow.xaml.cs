@@ -22,8 +22,17 @@ namespace BIMPills.UI.ModelAudit
 
         private void Populate()
         {
-            TitleText.Text    = $"Auditoría: {_result.DocumentTitle}";
+            // Título en 3 filas
+            DocumentName.Text = _result.DocumentTitle;
+            // AuditLabel.Text ya está definido en XAML como "Auditoría:"
             SubtitleText.Text = $"Modelo {(_result.IsWorkshared ? "colaborativo" : "local")}";
+
+            // Resumen en pie de página
+            var total = _result.Warnings.Count
+                      + _result.Families.Count
+                      + _result.UnplacedViews.Count
+                      + _result.OrphanElements.Count;
+            SummaryText.Text = $"{total} hallazgos en total  ·  {_result.Warnings.Count} advertencias";
 
             WarningsGrid.ItemsSource = _result.Warnings;
             FamiliesGrid.ItemsSource = _result.Families;

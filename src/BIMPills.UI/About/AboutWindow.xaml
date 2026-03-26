@@ -2,10 +2,10 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="BIMPills — Acerca de"
-        Width="450" Height="520"
+        Width="440" Height="480"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterScreen"
-        Background="#F5F5F5">
+        Background="#F0F0F0">
 
     <Window.Resources>
         <ResourceDictionary>
@@ -15,113 +15,104 @@
         </ResourceDictionary>
     </Window.Resources>
 
-    <DockPanel>
+    <StackPanel Margin="28,20,28,16">
 
-        <!-- Encabezado con identidad de marca -->
-        <Border DockPanel.Dock="Top"
-                Background="{StaticResource PrimaryBrush}"
-                Padding="0,32,0,28">
+        <!-- Logo BIMPills (PNG real) -->
+        <Image Source="/BIMPills.UI;component/Resources/pill-icon.png"
+               Width="44" Height="70"
+               Margin="0,0,0,8"
+               HorizontalAlignment="Center"
+               RenderOptions.BitmapScalingMode="HighQuality"/>
+
+        <!-- Nombre del plugin -->
+        <TextBlock Text="BIMPills"
+                   FontSize="22" FontWeight="SemiBold"
+                   Foreground="{StaticResource PrimaryBrush}"
+                   HorizontalAlignment="Center"
+                   FontFamily="Segoe UI"/>
+
+        <!-- Descripción breve -->
+        <TextBlock x:Name="DescriptionText"
+                   FontSize="12"
+                   Foreground="{StaticResource TextSecondaryBrush}"
+                   HorizontalAlignment="Center"
+                   Margin="0,4,0,14"
+                   FontFamily="Segoe UI"/>
+
+        <!-- Tarjeta de información -->
+        <Border Style="{StaticResource CardBorder}" Margin="0,0,0,10">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" Grid.Column="0"
+                           Text="Versión"
+                           Style="{StaticResource CaptionText}"
+                           Margin="0,0,20,10"/>
+                <TextBlock x:Name="VersionText"
+                           Grid.Row="0" Grid.Column="1"
+                           Style="{StaticResource BodyText}"
+                           Margin="0,0,0,10"/>
+
+                <TextBlock Grid.Row="1" Grid.Column="0"
+                           Text="Desarrollador"
+                           Style="{StaticResource CaptionText}"
+                           Margin="0,0,20,10"/>
+                <TextBlock x:Name="DeveloperText"
+                           Grid.Row="1" Grid.Column="1"
+                           Style="{StaticResource BodyText}"
+                           Margin="0,0,0,10"/>
+
+                <TextBlock Grid.Row="2" Grid.Column="0"
+                           Text="Empresa"
+                           Style="{StaticResource CaptionText}"
+                           Margin="0,0,20,0"/>
+                <TextBlock x:Name="CompanyText"
+                           Grid.Row="2" Grid.Column="1"
+                           Style="{StaticResource BodyText}"/>
+            </Grid>
+        </Border>
+
+        <!-- Enlace al sitio web -->
+        <Border Style="{StaticResource CardBorder}" Margin="0,0,0,12">
             <StackPanel HorizontalAlignment="Center">
-                <TextBlock Text="BIMPills"
-                           FontSize="28" FontWeight="Bold"
-                           Foreground="White"
+                <TextBlock Text="Visitar sitio web"
+                           FontSize="13"
+                           Foreground="{StaticResource AccentBrush}"
                            HorizontalAlignment="Center"
+                           Cursor="Hand"
+                           MouseLeftButtonUp="Website_Click"
                            FontFamily="Segoe UI"/>
-                <TextBlock x:Name="DescriptionText"
-                           FontSize="12"
-                           Foreground="#BBBBBB"
+                <TextBlock x:Name="WebsiteText"
+                           FontSize="11"
+                           Foreground="{StaticResource TextSecondaryBrush}"
                            HorizontalAlignment="Center"
-                           Margin="0,6,0,0"
+                           Margin="0,3,0,0"
                            FontFamily="Segoe UI"/>
             </StackPanel>
         </Border>
 
-        <!-- Pie de página -->
-        <StackPanel DockPanel.Dock="Bottom" Margin="24,0,24,20">
-            <TextBlock x:Name="CopyrightText"
-                       FontSize="11"
-                       Foreground="{StaticResource TextSecondaryBrush}"
-                       HorizontalAlignment="Center"
-                       Margin="0,0,0,12"
-                       FontFamily="Segoe UI"/>
-            <Button Content="Cerrar"
-                    Style="{StaticResource PrimaryButton}"
-                    Width="120"
-                    HorizontalAlignment="Center"
-                    Click="CloseButton_Click"/>
-        </StackPanel>
+        <!-- Copyright -->
+        <TextBlock x:Name="CopyrightText"
+                   FontSize="11"
+                   Foreground="{StaticResource TextSecondaryBrush}"
+                   HorizontalAlignment="Center"
+                   Margin="0,0,0,10"
+                   FontFamily="Segoe UI"/>
 
-        <!-- Contenido central -->
-        <ScrollViewer VerticalScrollBarVisibility="Auto"
-                      Margin="24,20,24,12">
-            <StackPanel>
+        <!-- Botón cerrar -->
+        <Button Content="Cerrar"
+                Style="{StaticResource SecondaryButton}"
+                Width="100"
+                HorizontalAlignment="Center"
+                Click="CloseButton_Click"/>
 
-                <!-- Tarjeta de información -->
-                <Border Style="{StaticResource CardBorder}" Margin="0,0,0,16">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
-
-                        <TextBlock Grid.Row="0" Grid.Column="0"
-                                   Text="Versión:"
-                                   Style="{StaticResource BodyText}"
-                                   FontWeight="SemiBold"
-                                   Margin="0,0,16,8"/>
-                        <TextBlock x:Name="VersionText"
-                                   Grid.Row="0" Grid.Column="1"
-                                   Style="{StaticResource BodyText}"
-                                   Margin="0,0,0,8"/>
-
-                        <TextBlock Grid.Row="1" Grid.Column="0"
-                                   Text="Desarrollador:"
-                                   Style="{StaticResource BodyText}"
-                                   FontWeight="SemiBold"
-                                   Margin="0,0,16,8"/>
-                        <TextBlock x:Name="DeveloperText"
-                                   Grid.Row="1" Grid.Column="1"
-                                   Style="{StaticResource BodyText}"
-                                   Margin="0,0,0,8"/>
-
-                        <TextBlock Grid.Row="2" Grid.Column="0"
-                                   Text="Empresa:"
-                                   Style="{StaticResource BodyText}"
-                                   FontWeight="SemiBold"
-                                   Margin="0,0,16,0"/>
-                        <TextBlock x:Name="CompanyText"
-                                   Grid.Row="2" Grid.Column="1"
-                                   Style="{StaticResource BodyText}"/>
-                    </Grid>
-                </Border>
-
-                <!-- Enlace al sitio web -->
-                <Border Style="{StaticResource CardBorder}">
-                    <StackPanel HorizontalAlignment="Center">
-                        <TextBlock Text="Visitar sitio web"
-                                   FontSize="13"
-                                   Foreground="{StaticResource SecondaryAccentBrush}"
-                                   HorizontalAlignment="Center"
-                                   Cursor="Hand"
-                                   MouseLeftButtonUp="Website_Click"
-                                   TextDecorations="Underline"
-                                   FontFamily="Segoe UI"/>
-                        <TextBlock x:Name="WebsiteText"
-                                   FontSize="11"
-                                   Foreground="{StaticResource TextSecondaryBrush}"
-                                   HorizontalAlignment="Center"
-                                   Margin="0,4,0,0"
-                                   FontFamily="Segoe UI"/>
-                    </StackPanel>
-                </Border>
-
-            </StackPanel>
-        </ScrollViewer>
-
-    </DockPanel>
+    </StackPanel>
 </Window>

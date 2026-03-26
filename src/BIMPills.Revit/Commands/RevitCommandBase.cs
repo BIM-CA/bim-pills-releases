@@ -32,17 +32,37 @@ namespace BIMPills.Revit.Commands
                     ? ServiceLocator.Get<ILogger>()
                     : null;
 
+                logger?.Info($"Iniciando comando: {GetType().Name}");
+
                 var context = new RevitCommandContext(commandData);
                 var command = CreateCommand();
                 var result  = command.Execute(context);
 
                 if (!result.Success)
                 {
-                    message = result.Message ?? "El comando no pudo completarse.";
+                    var msg = result.Message ?? "El comando no pudo completarse.";
+                    logger?.Warning($"Comando {GetType().Name} finalizó sin éxito: {msg}");
+                    message = msg;
                     return Result.Failed;
                 }
 
-                OnSuccess(command);
+                logger?.Info($"Comando {GetType().Name} ejecutado correctamente. Abriendo UI...");
+
+                try
+                {
+                    OnSuccess(command);
+                }
+                catch (Exception uiEx)
+                {
+                    logger?.Error($"Error al mostrar la ventana de {GetType().Name}", uiEx);
+                    TaskDialog.Show("BIMPills — Error de interfaz",
+                        $"El comando se ejecutó correctamente, pero ocurrió un error al mostrar la ventana.\n\n" +
+                        $"Detalle: {uiEx.Message}\n\n" +
+                        $"Revisa el log para más información.");
+                    return Result.Succeeded; // El comando sí funcionó
+                }
+
+                logger?.Info($"Comando {GetType().Name} completado.");
                 return Result.Succeeded;
             }
             catch (Exception ex)
