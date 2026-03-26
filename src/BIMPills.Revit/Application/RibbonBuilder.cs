@@ -1,6 +1,9 @@
 using Autodesk.Revit.UI;
 using BIMPills.Core.Modules;
+using BIMPills.Revit.Resources;
 using System;
+using System.Collections.Generic;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
 namespace BIMPills.Revit.Application
@@ -8,6 +11,13 @@ namespace BIMPills.Revit.Application
     internal sealed class RibbonBuilder : IRibbonBuilder
     {
         private readonly UIControlledApplication _app;
+
+        private static readonly Dictionary<string, Func<BitmapSource>> _iconFactories
+            = new Dictionary<string, Func<BitmapSource>>
+            {
+                ["audit"]  = RibbonIconFactory.CreateAuditIcon,
+                ["about"]  = RibbonIconFactory.CreateAboutIcon,
+            };
 
         public RibbonBuilder(UIControlledApplication app)
         {
@@ -19,13 +29,12 @@ namespace BIMPills.Revit.Application
             try { _app.CreateRibbonTab(tabName); }
             catch (Autodesk.Revit.Exceptions.ArgumentException)
             {
-                // Tab already exists — safe to ignore
+                // Tab already exists
             }
         }
 
         public void EnsurePanel(string tabName, string panelName)
         {
-            // CreateRibbonPanel throws if the panel already exists, so check first
             foreach (var existing in _app.GetRibbonPanels(tabName))
                 if (existing.Name == panelName) return;
 
@@ -33,35 +42,37 @@ namespace BIMPills.Revit.Application
         }
 
         public void AddPushButton(
+            string tabName,
             string panelName,
             string buttonName,
             string tooltip,
             string commandTypeFullName,
             string assemblyPath,
-            string? largeImagePath = null)
+            string? iconKey = null)
         {
             RibbonPanel? panel = null;
-            foreach (var existing in _app.GetRibbonPanels())
+            foreach (var existing in _app.GetRibbonPanels(tabName))
                 if (existing.Name == panelName) { panel = existing; break; }
 
             if (panel == null)
                 throw new InvalidOperationException(
-                    $"Panel '{panelName}' not found. Call EnsurePanel first.");
+                    $"Panel '{panelName}' no encontrado. Llama a EnsurePanel primero.");
 
             var data = new PushButtonData(buttonName, buttonName, assemblyPath, commandTypeFullName)
             {
                 ToolTip = tooltip
             };
 
-            if (!string.IsNullOrEmpty(largeImagePath))
+            // Load icon from factory
+            if (!string.IsNullOrEmpty(iconKey) && _iconFactories.TryGetValue(iconKey, out var factory))
             {
                 try
                 {
-                    data.LargeImage = new BitmapImage(new Uri(largeImagePath, UriKind.RelativeOrAbsolute));
+                    data.LargeImage = factory();
                 }
                 catch
                 {
-                    // Image load failure should not block plugin startup
+                    // Icon failure should not block plugin startup
                 }
             }
 

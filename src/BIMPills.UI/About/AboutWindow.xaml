@@ -1,11 +1,11 @@
 <Window x:Class="BIMPills.UI.About.AboutWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="BIM Pills — Acerca de"
+        Title="BIMPills — Acerca de"
         Width="450" Height="520"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterScreen"
-        Background="{StaticResource BackgroundBrush}">
+        Background="#F5F5F5">
 
     <Window.Resources>
         <ResourceDictionary>
@@ -22,7 +22,7 @@
                 Background="{StaticResource PrimaryBrush}"
                 Padding="0,32,0,28">
             <StackPanel HorizontalAlignment="Center">
-                <TextBlock Text="BIM Pills"
+                <TextBlock Text="BIMPills"
                            FontSize="28" FontWeight="Bold"
                            Foreground="White"
                            HorizontalAlignment="Center"
@@ -36,7 +36,7 @@
             </StackPanel>
         </Border>
 
-        <!-- Pie de pagina -->
+        <!-- Pie de página -->
         <StackPanel DockPanel.Dock="Bottom" Margin="24,0,24,20">
             <TextBlock x:Name="CopyrightText"
                        FontSize="11"
@@ -56,7 +56,7 @@
                       Margin="24,20,24,12">
             <StackPanel>
 
-                <!-- Tarjeta de informacion -->
+                <!-- Tarjeta de información -->
                 <Border Style="{StaticResource CardBorder}" Margin="0,0,0,16">
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -69,9 +69,8 @@
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
 
-                        <!-- Version -->
                         <TextBlock Grid.Row="0" Grid.Column="0"
-                                   Text="Version:"
+                                   Text="Versión:"
                                    Style="{StaticResource BodyText}"
                                    FontWeight="SemiBold"
                                    Margin="0,0,16,8"/>
@@ -80,7 +79,6 @@
                                    Style="{StaticResource BodyText}"
                                    Margin="0,0,0,8"/>
 
-                        <!-- Desarrollador -->
                         <TextBlock Grid.Row="1" Grid.Column="0"
                                    Text="Desarrollador:"
                                    Style="{StaticResource BodyText}"
@@ -91,7 +89,6 @@
                                    Style="{StaticResource BodyText}"
                                    Margin="0,0,0,8"/>
 
-                        <!-- Empresa -->
                         <TextBlock Grid.Row="2" Grid.Column="0"
                                    Text="Empresa:"
                                    Style="{StaticResource BodyText}"
@@ -104,7 +101,7 @@
                 </Border>
 
                 <!-- Enlace al sitio web -->
-                <Border Style="{StaticResource CardBorder}" Margin="0,0,0,0">
+                <Border Style="{StaticResource CardBorder}">
                     <StackPanel HorizontalAlignment="Center">
                         <TextBlock Text="Visitar sitio web"
                                    FontSize="13"

@@ -11,7 +11,7 @@ namespace BIMPills.Commands.About
     {
         public CommandResult Execute(ICommandContext context)
         {
-            context.Logger.Info("Mostrando información Acerca de BIM Pills.");
+            context.Logger.Info("Mostrando información Acerca de BIMPills.");
 
             var info = new AboutInfo();
             LastResult = info;

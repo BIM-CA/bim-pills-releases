@@ -8,16 +8,17 @@ using System;
 
 namespace BIMPills.Revit.Commands
 {
-    /// <summary>
-    /// Bridge between Revit's IExternalCommand and our IPluginCommand.
-    /// Subclasses only need to provide the business command via CreateCommand().
-    /// Error handling and logging are centralized here.
-    /// </summary>
     [Autodesk.Revit.Attributes.Transaction(Autodesk.Revit.Attributes.TransactionMode.Manual)]
     [Autodesk.Revit.Attributes.Regeneration(Autodesk.Revit.Attributes.RegenerationOption.Manual)]
     public abstract class RevitCommandBase : IExternalCommand
     {
         protected abstract IPluginCommand CreateCommand();
+
+        /// <summary>
+        /// Called after the command executes successfully.
+        /// Override to show UI windows with the command results.
+        /// </summary>
+        protected virtual void OnSuccess(IPluginCommand command) { }
 
         public Result Execute(
             ExternalCommandData commandData,
@@ -41,6 +42,7 @@ namespace BIMPills.Revit.Commands
                     return Result.Failed;
                 }
 
+                OnSuccess(command);
                 return Result.Succeeded;
             }
             catch (Exception ex)

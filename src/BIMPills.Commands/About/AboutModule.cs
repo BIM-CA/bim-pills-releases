@@ -6,21 +6,23 @@ namespace BIMPills.Commands.About
 {
     public sealed class AboutModule : IPluginModule
     {
-        public string TabName   => "BIM Pills";
+        public string TabName   => "BIMPills";
         public string PanelName => "Información";
 
         public void BuildRibbon(IRibbonBuilder builder)
         {
-            var assemblyPath = Assembly.GetExecutingAssembly().Location;
-            var imageDir     = Path.Combine(Path.GetDirectoryName(assemblyPath)!, "Images");
+            var revitDll = Path.Combine(
+                Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!,
+                "BIMPills.Revit.dll");
 
             builder.AddPushButton(
+                tabName:             TabName,
                 panelName:           PanelName,
                 buttonName:          "Acerca de",
-                tooltip:             "Información sobre BIM Pills y BIM-CA",
+                tooltip:             "Información sobre BIMPills y BIM-CA",
                 commandTypeFullName: "BIMPills.Revit.Commands.About.AboutRevitCommand",
-                assemblyPath:        Path.Combine(Path.GetDirectoryName(assemblyPath)!, "BIMPills.Revit.dll"),
-                largeImagePath:      Path.Combine(imageDir, "about_32.png"));
+                assemblyPath:        revitDll,
+                iconKey:             "about");
         }
     }
 }

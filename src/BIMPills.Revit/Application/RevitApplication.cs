@@ -40,13 +40,13 @@ namespace BIMPills.Revit.Application
                 }
 
                 ServiceLocator.Get<ILogger>().Info(
-                    $"BIM Pills iniciado ({new RevitVersionAdapterImpl().VersionLabel})");
+                    $"BIMPills iniciado ({new RevitVersionAdapterImpl().VersionLabel})");
 
                 return Result.Succeeded;
             }
             catch (Exception ex)
             {
-                TaskDialog.Show("BIM Pills — Error de inicio", ex.ToString());
+                TaskDialog.Show("BIMPills — Error de inicio", ex.ToString());
                 return Result.Failed;
             }
         }
@@ -54,7 +54,7 @@ namespace BIMPills.Revit.Application
         public Result OnShutdown(UIControlledApplication app)
         {
             if (ServiceLocator.IsRegistered<ILogger>())
-                ServiceLocator.Get<ILogger>().Info("BIM Pills cerrado.");
+                ServiceLocator.Get<ILogger>().Info("BIMPills cerrado.");
             return Result.Succeeded;
         }
 

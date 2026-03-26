@@ -26,7 +26,7 @@ namespace BIMPills.Core.Tests.About
             command.Execute(context);
 
             Assert.NotNull(AboutCommand.LastResult);
-            Assert.Equal("BIM Pills", AboutCommand.LastResult!.PluginName);
+            Assert.Equal("BIMPills", AboutCommand.LastResult!.PluginName);
             Assert.Equal("1.0.0", AboutCommand.LastResult.Version);
             Assert.Equal("Rodrigo Flores", AboutCommand.LastResult.Developer);
             Assert.Equal("BIM-CA", AboutCommand.LastResult.Company);
@@ -40,7 +40,7 @@ namespace BIMPills.Core.Tests.About
             var command = new AboutCommand();
             var result  = command.Execute(context);
 
-            Assert.Contains("BIM Pills", result.Message);
+            Assert.Contains("BIMPills", result.Message);
             Assert.Contains("1.0.0", result.Message);
             Assert.Contains("BIM-CA", result.Message);
         }

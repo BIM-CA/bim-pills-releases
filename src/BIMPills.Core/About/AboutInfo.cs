@@ -2,7 +2,7 @@ namespace BIMPills.Core.About
 {
     public sealed class AboutInfo
     {
-        public string PluginName => "BIM Pills";
+        public string PluginName => "BIMPills";
         public string Version => "1.0.0";
         public string Developer => "Rodrigo Flores";
         public string Company => "BIM-CA";
