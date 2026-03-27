@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BIMPills — Acotado de Vanos</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --azul: #212B37;
+    --naranja: #EF6337;
+    --amarillo: #FECA29;
+    --blanco: #FBFAF8;
+    --bg: #F5F5F5;
+    --card-bg: #FFFFFF;
+    --card-border: #E5E5EA;
+    --caption: #8E8E93;
+    --hover: #F9F9FB;
+  }
+  body {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--azul);
+  }
+
+  /* Window frame */
+  .window {
+    width: 520px; margin: 30px auto; border-radius: 10px;
+    background: var(--card-bg); box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+    overflow: hidden; border: 0.5px solid var(--card-border);
+  }
+
+  /* Title bar */
+  .title-bar {
+    background: var(--azul); color: white; padding: 12px 18px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .title-bar svg { width: 18px; height: 18px; flex-shrink: 0; }
+  .title-bar h1 { font-size: 13px; font-weight: 600; }
+  .title-bar .subtitle { font-size: 11px; opacity: 0.6; margin-left: auto; }
+
+  /* Content */
+  .content { padding: 20px; }
+
+  /* Step sections */
+  .step { margin-bottom: 20px; }
+  .step-header {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+  }
+  .step-number {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--naranja); color: white;
+    font-size: 11px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .step-title { font-size: 13px; font-weight: 600; }
+  .step-desc { font-size: 11px; color: var(--caption); margin-left: 30px; margin-bottom: 10px; }
+
+  /* Scheme cards */
+  .schemes { display: flex; flex-direction: column; gap: 8px; margin-left: 30px; }
+  .scheme-card {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 14px; border-radius: 8px;
+    border: 1.5px solid var(--card-border);
+    cursor: pointer; transition: all 0.15s;
+  }
+  .scheme-card:hover { border-color: #C5C5CA; background: var(--hover); }
+  .scheme-card.selected {
+    border-color: var(--naranja);
+    background: rgba(239, 99, 55, 0.04);
+  }
+  .scheme-card.disabled {
+    opacity: 0.45; cursor: default; pointer-events: none;
+  }
+  .scheme-icon {
+    width: 56px; height: 42px; border-radius: 6px;
+    background: #F2F2F7; display: flex; align-items: center;
+    justify-content: center; flex-shrink: 0;
+    border: 1px solid #E5E5EA;
+  }
+  .scheme-card.selected .scheme-icon {
+    background: rgba(239, 99, 55, 0.08);
+    border-color: rgba(239, 99, 55, 0.3);
+  }
+  .scheme-icon svg { width: 52px; height: 38px; }
+  .scheme-info { flex: 1; min-width: 0; }
+  .scheme-name { font-size: 12px; font-weight: 600; }
+  .scheme-detail { font-size: 10px; color: var(--caption); line-height: 1.4; margin-top: 2px; }
+  .scheme-badge {
+    font-size: 9px; font-weight: 600; padding: 2px 6px;
+    border-radius: 3px; flex-shrink: 0;
+  }
+  .badge-ready { background: #E8F5E9; color: #2E7D32; }
+  .badge-soon { background: #F2F2F7; color: #8E8E93; }
+
+  /* Radio dot */
+  .radio-dot {
+    width: 16px; height: 16px; border-radius: 50%;
+    border: 2px solid #C5C5CA; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .scheme-card.selected .radio-dot {
+    border-color: var(--naranja);
+  }
+  .scheme-card.selected .radio-dot::after {
+    content: ''; width: 8px; height: 8px;
+    border-radius: 50%; background: var(--naranja);
+  }
+
+  /* Dimension style selector */
+  .style-section { margin-left: 30px; }
+  .style-dropdown {
+    width: 100%; padding: 9px 12px; border-radius: 6px;
+    border: 1.5px solid var(--card-border); font-size: 12px;
+    font-family: inherit; color: var(--azul);
+    background: white; appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238E8E93' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    cursor: pointer;
+  }
+  .style-dropdown:focus { outline: none; border-color: var(--naranja); }
+
+  /* Preview */
+  .preview-box {
+    margin: 14px 0 0 30px; padding: 14px;
+    background: #FAFAFA; border-radius: 8px;
+    border: 1px solid #E5E5EA;
+    text-align: center;
+  }
+  .preview-label {
+    display: none;
+  }
+  .preview-svg { width: 100%; max-width: 440px; }
+
+  /* Info box */
+  .info-box {
+    margin: 10px 0 0 30px; padding: 10px 12px;
+    background: #E8F4FD; border-radius: 6px;
+    font-size: 11px; color: #1565C0; line-height: 1.5;
+    display: flex; align-items: flex-start; gap: 8px;
+  }
+  .info-box svg { width: 14px; height: 14px; flex-shrink: 0; margin-top: 1px; }
+
+  /* Footer / Actions */
+  .actions {
+    padding: 14px 20px; border-top: 1px solid #F2F2F7;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .action-left { font-size: 11px; color: var(--caption); }
+  .action-buttons { display: flex; gap: 8px; }
+  .btn {
+    padding: 8px 18px; border-radius: 6px; font-size: 12px;
+    font-weight: 600; font-family: inherit; cursor: pointer;
+    border: none; transition: all 0.15s;
+  }
+  .btn-secondary {
+    background: #F2F2F7; color: var(--azul);
+  }
+  .btn-secondary:hover { background: #E5E5EA; }
+  .btn-primary {
+    background: var(--naranja); color: white;
+  }
+  .btn-primary:hover { background: #D4522A; }
+  .btn-primary:disabled {
+    background: #D5D5DA; color: white; cursor: default;
+  }
+
+  /* Scope selector */
+  .scope-row {
+    display: flex; gap: 8px; margin-left: 30px; margin-bottom: 6px;
+  }
+  .scope-chip {
+    padding: 5px 12px; border-radius: 14px; font-size: 11px;
+    font-weight: 500; border: 1.5px solid var(--card-border);
+    cursor: pointer; transition: all 0.15s;
+  }
+  .scope-chip:hover { border-color: #C5C5CA; }
+  .scope-chip.active {
+    border-color: var(--naranja); background: rgba(239,99,55,0.06);
+    color: var(--naranja); font-weight: 600;
+  }
+
+  /* Back link */
+  .back-link {
+    display: block; text-align: center; margin: 16px auto;
+    font-size: 11px; color: var(--naranja); text-decoration: none;
+  }
+  /* Offset control */
+  .offset-slider-row {
+    display: flex; align-items: center; gap: 12px;
+  }
+  .offset-slider {
+    flex: 1; height: 4px; -webkit-appearance: none; appearance: none;
+    background: #E5E5EA; border-radius: 2px; outline: none;
+  }
+  .offset-slider::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 16px; height: 16px;
+    border-radius: 50%; background: var(--naranja); cursor: pointer;
+    border: 2px solid white; box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  }
+  .offset-value-box {
+    display: flex; align-items: center; gap: 4px;
+    background: #F2F2F7; border-radius: 6px; padding: 4px 8px;
+  }
+  .offset-input {
+    width: 44px; border: none; background: transparent;
+    font-size: 13px; font-weight: 600; color: var(--azul);
+    text-align: right; font-family: inherit; outline: none;
+  }
+  .offset-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .offset-unit { font-size: 11px; color: var(--caption); }
+  .offset-presets {
+    display: flex; gap: 6px; margin-top: 8px;
+  }
+  .offset-preset {
+    padding: 4px 10px; border-radius: 4px; font-size: 10px;
+    font-weight: 600; font-family: inherit; cursor: pointer;
+    border: 1.5px solid var(--card-border); background: white;
+    color: var(--caption); transition: all 0.15s;
+  }
+  .offset-preset:hover { border-color: #C5C5CA; }
+  .offset-preset.active {
+    border-color: var(--naranja); color: var(--naranja);
+    background: rgba(239,99,55,0.04);
+  }
+  .offset-preview {
+    margin-top: 10px; padding: 6px 0;
+    background: #FAFAFA; border-radius: 6px;
+    border: 1px solid #E5E5EA; text-align: center;
+  }
+  .offset-preview svg { width: 100%; max-width: 340px; }
+
+  .back-link:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<!-- SVG defs for wall hatch pattern -->
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <pattern id="wallHatch" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="4" stroke="#212B37" stroke-width="0.5" opacity="0.35"/>
+    </pattern>
+    <pattern id="wallHatchSm" width="3" height="3" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="3" stroke="#212B37" stroke-width="0.4" opacity="0.3"/>
+    </pattern>
+  </defs>
+</svg>
+
+<div class="window">
+  <!-- Title Bar -->
+  <div class="title-bar">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8">
+      <line x1="4" y1="20" x2="20" y2="20" stroke="white" stroke-linecap="round"/>
+      <line x1="4" y1="18" x2="4" y2="22" stroke="white" stroke-linecap="round"/>
+      <line x1="20" y1="18" x2="20" y2="22" stroke="white" stroke-linecap="round"/>
+      <line x1="12" y1="19" x2="12" y2="21" stroke="#EF6337" stroke-linecap="round"/>
+      <text x="10.5" y="16" fill="white" font-size="7" font-weight="bold">A</text>
+    </svg>
+    <h1>Acotado de Vanos</h1>
+    <span class="subtitle">Documentaci&oacute;n &rsaquo; Vanos</span>
+  </div>
+
+  <div class="content">
+
+    <!-- STEP 1: Alcance -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">1</div>
+        <div class="step-title">Alcance</div>
+      </div>
+      <div class="step-desc">
+        &iquest;En qu&eacute; elementos aplicar el acotado?
+      </div>
+      <div class="scope-row">
+        <span class="scope-chip active">Vista activa</span>
+        <span class="scope-chip">Selecci&oacute;n</span>
+      </div>
+    </div>
+
+    <!-- STEP 2: Scheme -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">2</div>
+        <div class="step-title">Esquema de acotado</div>
+      </div>
+      <div class="step-desc">
+        Elige el patr&oacute;n de cotas que se crear&aacute; autom&aacute;ticamente para cada vano de puerta.
+      </div>
+
+      <div class="schemes">
+        <!-- Scheme 1: Ancho de vano -->
+        <div class="scheme-card selected" onclick="selectScheme(this, 'opening')">
+          <div class="radio-dot"></div>
+          <div class="scheme-icon">
+            <svg viewBox="0 0 120 80" fill="none">
+              <!-- Wall left + jamba -->
+              <line x1="4" y1="28" x2="32" y2="28" stroke="#212B37" stroke-width="1"/>
+              <rect x="4" y="28" width="28" height="12" fill="url(#wallHatchSm)"/>
+              <line x1="4" y1="40" x2="32" y2="40" stroke="#212B37" stroke-width="1"/>
+              <line x1="32" y1="28" x2="32" y2="40" stroke="#212B37" stroke-width="1"/>
+              <!-- Wall right + jamba -->
+              <line x1="68" y1="28" x2="116" y2="28" stroke="#212B37" stroke-width="1"/>
+              <rect x="68" y="28" width="48" height="12" fill="url(#wallHatchSm)"/>
+              <line x1="68" y1="40" x2="116" y2="40" stroke="#212B37" stroke-width="1"/>
+              <line x1="68" y1="28" x2="68" y2="40" stroke="#212B37" stroke-width="1"/>
+              <!-- Door: rect leaf flush with jamba, hinge at (32,40) -->
+              <rect x="32" y="40" width="1.8" height="36" fill="none" stroke="#212B37" stroke-width="0.6"/>
+              <!-- Arc: dashed -->
+              <path d="M68 40 A36 36 0 0 1 33 76" stroke="#212B37" stroke-width="0.4" fill="none" stroke-dasharray="3,2"/>
+              <!-- Dim: extension lines from wall up past dim line -->
+              <line x1="32" y1="26" x2="32" y2="10" stroke="#EF6337" stroke-width="0.4" opacity="0.5"/>
+              <line x1="68" y1="26" x2="68" y2="10" stroke="#EF6337" stroke-width="0.4" opacity="0.5"/>
+              <!-- Dim line extends past ticks -->
+              <line x1="26" y1="18" x2="74" y2="18" stroke="#EF6337" stroke-width="0.6"/>
+              <!-- 45° ticks -->
+              <line x1="29" y1="21.5" x2="35" y2="14.5" stroke="#EF6337" stroke-width="1.2"/>
+              <line x1="65" y1="21.5" x2="71" y2="14.5" stroke="#EF6337" stroke-width="1.2"/>
+              <text x="50" y="14" text-anchor="middle" fill="#EF6337" font-size="6" font-weight="600">0.90</text>
+            </svg>
+          </div>
+          <div class="scheme-info">
+            <div class="scheme-name">Ancho de vano</div>
+            <div class="scheme-detail">Cota entre caras internas del muro en cada puerta</div>
+          </div>
+          <span class="scheme-badge badge-ready">Listo</span>
+        </div>
+
+        <!-- Scheme 2: Cadena de muro -->
+        <div class="scheme-card" onclick="selectScheme(this, 'wall-opening')">
+          <div class="radio-dot"></div>
+          <div class="scheme-icon">
+            <svg viewBox="0 0 120 80" fill="none">
+              <!-- Perpendicular wall left -->
+              <line x1="4" y1="24" x2="4" y2="60" stroke="#212B37" stroke-width="0.6" opacity="0.4"/>
+              <!-- Wall segment left + jamba -->
+              <line x1="4" y1="30" x2="36" y2="30" stroke="#212B37" stroke-width="1"/>
+              <rect x="4" y="30" width="32" height="12" fill="url(#wallHatchSm)"/>
+              <line x1="4" y1="42" x2="36" y2="42" stroke="#212B37" stroke-width="1"/>
+              <line x1="36" y1="30" x2="36" y2="42" stroke="#212B37" stroke-width="1"/>
+              <!-- Wall segment right + jamba -->
+              <line x1="72" y1="30" x2="92" y2="30" stroke="#212B37" stroke-width="1"/>
+              <rect x="72" y="30" width="20" height="12" fill="url(#wallHatchSm)"/>
+              <line x1="72" y1="42" x2="92" y2="42" stroke="#212B37" stroke-width="1"/>
+              <line x1="72" y1="30" x2="72" y2="42" stroke="#212B37" stroke-width="1"/>
+              <!-- Perpendicular wall right -->
+              <line x1="92" y1="24" x2="92" y2="60" stroke="#212B37" stroke-width="1"/>
+              <rect x="92" y="24" width="12" height="36" fill="url(#wallHatchSm)"/>
+              <line x1="104" y1="24" x2="104" y2="60" stroke="#212B37" stroke-width="1"/>
+              <!-- Door: rect leaf flush with jamba -->
+              <rect x="36" y="42" width="1.5" height="24" fill="none" stroke="#212B37" stroke-width="0.5"/>
+              <path d="M72 42 A36 36 0 0 1 37 66" stroke="#212B37" stroke-width="0.35" fill="none" stroke-dasharray="2.5,1.5"/>
+              <!-- Dim: extension lines past dim line -->
+              <line x1="4" y1="28" x2="4" y2="10" stroke="#8E8E93" stroke-width="0.3" opacity="0.5"/>
+              <line x1="36" y1="28" x2="36" y2="10" stroke="#EF6337" stroke-width="0.3" opacity="0.5"/>
+              <line x1="72" y1="28" x2="72" y2="10" stroke="#EF6337" stroke-width="0.3" opacity="0.5"/>
+              <line x1="92" y1="24" x2="92" y2="10" stroke="#8E8E93" stroke-width="0.3" opacity="0.5"/>
+              <!-- Dim lines extend past ticks -->
+              <line x1="0" y1="18" x2="96" y2="18" stroke="#8E8E93" stroke-width="0.5"/>
+              <line x1="36" y1="18" x2="72" y2="18" stroke="#EF6337" stroke-width="0.7"/>
+              <!-- 45° ticks -->
+              <line x1="1" y1="21" x2="7" y2="15" stroke="#8E8E93" stroke-width="0.9"/>
+              <line x1="33" y1="21" x2="39" y2="15" stroke="#EF6337" stroke-width="1.1"/>
+              <line x1="69" y1="21" x2="75" y2="15" stroke="#EF6337" stroke-width="1.1"/>
+              <line x1="89" y1="21" x2="95" y2="15" stroke="#8E8E93" stroke-width="0.9"/>
+              <!-- Texts -->
+              <text x="20" y="14" text-anchor="middle" fill="#8E8E93" font-size="5">1.20</text>
+              <text x="54" y="14" text-anchor="middle" fill="#EF6337" font-size="5" font-weight="600">0.90</text>
+              <text x="82" y="14" text-anchor="middle" fill="#8E8E93" font-size="5">0.45</text>
+            </svg>
+          </div>
+          <div class="scheme-info">
+            <div class="scheme-name">Cadena de muro</div>
+            <div class="scheme-detail">Cota continua a lo largo del muro: extremos, vanos y muros intermedios</div>
+          </div>
+          <span class="scheme-badge badge-ready">Listo</span>
+        </div>
+
+        <!-- Scheme 3: Distance to grid -->
+        <div class="scheme-card disabled">
+          <div class="radio-dot"></div>
+          <div class="scheme-icon">
+            <svg viewBox="0 0 120 80" fill="none">
+              <!-- Grid line (dash-dot) -->
+              <line x1="10" y1="12" x2="10" y2="76" stroke="#1565C0" stroke-width="0.5" stroke-dasharray="5,2,1,2"/>
+              <circle cx="10" cy="9" r="5" stroke="#1565C0" stroke-width="0.5" fill="white"/>
+              <text x="10" y="11.5" text-anchor="middle" fill="#1565C0" font-size="6" font-weight="600">A</text>
+              <!-- Wall left + jamba -->
+              <line x1="42" y1="30" x2="64" y2="30" stroke="#212B37" stroke-width="1"/>
+              <rect x="42" y="30" width="22" height="12" fill="url(#wallHatchSm)"/>
+              <line x1="42" y1="42" x2="64" y2="42" stroke="#212B37" stroke-width="1"/>
+              <line x1="64" y1="30" x2="64" y2="42" stroke="#212B37" stroke-width="1"/>
+              <!-- Wall right + jamba -->
+              <line x1="84" y1="30" x2="116" y2="30" stroke="#212B37" stroke-width="1"/>
+              <rect x="84" y="30" width="32" height="12" fill="url(#wallHatchSm)"/>
+              <line x1="84" y1="42" x2="116" y2="42" stroke="#212B37" stroke-width="1"/>
+              <line x1="84" y1="30" x2="84" y2="42" stroke="#212B37" stroke-width="1"/>
+              <!-- Door: rect leaf flush with jamba -->
+              <rect x="64" y="42" width="1.5" height="20" fill="none" stroke="#212B37" stroke-width="0.5"/>
+              <path d="M84 42 A20 20 0 0 1 65 62" stroke="#212B37" stroke-width="0.35" fill="none" stroke-dasharray="2.5,1.5"/>
+              <!-- Dim: grid to door center -->
+              <line x1="10" y1="70" x2="10" y2="60" stroke="#EF6337" stroke-width="0.3" opacity="0.5"/>
+              <line x1="74" y1="42" x2="74" y2="60" stroke="#EF6337" stroke-width="0.3" opacity="0.5"/>
+              <line x1="6" y1="66" x2="78" y2="66" stroke="#EF6337" stroke-width="0.6"/>
+              <line x1="7" y1="69" x2="13" y2="63" stroke="#EF6337" stroke-width="1.1"/>
+              <line x1="71" y1="69" x2="77" y2="63" stroke="#EF6337" stroke-width="1.1"/>
+              <text x="42" y="63" text-anchor="middle" fill="#EF6337" font-size="6">2.55</text>
+            </svg>
+          </div>
+          <div class="scheme-info">
+            <div class="scheme-name">Distancia a eje</div>
+            <div class="scheme-detail">Cota desde grilla/eje m&aacute;s cercano al centro del vano</div>
+          </div>
+          <span class="scheme-badge badge-soon">Pr&oacute;ximo</span>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- STEP 3: Dimension style -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">3</div>
+        <div class="step-title">Estilo de cota</div>
+      </div>
+      <div class="step-desc">
+        Tipo de cota del proyecto que se utilizar&aacute; para crear las dimensiones.
+      </div>
+      <div class="style-section">
+        <select class="style-dropdown">
+          <option>Linear - 2.5mm Arial</option>
+          <option>Linear - 3.0mm Arial</option>
+          <option>Linear - 2.0mm ISO</option>
+          <option>Diagonal - 2.5mm</option>
+        </select>
+      </div>
+
+      <!-- Preview -->
+      <div class="preview-box" id="mainPreview">
+        <div class="preview-label">Vista previa del esquema seleccionado</div>
+        <svg class="preview-svg" viewBox="0 0 440 170" fill="none">
+          <!-- Wall left + jamba flush at x=138 -->
+          <line x1="20" y1="60" x2="138" y2="60" stroke="#212B37" stroke-width="1.4"/>
+          <rect x="20" y="60" width="118" height="24" fill="url(#wallHatch)"/>
+          <line x1="20" y1="84" x2="138" y2="84" stroke="#212B37" stroke-width="1.4"/>
+          <line x1="138" y1="60" x2="138" y2="84" stroke="#212B37" stroke-width="1.4"/>
+          <!-- Wall right + jamba -->
+          <line x1="210" y1="60" x2="420" y2="60" stroke="#212B37" stroke-width="1.4"/>
+          <rect x="210" y="60" width="210" height="24" fill="url(#wallHatch)"/>
+          <line x1="210" y1="84" x2="420" y2="84" stroke="#212B37" stroke-width="1.4"/>
+          <line x1="210" y1="60" x2="210" y2="84" stroke="#212B37" stroke-width="1.4"/>
+          <!-- Door: rect leaf flush with jamba, hinge at (138,84), opens downward -->
+          <rect x="138" y="84" width="3" height="72" fill="none" stroke="#212B37" stroke-width="0.9"/>
+          <path d="M210 84 A72 72 0 0 1 139 156" stroke="#212B37" stroke-width="0.5" fill="none" stroke-dasharray="5,3.5"/>
+          <!-- Extension lines -->
+          <line x1="138" y1="56" x2="138" y2="26" stroke="#EF6337" stroke-width="0.5" opacity="0.45"/>
+          <line x1="210" y1="56" x2="210" y2="26" stroke="#EF6337" stroke-width="0.5" opacity="0.45"/>
+          <!-- Dim line extends past ticks -->
+          <line x1="126" y1="40" x2="222" y2="40" stroke="#EF6337" stroke-width="0.9"/>
+          <!-- 45° oblique ticks -->
+          <line x1="131" y1="47" x2="145" y2="33" stroke="#EF6337" stroke-width="2.2"/>
+          <line x1="203" y1="47" x2="217" y2="33" stroke="#EF6337" stroke-width="2.2"/>
+          <!-- Dimension text -->
+          <text x="174" y="35" text-anchor="middle" fill="#EF6337" font-size="11" font-weight="600">0.90</text>
+        </svg>
+      </div>
+
+      <div class="info-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#1565C0" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+        </svg>
+        <span>Se crear&aacute;n cotas en la <strong>vista activa</strong> para cada puerta visible. Las cotas existentes no ser&aacute;n duplicadas.</span>
+      </div>
+    </div>
+
+    <!-- STEP 4: Distance offset -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">4</div>
+        <div class="step-title">Distancia de la cota</div>
+      </div>
+      <div class="step-desc">
+        Separaci&oacute;n entre la l&iacute;nea de cota y el elemento acotado (en mil&iacute;metros).
+      </div>
+      <div class="offset-section" style="margin-left: 30px;">
+        <div class="offset-control">
+          <div class="offset-slider-row">
+            <input type="range" class="offset-slider" id="offsetSlider" min="50" max="500" value="150" step="10" oninput="updateOffset(this.value)">
+            <div class="offset-value-box">
+              <input type="number" class="offset-input" id="offsetInput" value="150" min="50" max="500" step="10" oninput="updateOffsetFromInput(this.value)">
+              <span class="offset-unit">mm</span>
+            </div>
+          </div>
+          <div class="offset-presets">
+            <button class="offset-preset" onclick="setOffset(80)">80</button>
+            <button class="offset-preset active" onclick="setOffset(150)">150</button>
+            <button class="offset-preset" onclick="setOffset(250)">250</button>
+            <button class="offset-preset" onclick="setOffset(400)">400</button>
+          </div>
+        </div>
+        <!-- Mini preview showing offset -->
+        <div class="offset-preview">
+          <svg viewBox="0 0 300 130" fill="none" id="offsetPreviewSvg">
+            <!-- Wall left + jamba flush at x=95 -->
+            <line x1="10" y1="50" x2="95" y2="50" stroke="#212B37" stroke-width="1.2"/>
+            <rect x="10" y="50" width="85" height="17" fill="url(#wallHatchSm)"/>
+            <line x1="10" y1="67" x2="95" y2="67" stroke="#212B37" stroke-width="1.2"/>
+            <line x1="95" y1="50" x2="95" y2="67" stroke="#212B37" stroke-width="1.2"/>
+            <!-- Wall right + jamba -->
+            <line x1="147" y1="50" x2="290" y2="50" stroke="#212B37" stroke-width="1.2"/>
+            <rect x="147" y="50" width="143" height="17" fill="url(#wallHatchSm)"/>
+            <line x1="147" y1="67" x2="290" y2="67" stroke="#212B37" stroke-width="1.2"/>
+            <line x1="147" y1="50" x2="147" y2="67" stroke="#212B37" stroke-width="1.2"/>
+            <!-- Door: rect leaf flush with jamba, hinge at (95,67), opens downward -->
+            <rect x="95" y="67" width="2" height="52" fill="none" stroke="#212B37" stroke-width="0.7"/>
+            <!-- Arc: dashed from closed (147,67) to open (96,119) -->
+            <path d="M147 67 A52 52 0 0 1 96 119" stroke="#212B37" stroke-width="0.4" fill="none" stroke-dasharray="3.5,2.5"/>
+            <!-- Extension lines: from wall up past dim line -->
+            <line x1="95" y1="47" x2="95" y2="18" stroke="#EF6337" stroke-width="0.4" opacity="0.45" id="extLineL"/>
+            <line x1="147" y1="47" x2="147" y2="18" stroke="#EF6337" stroke-width="0.4" opacity="0.45" id="extLineR"/>
+            <!-- Dimension line extends past ticks -->
+            <line x1="85" y1="34" x2="157" y2="34" stroke="#EF6337" stroke-width="0.7" id="dimLine"/>
+            <!-- 45° oblique ticks -->
+            <line x1="90" y1="39" x2="100" y2="29" stroke="#EF6337" stroke-width="1.6" id="dimTickL"/>
+            <line x1="142" y1="39" x2="152" y2="29" stroke="#EF6337" stroke-width="1.6" id="dimTickR"/>
+            <text x="121" y="28" text-anchor="middle" fill="#EF6337" font-size="8" font-weight="600" id="dimText">0.90</text>
+            <!-- Offset indicator -->
+            <line x1="78" y1="34" x2="78" y2="50" stroke="#8E8E93" stroke-width="0.5" stroke-dasharray="2.5,1.5" id="offsetIndicator"/>
+            <text x="66" y="44" fill="#8E8E93" font-size="6" id="offsetLabel">150mm</text>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Actions -->
+  <div class="actions">
+    <div class="action-left" id="statusText">0 puertas detectadas</div>
+    <div class="action-buttons">
+      <button class="btn btn-secondary" onclick="window.close()">Cancelar</button>
+      <button class="btn btn-primary" id="executeBtn">
+        <span style="display:flex;align-items:center;gap:6px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Acotar
+        </span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<a class="back-link" href="index.html">&larr; Volver al &iacute;ndice</a>
+
+<script>
+function selectScheme(card, scheme) {
+  document.querySelectorAll('.scheme-card').forEach(c => c.classList.remove('selected'));
+  card.classList.add('selected');
+  // Update preview based on scheme
+  updatePreview(scheme);
+}
+
+function updatePreview(scheme) {
+  const previewBox = document.getElementById('mainPreview');
+  if (scheme === 'wall-opening') {
+    previewBox.innerHTML = `
+      <div class="preview-label">Vista previa del esquema seleccionado</div>
+      <svg class="preview-svg" viewBox="0 0 440 170" fill="none">
+        <!-- LEFT PERPENDICULAR WALL (x=94..118, width=24) -->
+        <line x1="94" y1="20" x2="94" y2="150" stroke="#212B37" stroke-width="1.4"/>
+        <rect x="94" y="20" width="24" height="130" fill="url(#wallHatch)"/>
+        <line x1="118" y1="20" x2="118" y2="60" stroke="#212B37" stroke-width="1.4"/>
+        <line x1="118" y1="84" x2="118" y2="150" stroke="#212B37" stroke-width="1.4"/>
+        <!-- HORIZONTAL WALL LEFT (x=118..214, y=60..84, thickness=24) -->
+        <line x1="118" y1="60" x2="214" y2="60" stroke="#212B37" stroke-width="1.4"/>
+        <rect x="118" y="60" width="96" height="24" fill="url(#wallHatch)"/>
+        <line x1="118" y1="84" x2="214" y2="84" stroke="#212B37" stroke-width="1.4"/>
+        <line x1="214" y1="60" x2="214" y2="84" stroke="#212B37" stroke-width="1.4"/>
+        <!-- HORIZONTAL WALL RIGHT (x=286..322, y=60..84, thickness=24) -->
+        <line x1="286" y1="60" x2="322" y2="60" stroke="#212B37" stroke-width="1.4"/>
+        <rect x="286" y="60" width="36" height="24" fill="url(#wallHatch)"/>
+        <line x1="286" y1="84" x2="322" y2="84" stroke="#212B37" stroke-width="1.4"/>
+        <line x1="286" y1="60" x2="286" y2="84" stroke="#212B37" stroke-width="1.4"/>
+        <!-- RIGHT PERPENDICULAR WALL (x=322..346, width=24) -->
+        <line x1="346" y1="20" x2="346" y2="150" stroke="#212B37" stroke-width="1.4"/>
+        <rect x="322" y="20" width="24" height="130" fill="url(#wallHatch)"/>
+        <line x1="322" y1="20" x2="322" y2="60" stroke="#212B37" stroke-width="1.4"/>
+        <line x1="322" y1="84" x2="322" y2="150" stroke="#212B37" stroke-width="1.4"/>
+        <!-- DOOR: leaf at hinge (214,84), opens down -->
+        <rect x="214" y="84" width="3" height="72" fill="none" stroke="#212B37" stroke-width="0.9"/>
+        <path d="M286 84 A72 72 0 0 1 215 156" stroke="#212B37" stroke-width="0.5" fill="none" stroke-dasharray="5,3.5"/>
+        <!-- DIMENSION STRING -->
+        <line x1="118" y1="56" x2="118" y2="22" stroke="#8E8E93" stroke-width="0.4" opacity="0.4"/>
+        <line x1="214" y1="56" x2="214" y2="22" stroke="#EF6337" stroke-width="0.5" opacity="0.45"/>
+        <line x1="286" y1="56" x2="286" y2="22" stroke="#EF6337" stroke-width="0.5" opacity="0.45"/>
+        <line x1="322" y1="56" x2="322" y2="22" stroke="#8E8E93" stroke-width="0.4" opacity="0.4"/>
+        <line x1="106" y1="38" x2="334" y2="38" stroke="#8E8E93" stroke-width="0.8"/>
+        <line x1="214" y1="38" x2="286" y2="38" stroke="#EF6337" stroke-width="0.9"/>
+        <!-- 45° ticks -->
+        <line x1="112" y1="45" x2="124" y2="31" stroke="#8E8E93" stroke-width="1.8"/>
+        <line x1="208" y1="45" x2="220" y2="31" stroke="#EF6337" stroke-width="2.2"/>
+        <line x1="280" y1="45" x2="292" y2="31" stroke="#EF6337" stroke-width="2.2"/>
+        <line x1="316" y1="45" x2="328" y2="31" stroke="#8E8E93" stroke-width="1.8"/>
+        <!-- Dimension texts -->
+        <text x="166" y="33" text-anchor="middle" fill="#8E8E93" font-size="10">1.20</text>
+        <text x="250" y="33" text-anchor="middle" fill="#EF6337" font-size="10" font-weight="600">0.90</text>
+        <text x="304" y="33" text-anchor="middle" fill="#8E8E93" font-size="10">0.45</text>
+      </svg>
+    `;
+  } else {
+    previewBox.innerHTML = `
+      <div class="preview-label">Vista previa del esquema seleccionado</div>
+      <svg class="preview-svg" viewBox="0 0 440 170" fill="none">
+        <!-- Wall left + jamba flush at x=138 -->
+        <line x1="20" y1="60" x2="138" y2="60" stroke="#212B37" stroke-width="1.4"/>
+        <rect x="20" y="60" width="118" height="24" fill="url(#wallHatch)"/>
+        <line x1="20" y1="84" x2="138" y2="84" stroke="#212B37" stroke-width="1.4"/>
+        <line x1="138" y1="60" x2="138" y2="84" stroke="#212B37" stroke-width="1.4"/>
+        <!-- Wall right + jamba -->
+        <line x1="210" y1="60" x2="420" y2="60" stroke="#212B37" stroke-width="1.4"/>
+        <rect x="210" y="60" width="210" height="24" fill="url(#wallHatch)"/>
+        <line x1="210" y1="84" x2="420" y2="84" stroke="#212B37" stroke-width="1.4"/>
+        <line x1="210" y1="60" x2="210" y2="84" stroke="#212B37" stroke-width="1.4"/>
+        <!-- Door: rect leaf flush with jamba, opens down -->
+        <rect x="138" y="84" width="3" height="72" fill="none" stroke="#212B37" stroke-width="0.9"/>
+        <path d="M210 84 A72 72 0 0 1 139 156" stroke="#212B37" stroke-width="0.5" fill="none" stroke-dasharray="5,3.5"/>
+        <!-- Extension lines -->
+        <line x1="138" y1="56" x2="138" y2="26" stroke="#EF6337" stroke-width="0.5" opacity="0.45"/>
+        <line x1="210" y1="56" x2="210" y2="26" stroke="#EF6337" stroke-width="0.5" opacity="0.45"/>
+        <line x1="126" y1="40" x2="222" y2="40" stroke="#EF6337" stroke-width="0.9"/>
+        <!-- 45° oblique ticks -->
+        <line x1="131" y1="47" x2="145" y2="33" stroke="#EF6337" stroke-width="2.2"/>
+        <line x1="203" y1="47" x2="217" y2="33" stroke="#EF6337" stroke-width="2.2"/>
+        <text x="174" y="35" text-anchor="middle" fill="#EF6337" font-size="11" font-weight="600">0.90</text>
+      </svg>
+    `;
+  }
+}
+
+function updateOffset(val) {
+  document.getElementById('offsetInput').value = val;
+  updateOffsetPreview(val);
+  updateOffsetPresets(val);
+}
+function updateOffsetFromInput(val) {
+  val = Math.max(50, Math.min(500, parseInt(val) || 150));
+  document.getElementById('offsetSlider').value = val;
+  updateOffsetPreview(val);
+  updateOffsetPresets(val);
+}
+function setOffset(val) {
+  document.getElementById('offsetSlider').value = val;
+  document.getElementById('offsetInput').value = val;
+  updateOffsetPreview(val);
+  updateOffsetPresets(val);
+}
+function updateOffsetPresets(val) {
+  document.querySelectorAll('.offset-preset').forEach(p => {
+    p.classList.toggle('active', parseInt(p.textContent) === parseInt(val));
+  });
+}
+function updateOffsetPreview(val) {
+  // Map 50-500mm to y position 36-6 in SVG (wall top at y=50)
+  var y = 36 - ((val - 50) / 450) * 30;
+  var dimLine = document.getElementById('dimLine');
+  var dimTickL = document.getElementById('dimTickL');
+  var dimTickR = document.getElementById('dimTickR');
+  var extLineL = document.getElementById('extLineL');
+  var extLineR = document.getElementById('extLineR');
+  var dimText = document.getElementById('dimText');
+  var offsetInd = document.getElementById('offsetIndicator');
+  var offsetLbl = document.getElementById('offsetLabel');
+  if (dimLine) {
+    dimLine.setAttribute('y1', y); dimLine.setAttribute('y2', y);
+    dimTickL.setAttribute('y1', y+5); dimTickL.setAttribute('y2', y-5);
+    dimTickR.setAttribute('y1', y+5); dimTickR.setAttribute('y2', y-5);
+    // Extension lines: from wall (y=47) up past dim line
+    extLineL.setAttribute('y2', y-8);
+    extLineR.setAttribute('y2', y-8);
+    dimText.setAttribute('y', y-6);
+    offsetInd.setAttribute('y1', y);
+    offsetLbl.setAttribute('y', (y + 50) / 2 + 1);
+    offsetLbl.textContent = val + 'mm';
+  }
+}
+
+// Simulated door count
+document.getElementById('statusText').textContent = '12 puertas detectadas en la vista';
+
+// Scope chip toggle
+document.querySelectorAll('.scope-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('.scope-chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    if (chip.textContent === 'Selección') {
+      document.getElementById('statusText').textContent = '3 puertas seleccionadas';
+    } else {
+      document.getElementById('statusText').textContent = '12 puertas detectadas en la vista';
+    }
+  });
+});
+</script>
+
+</body>
+</html>

@@ -15,6 +15,12 @@ namespace BIMPills.Revit.Commands
         protected abstract IPluginCommand CreateCommand();
 
         /// <summary>
+        /// The ExternalCommandData from the current execution.
+        /// Available during and after Execute (including OnSuccess).
+        /// </summary>
+        protected ExternalCommandData? CommandData { get; private set; }
+
+        /// <summary>
         /// Called after the command executes successfully.
         /// Override to show UI windows with the command results.
         /// </summary>
@@ -25,6 +31,7 @@ namespace BIMPills.Revit.Commands
             ref string message,
             ElementSet elements)
         {
+            CommandData = commandData;
             ILogger? logger = null;
             try
             {

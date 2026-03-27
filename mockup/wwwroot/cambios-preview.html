@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BIMPills — Preview de Cambios</title>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; background: #F0F0F0; color: #212B37; line-height: 1.5; }
+    .container { max-width: 960px; margin: 0 auto; padding: 32px 24px; }
+    h1 { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+    h2 { font-size: 18px; font-weight: 600; margin: 32px 0 16px; padding-bottom: 8px; border-bottom: 2px solid #EF6337; color: #212B37; }
+    h3 { font-size: 14px; font-weight: 600; margin: 20px 0 10px; color: #86868B; text-transform: uppercase; letter-spacing: 0.5px; }
+    .subtitle { font-size: 13px; color: #EF6337; font-weight: 500; }
+    .meta { font-size: 12px; color: #86868B; margin-bottom: 24px; }
+
+    .card { background: white; border-radius: 10px; padding: 20px 24px; margin-bottom: 16px; box-shadow: 0 1px 8px rgba(0,0,0,0.06); border: 0.5px solid #E5E5EA; }
+    .change-item { margin-bottom: 12px; padding: 12px 16px; background: #F9F9FB; border-radius: 8px; border-left: 3px solid #EF6337; }
+    .change-item.green { border-left-color: #34C759; }
+    .change-item.blue { border-left-color: #007AFF; }
+    .change-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .change-label.new { color: #34C759; }
+    .change-label.fix { color: #EF6337; }
+    .change-label.update { color: #007AFF; }
+    .change-desc { font-size: 13px; }
+
+    /* Ribbon mockup */
+    .ribbon-bar { display: flex; gap: 24px; background: #F5F5F7; border-radius: 8px; padding: 12px 20px; align-items: flex-end; }
+    .ribbon-group { text-align: center; }
+    .ribbon-group-title { font-size: 9px; color: #86868B; margin-top: 4px; border-top: 1px solid #E5E5EA; padding-top: 2px; }
+    .ribbon-buttons { display: flex; gap: 8px; }
+    .ribbon-btn { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 10px; border-radius: 6px; cursor: default; }
+    .ribbon-btn:hover { background: #E5E5EA; }
+    .ribbon-icon { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+    .ribbon-label { font-size: 10px; font-weight: 500; }
+    .ribbon-label.changed { color: #EF6337; font-weight: 700; }
+
+    /* Health score mockup */
+    .health-demo { display: flex; gap: 24px; align-items: center; }
+    .health-ring { position: relative; width: 96px; height: 88px; }
+    .health-circle { width: 80px; height: 80px; }
+    .health-score-text { position: absolute; top: 50%; left: 40px; transform: translate(-50%, -50%); text-align: center; }
+    .health-score-text .number { font-size: 22px; font-weight: 700; display: block; }
+    .health-score-text .level { font-size: 9px; font-weight: 500; }
+    .info-btn { position: absolute; top: 0; right: 0; width: 22px; height: 22px; border-radius: 50%; background: #E5E5EA; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; font-family: Georgia, serif; font-style: italic; color: #86868B; cursor: pointer; border: none; transition: all 0.15s; }
+    .info-btn:hover { background: #007AFF; color: white; }
+
+    .metrics-row { display: flex; gap: 12px; flex: 1; }
+    .metric { background: #F9F9FB; border-radius: 8px; padding: 10px 14px; flex: 1; }
+    .metric-label { font-size: 11px; color: #86868B; }
+    .metric-value { font-size: 16px; font-weight: 600; margin-top: 2px; }
+
+    /* Scroll hint mockup */
+    .scroll-demo { position: relative; background: #F9F9FB; border-radius: 8px; padding: 8px; height: 120px; overflow: hidden; }
+    .scroll-hint { text-align: center; font-size: 10px; color: #86868B; background: rgba(255,255,255,0.93); padding: 3px 12px; border-radius: 4px; }
+    .scroll-hint.top { margin-bottom: 8px; }
+    .scroll-hint.bottom { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); }
+    .fake-row { padding: 6px 12px; border-bottom: 1px solid #F0F0F0; font-size: 11px; color: #86868B; }
+
+    /* Methodology popup */
+    .methodology-popup { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); max-width: 500px; font-size: 12px; line-height: 1.6; }
+    .methodology-popup h4 { font-size: 13px; font-weight: 600; margin: 12px 0 6px; color: #212B37; }
+    .methodology-popup .criterion { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #F5F5F7; }
+    .methodology-popup .criterion .label { color: #212B37; }
+    .methodology-popup .criterion .score { font-weight: 600; color: #EF6337; }
+    .methodology-popup .ref { font-size: 11px; color: #86868B; margin-top: 8px; }
+    .methodology-popup .ref em { color: #007AFF; font-style: normal; }
+
+    /* Icons */
+    .icon-preview { display: inline-flex; align-items: center; justify-content: center; width: 48px; height: 48px; border-radius: 8px; margin-right: 12px; }
+    .icon-row { display: flex; align-items: center; margin-bottom: 12px; }
+    .icon-desc { font-size: 13px; }
+    .icon-desc .old { text-decoration: line-through; color: #86868B; }
+    .icon-desc .new { color: #EF6337; font-weight: 600; }
+
+    /* Excel template */
+    .excel-table { border-collapse: collapse; font-size: 12px; width: 100%; }
+    .excel-table th { background: #217346; color: white; padding: 6px 12px; text-align: left; font-weight: 600; }
+    .excel-table td { padding: 5px 12px; border: 1px solid #E5E5EA; }
+    .excel-table .example { font-style: italic; color: #86868B; }
+    .excel-table .warning { color: #E65100; font-weight: 600; }
+    .excel-table .instruction { color: #3C3C43; }
+
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; }
+    .badge-new { background: #E8F5E9; color: #2E7D32; }
+    .badge-fix { background: #FFF3E0; color: #E65100; }
+    .badge-update { background: #E3F2FD; color: #1565C0; }
+
+    .before-after { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .before-after .panel { padding: 12px; border-radius: 8px; }
+    .before-after .before { background: #FFF3E0; }
+    .before-after .after { background: #E8F5E9; }
+    .before-after .panel-title { font-size: 10px; font-weight: 600; text-transform: uppercase; margin-bottom: 8px; color: #86868B; }
+</style>
+</head>
+<body>
+<div class="container">
+
+    <div class="subtitle">BIMPills — Preview de Cambios</div>
+    <h1>Resumen de actualizaciones</h1>
+    <p class="meta">Todos los cambios listados a continuaci&oacute;n est&aacute;n compilados y con tests pasando (7/7).</p>
+
+    <!-- ============================================= -->
+    <h2>1. Gr&aacute;fica de Salud — Arco al 100% corregido</h2>
+    <!-- ============================================= -->
+    <div class="card">
+        <div class="change-item">
+            <div class="change-label fix">Correcci&oacute;n</div>
+            <div class="change-desc">El anillo de salud ahora se dibuja correctamente al 100%. Antes, el arco de 360&deg; colapsaba a un punto porque inicio y fin coincid&iacute;an. Ahora usa un <code>Ellipse</code> completo cuando el score es 100.</div>
+        </div>
+
+        <div class="before-after">
+            <div class="panel before">
+                <div class="panel-title">Antes (bug)</div>
+                <div style="text-align:center;padding:16px;">
+                    <svg width="80" height="80" viewBox="0 0 80 80">
+                        <circle cx="40" cy="40" r="37" fill="none" stroke="#E5E5EA" stroke-width="6"/>
+                        <circle cx="40" cy="3" r="3" fill="#34C759"/>
+                    </svg>
+                    <div style="font-size:11px;color:#86868B;margin-top:4px;">Solo un punto verde</div>
+                </div>
+            </div>
+            <div class="panel after">
+                <div class="panel-title">Ahora (corregido)</div>
+                <div style="text-align:center;padding:16px;">
+                    <svg width="80" height="80" viewBox="0 0 80 80">
+                        <circle cx="40" cy="40" r="37" fill="none" stroke="#E5E5EA" stroke-width="6"/>
+                        <circle cx="40" cy="40" r="37" fill="none" stroke="#34C759" stroke-width="6"/>
+                    </svg>
+                    <div style="font-size:11px;color:#2E7D32;margin-top:4px;">Anillo completo</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================= -->
+    <h2>2. Bot&oacute;n de Informaci&oacute;n (i) — Metodolog&iacute;a de Salud</h2>
+    <!-- ============================================= -->
+    <div class="card">
+        <div class="change-item green">
+            <div class="change-label new">Nuevo</div>
+            <div class="change-desc">Bot&oacute;n circular <strong>(i)</strong> junto al indicador de salud. Al hacer clic muestra la metodolog&iacute;a completa con puntajes, umbrales y referencias bibliogr&aacute;ficas.</div>
+        </div>
+
+        <h3>Vista del dashboard con bot&oacute;n (i)</h3>
+        <div class="card" style="background:#F9F9FB;">
+            <div class="health-demo">
+                <div class="health-ring">
+                    <svg class="health-circle" viewBox="0 0 80 80">
+                        <circle cx="40" cy="40" r="37" fill="none" stroke="#E5E5EA" stroke-width="6"/>
+                        <circle cx="40" cy="40" r="37" fill="none" stroke="#34C759" stroke-width="6"
+                                stroke-dasharray="232.5" stroke-dashoffset="18.6"
+                                stroke-linecap="round" transform="rotate(-90 40 40)"/>
+                    </svg>
+                    <div class="health-score-text">
+                        <span class="number">92</span>
+                        <span class="level" style="color:#34C759">Excelente</span>
+                    </div>
+                    <button class="info-btn" onclick="document.getElementById('methodology').style.display=document.getElementById('methodology').style.display==='none'?'block':'none'" title="Ver metodolog&iacute;a">i</button>
+                </div>
+                <div class="metrics-row">
+                    <div class="metric"><div class="metric-label">Peso</div><div class="metric-value">145 MB</div></div>
+                    <div class="metric"><div class="metric-label">Elementos</div><div class="metric-value">82,400</div></div>
+                    <div class="metric"><div class="metric-label">Advertencias</div><div class="metric-value">23</div></div>
+                    <div class="metric"><div class="metric-label">Purgables</div><div class="metric-value" style="color:#EF6337">8</div></div>
+                </div>
+            </div>
+        </div>
+
+        <h3>Popup de metodolog&iacute;a (al hacer clic en &ldquo;i&rdquo;)</h3>
+        <div id="methodology" class="methodology-popup" style="margin-top:12px;">
+            <h4>Metodolog&iacute;a de Evaluaci&oacute;n (6 criterios)</h4>
+            <div class="criterion"><span class="label">1. Advertencias</span><span class="score">30 pts</span></div>
+            <div style="font-size:11px;color:#86868B;padding:2px 0 6px;">&le;50: 30 &bull; &le;100: 24 &bull; &le;200: 18 &bull; &le;400: 10 &bull; &le;600: 5 &bull; &gt;600: 0</div>
+
+            <div class="criterion"><span class="label">2. Tama&ntilde;o del archivo</span><span class="score">20 pts</span></div>
+            <div style="font-size:11px;color:#86868B;padding:2px 0 6px;">&lt;150 MB: 20 &bull; &lt;300 MB: 15 &bull; &lt;500 MB: 10 &bull; &lt;1 GB: 5 &bull; &ge;1 GB: 0</div>
+
+            <div class="criterion"><span class="label">3. Familia m&aacute;s pesada</span><span class="score">15 pts</span></div>
+            <div style="font-size:11px;color:#86868B;padding:2px 0 6px;">&lt;0.5 MB: 15 &bull; &lt;1 MB: 12 &bull; &lt;2 MB: 6 &bull; &lt;5 MB: 3 &bull; &ge;5 MB: 0</div>
+
+            <div class="criterion"><span class="label">4. Cantidad de elementos</span><span class="score">10 pts</span></div>
+            <div style="font-size:11px;color:#86868B;padding:2px 0 6px;">&lt;300K: 10 &bull; &lt;500K: 8 &bull; &lt;1M: 5 &bull; &lt;2M: 2 &bull; &ge;2M: 0</div>
+
+            <div class="criterion"><span class="label">5. Vistas sin colocar</span><span class="score">10 pts</span></div>
+            <div style="font-size:11px;color:#86868B;padding:2px 0 6px;">&le;5: 10 &bull; &le;15: 7 &bull; &le;30: 4 &bull; &le;50: 2 &bull; &gt;50: 0</div>
+
+            <div class="criterion"><span class="label">6. Elementos purgables</span><span class="score">15 pts</span></div>
+            <div style="font-size:11px;color:#86868B;padding:2px 0 6px;">&le;10: 15 &bull; &le;30: 11 &bull; &le;60: 7 &bull; &le;100: 3 &bull; &gt;100: 0</div>
+
+            <div style="margin-top:12px;padding:8px 12px;background:#F5F5F7;border-radius:6px;">
+                <strong>Niveles:</strong> 80&ndash;100 Excelente &bull; 60&ndash;79 Bueno &bull; 40&ndash;59 Regular &bull; 0&ndash;39 Cr&iacute;tico
+            </div>
+
+            <h4>Referencias</h4>
+            <div class="ref">&bull; <em>ISO 19650-1:2018</em> &mdash; Conceptos y principios de gesti&oacute;n de informaci&oacute;n BIM (&sect;11.1, &sect;8.1)</div>
+            <div class="ref">&bull; <em>ISO 19650-2:2018</em> &mdash; Fase de desarrollo de activos (&sect;5.2.2 Intercambio de informaci&oacute;n)</div>
+            <div class="ref">&bull; <em>Autodesk AU IT20549</em> &mdash; Health Check for Your Revit Project Models</div>
+            <div class="ref">&bull; <em>Autodesk Knowledge Network</em> &mdash; Model Performance Best Practices &amp; File Maintenance</div>
+            <div class="ref">&bull; <em>AEC (UK) BIM Protocol v2.0</em> &mdash; Model Validation Checklist (purga, vistas, limpieza)</div>
+            <div class="ref">&bull; <em>BIM Forum</em> &mdash; LOD Specification (gesti&oacute;n de contenido y peso de familias)</div>
+        </div>
+    </div>
+
+    <!-- ============================================= -->
+    <h2>3. Scroll Hints en todas las tablas</h2>
+    <!-- ============================================= -->
+    <div class="card">
+        <div class="change-item green">
+            <div class="change-label new">Nuevo</div>
+            <div class="change-desc">Indicadores &ldquo;m&aacute;s elementos arriba/abajo&rdquo; implementados en <strong>todas</strong> las tablas del plugin: Advertencias, Vistas, Hu&eacute;rfanos, Purgables (Auditor&iacute;a), Familias (Exportar), y Subproyectos (Gesti&oacute;n).</div>
+        </div>
+
+        <div class="scroll-demo">
+            <div class="scroll-hint top">&#x25B2; m&aacute;s elementos arriba</div>
+            <div class="fake-row">Elementos superpuestos &mdash; Error &mdash; 4 elementos</div>
+            <div class="fake-row">Advertencia de habitabilidad &mdash; Warning &mdash; 1 elemento</div>
+            <div class="fake-row">Muro duplicado &mdash; Error &mdash; 2 elementos</div>
+            <div class="scroll-hint bottom">&#x25BC; m&aacute;s elementos abajo</div>
+        </div>
+    </div>
+
+    <!-- ============================================= -->
+    <h2>4. Nombres de botones en Ribbon</h2>
+    <!-- ============================================= -->
+    <div class="card">
+        <div class="change-item blue">
+            <div class="change-label update">Actualizaci&oacute;n</div>
+            <div class="change-desc">&ldquo;Auditar Modelo&rdquo; &rarr; <strong>&ldquo;Auditar&rdquo;</strong> | &ldquo;Exportar Familias&rdquo; &rarr; <strong>&ldquo;Exportar&rdquo;</strong></div>
+        </div>
+
+        <h3>Ribbon BIMPills (actualizado)</h3>
+        <div class="ribbon-bar">
+            <div class="ribbon-group">
+                <div class="ribbon-buttons">
+                    <div class="ribbon-btn">
+                        <div class="icon-preview" style="background:#F5F5F7;">
+                            <!-- 3D cube + magnifier -->
+                            <svg width="32" height="32" viewBox="0 0 32 32">
+                                <polygon points="5,10 14,15 14,26 5,21" fill="rgba(33,43,55,0.08)" stroke="#212B37" stroke-width="1.2"/>
+                                <polygon points="14,15 23,10 23,21 14,26" fill="rgba(33,43,55,0.08)" stroke="#212B37" stroke-width="1.2"/>
+                                <polygon points="5,10 14,5 23,10 14,15" fill="rgba(33,43,55,0.15)" stroke="#212B37" stroke-width="1.2"/>
+                                <circle cx="24" cy="22" r="5" fill="rgba(239,99,55,0.12)" stroke="#EF6337" stroke-width="1.8"/>
+                                <line x1="28" y1="26" x2="31" y2="29" stroke="#EF6337" stroke-width="2.2" stroke-linecap="round"/>
+                            </svg>
+                        </div>
+                        <span class="ribbon-label changed">Auditar</span>
+                    </div>
+                    <div class="ribbon-btn">
+                        <div class="icon-preview" style="background:#F5F5F7;">
+                            <!-- Folder + arrow -->
+                            <svg width="32" height="32" viewBox="0 0 32 32">
+                                <polygon points="4,11 4,7 12,7 14,11" fill="#FECA29" stroke="#212B37" stroke-width="1.4"/>
+                                <rect x="4" y="11" width="20" height="14" rx="2" fill="white" stroke="#212B37" stroke-width="1.4"/>
+                                <line x1="14" y1="3" x2="14" y2="17" stroke="#EF6337" stroke-width="2" stroke-linecap="round"/>
+                                <polyline points="10,13 14,17 18,13" fill="none" stroke="#EF6337" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <span class="ribbon-label changed">Exportar</span>
+                    </div>
+                </div>
+                <div class="ribbon-group-title">Datos</div>
+            </div>
+            <div class="ribbon-group">
+                <div class="ribbon-buttons">
+                    <div class="ribbon-btn">
+                        <div class="icon-preview" style="background:#F5F5F7;">
+                            <!-- Blueprint/plan -->
+                            <svg width="32" height="32" viewBox="0 0 32 32">
+                                <rect x="3" y="4" width="22" height="24" rx="1" fill="white" stroke="#212B37" stroke-width="1.2"/>
+                                <rect x="6" y="7" width="16" height="18" fill="none" stroke="#212B37" stroke-width="0.6"/>
+                                <line x1="14" y1="7" x2="14" y2="25" stroke="#212B37" stroke-width="0.6"/>
+                                <line x1="6" y1="16" x2="22" y2="16" stroke="#212B37" stroke-width="0.6"/>
+                                <rect x="7" y="8" width="6" height="7" fill="none" stroke="#EF6337" stroke-width="0.8"/>
+                                <rect x="15" y="8" width="6" height="7" fill="none" stroke="#EF6337" stroke-width="0.8"/>
+                                <rect x="7" y="17" width="6" height="7" fill="none" stroke="#EF6337" stroke-width="0.8"/>
+                                <line x1="26" y1="6" x2="26" y2="26" stroke="#EF6337" stroke-width="1" stroke-linecap="round"/>
+                                <line x1="24" y1="8" x2="28" y2="6" stroke="#EF6337" stroke-width="1" stroke-linecap="round"/>
+                                <line x1="24" y1="24" x2="28" y2="26" stroke="#EF6337" stroke-width="1" stroke-linecap="round"/>
+                            </svg>
+                        </div>
+                        <span class="ribbon-label">Documentaci&oacute;n</span>
+                    </div>
+                    <div class="ribbon-btn">
+                        <div class="icon-preview" style="background:#F5F5F7;">
+                            <!-- Grid boxes -->
+                            <svg width="32" height="32" viewBox="0 0 32 32">
+                                <rect x="3" y="3" width="11" height="11" rx="2" fill="white" stroke="#212B37" stroke-width="1.2"/>
+                                <rect x="18" y="3" width="11" height="11" rx="2" fill="white" stroke="#212B37" stroke-width="1.2"/>
+                                <rect x="3" y="18" width="11" height="11" rx="2" fill="white" stroke="#212B37" stroke-width="1.2"/>
+                                <rect x="18" y="18" width="11" height="11" rx="2" fill="white" stroke="#212B37" stroke-width="1.2"/>
+                                <circle cx="8.5" cy="8.5" r="2" fill="#EF6337"/>
+                                <circle cx="23.5" cy="8.5" r="2" fill="#EF6337"/>
+                                <circle cx="8.5" cy="23.5" r="2" fill="#EF6337"/>
+                                <circle cx="23.5" cy="23.5" r="2" fill="#EF6337"/>
+                            </svg>
+                        </div>
+                        <span class="ribbon-label">Gesti&oacute;n</span>
+                    </div>
+                </div>
+                <div class="ribbon-group-title">Procesos</div>
+            </div>
+            <div class="ribbon-group">
+                <div class="ribbon-buttons">
+                    <div class="ribbon-btn">
+                        <div class="icon-preview" style="background:#F5F5F7;">
+                            <svg width="32" height="32" viewBox="0 0 32 32">
+                                <circle cx="16" cy="16" r="13" fill="#212B37"/>
+                                <circle cx="16" cy="16" r="10.5" fill="none" stroke="#EF6337" stroke-width="1"/>
+                                <circle cx="16" cy="9" r="2.2" fill="white"/>
+                                <line x1="16" y1="14.5" x2="16" y2="23" stroke="white" stroke-width="3" stroke-linecap="round"/>
+                            </svg>
+                        </div>
+                        <span class="ribbon-label">Acerca de</span>
+                    </div>
+                </div>
+                <div class="ribbon-group-title">Informaci&oacute;n</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================= -->
+    <h2>5. Iconos actualizados</h2>
+    <!-- ============================================= -->
+    <div class="card">
+        <div class="icon-row">
+            <div class="icon-preview" style="background:#F5F5F7;">
+                <svg width="32" height="32" viewBox="0 0 32 32">
+                    <polygon points="5,10 14,15 14,26 5,21" fill="rgba(33,43,55,0.08)" stroke="#212B37" stroke-width="1.2"/>
+                    <polygon points="14,15 23,10 23,21 14,26" fill="rgba(33,43,55,0.08)" stroke="#212B37" stroke-width="1.2"/>
+                    <polygon points="5,10 14,5 23,10 14,15" fill="rgba(33,43,55,0.15)" stroke="#212B37" stroke-width="1.2"/>
+                    <circle cx="24" cy="22" r="5" fill="rgba(239,99,55,0.12)" stroke="#EF6337" stroke-width="1.8"/>
+                    <line x1="28" y1="26" x2="31" y2="29" stroke="#EF6337" stroke-width="2.2" stroke-linecap="round"/>
+                </svg>
+            </div>
+            <div class="icon-desc">
+                <strong>Auditar</strong> &mdash; <span class="old">Documento con checklist</span> &rarr; <span class="new">Cubo 3D isom&eacute;trico + lupa</span>
+            </div>
+        </div>
+        <div class="icon-row">
+            <div class="icon-preview" style="background:#F5F5F7;">
+                <svg width="32" height="32" viewBox="0 0 32 32">
+                    <rect x="3" y="4" width="22" height="24" rx="1" fill="white" stroke="#212B37" stroke-width="1.2"/>
+                    <rect x="6" y="7" width="16" height="18" fill="none" stroke="#212B37" stroke-width="0.6"/>
+                    <line x1="14" y1="7" x2="14" y2="25" stroke="#212B37" stroke-width="0.6"/>
+                    <line x1="6" y1="16" x2="22" y2="16" stroke="#212B37" stroke-width="0.6"/>
+                    <rect x="7" y="8" width="6" height="7" fill="none" stroke="#EF6337" stroke-width="0.8"/>
+                    <rect x="15" y="8" width="6" height="7" fill="none" stroke="#EF6337" stroke-width="0.8"/>
+                    <rect x="7" y="17" width="6" height="7" fill="none" stroke="#EF6337" stroke-width="0.8"/>
+                    <line x1="26" y1="6" x2="26" y2="26" stroke="#EF6337" stroke-width="1" stroke-linecap="round"/>
+                    <line x1="24" y1="8" x2="28" y2="6" stroke="#EF6337" stroke-width="1" stroke-linecap="round"/>
+                    <line x1="24" y1="24" x2="28" y2="26" stroke="#EF6337" stroke-width="1" stroke-linecap="round"/>
+                </svg>
+            </div>
+            <div class="icon-desc">
+                <strong>Documentaci&oacute;n</strong> &mdash; <span class="old">Documento con l&aacute;piz</span> &rarr; <span class="new">Plano/blueprint con acotaciones</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================= -->
+    <h2>6. Scoring de salud mejorado (6 criterios)</h2>
+    <!-- ============================================= -->
+    <div class="card">
+        <div class="change-item blue">
+            <div class="change-label update">Actualizaci&oacute;n</div>
+            <div class="change-desc">La puntuaci&oacute;n de salud ahora eval&uacute;a <strong>6 criterios</strong> (antes 4). Se agregaron &ldquo;Vistas sin colocar&rdquo; y &ldquo;Elementos purgables&rdquo; como factores de calidad.</div>
+        </div>
+
+        <div class="before-after">
+            <div class="panel before">
+                <div class="panel-title">Antes (4 criterios)</div>
+                <div style="font-size:12px;padding:4px 0;">
+                    <div>Advertencias: <strong>40 pts</strong></div>
+                    <div>Tama&ntilde;o archivo: <strong>25 pts</strong></div>
+                    <div>Familia m&aacute;s pesada: <strong>20 pts</strong></div>
+                    <div>Elementos: <strong>15 pts</strong></div>
+                    <div style="margin-top:4px;font-weight:600;color:#86868B;">Total: 100 pts</div>
+                </div>
+            </div>
+            <div class="panel after">
+                <div class="panel-title">Ahora (6 criterios)</div>
+                <div style="font-size:12px;padding:4px 0;">
+                    <div>Advertencias: <strong>30 pts</strong></div>
+                    <div>Tama&ntilde;o archivo: <strong>20 pts</strong></div>
+                    <div>Familia m&aacute;s pesada: <strong>15 pts</strong></div>
+                    <div>Elementos: <strong>10 pts</strong></div>
+                    <div style="color:#34C759;">Vistas sin colocar: <strong>10 pts</strong> <span class="badge badge-new">NUEVO</span></div>
+                    <div style="color:#34C759;">Elementos purgables: <strong>15 pts</strong> <span class="badge badge-new">NUEVO</span></div>
+                    <div style="margin-top:4px;font-weight:600;color:#2E7D32;">Total: 100 pts</div>
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-top:12px;padding:10px 14px;background:#E3F2FD;border-radius:6px;font-size:12px;">
+            <strong>Referencias:</strong> ISO 19650-1:2018, ISO 19650-2:2018, Autodesk AU IT20549, AEC (UK) BIM Protocol v2.0, BIM Forum LOD Specification
+        </div>
+    </div>
+
+    <!-- ============================================= -->
+    <h2>7. Plantilla Excel — Nota de instrucciones</h2>
+    <!-- ============================================= -->
+    <div class="card">
+        <div class="change-item blue">
+            <div class="change-label update">Actualizaci&oacute;n</div>
+            <div class="change-desc">La plantilla de subproyectos ahora incluye una advertencia visible de que las instrucciones deben eliminarse o moverse a otra hoja antes de importar.</div>
+        </div>
+
+        <table class="excel-table">
+            <tr><th>Nombre</th><th>Estado</th></tr>
+            <tr><td class="example">ARQ - Arquitectura</td><td class="example">Abierto</td></tr>
+            <tr><td class="example">EST - Estructura</td><td class="example">Abierto</td></tr>
+            <tr><td class="example">MEP - Instalaciones</td><td class="example">Abierto</td></tr>
+            <tr><td colspan="2" style="padding-top:12px;"></td></tr>
+            <tr><td colspan="2"><strong>Instrucciones:</strong></td></tr>
+            <tr><td colspan="2" class="instruction">1. Reemplace los ejemplos con los nombres de sus subproyectos.</td></tr>
+            <tr><td colspan="2" class="instruction">2. La columna Estado es opcional (por defecto: Abierto).</td></tr>
+            <tr><td colspan="2" class="instruction">3. Guarde el archivo y use &lsquo;Importar Excel&rsquo; en BIMPills.</td></tr>
+            <tr><td colspan="2"></td></tr>
+            <tr><td colspan="2" class="warning" style="background:#FFF3E0;">IMPORTANTE: Antes de importar, elimine estas instrucciones o mu&eacute;valas a otra hoja de trabajo. Solo se leer&aacute;n las filas de la primera hoja a partir de la fila 2.</td></tr>
+        </table>
+    </div>
+
+    <!-- ============================================= -->
+    <h2>Resumen de archivos modificados</h2>
+    <!-- ============================================= -->
+    <div class="card">
+        <table style="width:100%;font-size:12px;border-collapse:collapse;">
+            <tr style="border-bottom:1px solid #E5E5EA;">
+                <td style="padding:6px 0;"><span class="badge badge-update">UPD</span></td>
+                <td style="padding:6px 8px;">ModelHealthScore.cs</td>
+                <td style="padding:6px 0;color:#86868B;">6 criterios + metodolog&iacute;a + refs ISO 19650</td>
+            </tr>
+            <tr style="border-bottom:1px solid #E5E5EA;">
+                <td style="padding:6px 0;"><span class="badge badge-update">UPD</span></td>
+                <td style="padding:6px 8px;">ModelAuditCommand.cs</td>
+                <td style="padding:6px 0;color:#86868B;">Pasa vistas y purgables al score</td>
+            </tr>
+            <tr style="border-bottom:1px solid #E5E5EA;">
+                <td style="padding:6px 0;"><span class="badge badge-update">UPD</span></td>
+                <td style="padding:6px 8px;">ModelAuditWindow.xaml</td>
+                <td style="padding:6px 0;color:#86868B;">Scroll hints + bot&oacute;n (i) + arco 100%</td>
+            </tr>
+            <tr style="border-bottom:1px solid #E5E5EA;">
+                <td style="padding:6px 0;"><span class="badge badge-update">UPD</span></td>
+                <td style="padding:6px 8px;">ModelAuditWindow.xaml.cs</td>
+                <td style="padding:6px 0;color:#86868B;">DrawHealthArc fix + HealthInfo_Click + ScrollHintHelper</td>
+            </tr>
+            <tr style="border-bottom:1px solid #E5E5EA;">
+                <td style="padding:6px 0;"><span class="badge badge-update">UPD</span></td>
+                <td style="padding:6px 8px;">ModelAuditModule.cs</td>
+                <td style="padding:6px 0;color:#86868B;">&ldquo;Auditar Modelo&rdquo; &rarr; &ldquo;Auditar&rdquo;</td>
+            </tr>
+            <tr style="border-bottom:1px solid #E5E5EA;">
+                <td style="padding:6px 0;"><span class="badge badge-update">UPD</span></td>
+                <td style="padding:6px 8px;">ExportFamiliesModule.cs</td>
+                <td style="padding:6px 0;color:#86868B;">&ldquo;Exportar Familias&rdquo; &rarr; &ldquo;Exportar&rdquo;</td>
+            </tr>
+            <tr style="border-bottom:1px solid #E5E5EA;">
+                <td style="padding:6px 0;"><span class="badge badge-update">UPD</span></td>
+                <td style="padding:6px 8px;">RibbonIconFactory.cs</td>
+                <td style="padding:6px 0;color:#86868B;">Auditar: cubo 3D + lupa | Documentaci&oacute;n: plano/blueprint</td>
+            </tr>
+            <tr style="border-bottom:1px solid #E5E5EA;">
+                <td style="padding:6px 0;"><span class="badge badge-update">UPD</span></td>
+                <td style="padding:6px 8px;">GestionWindow.xaml.cs</td>
+                <td style="padding:6px 0;color:#86868B;">Nota en plantilla Excel sobre eliminar instrucciones</td>
+            </tr>
+            <tr>
+                <td style="padding:6px 0;"><span class="badge badge-fix">FIX</span></td>
+                <td style="padding:6px 8px;">ModelAuditCommandTests.cs</td>
+                <td style="padding:6px 0;color:#86868B;">Test actualizado para 6 criterios (7/7 pasan)</td>
+            </tr>
+        </table>
+    </div>
+
+    <div style="text-align:center;font-size:11px;color:#86868B;margin-top:24px;padding-top:16px;border-top:1px solid #E5E5EA;">
+        BIMPills v1.0 &bull; BIM-CA &bull; Compilaci&oacute;n exitosa &bull; 7/7 tests pasando
+    </div>
+
+</div>
+</body>
+</html>

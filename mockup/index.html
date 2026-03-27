@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BIMPills — Auditoría de Modelo (Mockup)</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --azul: #212B37;
+    --naranja: #EF6337;
+    --amarillo: #FECA29;
+    --blanco: #FBFAF8;
+    --negro: #000000;
+    --bg: #F0F0F0;
+    --card-bg: #FFFFFF;
+    --card-border: #E5E5EA;
+    --caption: #8E8E93;
+    --metric-bg: #F9F9FB;
+    --green: #34C759;
+    --red: #FF3B30;
+  }
+
+  body {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--azul);
+    width: 920px;
+    margin: 0 auto;
+    min-height: 100vh;
+  }
+
+  /* ═══ ENCABEZADO ═══ */
+  .header {
+    background: var(--card-bg);
+    border-bottom: 0.5px solid var(--card-border);
+    padding: 18px 24px 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+  }
+  .header img {
+    width: 28px;
+    height: 44px;
+    object-fit: contain;
+  }
+  .header-text { display: flex; flex-direction: column; gap: 3px; }
+  .header-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--naranja);
+  }
+  .header-title {
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--azul);
+  }
+  .header-subtitle {
+    font-size: 12px;
+    color: var(--caption);
+  }
+
+  /* ═══ DASHBOARD DE SALUD ═══ */
+  .health-dashboard {
+    margin: 16px 20px 0;
+    background: var(--card-bg);
+    border-radius: 10px;
+    border: 0.5px solid var(--card-border);
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+  }
+
+  /* Anillo de salud */
+  .health-ring {
+    position: relative;
+    width: 90px;
+    height: 90px;
+    flex-shrink: 0;
+  }
+  .health-ring svg {
+    width: 90px;
+    height: 90px;
+    transform: rotate(-90deg);
+  }
+  .health-ring .bg-circle {
+    fill: none;
+    stroke: #E5E5EA;
+    stroke-width: 6;
+  }
+  .health-ring .progress-circle {
+    fill: none;
+    stroke-width: 6;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 1s ease;
+  }
+  .health-ring .score-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+  }
+  .health-ring .score-number {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--azul);
+    display: block;
+    line-height: 1.1;
+  }
+  .health-ring .score-label {
+    font-size: 10px;
+    font-weight: 600;
+    display: block;
+    margin-top: 2px;
+  }
+
+  /* Tarjetas de métricas */
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    flex: 1;
+  }
+  .metric-card {
+    background: var(--metric-bg);
+    border-radius: 8px;
+    padding: 12px;
+  }
+  .metric-label {
+    font-size: 11px;
+    color: var(--caption);
+    margin-bottom: 6px;
+  }
+  .metric-value {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--azul);
+  }
+  .metric-value.warning { color: var(--naranja); }
+  .metric-value.danger { color: var(--red); }
+  .metric-value.purgeable { color: var(--naranja); }
+
+  /* ═══ PESTAÑAS ═══ */
+  .tabs-container {
+    margin: 16px 20px 0;
+    background: var(--card-bg);
+    border-radius: 10px;
+    border: 0.5px solid var(--card-border);
+    padding: 12px;
+    box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 320px;
+  }
+  .tab-bar {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--card-border);
+    margin-bottom: 8px;
+  }
+  .tab-btn {
+    background: none;
+    border: none;
+    padding: 8px 16px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--caption);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    font-family: inherit;
+    transition: all 0.15s;
+  }
+  .tab-btn:hover { color: var(--azul); }
+  .tab-btn.active {
+    color: var(--azul);
+    border-bottom-color: var(--naranja);
+  }
+  .tab-content { display: none; flex: 1; overflow: auto; }
+  .tab-content.active { display: block; }
+
+  /* Tabla */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  th {
+    text-align: left;
+    padding: 8px 12px;
+    font-weight: 600;
+    color: var(--azul);
+    border-bottom: 1px solid var(--card-border);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  td {
+    padding: 7px 12px;
+    border-bottom: 1px solid #F2F2F7;
+    color: #3C3C43;
+  }
+  tr:hover td { background: #F9F9FB; }
+  .size-warning { color: var(--naranja); font-weight: 600; }
+  .size-danger { color: var(--red); font-weight: 600; }
+
+  /* ═══ PIE DE PÁGINA ═══ */
+  .footer {
+    padding: 12px 24px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .footer-summary {
+    font-size: 12px;
+    color: var(--caption);
+  }
+  .btn-close {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    padding: 8px 28px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--azul);
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s;
+  }
+  .btn-close:hover { background: #F2F2F7; }
+
+  /* Badge de tipo en purgables */
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 600;
+  }
+  .badge-familia { background: #FFF3E0; color: #E65100; }
+  .badge-vista { background: #E3F2FD; color: #1565C0; }
+  .badge-material { background: #F3E5F5; color: #7B1FA2; }
+</style>
+</head>
+<body>
+
+<!-- ENCABEZADO -->
+<div class="header">
+  <img src="../src/BIMPills.UI/Resources/pill-icon.png" alt="BIMPills" />
+  <div class="header-text">
+    <span class="header-label">Auditoría de Modelo</span>
+    <span class="header-title">Proyecto1</span>
+    <span class="header-subtitle">Modelo local</span>
+  </div>
+</div>
+
+<!-- DASHBOARD DE SALUD -->
+<div class="health-dashboard">
+  <!-- Anillo circular -->
+  <div class="health-ring">
+    <svg viewBox="0 0 90 90">
+      <circle class="bg-circle" cx="45" cy="45" r="37"/>
+      <circle class="progress-circle" cx="45" cy="45" r="37"
+              stroke="#34C759"
+              stroke-dasharray="232.48"
+              stroke-dashoffset="46.5"/>
+    </svg>
+    <div class="score-text">
+      <span class="score-number">80</span>
+      <span class="score-label" style="color: #34C759;">Excelente</span>
+    </div>
+  </div>
+
+  <!-- Métricas -->
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <div class="metric-label">Peso</div>
+      <div class="metric-value">47.6 MB</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Elementos</div>
+      <div class="metric-value">3,522</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Advertencias</div>
+      <div class="metric-value">0</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Purgables</div>
+      <div class="metric-value purgeable">23</div>
+    </div>
+  </div>
+</div>
+
+<!-- PESTAÑAS -->
+<div class="tabs-container">
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('warnings')">Advertencias (0)</button>
+    <button class="tab-btn" onclick="switchTab('families')">Familias (105)</button>
+    <button class="tab-btn" onclick="switchTab('views')">Vistas sin colocar (21)</button>
+    <button class="tab-btn" onclick="switchTab('orphans')">Elementos huérfanos (3396)</button>
+    <button class="tab-btn" onclick="switchTab('purgeable')">Purgables (23)</button>
+  </div>
+
+  <!-- Advertencias -->
+  <div id="tab-warnings" class="tab-content active">
+    <table>
+      <thead><tr><th>Severidad</th><th>Descripción</th><th style="text-align:right">Elementos</th></tr></thead>
+      <tbody>
+        <tr><td colspan="3" style="text-align:center; color:#8E8E93; padding:40px;">Sin advertencias — modelo saludable</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Familias -->
+  <div id="tab-families" class="tab-content">
+    <table>
+      <thead><tr><th>Familia</th><th>Categoría</th><th>Tamaño</th><th style="text-align:right">Instancias</th></tr></thead>
+      <tbody>
+        <tr><td>M_Furniture_Desk_Standard</td><td>Mobiliario</td><td class="size-danger">3.2 MB</td><td style="text-align:right">12</td></tr>
+        <tr><td>M_Door_SingleFlush</td><td>Puertas</td><td class="size-warning">1.8 MB</td><td style="text-align:right">45</td></tr>
+        <tr><td>M_Window_DoubleHung</td><td>Ventanas</td><td>0.9 MB</td><td style="text-align:right">32</td></tr>
+        <tr><td>M_Column_Round</td><td>Columnas</td><td>0.4 MB</td><td style="text-align:right">28</td></tr>
+        <tr><td>M_Plumbing_Fixture_Sink</td><td>Fontanería</td><td>0.3 MB</td><td style="text-align:right">8</td></tr>
+        <tr><td>M_Lighting_Ceiling_Recessed</td><td>Iluminación</td><td>0.2 MB</td><td style="text-align:right">64</td></tr>
+        <tr><td>M_Wall_Partition_Int</td><td>Muros</td><td>0.1 MB</td><td style="text-align:right">120</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Vistas -->
+  <div id="tab-views" class="tab-content">
+    <table>
+      <thead><tr><th>Vista</th><th>Tipo</th></tr></thead>
+      <tbody>
+        <tr><td>Planta Nivel 1 - Trabajo</td><td>FloorPlan</td></tr>
+        <tr><td>Sección Longitudinal - Borrador</td><td>Section</td></tr>
+        <tr><td>3D - Coordinación MEP</td><td>ThreeD</td></tr>
+        <tr><td>Detalle Muro Cortina - Rev2</td><td>Detail</td></tr>
+        <tr><td>Elevación Norte - Antiguo</td><td>Elevation</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Huérfanos -->
+  <div id="tab-orphans" class="tab-content">
+    <table>
+      <thead><tr><th>ID</th><th>Nombre</th></tr></thead>
+      <tbody>
+        <tr><td>485231</td><td>(sin nombre)</td></tr>
+        <tr><td>485344</td><td>(sin nombre)</td></tr>
+        <tr><td>491002</td><td>ImportInstance_CAD_001</td></tr>
+        <tr><td>491543</td><td>(sin nombre)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Purgables -->
+  <div id="tab-purgeable" class="tab-content">
+    <table>
+      <thead><tr><th>Nombre</th><th>Tipo</th><th>Categoría</th><th>Tamaño</th></tr></thead>
+      <tbody>
+        <tr><td>M_Casework_Bookshelf_Old</td><td><span class="badge badge-familia">Familia</span></td><td>Mobiliario</td><td class="size-warning">1.4 MB</td></tr>
+        <tr><td>M_Generic_Placeholder_v2</td><td><span class="badge badge-familia">Familia</span></td><td>Modelo genérico</td><td>0.8 MB</td></tr>
+        <tr><td>M_Electrical_Panel_Unused</td><td><span class="badge badge-familia">Familia</span></td><td>Electricidad</td><td>0.5 MB</td></tr>
+        <tr><td>Planta Nivel 3 - Descartada</td><td><span class="badge badge-vista">Vista</span></td><td>FloorPlan</td><td>—</td></tr>
+        <tr><td>3D - Render Test Antiguo</td><td><span class="badge badge-vista">Vista</span></td><td>ThreeD</td><td>—</td></tr>
+        <tr><td>Sección - Borrador Eliminado</td><td><span class="badge badge-vista">Vista</span></td><td>Section</td><td>—</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- PIE DE PÁGINA -->
+<div class="footer">
+  <span class="footer-summary">3,545 hallazgos en total  ·  Salud: 80/100</span>
+  <button class="btn-close">Cerrar</button>
+</div>
+
+<script>
+function switchTab(name) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
+</body>
+</html>

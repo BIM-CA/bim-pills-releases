@@ -27,8 +27,8 @@ namespace BIMPills.Core.Tests.About
 
             Assert.NotNull(AboutCommand.LastResult);
             Assert.Equal("BIMPills", AboutCommand.LastResult!.PluginName);
-            Assert.Equal("1.0.0", AboutCommand.LastResult.Version);
-            Assert.Equal("Rodrigo Flores", AboutCommand.LastResult.Developer);
+            Assert.Equal("1.0.0-alpha.1", AboutCommand.LastResult.Version);
+            Assert.Equal("Rodrigo Flores + BIM-CA Team", AboutCommand.LastResult.Developer);
             Assert.Equal("BIM-CA", AboutCommand.LastResult.Company);
             Assert.Equal("https://bim-ca.com", AboutCommand.LastResult.Website);
         }
@@ -59,6 +59,8 @@ namespace BIMPills.Core.Tests.About
         public string Title => "TestModel.rvt";
         public bool IsWorkshared => false;
 
+        public long GetModelFileSize() => 50_000_000;
+        public int GetTotalElementCount() => 10_000;
         public System.Collections.Generic.IReadOnlyList<Audit.ModelWarningInfo> GetWarnings()
             => new System.Collections.Generic.List<Audit.ModelWarningInfo>();
         public System.Collections.Generic.IReadOnlyList<Audit.FamilyInfo> GetFamilySizes()
@@ -67,6 +69,22 @@ namespace BIMPills.Core.Tests.About
             => new System.Collections.Generic.List<Audit.ViewInfo>();
         public System.Collections.Generic.IReadOnlyList<Audit.ElementInfo> GetElementsWithoutCategory()
             => new System.Collections.Generic.List<Audit.ElementInfo>();
+        public System.Collections.Generic.IReadOnlyList<Audit.PurgeableItem> GetPurgeableElements()
+            => new System.Collections.Generic.List<Audit.PurgeableItem>();
+        public int PurgeElements(System.Collections.Generic.IReadOnlyList<long> elementIds)
+            => elementIds?.Count ?? 0;
+        public System.Collections.Generic.IReadOnlyList<Audit.FamilyExportInfo> GetLoadedFamilies()
+            => new System.Collections.Generic.List<Audit.FamilyExportInfo>();
+        public bool ExportFamily(long familyId, string destinationPath)
+            => true;
+        public System.Collections.Generic.IReadOnlyList<Gestion.WorksetInfo> GetWorksets()
+            => new System.Collections.Generic.List<Gestion.WorksetInfo>();
+        public bool CreateWorkset(string name) => true;
+        public bool RenameWorkset(long worksetId, string newName) => true;
+        public System.Collections.Generic.IReadOnlyList<Documentacion.DimensionTypeInfo> GetDimensionTypes()
+            => new System.Collections.Generic.List<Documentacion.DimensionTypeInfo>();
+        public int GetDoorCountInActiveView() => 0;
+        public string GetActiveViewName() => "Level 1";
     }
 
     internal sealed class NullAboutLogger : ILogger

@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BIMPills — Extracción</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --azul: #212B37;
+    --naranja: #EF6337;
+    --blanco: #FBFAF8;
+    --bg: #F0F0F0;
+    --card-bg: #FFFFFF;
+    --card-border: #E5E5EA;
+    --caption: #8E8E93;
+    --metric-bg: #F9F9FB;
+    --green: #34C759;
+    --red: #FF3B30;
+  }
+
+  body {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--azul);
+    width: 780px;
+    height: 640px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ═══ ENCABEZADO ═══ */
+  .header {
+    margin: 16px 20px 0;
+    background: var(--card-bg);
+    border-radius: 10px;
+    border: 0.5px solid var(--card-border);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+    flex-shrink: 0;
+  }
+  .header img { width: 24px; height: 38px; object-fit: contain; }
+  .header-text { display: flex; flex-direction: column; gap: 2px; }
+  .header-label { font-size: 12px; font-weight: 500; color: var(--naranja); }
+  .header-title { font-size: 17px; font-weight: 600; color: var(--azul); }
+  .header-subtitle { font-size: 12px; color: var(--caption); }
+
+  /* ═══ HERRAMIENTA: EXPORTAR FAMILIAS ═══ */
+  .tool-section {
+    margin: 12px 20px 0;
+    background: var(--card-bg);
+    border-radius: 10px;
+    border: 0.5px solid var(--card-border);
+    box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .tool-header {
+    padding: 14px 16px 12px;
+    border-bottom: 1px solid var(--card-border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .tool-icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: #FFF3E0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .tool-icon svg { width: 16px; height: 16px; stroke: #E65100; fill: none; stroke-width: 2; }
+  .tool-title { font-size: 14px; font-weight: 600; }
+  .tool-desc { font-size: 11px; color: var(--caption); margin-left: auto; }
+
+  /* Ruta destino */
+  .dest-bar {
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid #F2F2F7;
+    flex-shrink: 0;
+  }
+  .dest-label { font-size: 11px; font-weight: 600; color: var(--azul); white-space: nowrap; }
+  .dest-path {
+    flex: 1;
+    background: var(--metric-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 11px;
+    font-family: 'Consolas', 'SF Mono', monospace;
+    color: #3C3C43;
+  }
+  .btn-browse {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--azul);
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s;
+    white-space: nowrap;
+  }
+  .btn-browse:hover { background: #F2F2F7; }
+
+  /* Stats bar */
+  .stats-bar {
+    padding: 8px 16px;
+    display: flex;
+    gap: 20px;
+    border-bottom: 1px solid #F2F2F7;
+    flex-shrink: 0;
+  }
+  .stat-item { font-size: 11px; color: var(--caption); }
+  .stat-item strong { color: var(--azul); font-weight: 600; }
+
+  /* Category filter */
+  .filter-bar {
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid #F2F2F7;
+    flex-shrink: 0;
+  }
+  .filter-label { font-size: 11px; color: var(--caption); }
+  .filter-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip {
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 500;
+    border: 1px solid var(--card-border);
+    background: var(--card-bg);
+    color: var(--caption);
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  .chip.active {
+    background: var(--azul);
+    color: white;
+    border-color: var(--azul);
+  }
+  .chip:hover:not(.active) { border-color: var(--azul); color: var(--azul); }
+
+  /* Tabla de familias */
+  .table-wrapper {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+  }
+  .table-wrapper::-webkit-scrollbar { width: 6px; }
+  .table-wrapper::-webkit-scrollbar-track { background: transparent; }
+  .table-wrapper::-webkit-scrollbar-thumb { background: #D1D1D6; border-radius: 3px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  thead { position: sticky; top: 0; z-index: 3; background: var(--card-bg); }
+  th {
+    text-align: left; padding: 8px 12px; font-weight: 600;
+    color: var(--azul); border-bottom: 1px solid var(--card-border);
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.3px;
+    background: var(--card-bg);
+  }
+  td { padding: 7px 12px; border-bottom: 1px solid #F2F2F7; color: #3C3C43; }
+  tr:hover td { background: #F9F9FB; }
+
+  .export-check {
+    width: 14px; height: 14px; accent-color: var(--naranja); cursor: pointer;
+  }
+
+  .cat-badge {
+    display: inline-block; padding: 2px 8px; border-radius: 4px;
+    font-size: 10px; font-weight: 600;
+  }
+  .cat-mobiliario { background: #FFF3E0; color: #E65100; }
+  .cat-puertas { background: #E3F2FD; color: #1565C0; }
+  .cat-ventanas { background: #E8F5E9; color: #2E7D32; }
+  .cat-columnas { background: #F3E5F5; color: #7B1FA2; }
+  .cat-fontaneria { background: #E0F7FA; color: #00695C; }
+  .cat-iluminacion { background: #FFFDE7; color: #F57F17; }
+  .cat-muros { background: #EFEBE9; color: #4E342E; }
+  .cat-estructura { background: #ECEFF1; color: #37474F; }
+  .cat-electricidad { background: #FCE4EC; color: #AD1457; }
+  .cat-escaleras { background: #EDE7F6; color: #4527A0; }
+
+  .size-warning { color: var(--naranja); font-weight: 600; }
+  .size-danger { color: var(--red); font-weight: 600; }
+
+  .scroll-indicator-bottom {
+    position: sticky; bottom: 0; left: 0; right: 0;
+    text-align: center; font-size: 10px; font-weight: 500;
+    color: var(--caption); padding: 6px 0;
+    background: linear-gradient(to top, rgba(255,255,255,0.95) 60%, transparent);
+  }
+  .scroll-indicator-bottom svg {
+    width: 12px; height: 12px; vertical-align: middle; margin: 0 4px;
+    stroke: var(--caption); fill: none; stroke-width: 2;
+  }
+
+  /* Options bar */
+  .options-bar {
+    padding: 8px 16px;
+    border-bottom: 1px solid #F2F2F7;
+    flex-shrink: 0;
+  }
+  .option-check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+  }
+  .export-option-check {
+    width: 14px; height: 14px; accent-color: var(--naranja); cursor: pointer;
+  }
+  .option-label { font-size: 11px; color: var(--azul); font-weight: 500; }
+  .version-warning {
+    margin-top: 6px;
+    padding: 6px 10px;
+    background: #F0F4FF;
+    border: 1px solid #BBDEFB;
+    border-radius: 6px;
+    font-size: 10px;
+    color: #1565C0;
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+  }
+  .version-warning svg {
+    width: 14px; height: 14px; stroke: #1565C0; fill: none; stroke-width: 2; flex-shrink: 0; margin-top: 1px;
+  }
+
+  /* Folder structure preview */
+  .folder-preview {
+    padding: 10px 16px;
+    border-top: 1px solid #F2F2F7;
+    flex-shrink: 0;
+  }
+  .folder-preview-label {
+    font-size: 10px; font-weight: 600; color: var(--caption);
+    text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 6px;
+  }
+  .folder-tree {
+    font-family: 'Consolas', 'SF Mono', monospace;
+    font-size: 11px; color: #3C3C43; line-height: 1.6;
+  }
+  .folder-tree .folder { color: var(--azul); font-weight: 600; }
+  .folder-tree .file { color: var(--caption); }
+
+  /* ═══ PIE DE PÁGINA ═══ */
+  .footer {
+    padding: 10px 20px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .footer-info { font-size: 11px; color: var(--caption); }
+  .footer-info strong { color: var(--azul); }
+  .footer-buttons { display: flex; gap: 8px; }
+  .btn-export {
+    background: var(--naranja);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 20px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn-export:hover { background: #D84E24; }
+  .btn-export svg { width: 14px; height: 14px; stroke: white; fill: none; stroke-width: 2; }
+  .btn-close {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    padding: 8px 20px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--azul);
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s;
+  }
+  .btn-close:hover { background: #F2F2F7; }
+
+  /* Confirm dialog */
+  .confirm-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.35);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 100;
+  }
+  .confirm-dialog {
+    background: var(--card-bg);
+    border-radius: 12px;
+    width: 420px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    overflow: hidden;
+  }
+  .confirm-header {
+    padding: 16px 20px 12px;
+    font-size: 15px; font-weight: 600; color: var(--azul);
+    border-bottom: 1px solid var(--card-border);
+  }
+  .confirm-body { padding: 16px 20px; }
+  .confirm-body p { font-size: 12px; color: #3C3C43; margin-bottom: 12px; }
+  .confirm-path {
+    background: var(--metric-bg); border: 1px solid var(--card-border);
+    border-radius: 6px; padding: 8px 12px;
+    font-family: 'Consolas', 'SF Mono', monospace;
+    font-size: 11px; color: var(--azul); font-weight: 600;
+    margin-bottom: 12px;
+  }
+  .confirm-details { margin-bottom: 12px; }
+  .confirm-detail-row {
+    display: flex; justify-content: space-between;
+    font-size: 11px; color: #3C3C43; padding: 3px 0;
+  }
+  .confirm-label { color: var(--caption); }
+  .confirm-version-on { color: var(--naranja); font-weight: 600; }
+  .confirm-notice {
+    display: flex; align-items: flex-start; gap: 8px;
+    padding: 8px 12px; background: #F0F4FF; border-radius: 6px;
+    font-size: 11px; color: #1565C0;
+  }
+  .confirm-notice svg {
+    width: 14px; height: 14px; stroke: #1565C0; fill: none; stroke-width: 2; flex-shrink: 0; margin-top: 1px;
+  }
+  .confirm-actions {
+    padding: 12px 20px; border-top: 1px solid var(--card-border);
+    display: flex; justify-content: flex-end; gap: 8px;
+  }
+
+  .back-link {
+    position: fixed; top: 8px; left: 8px;
+    font-size: 11px; color: var(--caption); text-decoration: none;
+  }
+  .back-link:hover { color: var(--azul); }
+</style>
+</head>
+<body>
+
+<a class="back-link" href="index.html">&larr; Mockups</a>
+
+<!-- ENCABEZADO -->
+<div class="header">
+  <img src="pill-icon.png" alt="BIMPills" />
+  <div class="header-text">
+    <span class="header-label">Extracción</span>
+    <span class="header-title">Proyecto_Residencial_2026</span>
+    <span class="header-subtitle">Modelo local</span>
+  </div>
+</div>
+
+<!-- HERRAMIENTA: EXPORTAR FAMILIAS -->
+<div class="tool-section">
+  <div class="tool-header">
+    <div class="tool-icon">
+      <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    </div>
+    <span class="tool-title">Exportar Familias</span>
+    <span class="tool-desc">Exporta familias .rfa organizadas por categoría</span>
+  </div>
+
+  <!-- Ruta destino -->
+  <div class="dest-bar">
+    <span class="dest-label">Destino:</span>
+    <span class="dest-path">C:\Users\rodrigo\Documents\BIMPills_Export</span>
+    <button class="btn-browse">Examinar...</button>
+  </div>
+
+  <!-- Opciones de exportación -->
+  <div class="options-bar">
+    <label class="option-check">
+      <input type="checkbox" class="export-option-check" id="versionCheck" onclick="toggleVersionWarning()" />
+      <span class="option-label">Agregar sufijo de versión al nombre de la familia (ej: "-26")</span>
+    </label>
+    <div class="version-warning" id="versionWarning" style="display:none;">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+      <span>Se agregará el sufijo "-26" basado en la versión de Revit activa. Si la familia ya posee un sufijo de versión, será reemplazado por el actual.</span>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-bar">
+    <span class="stat-item">Familias en el modelo: <strong>105</strong></span>
+    <span class="stat-item">Seleccionadas: <strong>105</strong></span>
+    <span class="stat-item">Tamaño estimado: <strong>12.4 MB</strong></span>
+    <span class="stat-item">Categorías: <strong>10</strong></span>
+  </div>
+
+  <!-- Category filter -->
+  <div class="filter-bar">
+    <span class="filter-label">Filtrar:</span>
+    <div class="filter-chips">
+      <button class="chip active" onclick="toggleChip(this)">Todas</button>
+      <button class="chip" onclick="toggleChip(this)">Mobiliario</button>
+      <button class="chip" onclick="toggleChip(this)">Puertas</button>
+      <button class="chip" onclick="toggleChip(this)">Ventanas</button>
+      <button class="chip" onclick="toggleChip(this)">Estructura</button>
+      <button class="chip" onclick="toggleChip(this)">Columnas</button>
+      <button class="chip" onclick="toggleChip(this)">Fontanería</button>
+      <button class="chip" onclick="toggleChip(this)">Iluminación</button>
+      <button class="chip" onclick="toggleChip(this)">Electricidad</button>
+      <button class="chip" onclick="toggleChip(this)">Muros</button>
+    </div>
+  </div>
+
+  <!-- Tabla de familias -->
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:30px"><input type="checkbox" class="export-check" checked onclick="toggleAllExport(this)"/></th>
+          <th>Familia</th>
+          <th>Categoría</th>
+          <th>Tamaño</th>
+          <th style="text-align:right">Instancias</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td><input type="checkbox" class="export-check" checked/></td><td>M_Furniture_Desk_Standard</td><td><span class="cat-badge cat-mobiliario">Mobiliario</span></td><td class="size-danger">3.2 MB</td><td style="text-align:right">12</td></tr>
+        <tr><td><input type="checkbox" class="export-check" checked/></td><td>M_Door_SingleFlush</td><td><span class="cat-badge cat-puertas">Puertas</span></td><td class="size-warning">1.8 MB</td><td style="text-align:right">45</td></tr>
+        <tr><td><input type="checkbox" class="export-check" checked/></td><td>M_Curtain_Panel_Glazed</td><td><span class="cat-badge cat-ventanas">Ventanas</span></td><td class="size-warning">1.5 MB</td><td style="text-align:right">18</td></tr>
+        <tr><td><input type="checkbox" class="export-check" checked/></td><td>M_Stair_Precast</td><td><span class="cat-badge cat-escaleras">Escaleras</span></td><td class="size-warning">1.2 MB</td><td style="text-align:right">4</td></tr>
+        <tr><td><input type="checkbox" class="export-check" checked/></td><td>M_Window_DoubleHung</td><td><span class="cat-badge cat-ventanas">Ventanas</span></td><td>0.9 MB</td><td style="text-align:right">32</td></tr>
+        <tr><td><input type="checkbox" class="export-check" checked/></td><td>M_Structural_Beam_W</td><td><span class="cat-badge cat-estructura">Estructura</span></td><td>0.7 MB</td><td style="text-align:right">56</td></tr>
+        <tr><td><input type="checkbox" class="export-check" checked/></td><td>M_Column_Round</td><td><span class="cat-badge cat-columnas">Columnas</span></td><td>0.4 MB</td><td style="text-align:right">28</td></tr>
+        <tr><td><input type="checkbox" class="export-check" checked/></td><td>M_Plumbing_Fixture_Sink</td><td><span class="cat-badge cat-fontaneria">Fontanería</span></td><td>0.3 MB</td><td style="text-align:right">8</td></tr>
+        <tr><td><input type="checkbox" class="export-check" checked/></td><td>M_Lighting_Ceiling_Recessed</td><td><span class="cat-badge cat-iluminacion">Iluminación</span></td><td>0.2 MB</td><td style="text-align:right">64</td></tr>
+        <tr><td><input type="checkbox" class="export-check" checked/></td><td>M_Electrical_Outlet_Duplex</td><td><span class="cat-badge cat-electricidad">Electricidad</span></td><td>0.15 MB</td><td style="text-align:right">42</td></tr>
+        <tr><td><input type="checkbox" class="export-check" checked/></td><td>M_Wall_Partition_Int</td><td><span class="cat-badge cat-muros">Muros</span></td><td>0.1 MB</td><td style="text-align:right">120</td></tr>
+      </tbody>
+    </table>
+    <div class="scroll-indicator-bottom">
+      <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+      más familias abajo (94 restantes)
+    </div>
+  </div>
+
+  <!-- Folder structure preview -->
+  <div class="folder-preview">
+    <div class="folder-preview-label">Estructura de carpetas resultante</div>
+    <div class="folder-tree">
+      <span class="folder">📁 BIMPills_Export/</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="folder">📁 Proyecto_Residencial_2026/</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="folder">📁 Mobiliario/</span> <span class="file">— 8 familias</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="folder">📁 Puertas/</span> <span class="file">— 12 familias</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="folder">📁 Ventanas/</span> <span class="file">— 15 familias</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="folder">📁 Estructura/</span> <span class="file">— 6 familias</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="file">… y 6 categorías más</span>
+    </div>
+  </div>
+</div>
+
+<!-- PIE DE PÁGINA -->
+<div class="footer">
+  <span class="footer-info"><strong>105</strong> familias seleccionadas — <strong>12.4 MB</strong> estimados</span>
+  <div class="footer-buttons">
+    <button class="btn-close">Cancelar</button>
+    <button class="btn-export" onclick="showConfirmDialog()">
+      <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Exportar familias
+    </button>
+  </div>
+</div>
+
+<!-- Diálogo de confirmación -->
+<div class="confirm-overlay" id="confirmOverlay" style="display:none;">
+  <div class="confirm-dialog">
+    <div class="confirm-header">Confirmar exportación</div>
+    <div class="confirm-body">
+      <p>Se exportarán <strong>105 familias</strong> organizadas por categoría en:</p>
+      <div class="confirm-path">📁 BIMPills_Export / Proyecto_Residencial_2026 /</div>
+      <div class="confirm-details">
+        <div class="confirm-detail-row">
+          <span class="confirm-label">Categorías:</span>
+          <span>10 subcarpetas</span>
+        </div>
+        <div class="confirm-detail-row">
+          <span class="confirm-label">Tamaño estimado:</span>
+          <span>12.4 MB</span>
+        </div>
+        <div class="confirm-detail-row" id="confirmVersionRow" style="display:none;">
+          <span class="confirm-label">Sufijo de versión:</span>
+          <span class="confirm-version-on">Sí — sufijo "-26" (Revit 2026)</span>
+        </div>
+      </div>
+      <div class="confirm-notice">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        Este proceso puede tomar varios minutos dependiendo del número de familias.
+      </div>
+    </div>
+    <div class="confirm-actions">
+      <button class="btn-close" onclick="hideConfirmDialog()">Cancelar</button>
+      <button class="btn-export" onclick="hideConfirmDialog()">
+        <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        Iniciar exportación
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+function toggleChip(el) {
+  if (el.textContent === 'Todas') {
+    document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+  } else {
+    document.querySelector('.chip.active')?.classList.remove('active');
+    el.classList.toggle('active');
+    if (!document.querySelector('.chip.active')) {
+      document.querySelector('.chip').classList.add('active');
+    }
+  }
+}
+
+function toggleAllExport(master) {
+  document.querySelectorAll('.export-check').forEach(cb => {
+    if (cb !== master) cb.checked = master.checked;
+  });
+}
+
+function toggleVersionWarning() {
+  const checked = document.getElementById('versionCheck').checked;
+  document.getElementById('versionWarning').style.display = checked ? 'flex' : 'none';
+}
+
+function showConfirmDialog() {
+  const versionOn = document.getElementById('versionCheck').checked;
+  document.getElementById('confirmVersionRow').style.display = versionOn ? 'flex' : 'none';
+  document.getElementById('confirmOverlay').style.display = 'flex';
+}
+
+function hideConfirmDialog() {
+  document.getElementById('confirmOverlay').style.display = 'none';
+}
+</script>
+</body>
+</html>

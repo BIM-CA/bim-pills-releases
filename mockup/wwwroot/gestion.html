@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BIMPills — Gestión</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --azul: #212B37;
+    --naranja: #EF6337;
+    --blanco: #FBFAF8;
+    --bg: #F0F0F0;
+    --card-bg: #FFFFFF;
+    --card-border: #E5E5EA;
+    --caption: #8E8E93;
+    --metric-bg: #F9F9FB;
+    --green: #34C759;
+    --red: #FF3B30;
+  }
+
+  body {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--azul);
+    width: 780px;
+    height: 640px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ═══ ENCABEZADO ═══ */
+  .header {
+    margin: 16px 20px 0;
+    background: var(--card-bg);
+    border-radius: 10px;
+    border: 0.5px solid var(--card-border);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+    flex-shrink: 0;
+  }
+  .header img { width: 24px; height: 38px; object-fit: contain; }
+  .header-text { display: flex; flex-direction: column; gap: 2px; }
+  .header-label { font-size: 12px; font-weight: 500; color: var(--naranja); }
+  .header-title { font-size: 17px; font-weight: 600; color: var(--azul); }
+  .header-subtitle { font-size: 12px; color: var(--caption); }
+
+  /* ═══ HERRAMIENTA: SUBPROYECTOS ═══ */
+  .tool-section {
+    margin: 12px 20px 0;
+    background: var(--card-bg);
+    border-radius: 10px;
+    border: 0.5px solid var(--card-border);
+    box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .tool-header {
+    padding: 14px 16px 12px;
+    border-bottom: 1px solid var(--card-border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .tool-icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: #E3F2FD;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .tool-icon svg { width: 16px; height: 16px; stroke: #1565C0; fill: none; stroke-width: 2; }
+  .tool-title { font-size: 14px; font-weight: 600; }
+  .tool-desc { font-size: 11px; color: var(--caption); margin-left: auto; }
+
+  /* Toolbar */
+  .toolbar {
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid #F2F2F7;
+    flex-shrink: 0;
+  }
+  .btn-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--azul);
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s;
+  }
+  .btn-toolbar:hover { background: #F2F2F7; }
+  .btn-toolbar svg { width: 14px; height: 14px; stroke: var(--azul); fill: none; stroke-width: 2; }
+  .btn-toolbar.primary {
+    background: var(--azul);
+    color: white;
+    border-color: var(--azul);
+  }
+  .btn-toolbar.primary svg { stroke: white; }
+  .btn-toolbar.primary:hover { background: #2D3A49; }
+  .toolbar-sep {
+    width: 1px;
+    height: 20px;
+    background: var(--card-border);
+    margin: 0 4px;
+  }
+  .toolbar-info {
+    font-size: 11px;
+    color: var(--caption);
+    margin-left: auto;
+  }
+  .toolbar-info strong { color: var(--azul); }
+
+  /* Worksharing warning */
+  .ws-notice {
+    padding: 8px 16px;
+    background: #E8F5E9;
+    border-bottom: 1px solid #C8E6C9;
+    font-size: 11px;
+    color: #2E7D32;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .ws-notice svg { width: 14px; height: 14px; stroke: #2E7D32; fill: none; stroke-width: 2; flex-shrink: 0; }
+
+  /* Tabla */
+  .table-wrapper {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+  }
+  .table-wrapper::-webkit-scrollbar { width: 6px; }
+  .table-wrapper::-webkit-scrollbar-track { background: transparent; }
+  .table-wrapper::-webkit-scrollbar-thumb { background: #D1D1D6; border-radius: 3px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  thead { position: sticky; top: 0; z-index: 3; background: var(--card-bg); }
+  th {
+    text-align: left; padding: 8px 12px; font-weight: 600;
+    color: var(--azul); border-bottom: 1px solid var(--card-border);
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.3px;
+    background: var(--card-bg);
+  }
+  td { padding: 7px 12px; border-bottom: 1px solid #F2F2F7; color: #3C3C43; }
+  tr:hover td { background: #F9F9FB; }
+  tr.selected td { background: #EBF0F5; }
+
+  /* Status badges */
+  .status {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 600;
+  }
+  .status-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+  }
+  .status-open { background: #E8F5E9; color: #2E7D32; }
+  .status-open .status-dot { background: #34C759; }
+  .status-closed { background: #F2F2F7; color: #8E8E93; }
+  .status-closed .status-dot { background: #8E8E93; }
+
+  /* Editable name */
+  .name-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .name-cell .edit-icon {
+    width: 14px; height: 14px;
+    opacity: 0;
+    stroke: var(--caption);
+    fill: none;
+    stroke-width: 2;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  tr:hover .name-cell .edit-icon { opacity: 0.6; }
+  tr:hover .name-cell .edit-icon:hover { opacity: 1; }
+
+  /* Default workset highlight */
+  .default-tag {
+    font-size: 9px;
+    font-weight: 600;
+    color: var(--naranja);
+    background: #FFF3E0;
+    padding: 1px 6px;
+    border-radius: 3px;
+    margin-left: 4px;
+  }
+
+  .scroll-indicator-bottom {
+    position: sticky; bottom: 0; left: 0; right: 0;
+    text-align: center; font-size: 10px; font-weight: 500;
+    color: var(--caption); padding: 6px 0;
+    background: linear-gradient(to top, rgba(255,255,255,0.95) 60%, transparent);
+  }
+  .scroll-indicator-bottom svg {
+    width: 12px; height: 12px; vertical-align: middle; margin: 0 4px;
+    stroke: var(--caption); fill: none; stroke-width: 2;
+  }
+
+  /* Excel template info */
+  .template-info {
+    padding: 10px 16px;
+    border-top: 1px solid #F2F2F7;
+    flex-shrink: 0;
+  }
+  .template-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--caption);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-bottom: 6px;
+    font-family: 'Segoe UI', sans-serif;
+  }
+  .excel-preview {
+    border: 1px solid #B0BEC5;
+    border-radius: 4px;
+    overflow: hidden;
+    font-family: 'Consolas', 'SF Mono', monospace;
+    font-size: 10px;
+  }
+  .excel-preview .excel-toolbar {
+    background: #217346;
+    color: white;
+    padding: 3px 8px;
+    font-size: 9px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .excel-preview .excel-toolbar svg { width: 10px; height: 10px; stroke: white; fill: none; stroke-width: 2; }
+  .excel-grid {
+    display: grid;
+    grid-template-columns: 28px 1fr 1fr;
+    background: white;
+  }
+  .excel-cell {
+    padding: 3px 8px;
+    border-right: 1px solid #E0E0E0;
+    border-bottom: 1px solid #E0E0E0;
+    color: #3C3C43;
+    white-space: nowrap;
+  }
+  .excel-row-num {
+    background: #F5F5F5;
+    color: #9E9E9E;
+    text-align: center;
+    font-size: 9px;
+    padding: 3px 4px;
+    border-right: 1px solid #D0D0D0;
+    border-bottom: 1px solid #E0E0E0;
+  }
+  .excel-col-header {
+    background: #F5F5F5;
+    color: #616161;
+    text-align: center;
+    font-weight: 700;
+    font-size: 9px;
+    padding: 2px 8px;
+    border-right: 1px solid #D0D0D0;
+    border-bottom: 1px solid #D0D0D0;
+  }
+  .excel-cell.header {
+    background: #E8F5E9;
+    color: #217346;
+    font-weight: 700;
+  }
+
+  /* ═══ PIE DE PÁGINA ═══ */
+  .footer {
+    padding: 10px 20px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .footer-info { font-size: 11px; color: var(--caption); }
+  .footer-info strong { color: var(--azul); }
+  .footer-buttons { display: flex; gap: 8px; }
+  .btn-close {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    padding: 8px 20px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--azul);
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s;
+  }
+  .btn-close:hover { background: #F2F2F7; }
+
+  .back-link {
+    position: fixed; top: 8px; left: 8px;
+    font-size: 11px; color: var(--caption); text-decoration: none;
+  }
+  .back-link:hover { color: var(--azul); }
+</style>
+</head>
+<body>
+
+<a class="back-link" href="index.html">&larr; Mockups</a>
+
+<!-- ENCABEZADO -->
+<div class="header">
+  <img src="pill-icon.png" alt="BIMPills" />
+  <div class="header-text">
+    <span class="header-label">Gestión</span>
+    <span class="header-title">Proyecto_Residencial_2026</span>
+    <span class="header-subtitle">Modelo central — Worksharing activo</span>
+  </div>
+</div>
+
+<!-- HERRAMIENTA: SUBPROYECTOS -->
+<div class="tool-section">
+  <div class="tool-header">
+    <div class="tool-icon">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    </div>
+    <span class="tool-title">Subproyectos</span>
+    <span class="tool-desc">Crear y gestionar subproyectos (Worksets)</span>
+  </div>
+
+  <!-- Worksharing notice -->
+  <div class="ws-notice">
+    <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+    Worksharing habilitado — Los cambios se sincronizarán al guardar en el modelo central
+  </div>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <button class="btn-toolbar primary">
+      <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Nuevo subproyecto
+    </button>
+    <div class="toolbar-sep"></div>
+    <button class="btn-toolbar">
+      <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Importar Excel
+    </button>
+    <button class="btn-toolbar">
+      <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Exportar Excel
+    </button>
+    <span class="toolbar-info"><strong>8</strong> subproyectos</span>
+  </div>
+
+  <!-- Tabla de subproyectos -->
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Estado</th>
+          <th style="text-align:right">Elementos</th>
+          <th>Propietario</th>
+          <th style="text-align:right">Editable</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <div class="name-cell">
+              Subproyecto compartido
+              <span class="default-tag">Predeterminado</span>
+              <svg class="edit-icon" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </div>
+          </td>
+          <td><span class="status status-open"><span class="status-dot"></span>Abierto</span></td>
+          <td style="text-align:right">1,245</td>
+          <td>—</td>
+          <td style="text-align:right">Todos</td>
+        </tr>
+        <tr>
+          <td>
+            <div class="name-cell">
+              ARQ - Arquitectura
+              <svg class="edit-icon" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </div>
+          </td>
+          <td><span class="status status-open"><span class="status-dot"></span>Abierto</span></td>
+          <td style="text-align:right">856</td>
+          <td>rodrigo</td>
+          <td style="text-align:right">Sí</td>
+        </tr>
+        <tr>
+          <td>
+            <div class="name-cell">
+              EST - Estructura
+              <svg class="edit-icon" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </div>
+          </td>
+          <td><span class="status status-open"><span class="status-dot"></span>Abierto</span></td>
+          <td style="text-align:right">432</td>
+          <td>carlos</td>
+          <td style="text-align:right">Sí</td>
+        </tr>
+        <tr>
+          <td>
+            <div class="name-cell">
+              MEP - Instalaciones
+              <svg class="edit-icon" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </div>
+          </td>
+          <td><span class="status status-open"><span class="status-dot"></span>Abierto</span></td>
+          <td style="text-align:right">289</td>
+          <td>—</td>
+          <td style="text-align:right">Todos</td>
+        </tr>
+        <tr>
+          <td>
+            <div class="name-cell">
+              INT - Interiores
+              <svg class="edit-icon" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </div>
+          </td>
+          <td><span class="status status-open"><span class="status-dot"></span>Abierto</span></td>
+          <td style="text-align:right">178</td>
+          <td>—</td>
+          <td style="text-align:right">Todos</td>
+        </tr>
+        <tr>
+          <td>
+            <div class="name-cell">
+              COORD - Coordinación
+              <svg class="edit-icon" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </div>
+          </td>
+          <td><span class="status status-open"><span class="status-dot"></span>Abierto</span></td>
+          <td style="text-align:right">67</td>
+          <td>rodrigo</td>
+          <td style="text-align:right">Sí</td>
+        </tr>
+        <tr>
+          <td>
+            <div class="name-cell">
+              VIS - Vistas y Planos
+              <svg class="edit-icon" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </div>
+          </td>
+          <td><span class="status status-open"><span class="status-dot"></span>Abierto</span></td>
+          <td style="text-align:right">312</td>
+          <td>—</td>
+          <td style="text-align:right">Todos</td>
+        </tr>
+        <tr>
+          <td>
+            <div class="name-cell">
+              TEMP - Temporal
+              <svg class="edit-icon" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </div>
+          </td>
+          <td><span class="status status-closed"><span class="status-dot"></span>Cerrado</span></td>
+          <td style="text-align:right">143</td>
+          <td>—</td>
+          <td style="text-align:right">No</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Excel template preview -->
+  <div class="template-info">
+    <div class="template-label">Formato Excel (.xlsx) para importación</div>
+    <div class="excel-preview">
+      <div class="excel-toolbar">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+        Subproyectos.xlsx
+      </div>
+      <div class="excel-grid">
+        <div class="excel-col-header"></div>
+        <div class="excel-col-header">A</div>
+        <div class="excel-col-header">B</div>
+        <div class="excel-row-num">1</div>
+        <div class="excel-cell header">Nombre</div>
+        <div class="excel-cell header">Estado</div>
+        <div class="excel-row-num">2</div>
+        <div class="excel-cell">ARQ - Arquitectura</div>
+        <div class="excel-cell">Abierto</div>
+        <div class="excel-row-num">3</div>
+        <div class="excel-cell">EST - Estructura</div>
+        <div class="excel-cell">Abierto</div>
+        <div class="excel-row-num">4</div>
+        <div class="excel-cell">MEP - Instalaciones</div>
+        <div class="excel-cell">Abierto</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PIE DE PÁGINA -->
+<div class="footer">
+  <span class="footer-info"><strong>8</strong> subproyectos — <strong>3,522</strong> elementos en total</span>
+  <div class="footer-buttons">
+    <button class="btn-close">Cerrar</button>
+  </div>
+</div>
+
+</body>
+</html>

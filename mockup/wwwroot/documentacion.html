@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BIMPills — Documentación</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --azul: #212B37;
+    --naranja: #EF6337;
+    --blanco: #FBFAF8;
+    --bg: #F0F0F0;
+    --card-bg: #FFFFFF;
+    --card-border: #E5E5EA;
+    --caption: #8E8E93;
+  }
+
+  body {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--azul);
+    width: 580px;
+    height: 400px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .header {
+    margin: 16px 20px 0;
+    background: var(--card-bg);
+    border-radius: 10px;
+    border: 0.5px solid var(--card-border);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+    flex-shrink: 0;
+  }
+  .header img { width: 24px; height: 38px; object-fit: contain; }
+  .header-text { display: flex; flex-direction: column; gap: 2px; }
+  .header-label { font-size: 12px; font-weight: 500; color: var(--naranja); }
+  .header-title { font-size: 17px; font-weight: 600; color: var(--azul); }
+  .header-subtitle { font-size: 12px; color: var(--caption); }
+
+  .empty-section {
+    margin: 12px 20px 0;
+    background: var(--card-bg);
+    border-radius: 10px;
+    border: 0.5px solid var(--card-border);
+    box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 40px;
+  }
+
+  .empty-icon {
+    width: 56px; height: 56px; border-radius: 14px;
+    background: #F2F2F7;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 16px;
+  }
+  .empty-icon svg { width: 28px; height: 28px; stroke: #C7C7CC; fill: none; stroke-width: 1.5; }
+
+  .empty-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--azul);
+    margin-bottom: 6px;
+  }
+  .empty-desc {
+    font-size: 12px;
+    color: var(--caption);
+    line-height: 1.5;
+    max-width: 300px;
+  }
+
+  .footer {
+    padding: 10px 20px 14px;
+    display: flex;
+    justify-content: flex-end;
+    flex-shrink: 0;
+  }
+  .btn-close {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    padding: 7px 20px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--azul);
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s;
+  }
+  .btn-close:hover { background: #F2F2F7; }
+
+  .back-link {
+    position: fixed; top: 8px; left: 8px;
+    font-size: 11px; color: var(--caption); text-decoration: none;
+  }
+  .back-link:hover { color: var(--azul); }
+</style>
+</head>
+<body>
+
+<a class="back-link" href="index.html">&larr; Mockups</a>
+
+<div class="header">
+  <img src="pill-icon.png" alt="BIMPills" />
+  <div class="header-text">
+    <span class="header-label">Documentación</span>
+    <span class="header-title">Proyecto_Residencial_2026</span>
+    <span class="header-subtitle">Modelo local</span>
+  </div>
+</div>
+
+<div class="empty-section">
+  <div class="empty-icon">
+    <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+  </div>
+  <div class="empty-title">Próximamente</div>
+  <div class="empty-desc">
+    Las herramientas de documentación estarán disponibles en una próxima actualización de BIM Pills.
+  </div>
+</div>
+
+<div class="footer">
+  <button class="btn-close">Cerrar</button>
+</div>
+
+</body>
+</html>

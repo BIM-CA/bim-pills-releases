@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>BIMPills — Test de Grafismo Arquitectónico</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', -apple-system, sans-serif;
+    background: #F0F0F0; color: #212B37;
+    padding: 30px; max-width: 900px; margin: 0 auto;
+  }
+  h1 { font-size: 18px; text-align: center; margin-bottom: 6px; }
+  .sub { font-size: 12px; color: #8E8E93; text-align: center; margin-bottom: 30px; }
+  .section { margin-bottom: 36px; }
+  .section h2 {
+    font-size: 13px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.5px; color: #8E8E93; margin-bottom: 12px;
+    border-bottom: 1px solid #E5E5EA; padding-bottom: 6px;
+  }
+  .options { display: flex; gap: 14px; flex-wrap: wrap; }
+  .option {
+    background: white; border-radius: 10px; padding: 16px;
+    border: 2px solid #E5E5EA; flex: 1; min-width: 260px;
+    cursor: pointer; transition: border-color 0.15s;
+  }
+  .option:hover { border-color: #C5C5CA; }
+  .option.pick { border-color: #EF6337; background: rgba(239,99,55,0.02); }
+  .option h3 { font-size: 12px; font-weight: 600; margin-bottom: 3px; }
+  .option p { font-size: 10px; color: #8E8E93; margin-bottom: 10px; line-height: 1.4; }
+  .option svg { width: 100%; display: block; }
+  .full { min-width: 100%; }
+  .ref { font-size: 10px; color: #8E8E93; margin-top: 4px; font-style: italic; }
+</style>
+
+<!-- Global SVG defs -->
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <!-- Wall hatch: 45° diagonal lines -->
+    <pattern id="wh" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="6" stroke="#212B37" stroke-width="0.6" opacity="0.35"/>
+    </pattern>
+    <pattern id="whSm" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="4" stroke="#212B37" stroke-width="0.5" opacity="0.3"/>
+    </pattern>
+  </defs>
+</svg>
+</head>
+<body>
+
+<h1>Test de Grafismo Arquitectónico</h1>
+<p class="sub">Elementos para la herramienta Acotado de Vanos &mdash; selecciona los que prefieras</p>
+
+<!-- ==================== MUROS ==================== -->
+<div class="section">
+  <h2>1. Muros en planta (corte horizontal)</h2>
+  <div class="options">
+
+    <div class="option" onclick="this.classList.toggle('pick')">
+      <h3>A &mdash; S&oacute;lido negro</h3>
+      <p>Rect&aacute;ngulo relleno negro. M&iacute;nimo, alto contraste.</p>
+      <svg viewBox="0 0 300 60">
+        <rect x="20" y="15" width="260" height="30" fill="#212B37"/>
+      </svg>
+    </div>
+
+    <div class="option" onclick="this.classList.toggle('pick')">
+      <h3>B &mdash; Doble l&iacute;nea + hatch 45&deg;</h3>
+      <p>L&iacute;neas paralelas con rayado diagonal. Convenci&oacute;n cl&aacute;sica de corte en planta.</p>
+      <svg viewBox="0 0 300 60">
+        <line x1="20" y1="15" x2="280" y2="15" stroke="#212B37" stroke-width="1.8"/>
+        <rect x="20" y="15" width="260" height="30" fill="url(#wh)"/>
+        <line x1="20" y1="45" x2="280" y2="45" stroke="#212B37" stroke-width="1.8"/>
+      </svg>
+    </div>
+
+    <div class="option" onclick="this.classList.toggle('pick')">
+      <h3>C &mdash; Doble l&iacute;nea + gris</h3>
+      <p>L&iacute;neas paralelas con relleno gris uniforme. Limpio.</p>
+      <svg viewBox="0 0 300 60">
+        <rect x="20" y="15" width="260" height="30" fill="#C8C8CC" stroke="#212B37" stroke-width="1.8"/>
+      </svg>
+    </div>
+
+  </div>
+</div>
+
+<!-- ==================== PUERTAS ==================== -->
+<div class="section">
+  <h2>2. Puerta simple en planta (vano en muro)</h2>
+  <p class="ref">Ref: dimensions.com &mdash; Door Hand Conventions. Hoja = rect&aacute;ngulo delgado (proporci&oacute;n ~1:24). Arco = cuarto de c&iacute;rculo desde posici&oacute;n cerrada a 90&deg; abierta.</p>
+  <br/>
+  <div class="options">
+
+    <div class="option full" onclick="this.classList.toggle('pick')">
+      <h3>A &mdash; Puerta 90&deg; abierta &mdash; hoja como rect&aacute;ngulo delgado</h3>
+      <p>Hoja representada como rect&aacute;ngulo delgado (grosor real ~4.5cm a escala). Arco de cuarto de c&iacute;rculo con l&iacute;nea discontinua. Bisagra en cara interior izquierda del vano. L&iacute;neas de jamba en bordes del vano.</p>
+      <svg viewBox="0 0 600 250">
+        <!-- Wall left — ends at x=192.5 flush with door leaf exterior face -->
+        <line x1="30" y1="70" x2="192.5" y2="70" stroke="#212B37" stroke-width="2"/>
+        <rect x="30" y="70" width="162.5" height="40" fill="url(#wh)"/>
+        <line x1="30" y1="110" x2="192.5" y2="110" stroke="#212B37" stroke-width="2"/>
+        <!-- Jamba izquierda — alineada con rostro exterior de la hoja -->
+        <line x1="192.5" y1="70" x2="192.5" y2="110" stroke="#212B37" stroke-width="2"/>
+
+        <!-- Wall right -->
+        <line x1="305" y1="70" x2="570" y2="70" stroke="#212B37" stroke-width="2"/>
+        <rect x="305" y="70" width="265" height="40" fill="url(#wh)"/>
+        <line x1="305" y1="110" x2="570" y2="110" stroke="#212B37" stroke-width="2"/>
+        <line x1="305" y1="70" x2="305" y2="110" stroke="#212B37" stroke-width="2"/>
+
+        <!-- Door leaf: thin rectangle, hinge at interior wall face -->
+        <!-- x=192.5, width=5 → exterior face at 192.5, interior face at 197.5 -->
+        <rect x="192.5" y="110" width="5" height="110" fill="none" stroke="#212B37" stroke-width="1.2" stroke-linejoin="round"/>
+
+        <!-- Arc: dashed quarter circle from closed to open position -->
+        <path d="M305 110 A110 110 0 0 1 195 220" stroke="#212B37" stroke-width="0.7" fill="none" stroke-dasharray="6,4"/>
+      </svg>
+    </div>
+
+    <div class="option full" onclick="this.classList.toggle('pick')">
+      <h3>B &mdash; Puerta 90&deg; abierta &mdash; hoja como l&iacute;nea gruesa</h3>
+      <p>Simplificaci&oacute;n: hoja como l&iacute;nea con stroke grueso. Arco discontinuo. Mismo esquema geom&eacute;trico.</p>
+      <svg viewBox="0 0 600 250">
+        <!-- Wall left — ends flush with door line center -->
+        <line x1="30" y1="70" x2="195" y2="70" stroke="#212B37" stroke-width="2"/>
+        <rect x="30" y="70" width="165" height="40" fill="url(#wh)"/>
+        <line x1="30" y1="110" x2="195" y2="110" stroke="#212B37" stroke-width="2"/>
+        <line x1="195" y1="70" x2="195" y2="110" stroke="#212B37" stroke-width="2"/>
+        <!-- Wall right -->
+        <line x1="305" y1="70" x2="570" y2="70" stroke="#212B37" stroke-width="2"/>
+        <rect x="305" y="70" width="265" height="40" fill="url(#wh)"/>
+        <line x1="305" y1="110" x2="570" y2="110" stroke="#212B37" stroke-width="2"/>
+        <line x1="305" y1="70" x2="305" y2="110" stroke="#212B37" stroke-width="2"/>
+
+        <!-- Door leaf: thick line from hinge downward -->
+        <line x1="195" y1="110" x2="195" y2="220" stroke="#212B37" stroke-width="3" stroke-linecap="round"/>
+
+        <!-- Arc: dashed -->
+        <path d="M305 110 A110 110 0 0 1 195 220" stroke="#212B37" stroke-width="0.7" fill="none" stroke-dasharray="6,4"/>
+      </svg>
+    </div>
+
+    <div class="option full" onclick="this.classList.toggle('pick')">
+      <h3>C &mdash; Puerta 90&deg; &mdash; hoja rect&aacute;ngulo + arco continuo</h3>
+      <p>Igual que A pero con arco de l&iacute;nea continua (no discontinua). Algunos est&aacute;ndares lo usan as&iacute;.</p>
+      <svg viewBox="0 0 600 250">
+        <!-- Wall left — flush with door leaf exterior -->
+        <line x1="30" y1="70" x2="192.5" y2="70" stroke="#212B37" stroke-width="2"/>
+        <rect x="30" y="70" width="162.5" height="40" fill="url(#wh)"/>
+        <line x1="30" y1="110" x2="192.5" y2="110" stroke="#212B37" stroke-width="2"/>
+        <line x1="192.5" y1="70" x2="192.5" y2="110" stroke="#212B37" stroke-width="2"/>
+        <!-- Wall right -->
+        <line x1="305" y1="70" x2="570" y2="70" stroke="#212B37" stroke-width="2"/>
+        <rect x="305" y="70" width="265" height="40" fill="url(#wh)"/>
+        <line x1="305" y1="110" x2="570" y2="110" stroke="#212B37" stroke-width="2"/>
+        <line x1="305" y1="70" x2="305" y2="110" stroke="#212B37" stroke-width="2"/>
+
+        <!-- Door leaf: thin rect, flush with jamba -->
+        <rect x="192.5" y="110" width="5" height="110" fill="none" stroke="#212B37" stroke-width="1.2" stroke-linejoin="round"/>
+
+        <!-- Arc: continuous thin line -->
+        <path d="M305 110 A110 110 0 0 1 195 220" stroke="#212B37" stroke-width="0.7" fill="none"/>
+      </svg>
+    </div>
+
+    <div class="option full" onclick="this.classList.toggle('pick')">
+      <h3>D &mdash; Puerta 45&deg; &mdash; hoja rect&aacute;ngulo + arco discontinuo</h3>
+      <p>Hoja a 45&deg; del muro (posici&oacute;n intermedia). M&aacute;s compacto visualmente. Arco completo de 90&deg;.</p>
+      <svg viewBox="0 0 600 220">
+        <!-- Wall left — flush with door leaf exterior -->
+        <line x1="30" y1="70" x2="192.5" y2="70" stroke="#212B37" stroke-width="2"/>
+        <rect x="30" y="70" width="162.5" height="40" fill="url(#wh)"/>
+        <line x1="30" y1="110" x2="192.5" y2="110" stroke="#212B37" stroke-width="2"/>
+        <line x1="192.5" y1="70" x2="192.5" y2="110" stroke="#212B37" stroke-width="2"/>
+        <!-- Wall right -->
+        <line x1="305" y1="70" x2="570" y2="70" stroke="#212B37" stroke-width="2"/>
+        <rect x="305" y="70" width="265" height="40" fill="url(#wh)"/>
+        <line x1="305" y1="110" x2="570" y2="110" stroke="#212B37" stroke-width="2"/>
+        <line x1="305" y1="70" x2="305" y2="110" stroke="#212B37" stroke-width="2"/>
+
+        <!-- Door leaf at 45°: hinge at (192.5,110), flush with jamba -->
+        <rect x="192.5" y="110" width="5" height="110" fill="none" stroke="#212B37" stroke-width="1.2" transform="rotate(45 192.5 110)"/>
+
+        <!-- Arc: dashed, full quarter circle -->
+        <path d="M305 110 A110 110 0 0 1 195 220" stroke="#212B37" stroke-width="0.7" fill="none" stroke-dasharray="6,4"/>
+      </svg>
+    </div>
+
+  </div>
+</div>
+
+<!-- ==================== COTAS ==================== -->
+<div class="section">
+  <h2>3. Marca de cota</h2>
+  <p class="ref">Convenci&oacute;n: ticks oblicuos 45&deg; (abajo-izq a arriba-der), m&aacute;s gruesos que la l&iacute;nea de cota. L&iacute;neas de extensi&oacute;n con gap de ~2mm antes del objeto.</p>
+  <br/>
+  <div class="options">
+
+    <div class="option" onclick="this.classList.toggle('pick')">
+      <h3>A &mdash; Oblicua 45&deg; simple</h3>
+      <p>Tick diagonal puro. Sin adornos. L&iacute;neas de extensi&oacute;n sobrepasan la l&iacute;nea de cota.</p>
+      <svg viewBox="0 0 300 90">
+        <!-- Extension lines: from object (y=75) up past dim line, extending above to y=25 -->
+        <line x1="50" y1="75" x2="50" y2="25" stroke="#EF6337" stroke-width="0.6" opacity="0.5"/>
+        <line x1="250" y1="75" x2="250" y2="25" stroke="#EF6337" stroke-width="0.6" opacity="0.5"/>
+        <!-- Dimension line — extends past ticks on both sides -->
+        <line x1="38" y1="40" x2="262" y2="40" stroke="#EF6337" stroke-width="0.8"/>
+        <!-- 45° ticks -->
+        <line x1="43" y1="47" x2="57" y2="33" stroke="#EF6337" stroke-width="3"/>
+        <line x1="243" y1="47" x2="257" y2="33" stroke="#EF6337" stroke-width="3"/>
+        <!-- Text above -->
+        <text x="150" y="32" text-anchor="middle" fill="#EF6337" font-size="13" font-weight="600">0.90</text>
+      </svg>
+    </div>
+
+    <div class="option" onclick="this.classList.toggle('pick')">
+      <h3>B &mdash; Oblicua + punto</h3>
+      <p>Tick 45&deg; con punto en la intersecci&oacute;n. Mayor visibilidad en pantalla.</p>
+      <svg viewBox="0 0 300 80">
+        <line x1="50" y1="48" x2="50" y2="60" stroke="#EF6337" stroke-width="0.6" opacity="0.5"/>
+        <line x1="250" y1="48" x2="250" y2="60" stroke="#EF6337" stroke-width="0.6" opacity="0.5"/>
+        <line x1="50" y1="40" x2="250" y2="40" stroke="#EF6337" stroke-width="0.8"/>
+        <line x1="43" y1="47" x2="57" y2="33" stroke="#EF6337" stroke-width="2"/>
+        <line x1="243" y1="47" x2="257" y2="33" stroke="#EF6337" stroke-width="2"/>
+        <circle cx="50" cy="40" r="2" fill="#EF6337"/>
+        <circle cx="250" cy="40" r="2" fill="#EF6337"/>
+        <text x="150" y="32" text-anchor="middle" fill="#EF6337" font-size="13" font-weight="600">0.90</text>
+      </svg>
+    </div>
+
+    <div class="option" onclick="this.classList.toggle('pick')">
+      <h3>C &mdash; Flechas cerradas</h3>
+      <p>Flechas triangulares rellenas. Estilo ingenier&iacute;a.</p>
+      <svg viewBox="0 0 300 80">
+        <line x1="50" y1="48" x2="50" y2="60" stroke="#EF6337" stroke-width="0.6" opacity="0.5"/>
+        <line x1="250" y1="48" x2="250" y2="60" stroke="#EF6337" stroke-width="0.6" opacity="0.5"/>
+        <line x1="58" y1="40" x2="242" y2="40" stroke="#EF6337" stroke-width="0.8"/>
+        <!-- Arrow left -->
+        <polygon points="50,40 60,36 60,44" fill="#EF6337"/>
+        <!-- Arrow right -->
+        <polygon points="250,40 240,36 240,44" fill="#EF6337"/>
+        <text x="150" y="32" text-anchor="middle" fill="#EF6337" font-size="13" font-weight="600">0.90</text>
+      </svg>
+    </div>
+
+  </div>
+</div>
+
+<!-- ==================== COMPOSICIÓN COMPLETA ==================== -->
+<div class="section">
+  <h2>4. Composici&oacute;n completa &mdash; Muro + Puerta + Cota</h2>
+  <div class="options">
+
+    <div class="option full" onclick="this.classList.toggle('pick')">
+      <h3>Muro hatch + Puerta rect 90&deg; + Cota oblicua</h3>
+      <svg viewBox="0 0 600 260">
+        <!-- Wall left — flush with door leaf exterior at x=192.5 -->
+        <line x1="30" y1="90" x2="192.5" y2="90" stroke="#212B37" stroke-width="2"/>
+        <rect x="30" y="90" width="162.5" height="40" fill="url(#wh)"/>
+        <line x1="30" y1="130" x2="192.5" y2="130" stroke="#212B37" stroke-width="2"/>
+        <line x1="192.5" y1="90" x2="192.5" y2="130" stroke="#212B37" stroke-width="2"/>
+        <!-- Wall right -->
+        <line x1="305" y1="90" x2="570" y2="90" stroke="#212B37" stroke-width="2"/>
+        <rect x="305" y="90" width="265" height="40" fill="url(#wh)"/>
+        <line x1="305" y1="130" x2="570" y2="130" stroke="#212B37" stroke-width="2"/>
+        <line x1="305" y1="90" x2="305" y2="130" stroke="#212B37" stroke-width="2"/>
+
+        <!-- Door: leaf rect flush with jamba -->
+        <rect x="192.5" y="130" width="5" height="110" fill="none" stroke="#212B37" stroke-width="1.2"/>
+        <!-- Arc: dashed quarter circle -->
+        <path d="M305 130 A110 110 0 0 1 195 240" stroke="#212B37" stroke-width="0.7" fill="none" stroke-dasharray="6,4"/>
+
+        <!-- DIMENSION -->
+        <!-- Extension lines: from jamba (x=192.5) up past dim line -->
+        <line x1="192.5" y1="86" x2="192.5" y2="40" stroke="#EF6337" stroke-width="0.6" opacity="0.5"/>
+        <line x1="305" y1="86" x2="305" y2="40" stroke="#EF6337" stroke-width="0.6" opacity="0.5"/>
+        <!-- Dimension line — extends past ticks -->
+        <line x1="180" y1="60" x2="318" y2="60" stroke="#EF6337" stroke-width="1"/>
+        <!-- 45° ticks -->
+        <line x1="185.5" y1="67" x2="199.5" y2="53" stroke="#EF6337" stroke-width="3"/>
+        <line x1="298" y1="67" x2="312" y2="53" stroke="#EF6337" stroke-width="3"/>
+        <!-- Text -->
+        <text x="249" y="50" text-anchor="middle" fill="#EF6337" font-size="15" font-weight="600">0.90</text>
+      </svg>
+    </div>
+
+    <div class="option full" onclick="this.classList.toggle('pick')">
+      <h3>Muro s&oacute;lido + Puerta rect 90&deg; + Cota oblicua</h3>
+      <svg viewBox="0 0 600 260">
+        <!-- Wall left solid -->
+        <rect x="30" y="90" width="165" height="40" fill="#212B37"/>
+        <!-- Wall right solid -->
+        <rect x="305" y="90" width="265" height="40" fill="#212B37"/>
+
+        <!-- Door -->
+        <rect x="192.5" y="130" width="5" height="110" fill="none" stroke="#212B37" stroke-width="1.2"/>
+        <path d="M305 130 A110 110 0 0 1 195 240" stroke="#212B37" stroke-width="0.7" fill="none" stroke-dasharray="6,4"/>
+
+        <!-- Dimension -->
+        <line x1="195" y1="86" x2="195" y2="40" stroke="#EF6337" stroke-width="0.6" opacity="0.5"/>
+        <line x1="305" y1="86" x2="305" y2="40" stroke="#EF6337" stroke-width="0.6" opacity="0.5"/>
+        <line x1="183" y1="60" x2="318" y2="60" stroke="#EF6337" stroke-width="1"/>
+        <line x1="188" y1="67" x2="202" y2="53" stroke="#EF6337" stroke-width="3"/>
+        <line x1="298" y1="67" x2="312" y2="53" stroke="#EF6337" stroke-width="3"/>
+        <text x="250" y="50" text-anchor="middle" fill="#EF6337" font-size="15" font-weight="600">0.90</text>
+      </svg>
+    </div>
+
+    <div class="option full" onclick="this.classList.toggle('pick')">
+      <h3>Muro gris + Puerta l&iacute;nea 90&deg; + Cota oblicua</h3>
+      <svg viewBox="0 0 600 260">
+        <!-- Wall left -->
+        <rect x="30" y="90" width="165" height="40" fill="#C8C8CC" stroke="#212B37" stroke-width="2"/>
+        <!-- Wall right -->
+        <rect x="305" y="90" width="265" height="40" fill="#C8C8CC" stroke="#212B37" stroke-width="2"/>
+
+
+        <!-- Door: line style -->
+        <line x1="195" y1="130" x2="195" y2="240" stroke="#212B37" stroke-width="2.5" stroke-linecap="round"/>
+        <path d="M305 130 A110 110 0 0 1 195 240" stroke="#212B37" stroke-width="0.7" fill="none" stroke-dasharray="6,4"/>
+
+        <!-- Dimension -->
+        <line x1="195" y1="86" x2="195" y2="40" stroke="#EF6337" stroke-width="0.6" opacity="0.5"/>
+        <line x1="305" y1="86" x2="305" y2="40" stroke="#EF6337" stroke-width="0.6" opacity="0.5"/>
+        <line x1="183" y1="60" x2="318" y2="60" stroke="#EF6337" stroke-width="1"/>
+        <line x1="188" y1="67" x2="202" y2="53" stroke="#EF6337" stroke-width="3"/>
+        <line x1="298" y1="67" x2="312" y2="53" stroke="#EF6337" stroke-width="3"/>
+        <text x="250" y="50" text-anchor="middle" fill="#EF6337" font-size="15" font-weight="600">0.90</text>
+      </svg>
+    </div>
+
+  </div>
+</div>
+
+<script>
+document.querySelectorAll('.option').forEach(o => {
+  o.addEventListener('click', (e) => { /* toggle handled inline */ });
+});
+</script>
+</body>
+</html>

@@ -8,6 +8,7 @@
     <RootNamespace>BIMPills.Revit</RootNamespace>
     <IncludeRevitRefs>true</IncludeRevitRefs>
     <UseWPF>true</UseWPF>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
   <ItemGroup>
@@ -24,11 +25,11 @@
       <DeployDir>$(AddinDir)\BIMPills</DeployDir>
     </PropertyGroup>
     <MakeDir Directories="$(DeployDir)" />
-    <Copy SourceFiles="$(OutputPath)BIMPills.Revit.dll"          DestinationFolder="$(DeployDir)" SkipUnchangedFiles="true" />
-    <Copy SourceFiles="$(OutputPath)BIMPills.Core.dll"           DestinationFolder="$(DeployDir)" SkipUnchangedFiles="true" />
-    <Copy SourceFiles="$(OutputPath)BIMPills.Infrastructure.dll" DestinationFolder="$(DeployDir)" SkipUnchangedFiles="true" />
-    <Copy SourceFiles="$(OutputPath)BIMPills.Commands.dll"       DestinationFolder="$(DeployDir)" SkipUnchangedFiles="true" />
-    <Copy SourceFiles="$(OutputPath)BIMPills.UI.dll"             DestinationFolder="$(DeployDir)" SkipUnchangedFiles="true" />
+    <!-- Copy all DLLs including NuGet dependencies (ClosedXML, etc.) -->
+    <ItemGroup>
+      <DeployFiles Include="$(OutputPath)*.dll" />
+    </ItemGroup>
+    <Copy SourceFiles="@(DeployFiles)" DestinationFolder="$(DeployDir)" SkipUnchangedFiles="true" />
     <Copy SourceFiles="$(MSBuildThisFileDirectory)..\..\manifests\Revit$(RevitVersion)\BIMPills.addin"
           DestinationFolder="$(AddinDir)" SkipUnchangedFiles="true" />
     <Message Text="BIM Pills deployed to $(DeployDir)" Importance="high" />

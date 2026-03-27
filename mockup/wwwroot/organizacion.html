@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BIMPills — Organización de Paneles</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --azul: #212B37;
+    --naranja: #EF6337;
+    --blanco: #FBFAF8;
+    --bg: #F0F0F0;
+    --card-bg: #FFFFFF;
+    --card-border: #E5E5EA;
+    --caption: #8E8E93;
+    --green: #34C759;
+  }
+  body {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--azul);
+    padding: 30px 40px;
+    max-width: 960px;
+    margin: 0 auto;
+  }
+
+  .page-header {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+  .page-header img { width: 32px; height: 50px; object-fit: contain; margin-bottom: 8px; }
+  .page-header h1 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+  .page-header p { font-size: 12px; color: var(--caption); }
+
+  /* ═══ RIBBON DIAGRAM ═══ */
+  .ribbon-box {
+    background: var(--card-bg);
+    border-radius: 12px;
+    border: 0.5px solid var(--card-border);
+    padding: 20px 24px;
+    box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+    margin-bottom: 28px;
+  }
+  .ribbon-label {
+    font-size: 10px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.5px; color: var(--caption); margin-bottom: 12px;
+  }
+  .tab-strip {
+    display: inline-block;
+    background: var(--naranja);
+    color: white;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 6px 18px;
+    border-radius: 6px 6px 0 0;
+    margin-bottom: 0;
+  }
+  .ribbon-area {
+    background: #F7F7FA;
+    border: 1px solid var(--card-border);
+    border-radius: 0 8px 8px 8px;
+    padding: 16px;
+    display: flex;
+    gap: 12px;
+  }
+
+  /* Panel */
+  .panel {
+    flex: 1;
+    background: var(--card-bg);
+    border-radius: 8px;
+    border: 1px solid var(--card-border);
+    overflow: hidden;
+  }
+  .panel-header {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--card-border);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--azul);
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    background: #FAFAFA;
+  }
+  .panel-body {
+    padding: 12px;
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+  }
+
+  /* Button in ribbon */
+  .ribbon-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    min-width: 56px;
+  }
+  .ribbon-icon {
+    width: 36px; height: 36px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .ribbon-icon svg { width: 18px; height: 18px; }
+  .ribbon-btn-label { font-size: 10px; font-weight: 500; color: var(--azul); text-align: center; }
+
+  /* ═══ TREE DIAGRAM ═══ */
+  .tree-section {
+    background: var(--card-bg);
+    border-radius: 12px;
+    border: 0.5px solid var(--card-border);
+    padding: 24px;
+    box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+    margin-bottom: 20px;
+  }
+  .tree-title {
+    font-size: 13px; font-weight: 700; margin-bottom: 20px;
+    padding-bottom: 10px; border-bottom: 1px solid #F2F2F7;
+  }
+
+  /* Tree nodes */
+  .tree { padding-left: 0; }
+  .tree, .tree ul { list-style: none; }
+  .tree ul { padding-left: 28px; margin-top: 6px; }
+  .tree li { position: relative; padding: 5px 0; }
+  .tree ul li::before {
+    content: '';
+    position: absolute;
+    left: -18px;
+    top: 0;
+    height: 100%;
+    width: 1px;
+    background: #D1D1D6;
+  }
+  .tree ul li::after {
+    content: '';
+    position: absolute;
+    left: -18px;
+    top: 16px;
+    width: 14px;
+    height: 1px;
+    background: #D1D1D6;
+  }
+  .tree ul li:last-child::before {
+    height: 16px;
+  }
+
+  .node {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .node-tab {
+    background: var(--naranja);
+    color: white;
+    font-weight: 700;
+    font-size: 13px;
+    padding: 8px 16px;
+  }
+  .node-panel {
+    background: var(--azul);
+    color: white;
+    font-weight: 600;
+  }
+  .node-button {
+    background: #EBF0F5;
+    color: var(--azul);
+    font-weight: 600;
+    border: 1px solid #D1D9E0;
+  }
+  .node-tool {
+    background: #FFF8F5;
+    color: #E65100;
+    border: 1px solid #FFE0D6;
+    font-weight: 500;
+  }
+  .node-coming {
+    background: #F2F2F7;
+    color: var(--caption);
+    border: 1px dashed #D1D1D6;
+    font-style: italic;
+  }
+  .node-icon {
+    width: 16px; height: 16px; border-radius: 4px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 10px;
+  }
+
+  .node-tag {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 9px;
+    font-weight: 600;
+    margin-left: 6px;
+  }
+  .tag-ready { background: #E8F5E9; color: #2E7D32; }
+  .tag-new { background: #FFF3E0; color: #E65100; }
+  .tag-empty { background: #F2F2F7; color: #8E8E93; }
+  .tag-planned { background: #E3F2FD; color: #1565C0; }
+
+  /* Tool details */
+  .tool-detail {
+    margin-left: 28px;
+    padding: 8px 12px;
+    font-size: 11px;
+    color: var(--caption);
+    line-height: 1.6;
+    border-left: 2px solid #F2F2F7;
+    margin-top: 4px;
+  }
+  .tool-detail strong { color: #3C3C43; }
+
+  .legend {
+    display: flex;
+    gap: 16px;
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid #F2F2F7;
+    flex-wrap: wrap;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    color: var(--caption);
+  }
+  .legend-dot {
+    width: 10px; height: 10px; border-radius: 3px;
+  }
+
+  .back-link {
+    position: fixed; top: 8px; left: 8px;
+    font-size: 11px; color: var(--caption); text-decoration: none;
+  }
+  .back-link:hover { color: var(--azul); }
+
+  .note {
+    background: #FFFDE7;
+    border: 1px solid #FFF9C4;
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 11px;
+    color: #5D4037;
+    line-height: 1.6;
+    margin-top: 20px;
+  }
+  .note strong { color: #E65100; }
+</style>
+</head>
+<body>
+
+<a class="back-link" href="index.html">&larr; Mockups</a>
+
+<div class="page-header">
+  <img src="pill-icon.png" alt="BIMPills" />
+  <h1>Organización de Paneles y Funciones</h1>
+  <p>Diagrama para aprobación — Tab "BIM Pills" en Revit</p>
+</div>
+
+<!-- ═══ RIBBON VISUAL ═══ -->
+<div class="ribbon-box">
+  <div class="ribbon-label">Vista del Ribbon en Revit</div>
+  <div class="tab-strip">BIM Pills</div>
+  <div class="ribbon-area">
+    <!-- Panel Datos -->
+    <div class="panel">
+      <div class="panel-header">Datos</div>
+      <div class="panel-body">
+        <div class="ribbon-btn">
+          <div class="ribbon-icon" style="background: #EBF0F5;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#212B37" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><path d="M9 5a2 2 0 012-2h2a2 2 0 012 2v0a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/><path d="M9 12h6M9 16h6"/></svg>
+          </div>
+          <span class="ribbon-btn-label">Auditoría</span>
+        </div>
+        <div class="ribbon-btn">
+          <div class="ribbon-icon" style="background: #EBF0F5;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#212B37" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </div>
+          <span class="ribbon-btn-label">Extracción</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel Procesos -->
+    <div class="panel">
+      <div class="panel-header">Procesos</div>
+      <div class="panel-body">
+        <div class="ribbon-btn">
+          <div class="ribbon-icon" style="background: #EBF0F5;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#212B37" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          </div>
+          <span class="ribbon-btn-label">Documentación</span>
+        </div>
+        <div class="ribbon-btn">
+          <div class="ribbon-icon" style="background: #EBF0F5;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#212B37" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          </div>
+          <span class="ribbon-btn-label">Gestión</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel Información -->
+    <div class="panel">
+      <div class="panel-header">Información</div>
+      <div class="panel-body">
+        <div class="ribbon-btn">
+          <div class="ribbon-icon" style="background: #EBF0F5;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#212B37" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          </div>
+          <span class="ribbon-btn-label">Acerca de</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ÁRBOL DE FUNCIONES ═══ -->
+<div class="tree-section">
+  <div class="tree-title">Árbol de Funciones Completo</div>
+  <ul class="tree">
+    <!-- Tab -->
+    <li>
+      <span class="node node-tab">Tab: BIM Pills</span>
+      <ul>
+        <!-- Panel Datos -->
+        <li>
+          <span class="node node-panel">Panel: Datos</span>
+          <ul>
+            <!-- Auditoría -->
+            <li>
+              <span class="node node-button">Auditoría</span>
+              <span class="node-tag tag-ready">Listo</span>
+              <div class="tool-detail">
+                Abre ventana de <strong>Auditoría de Modelo</strong> con:
+              </div>
+              <ul>
+                <li>
+                  <span class="node node-tool">Dashboard de Salud</span>
+                  <span class="node-tag tag-ready">Listo</span>
+                  <div class="tool-detail">Anillo de puntuación, peso del modelo, elementos, advertencias, purgables</div>
+                </li>
+                <li>
+                  <span class="node node-tool">Advertencias</span>
+                  <span class="node-tag tag-ready">Listo</span>
+                  <div class="tool-detail">Listado de advertencias del modelo con severidad y conteo de elementos</div>
+                </li>
+                <li>
+                  <span class="node node-tool">Familias</span>
+                  <span class="node-tag tag-ready">Listo</span>
+                  <div class="tool-detail">Tabla de familias cargadas con <strong>tamaño en MB</strong>, categoría e instancias</div>
+                </li>
+                <li>
+                  <span class="node node-tool">Vistas sin colocar</span>
+                  <span class="node-tag tag-ready">Listo</span>
+                  <div class="tool-detail">Vistas que no están en ningún sheet</div>
+                </li>
+                <li>
+                  <span class="node node-tool">Elementos huérfanos</span>
+                  <span class="node-tag tag-ready">Listo</span>
+                  <div class="tool-detail">Elementos sin categoría válida o importaciones CAD</div>
+                </li>
+                <li>
+                  <span class="node node-tool">Purgar elementos</span>
+                  <span class="node-tag tag-ready">Listo</span>
+                  <div class="tool-detail">Selección y eliminación de familias, vistas, materiales y tipos sin uso</div>
+                </li>
+                <li>
+                  <span class="node node-tool">Exportar PDF / CSV</span>
+                  <span class="node-tag tag-ready">Listo</span>
+                  <div class="tool-detail">Reporte de auditoría exportable</div>
+                </li>
+              </ul>
+            </li>
+
+            <!-- Extracción -->
+            <li>
+              <span class="node node-button">Extracción</span>
+              <span class="node-tag tag-new">Nuevo</span>
+              <div class="tool-detail">
+                Abre ventana de <strong>Extracción</strong> con:
+              </div>
+              <ul>
+                <li>
+                  <span class="node node-tool">Exportar Familias</span>
+                  <span class="node-tag tag-new">Nuevo</span>
+                  <div class="tool-detail">Exporta archivos .rfa organizados por categoría a carpetas locales. Filtro por categoría, vista previa de estructura de carpetas.</div>
+                </li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+
+        <!-- Panel Procesos -->
+        <li>
+          <span class="node node-panel">Panel: Procesos</span>
+          <ul>
+            <!-- Documentación -->
+            <li>
+              <span class="node node-button">Documentación</span>
+              <span class="node-tag tag-empty">Vacío</span>
+              <div class="tool-detail">Ventana reservada. Sin herramientas definidas aún.</div>
+            </li>
+
+            <!-- Gestión -->
+            <li>
+              <span class="node node-button">Gestión</span>
+              <span class="node-tag tag-planned">Planeado</span>
+              <div class="tool-detail">
+                Abre ventana de <strong>Gestión</strong> con:
+              </div>
+              <ul>
+                <li>
+                  <span class="node node-tool">Subproyectos</span>
+                  <span class="node-tag tag-planned">Planeado</span>
+                  <div class="tool-detail">
+                    <strong>Crear y gestionar subproyectos</strong> en el modelo de Revit.<br>
+                    — Importar lista de subproyectos desde <strong>Excel (.xlsx)</strong> formateado<br>
+                    — Exportar lista actual de subproyectos a Excel<br>
+                    — Crear subproyectos nuevos individualmente<br>
+                    — Renombrar subproyectos existentes<br>
+                    — Vista de tabla con nombre, estado y elementos asignados
+                  </div>
+                </li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+
+        <!-- Panel Información -->
+        <li>
+          <span class="node node-panel">Panel: Información</span>
+          <ul>
+            <li>
+              <span class="node node-button">Acerca de</span>
+              <span class="node-tag tag-ready">Listo</span>
+              <div class="tool-detail">Créditos, versión del plugin y enlace a BIM-CA. Rodrigo Flores + BIM-CA Team.</div>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+
+  <!-- Legend -->
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background: var(--naranja);"></div> Tab</div>
+    <div class="legend-item"><div class="legend-dot" style="background: var(--azul);"></div> Panel</div>
+    <div class="legend-item"><div class="legend-dot" style="background: #EBF0F5; border: 1px solid #D1D9E0;"></div> Botón (abre ventana)</div>
+    <div class="legend-item"><div class="legend-dot" style="background: #FFF8F5; border: 1px solid #FFE0D6;"></div> Herramienta</div>
+    <div class="legend-item"><span class="node-tag tag-ready" style="margin:0;">Listo</span></div>
+    <div class="legend-item"><span class="node-tag tag-new" style="margin:0;">Nuevo</span></div>
+    <div class="legend-item"><span class="node-tag tag-planned" style="margin:0;">Planeado</span></div>
+    <div class="legend-item"><span class="node-tag tag-empty" style="margin:0;">Vacío</span></div>
+  </div>
+</div>
+
+<!-- Note about Subproyectos -->
+<div class="note">
+  <strong>Nota sobre Subproyectos:</strong> En Revit, los subproyectos (Worksets) se gestionan mediante la API <code>WorksetTable</code>.
+  Se puede crear nuevos worksets con <code>Workset.Create(doc, name)</code> y renombrarlos con <code>WorksetTable.RenameWorkset()</code>.
+  El import/export desde Excel permitiría preparar listas de nombres offline y aplicarlos en lote al modelo.
+  <strong>Requisito:</strong> el modelo debe tener Worksharing habilitado.
+</div>
+
+</body>
+</html>

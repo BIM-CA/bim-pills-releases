@@ -7,6 +7,7 @@
     <AssemblyName>BIMPills.UI</AssemblyName>
     <RootNamespace>BIMPills.UI</RootNamespace>
     <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
   </PropertyGroup>
 
   <ItemGroup>
@@ -17,6 +18,9 @@
   <!-- Imágenes embebidas como Resource (accesibles via pack URI) -->
   <ItemGroup>
     <Resource Include="Resources\pill-icon.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="ClosedXML" Version="0.105.0" />
   </ItemGroup>
 
 </Project>

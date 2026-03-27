@@ -1,5 +1,8 @@
 using Autodesk.Revit.UI;
 using BIMPills.Commands.About;
+using BIMPills.Commands.Documentacion;
+using BIMPills.Commands.ExportFamilies;
+using BIMPills.Commands.Gestion;
 using BIMPills.Commands.ModelAudit;
 using BIMPills.Core.Modules;
 using BIMPills.Core.Services;
@@ -75,10 +78,14 @@ namespace BIMPills.Revit.Application
         // Para agregar una nueva funcionalidad, añade una línea aquí.
         private static IEnumerable<IPluginModule> GetModules()
         {
+            // Panel: Datos
             yield return new ModelAuditModule();
+            yield return new ExportFamiliesModule();
+            // Panel: Procesos
+            yield return new DocumentacionModule();
+            yield return new GestionModule();
+            // Panel: Información
             yield return new AboutModule();
-            // yield return new ExportSchedulesModule();
-            // yield return new MaintenanceModule();
         }
     }
 }

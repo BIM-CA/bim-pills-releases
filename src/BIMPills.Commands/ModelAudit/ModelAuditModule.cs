@@ -7,7 +7,7 @@ namespace BIMPills.Commands.ModelAudit
     public sealed class ModelAuditModule : IPluginModule
     {
         public string TabName   => "BIMPills";
-        public string PanelName => "Auditoría";
+        public string PanelName => "Datos";
 
         public void BuildRibbon(IRibbonBuilder builder)
         {
@@ -18,7 +18,7 @@ namespace BIMPills.Commands.ModelAudit
             builder.AddPushButton(
                 tabName:             TabName,
                 panelName:           PanelName,
-                buttonName:          "Auditar Modelo",
+                buttonName:          "Auditar",
                 tooltip:             "Analiza advertencias, familias, vistas sin colocar y elementos huérfanos del modelo activo.",
                 commandTypeFullName: "BIMPills.Revit.Commands.ModelAudit.ModelAuditRevitCommand",
                 assemblyPath:        revitDll,

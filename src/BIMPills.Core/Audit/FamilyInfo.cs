@@ -15,8 +15,10 @@ namespace BIMPills.Core.Audit
             SizeBytes = sizeBytes;
         }
 
+        public double SizeMB => SizeBytes / 1_048_576.0;
+
         public string SizeLabel =>
-            SizeBytes >= 1_048_576 ? $"{SizeBytes / 1_048_576.0:F1} MB" :
+            SizeBytes >= 1_048_576 ? $"{SizeMB:F1} MB" :
             SizeBytes >= 1_024    ? $"{SizeBytes / 1_024.0:F1} KB" :
                                     $"{SizeBytes} B";
     }

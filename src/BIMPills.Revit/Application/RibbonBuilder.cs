@@ -15,8 +15,11 @@ namespace BIMPills.Revit.Application
         private static readonly Dictionary<string, Func<BitmapSource>> _iconFactories
             = new Dictionary<string, Func<BitmapSource>>
             {
-                ["audit"]  = RibbonIconFactory.CreateAuditIcon,
-                ["about"]  = RibbonIconFactory.CreateAboutIcon,
+                ["audit"]         = RibbonIconFactory.CreateAuditIcon,
+                ["about"]         = RibbonIconFactory.CreateAboutIcon,
+                ["export"]        = RibbonIconFactory.CreateExportIcon,
+                ["documentacion"] = RibbonIconFactory.CreateDocumentacionIcon,
+                ["gestion"]       = RibbonIconFactory.CreateGestionIcon,
             };
 
         public RibbonBuilder(UIControlledApplication app)

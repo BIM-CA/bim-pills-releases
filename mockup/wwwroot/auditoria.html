@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BIMPills — Auditoría de Modelo</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --azul: #212B37;
+    --naranja: #EF6337;
+    --blanco: #FBFAF8;
+    --bg: #F0F0F0;
+    --card-bg: #FFFFFF;
+    --card-border: #E5E5EA;
+    --caption: #8E8E93;
+    --metric-bg: #F9F9FB;
+    --green: #34C759;
+    --red: #FF3B30;
+  }
+
+  body {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--azul);
+    width: 920px;
+    height: 720px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ═══ ENCABEZADO ═══ */
+  .header {
+    margin: 16px 20px 0;
+    background: var(--card-bg);
+    border-radius: 10px;
+    border: 0.5px solid var(--card-border);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+    flex-shrink: 0;
+  }
+  .header img { width: 24px; height: 38px; object-fit: contain; }
+  .header-text { display: flex; flex-direction: column; gap: 2px; }
+  .header-label { font-size: 12px; font-weight: 500; color: var(--naranja); }
+  .header-title { font-size: 17px; font-weight: 600; color: var(--azul); }
+  .header-subtitle { font-size: 12px; color: var(--caption); }
+
+  /* ═══ DASHBOARD DE SALUD ═══ */
+  .health-dashboard {
+    margin: 12px 20px 0;
+    background: var(--card-bg);
+    border-radius: 10px;
+    border: 0.5px solid var(--card-border);
+    padding: 18px 20px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+    flex-shrink: 0;
+  }
+
+  .health-ring { position: relative; width: 80px; height: 80px; flex-shrink: 0; }
+  .health-ring svg { width: 80px; height: 80px; transform: rotate(-90deg); }
+  .health-ring .bg-circle { fill: none; stroke: #E5E5EA; stroke-width: 6; }
+  .health-ring .progress-circle {
+    fill: none; stroke-width: 6; stroke-linecap: round;
+    transition: stroke-dashoffset 1s ease;
+  }
+  .health-ring .score-text {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%); text-align: center;
+  }
+  .health-ring .score-number {
+    font-size: 22px; font-weight: 700; color: var(--azul);
+    display: block; line-height: 1.1;
+  }
+  .health-ring .score-label {
+    font-size: 9px; font-weight: 600; display: block; margin-top: 2px;
+  }
+
+  .metrics-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 8px; flex: 1;
+  }
+  .metric-card { background: var(--metric-bg); border-radius: 8px; padding: 10px 12px; }
+  .metric-label { font-size: 11px; color: var(--caption); margin-bottom: 4px; }
+  .metric-value { font-size: 17px; font-weight: 600; color: var(--azul); }
+  .metric-value.warning { color: var(--naranja); }
+  .metric-value.danger { color: var(--red); }
+  .metric-value.purgeable { color: var(--naranja); }
+
+  /* ═══ PESTAÑAS ═══ */
+  .tabs-container {
+    margin: 12px 20px 0;
+    background: var(--card-bg);
+    border-radius: 10px;
+    border: 0.5px solid var(--card-border);
+    padding: 12px;
+    box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .tab-bar {
+    display: flex; gap: 0;
+    border-bottom: 1px solid var(--card-border);
+    margin-bottom: 0;
+    flex-shrink: 0;
+  }
+  .tab-btn {
+    background: none; border: none;
+    padding: 8px 14px; font-size: 12px; font-weight: 500;
+    color: var(--caption); cursor: pointer;
+    border-bottom: 2px solid transparent;
+    font-family: inherit; transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .tab-btn:hover { color: var(--azul); }
+  .tab-btn.active { color: var(--azul); border-bottom-color: var(--naranja); }
+
+  .tab-content {
+    display: none;
+    flex: 1;
+    min-height: 0;
+    position: relative;
+  }
+  .tab-content.active { display: flex; flex-direction: column; }
+
+  /* Scrollable table wrapper */
+  .table-wrapper {
+    flex: 1;
+    overflow-y: auto;
+    position: relative;
+  }
+  .table-wrapper::-webkit-scrollbar { width: 6px; }
+  .table-wrapper::-webkit-scrollbar-track { background: transparent; }
+  .table-wrapper::-webkit-scrollbar-thumb { background: #D1D1D6; border-radius: 3px; }
+
+  /* Scroll indicators */
+  .scroll-indicator {
+    position: sticky;
+    left: 0; right: 0;
+    text-align: center;
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--caption);
+    padding: 4px 0;
+    z-index: 2;
+    pointer-events: none;
+  }
+  .scroll-indicator-top {
+    top: 0;
+    background: linear-gradient(to bottom, rgba(255,255,255,0.95) 60%, transparent);
+    display: none;
+  }
+  .scroll-indicator-bottom {
+    bottom: 0;
+    position: sticky;
+    background: linear-gradient(to top, rgba(255,255,255,0.95) 60%, transparent);
+    padding: 6px 0;
+  }
+  .scroll-indicator svg {
+    width: 12px; height: 12px;
+    vertical-align: middle; margin: 0 4px;
+    stroke: var(--caption); fill: none; stroke-width: 2;
+  }
+
+  /* Tabla */
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  thead { position: sticky; top: 0; z-index: 3; background: var(--card-bg); }
+  th {
+    text-align: left; padding: 8px 12px; font-weight: 600;
+    color: var(--azul); border-bottom: 1px solid var(--card-border);
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.3px;
+    background: var(--card-bg);
+  }
+  td { padding: 7px 12px; border-bottom: 1px solid #F2F2F7; color: #3C3C43; }
+  tr:hover td { background: #F9F9FB; }
+  .size-warning { color: var(--naranja); font-weight: 600; }
+  .size-danger { color: var(--red); font-weight: 600; }
+
+  /* Purge action bar */
+  .purge-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: #FFF8F5;
+    border: 1px solid #FFE0D6;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    flex-shrink: 0;
+  }
+  .purge-info { font-size: 11px; color: #3C3C43; }
+  .purge-info strong { color: var(--naranja); }
+  .purge-bar .btn-purge {
+    background: var(--naranja);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 16px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s;
+  }
+  .purge-bar .btn-purge:hover { background: #D84E24; }
+
+  /* Checkbox in purgeable table */
+  .purge-check {
+    width: 14px; height: 14px; accent-color: var(--naranja); cursor: pointer;
+  }
+
+  /* ═══ PIE DE PÁGINA ═══ */
+  .footer {
+    padding: 10px 20px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .footer-actions { display: flex; gap: 8px; }
+  .btn-export {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    padding: 7px 16px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--azul);
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn-export:hover { background: #F2F2F7; }
+  .btn-export svg { width: 14px; height: 14px; stroke: var(--azul); fill: none; stroke-width: 2; }
+  .btn-close {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    padding: 7px 24px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--azul);
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s;
+  }
+  .btn-close:hover { background: #F2F2F7; }
+
+  /* Badge */
+  .badge {
+    display: inline-block; padding: 2px 8px;
+    border-radius: 4px; font-size: 10px; font-weight: 600;
+  }
+  .badge-familia { background: #FFF3E0; color: #E65100; }
+  .badge-vista { background: #E3F2FD; color: #1565C0; }
+  .badge-material { background: #F3E5F5; color: #7B1FA2; }
+  .badge-tipo { background: #E8F5E9; color: #2E7D32; }
+
+  /* Category groups (families tab) */
+  .families-summary {
+    padding: 8px 12px;
+    font-size: 11px;
+    color: var(--caption);
+    border-bottom: 1px solid var(--card-border);
+    flex-shrink: 0;
+  }
+  .families-summary strong { color: var(--azul); }
+
+  .category-group {
+    border-bottom: 1px solid var(--card-border);
+  }
+  .category-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .category-header:hover { background: #F9F9FB; }
+  .chevron {
+    width: 14px; height: 14px;
+    stroke: var(--caption); fill: none; stroke-width: 2;
+    transition: transform 0.2s;
+    flex-shrink: 0;
+  }
+  .chevron.rotated-right { transform: rotate(-90deg); }
+  .category-badge {
+    display: inline-block; padding: 2px 10px; border-radius: 4px;
+    font-size: 11px; font-weight: 600;
+  }
+  .cat-mobiliario { background: #FFF3E0; color: #E65100; }
+  .cat-puertas { background: #E3F2FD; color: #1565C0; }
+  .cat-ventanas { background: #E8F5E9; color: #2E7D32; }
+  .cat-columnas { background: #F3E5F5; color: #7B1FA2; }
+  .cat-fontaneria { background: #E0F7FA; color: #00695C; }
+  .cat-iluminacion { background: #FFFDE7; color: #F57F17; }
+  .cat-muros { background: #EFEBE9; color: #4E342E; }
+  .cat-estructura { background: #ECEFF1; color: #37474F; }
+  .cat-electricidad { background: #FCE4EC; color: #AD1457; }
+  .cat-escaleras { background: #EDE7F6; color: #4527A0; }
+
+  .category-count { font-size: 11px; color: var(--caption); }
+  .category-size { font-size: 11px; color: var(--azul); font-weight: 600; margin-left: auto; }
+
+  .category-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .category-table.collapsed { display: none; }
+  .category-table th {
+    text-align: left; padding: 6px 12px 6px 36px; font-weight: 600;
+    color: var(--caption); font-size: 10px; text-transform: uppercase;
+    letter-spacing: 0.3px; border-bottom: 1px solid #F2F2F7;
+  }
+  .category-table td { padding: 5px 12px 5px 36px; border-bottom: 1px solid #F2F2F7; color: #3C3C43; }
+  .category-table tr:hover td { background: #F9F9FB; }
+  .category-more {
+    padding: 4px 36px 8px;
+    font-size: 10px; color: var(--caption); font-style: italic;
+  }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center; color: var(--caption);
+    padding: 40px; font-size: 13px;
+  }
+
+  /* Back link */
+  .back-link {
+    position: fixed; top: 8px; left: 8px;
+    font-size: 11px; color: var(--caption);
+    text-decoration: none;
+  }
+  .back-link:hover { color: var(--azul); }
+</style>
+</head>
+<body>
+
+<a class="back-link" href="index.html">&larr; Mockups</a>
+
+<!-- ENCABEZADO -->
+<div class="header">
+  <img src="pill-icon.png" alt="BIMPills" />
+  <div class="header-text">
+    <span class="header-label">Auditoría de Modelo</span>
+    <span class="header-title">Proyecto_Residencial_2026</span>
+    <span class="header-subtitle">Modelo local</span>
+  </div>
+</div>
+
+<!-- DASHBOARD DE SALUD -->
+<div class="health-dashboard">
+  <div class="health-ring">
+    <svg viewBox="0 0 80 80">
+      <circle class="bg-circle" cx="40" cy="40" r="33"/>
+      <circle class="progress-circle" cx="40" cy="40" r="33"
+              stroke="#34C759"
+              stroke-dasharray="207.35"
+              stroke-dashoffset="41.47"/>
+    </svg>
+    <div class="score-text">
+      <span class="score-number">80</span>
+      <span class="score-label" style="color: #34C759;">Bueno</span>
+    </div>
+  </div>
+
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <div class="metric-label">Peso del modelo</div>
+      <div class="metric-value">47.6 MB</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Elementos</div>
+      <div class="metric-value">3,522</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Advertencias</div>
+      <div class="metric-value warning">12</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Purgables</div>
+      <div class="metric-value purgeable">23</div>
+    </div>
+  </div>
+</div>
+
+<!-- PESTAÑAS -->
+<div class="tabs-container">
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('warnings')">Advertencias (12)</button>
+    <button class="tab-btn" onclick="switchTab('families')">Familias (105)</button>
+    <button class="tab-btn" onclick="switchTab('views')">Vistas sin colocar (21)</button>
+    <button class="tab-btn" onclick="switchTab('orphans')">Elementos huérfanos (3396)</button>
+    <button class="tab-btn" onclick="switchTab('purgeable')">Purgables (23)</button>
+  </div>
+
+  <!-- Advertencias -->
+  <div id="tab-warnings" class="tab-content active">
+    <div class="table-wrapper" onscroll="updateScrollIndicators(this)">
+      <table>
+        <thead><tr><th>Severidad</th><th>Descripción</th><th style="text-align:right">Elementos</th></tr></thead>
+        <tbody>
+          <tr><td><span class="badge" style="background:#FFEBEE;color:#C62828;">Error</span></td><td>Elementos duplicados en la misma ubicación</td><td style="text-align:right">4</td></tr>
+          <tr><td><span class="badge" style="background:#FFF3E0;color:#E65100;">Advertencia</span></td><td>Muros ligeramente fuera de eje</td><td style="text-align:right">3</td></tr>
+          <tr><td><span class="badge" style="background:#FFF3E0;color:#E65100;">Advertencia</span></td><td>Uniones de muro no resueltas</td><td style="text-align:right">2</td></tr>
+          <tr><td><span class="badge" style="background:#FFF3E0;color:#E65100;">Advertencia</span></td><td>Habitaciones no delimitadas</td><td style="text-align:right">1</td></tr>
+          <tr><td><span class="badge" style="background:#E3F2FD;color:#1565C0;">Info</span></td><td>Niveles sin vistas de planta asociadas</td><td style="text-align:right">2</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Familias (agrupadas por categoría) -->
+  <div id="tab-families" class="tab-content">
+    <div class="families-summary">
+      <span>105 familias en 10 categorías — Tamaño total: <strong>12.4 MB</strong></span>
+    </div>
+    <div class="table-wrapper" onscroll="updateScrollIndicators(this)">
+      <!-- Grupo: Mobiliario -->
+      <div class="category-group">
+        <div class="category-header" onclick="toggleCategory(this)">
+          <svg class="chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          <span class="category-badge cat-mobiliario">Mobiliario</span>
+          <span class="category-count">8 familias</span>
+          <span class="category-size">4.1 MB</span>
+        </div>
+        <table class="category-table">
+          <thead><tr><th>Familia</th><th>Tamaño</th><th style="text-align:right">Instancias</th></tr></thead>
+          <tbody>
+            <tr><td>M_Furniture_Desk_Standard</td><td class="size-danger">3.2 MB</td><td style="text-align:right">12</td></tr>
+            <tr><td>M_Furniture_Chair_Office</td><td>0.4 MB</td><td style="text-align:right">24</td></tr>
+            <tr><td>M_Furniture_Table_Round</td><td>0.3 MB</td><td style="text-align:right">6</td></tr>
+            <tr><td>M_Furniture_Shelf_Wall</td><td>0.2 MB</td><td style="text-align:right">8</td></tr>
+          </tbody>
+        </table>
+        <div class="category-more">… y 4 familias más</div>
+      </div>
+
+      <!-- Grupo: Puertas -->
+      <div class="category-group">
+        <div class="category-header" onclick="toggleCategory(this)">
+          <svg class="chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          <span class="category-badge cat-puertas">Puertas</span>
+          <span class="category-count">12 familias</span>
+          <span class="category-size">2.8 MB</span>
+        </div>
+        <table class="category-table">
+          <thead><tr><th>Familia</th><th>Tamaño</th><th style="text-align:right">Instancias</th></tr></thead>
+          <tbody>
+            <tr><td>M_Door_SingleFlush</td><td class="size-warning">1.8 MB</td><td style="text-align:right">45</td></tr>
+            <tr><td>M_Door_DoublePivot</td><td>0.5 MB</td><td style="text-align:right">8</td></tr>
+            <tr><td>M_Door_Sliding_Glass</td><td>0.3 MB</td><td style="text-align:right">12</td></tr>
+          </tbody>
+        </table>
+        <div class="category-more">… y 9 familias más</div>
+      </div>
+
+      <!-- Grupo: Ventanas -->
+      <div class="category-group">
+        <div class="category-header" onclick="toggleCategory(this)">
+          <svg class="chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          <span class="category-badge cat-ventanas">Ventanas</span>
+          <span class="category-count">15 familias</span>
+          <span class="category-size">2.4 MB</span>
+        </div>
+        <table class="category-table">
+          <thead><tr><th>Familia</th><th>Tamaño</th><th style="text-align:right">Instancias</th></tr></thead>
+          <tbody>
+            <tr><td>M_Curtain_Panel_Glazed</td><td class="size-warning">1.5 MB</td><td style="text-align:right">18</td></tr>
+            <tr><td>M_Window_DoubleHung</td><td>0.9 MB</td><td style="text-align:right">32</td></tr>
+          </tbody>
+        </table>
+        <div class="category-more">… y 13 familias más</div>
+      </div>
+
+      <!-- Grupo: Estructura -->
+      <div class="category-group">
+        <div class="category-header" onclick="toggleCategory(this)">
+          <svg class="chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          <span class="category-badge cat-estructura">Estructura</span>
+          <span class="category-count">6 familias</span>
+          <span class="category-size">1.1 MB</span>
+        </div>
+        <table class="category-table">
+          <thead><tr><th>Familia</th><th>Tamaño</th><th style="text-align:right">Instancias</th></tr></thead>
+          <tbody>
+            <tr><td>M_Structural_Beam_W</td><td>0.7 MB</td><td style="text-align:right">56</td></tr>
+            <tr><td>M_Structural_Foundation_Pad</td><td>0.4 MB</td><td style="text-align:right">12</td></tr>
+          </tbody>
+        </table>
+        <div class="category-more">… y 4 familias más</div>
+      </div>
+
+      <!-- Grupo: Escaleras -->
+      <div class="category-group">
+        <div class="category-header" onclick="toggleCategory(this)">
+          <svg class="chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          <span class="category-badge cat-escaleras">Escaleras</span>
+          <span class="category-count">3 familias</span>
+          <span class="category-size">1.2 MB</span>
+        </div>
+        <table class="category-table">
+          <thead><tr><th>Familia</th><th>Tamaño</th><th style="text-align:right">Instancias</th></tr></thead>
+          <tbody>
+            <tr><td>M_Stair_Precast</td><td class="size-warning">1.2 MB</td><td style="text-align:right">4</td></tr>
+          </tbody>
+        </table>
+        <div class="category-more">… y 2 familias más</div>
+      </div>
+
+      <!-- Grupo: Columnas -->
+      <div class="category-group">
+        <div class="category-header" onclick="toggleCategory(this)">
+          <svg class="chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          <span class="category-badge cat-columnas">Columnas</span>
+          <span class="category-count">4 familias</span>
+          <span class="category-size">0.6 MB</span>
+        </div>
+        <table class="category-table collapsed">
+          <thead><tr><th>Familia</th><th>Tamaño</th><th style="text-align:right">Instancias</th></tr></thead>
+          <tbody>
+            <tr><td>M_Column_Round</td><td>0.4 MB</td><td style="text-align:right">28</td></tr>
+            <tr><td>M_Column_Rectangular</td><td>0.2 MB</td><td style="text-align:right">14</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Grupo: Fontanería -->
+      <div class="category-group">
+        <div class="category-header" onclick="toggleCategory(this)">
+          <svg class="chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          <span class="category-badge cat-fontaneria">Fontanería</span>
+          <span class="category-count">5 familias</span>
+          <span class="category-size">0.5 MB</span>
+        </div>
+        <table class="category-table collapsed">
+          <thead><tr><th>Familia</th><th>Tamaño</th><th style="text-align:right">Instancias</th></tr></thead>
+          <tbody>
+            <tr><td>M_Plumbing_Fixture_Sink</td><td>0.3 MB</td><td style="text-align:right">8</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Grupos colapsados restantes -->
+      <div class="category-group">
+        <div class="category-header" onclick="toggleCategory(this)">
+          <svg class="chevron rotated-right" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          <span class="category-badge cat-iluminacion">Iluminación</span>
+          <span class="category-count">6 familias</span>
+          <span class="category-size">0.3 MB</span>
+        </div>
+        <table class="category-table collapsed"><tbody></tbody></table>
+      </div>
+
+      <div class="category-group">
+        <div class="category-header" onclick="toggleCategory(this)">
+          <svg class="chevron rotated-right" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          <span class="category-badge cat-electricidad">Electricidad</span>
+          <span class="category-count">4 familias</span>
+          <span class="category-size">0.2 MB</span>
+        </div>
+        <table class="category-table collapsed"><tbody></tbody></table>
+      </div>
+
+      <div class="category-group">
+        <div class="category-header" onclick="toggleCategory(this)">
+          <svg class="chevron rotated-right" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          <span class="category-badge cat-muros">Muros</span>
+          <span class="category-count">2 familias</span>
+          <span class="category-size">0.1 MB</span>
+        </div>
+        <table class="category-table collapsed"><tbody></tbody></table>
+      </div>
+
+      <div class="scroll-indicator scroll-indicator-bottom">
+        <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+        más categorías abajo
+      </div>
+    </div>
+  </div>
+
+  <!-- Vistas -->
+  <div id="tab-views" class="tab-content">
+    <div class="table-wrapper" onscroll="updateScrollIndicators(this)">
+      <table>
+        <thead><tr><th>Vista</th><th>Tipo</th></tr></thead>
+        <tbody>
+          <tr><td>Planta Nivel 1 - Trabajo</td><td>FloorPlan</td></tr>
+          <tr><td>Planta Nivel 2 - Borrador</td><td>FloorPlan</td></tr>
+          <tr><td>Planta Nivel 3 - Coordinación</td><td>FloorPlan</td></tr>
+          <tr><td>Sección Longitudinal - Borrador</td><td>Section</td></tr>
+          <tr><td>Sección Transversal - Rev1</td><td>Section</td></tr>
+          <tr><td>3D - Coordinación MEP</td><td>ThreeD</td></tr>
+          <tr><td>3D - Vista Trabajo</td><td>ThreeD</td></tr>
+          <tr><td>Detalle Muro Cortina - Rev2</td><td>Detail</td></tr>
+          <tr><td>Elevación Norte - Antiguo</td><td>Elevation</td></tr>
+          <tr><td>Elevación Sur - Trabajo</td><td>Elevation</td></tr>
+          <tr><td>Leyenda - Sin usar</td><td>Legend</td></tr>
+        </tbody>
+      </table>
+      <div class="scroll-indicator scroll-indicator-bottom">
+        <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+        más elementos abajo
+      </div>
+    </div>
+  </div>
+
+  <!-- Huérfanos -->
+  <div id="tab-orphans" class="tab-content">
+    <div class="table-wrapper" onscroll="updateScrollIndicators(this)">
+      <table>
+        <thead><tr><th>ID</th><th>Nombre</th><th>Categoría</th></tr></thead>
+        <tbody>
+          <tr><td>485231</td><td>(sin nombre)</td><td>Modelo genérico</td></tr>
+          <tr><td>485344</td><td>(sin nombre)</td><td>Modelo genérico</td></tr>
+          <tr><td>491002</td><td>ImportInstance_CAD_001</td><td>Importación CAD</td></tr>
+          <tr><td>491543</td><td>(sin nombre)</td><td>Modelo genérico</td></tr>
+          <tr><td>492100</td><td>ImportInstance_DWG_Topografia</td><td>Importación CAD</td></tr>
+          <tr><td>493211</td><td>(sin nombre)</td><td>Líneas de modelo</td></tr>
+          <tr><td>494555</td><td>Group_Old_Layout</td><td>Grupos</td></tr>
+          <tr><td>495001</td><td>(sin nombre)</td><td>Modelo genérico</td></tr>
+        </tbody>
+      </table>
+      <div class="scroll-indicator scroll-indicator-bottom">
+        <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+        más elementos abajo (3,388 restantes)
+      </div>
+    </div>
+  </div>
+
+  <!-- Purgables -->
+  <div id="tab-purgeable" class="tab-content">
+    <div class="purge-bar">
+      <span class="purge-info">Se encontraron <strong>23 elementos purgables</strong> — se liberarían aprox. <strong>4.8 MB</strong></span>
+      <button class="btn-purge">Purgar seleccionados</button>
+    </div>
+    <div class="table-wrapper" onscroll="updateScrollIndicators(this)">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:30px"><input type="checkbox" class="purge-check" checked onclick="toggleAll(this)"/></th>
+            <th>Nombre</th>
+            <th>Tipo</th>
+            <th>Categoría</th>
+            <th>Tamaño</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><input type="checkbox" class="purge-check" checked/></td><td>M_Casework_Bookshelf_Old</td><td><span class="badge badge-familia">Familia</span></td><td>Mobiliario</td><td class="size-warning">1.4 MB</td></tr>
+          <tr><td><input type="checkbox" class="purge-check" checked/></td><td>M_Generic_Placeholder_v2</td><td><span class="badge badge-familia">Familia</span></td><td>Modelo genérico</td><td>0.8 MB</td></tr>
+          <tr><td><input type="checkbox" class="purge-check" checked/></td><td>M_Electrical_Panel_Unused</td><td><span class="badge badge-familia">Familia</span></td><td>Electricidad</td><td>0.5 MB</td></tr>
+          <tr><td><input type="checkbox" class="purge-check" checked/></td><td>M_Railing_Old_Style</td><td><span class="badge badge-familia">Familia</span></td><td>Barandillas</td><td>0.3 MB</td></tr>
+          <tr><td><input type="checkbox" class="purge-check" checked/></td><td>Planta Nivel 3 - Descartada</td><td><span class="badge badge-vista">Vista</span></td><td>FloorPlan</td><td>—</td></tr>
+          <tr><td><input type="checkbox" class="purge-check" checked/></td><td>3D - Render Test Antiguo</td><td><span class="badge badge-vista">Vista</span></td><td>ThreeD</td><td>—</td></tr>
+          <tr><td><input type="checkbox" class="purge-check" checked/></td><td>Sección - Borrador Eliminado</td><td><span class="badge badge-vista">Vista</span></td><td>Section</td><td>—</td></tr>
+          <tr><td><input type="checkbox" class="purge-check" checked/></td><td>Concreto Expuesto - v1</td><td><span class="badge badge-material">Material</span></td><td>Materiales</td><td>0.2 MB</td></tr>
+          <tr><td><input type="checkbox" class="purge-check" checked/></td><td>Vidrio Templado - Antiguo</td><td><span class="badge badge-material">Material</span></td><td>Materiales</td><td>0.1 MB</td></tr>
+          <tr><td><input type="checkbox" class="purge-check" checked/></td><td>Muro Interior 15cm - Sin uso</td><td><span class="badge badge-tipo">Tipo</span></td><td>Muros</td><td>—</td></tr>
+        </tbody>
+      </table>
+      <div class="scroll-indicator scroll-indicator-bottom">
+        <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+        más elementos abajo (13 restantes)
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PIE DE PÁGINA -->
+<div class="footer">
+  <div class="footer-actions">
+    <button class="btn-export">
+      <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      Exportar PDF
+    </button>
+    <button class="btn-export">
+      <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Exportar CSV
+    </button>
+  </div>
+  <button class="btn-close">Cerrar</button>
+</div>
+
+<script>
+function switchTab(name) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  event.target.classList.add('active');
+}
+
+function toggleAll(master) {
+  document.querySelectorAll('#tab-purgeable .purge-check').forEach(cb => {
+    if (cb !== master) cb.checked = master.checked;
+  });
+}
+
+function updateScrollIndicators(wrapper) {
+  const topInd = wrapper.querySelector('.scroll-indicator-top');
+  const botInd = wrapper.querySelector('.scroll-indicator-bottom');
+  if (topInd) topInd.style.display = wrapper.scrollTop > 10 ? 'block' : 'none';
+  if (botInd) {
+    const atBottom = wrapper.scrollHeight - wrapper.scrollTop - wrapper.clientHeight < 10;
+    botInd.style.display = atBottom ? 'none' : 'block';
+  }
+}
+
+function toggleCategory(header) {
+  const table = header.nextElementSibling;
+  const more = table.nextElementSibling;
+  const chevron = header.querySelector('.chevron');
+  if (table.classList.contains('collapsed')) {
+    table.classList.remove('collapsed');
+    chevron.classList.remove('rotated-right');
+  } else {
+    table.classList.add('collapsed');
+    chevron.classList.add('rotated-right');
+  }
+}
+
+// Init scroll indicators on load
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.table-wrapper').forEach(w => updateScrollIndicators(w));
+});
+</script>
+</body>
+</html>
