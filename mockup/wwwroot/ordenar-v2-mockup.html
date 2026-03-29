@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BIMPills — Ordenar v2 (Mockup)</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --azul:    #1565C0;
+    --naranja: #EF6337;
+    --bg:      #F0F0F0;
+    --card:    #FFFFFF;
+    --border:  #E5E5EA;
+    --caption: #86868B;
+    --light:   #C7C7CC;
+    --green:   #2E7D32;
+    --red:     #C62828;
+  }
+
+  body {
+    font-family: 'Segoe UI', -apple-system, sans-serif;
+    background: #E8E8E8;
+    padding: 40px 24px;
+    display: flex;
+    gap: 48px;
+    align-items: flex-start;
+    justify-content: center;
+    flex-wrap: wrap;
+    min-height: 100vh;
+  }
+
+  .mockup-badge {
+    position: fixed; top: 8px; right: 8px;
+    background: var(--naranja); color: white;
+    font-size: 9px; font-weight: 700;
+    padding: 3px 8px; border-radius: 4px;
+    letter-spacing: 0.5px; text-transform: uppercase;
+    z-index: 100;
+  }
+
+  .col { display: flex; flex-direction: column; gap: 12px; align-items: center; }
+  .col-label {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1px; color: var(--caption);
+  }
+
+  /* ════ WINDOW SHELL ════ */
+  .window {
+    background: var(--bg);
+    border: 1px solid #BBBBBB;
+    border-radius: 8px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+    overflow: hidden;
+    font-size: 13px;
+    color: #1A1A2E;
+  }
+  .titlebar {
+    background: #F3F3F3;
+    border-bottom: 1px solid #DDDDDD;
+    padding: 7px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    color: #444;
+  }
+  .titlebar-btns { display: flex; gap: 5px; }
+  .tb-btn { width: 11px; height: 11px; border-radius: 50%; background: #D1D1D1; }
+
+  /* ════ CONFIG WINDOW ════ */
+  .config-window { width: 460px; }
+
+  .win-body { padding: 14px 16px 14px; display: flex; flex-direction: column; gap: 10px; }
+
+  /* Header card */
+  .header-card {
+    background: white; border: 0.5px solid var(--border);
+    border-radius: 8px; padding: 11px 14px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .pill-icon {
+    width: 18px; height: 30px; flex-shrink: 0;
+    background: linear-gradient(160deg, var(--naranja) 40%, #C0392B);
+    border-radius: 9px;
+    position: relative;
+  }
+  .pill-icon::after {
+    content:''; position: absolute; top: 4px; left: 50%;
+    transform: translateX(-50%);
+    width: 4px; height: 4px; border-radius: 50%;
+    background: rgba(255,255,255,0.65);
+  }
+  .h-label { font-size: 11px; font-weight: 600; color: var(--naranja); }
+  .h-title { font-size: 14px; font-weight: 700; color: #1A1A2E; }
+
+  /* Main card with tabs */
+  .main-card {
+    background: white; border: 0.5px solid var(--border);
+    border-radius: 8px; overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  }
+
+  /* Tab bar */
+  .tab-bar {
+    display: flex; border-bottom: 1px solid var(--border);
+    background: #FAFAFA; padding: 0 14px;
+  }
+  .tab {
+    padding: 9px 14px 8px; font-size: 12px; font-weight: 500;
+    color: var(--caption); border-bottom: 2px solid transparent;
+    margin-bottom: -1px; white-space: nowrap;
+  }
+  .tab.active { color: var(--azul); font-weight: 600; border-bottom-color: var(--azul); }
+  .tab.disabled { color: var(--light); font-style: italic; }
+
+  /* Form */
+  .form { padding: 14px 14px 0; display: flex; flex-direction: column; gap: 12px; }
+
+  .field-group { display: flex; flex-direction: column; gap: 4px; }
+  .field-label { font-size: 12px; font-weight: 600; color: #1A1A2E; }
+  .field-hint { font-size: 10px; color: var(--caption); margin-top: 1px; }
+
+  .combo {
+    height: 32px; border: 1px solid #D1D1D6; border-radius: 4px;
+    background: white; padding: 0 10px;
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 13px; color: #1A1A2E;
+  }
+  .combo-arrow { color: var(--caption); font-size: 10px; }
+
+  .fields-row { display: grid; grid-template-columns: 1fr 72px 72px 1fr; gap: 8px; }
+  .mini { display: flex; flex-direction: column; gap: 3px; }
+  .mini-lbl { font-size: 10px; color: var(--caption); }
+  .mini-input {
+    height: 32px; border: 1px solid #D1D1D6; border-radius: 4px;
+    background: white; padding: 0 8px;
+    display: flex; align-items: center;
+    font-size: 13px; color: #1A1A2E;
+  }
+  .mini-input.center { justify-content: center; }
+  .mini-input.ph { color: var(--light); font-size: 11px; }
+
+  /* Preview */
+  .preview-box {
+    background: #F7F7F9; border-radius: 8px;
+    padding: 10px 12px 12px;
+  }
+  .preview-lbl {
+    font-size: 10px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.6px; color: var(--caption);
+    text-align: center; margin-bottom: 9px;
+  }
+  .preview-pills {
+    display: flex; align-items: center; justify-content: center; gap: 5px;
+  }
+  .ppill {
+    height: 32px; min-width: 48px; padding: 0 10px;
+    border: 1.5px solid #D1D1D6; border-radius: 6px;
+    background: white; display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; font-family: 'Consolas', monospace;
+    color: #1A1A2E;
+  }
+  /* Solo el pill activo lleva borde azul — el resto oscuro */
+  .ppill.active { border-color: #1A1A2E; background: #F5F5F7; }
+  .ppill.faded { color: var(--light); border-color: #EBEBEB; background: #FAFAFA; }
+  .parrow { color: var(--light); font-size: 11px; }
+
+  /* Footer */
+  .footer {
+    border-top: 1px solid var(--border); padding: 10px 14px;
+    display: flex; justify-content: flex-end; gap: 8px;
+    background: white;
+  }
+  .btn {
+    height: 32px; padding: 0 18px; border-radius: 6px;
+    font-size: 12px; font-weight: 500; display: flex; align-items: center; gap: 5px;
+    font-family: 'Segoe UI', sans-serif; cursor: default;
+  }
+  .btn-sec { background: white; color: var(--azul); border: 1px solid #D1D1D6; }
+  .btn-pri { background: #1A1A2E; color: white; border: 1px solid #1A1A2E; font-weight: 700; }
+  .btn-pri .arr { font-size: 10px; }
+
+  /* ════ SESSION WINDOW ════ */
+  .session-window { width: 300px; }
+
+  /* Orange header — matches Ordenar accent */
+  .session-header {
+    background: var(--naranja); color: white;
+    padding: 10px 14px;
+    display: flex; align-items: center; gap: 8px;
+    font-size: 11px;
+  }
+  .session-header .icon-box {
+    width: 22px; height: 22px; border-radius: 4px;
+    background: rgba(255,255,255,0.2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; flex-shrink: 0;
+  }
+  .session-header .route {
+    flex: 1; font-size: 10px; color: rgba(255,255,255,0.75);
+  }
+  .session-header .route strong { color: white; font-size: 11px; }
+
+  /* Session body */
+  .sess-body { background: white; }
+
+  /* Next value display */
+  .next-val-section {
+    padding: 16px 14px 12px; text-align: center;
+    border-bottom: 1px solid var(--border);
+  }
+  .next-lbl {
+    font-size: 10px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.8px; color: var(--caption); margin-bottom: 8px;
+  }
+  .next-value {
+    font-size: 38px; font-weight: 800;
+    font-family: 'Consolas', monospace;
+    color: #1A1A2E; line-height: 1;
+  }
+
+  /* Stats row */
+  .stats-row {
+    display: flex; border-bottom: 1px solid var(--border);
+  }
+  .stat {
+    flex: 1; padding: 10px 6px; text-align: center;
+    border-right: 1px solid var(--border);
+  }
+  .stat:last-child { border-right: none; }
+  .stat-val { font-size: 17px; font-weight: 700; color: var(--azul); }
+  .stat-lbl { font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--caption); margin-top: 2px; }
+
+  /* Action buttons */
+  .actions { padding: 12px 10px; display: flex; flex-direction: column; gap: 7px; border-bottom: 1px solid var(--border); }
+
+  .act-btn {
+    height: 34px; border-radius: 6px; display: flex; align-items: center;
+    justify-content: center; gap: 7px;
+    font-size: 12px; font-weight: 600; cursor: default;
+    font-family: 'Segoe UI', sans-serif;
+  }
+  .act-btn.primary { background: var(--azul); color: white; }
+  .act-btn-row { display: flex; gap: 7px; }
+  .act-btn.secondary { flex: 1; background: #F5F5F7; color: #3A3A4A; border: 1px solid var(--border); font-weight: 500; }
+  .act-btn.success { flex: 1; background: #E8F5E9; color: var(--green); border: 1px solid #C8E6C9; }
+  .act-btn.danger {
+    background: #FFF5F5; color: var(--red); border: 1px solid #FFCDD2;
+    font-size: 11px; font-weight: 500;
+  }
+
+  /* History */
+  .history { padding: 10px 12px 12px; }
+  .hist-lbl {
+    font-size: 10px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.7px; color: var(--caption); margin-bottom: 8px;
+  }
+  .hist-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 0; border-bottom: 1px solid #F2F2F7;
+    font-size: 12px;
+  }
+  .hist-row:last-child { border-bottom: none; }
+  .hist-val { font-weight: 700; font-family: 'Consolas', monospace; color: var(--azul); width: 42px; }
+  .hist-id { color: var(--caption); flex: 1; font-size: 11px; }
+  .hist-badge {
+    font-size: 10px; font-weight: 600; padding: 2px 8px;
+    border-radius: 4px; background: #E8F5E9; color: var(--green);
+  }
+</style>
+</head>
+<body>
+<div class="mockup-badge">MOCKUP v2</div>
+
+<!-- ════ VENTANA 1: CONFIGURACIÓN ════ -->
+<div class="col">
+  <div class="col-label">① Configuración</div>
+
+  <div class="window config-window">
+    <div class="titlebar">
+      <span>BIMPills — Ordenar</span>
+      <div class="titlebar-btns">
+        <div class="tb-btn"></div><div class="tb-btn"></div><div class="tb-btn"></div>
+      </div>
+    </div>
+
+    <div class="win-body">
+
+      <!-- Header card -->
+      <div class="header-card">
+        <div class="pill-icon"></div>
+        <div>
+          <div class="h-label">Ordenar</div>
+          <div class="h-title">Numeración Incremental</div>
+        </div>
+      </div>
+
+      <!-- Main card -->
+      <div class="main-card">
+
+        <!-- Tabs -->
+        <div class="tab-bar">
+          <div class="tab active">Numeración Incremental</div>
+          <div class="tab disabled">Pronto...</div>
+        </div>
+
+        <!-- Form -->
+        <div class="form">
+
+          <div class="field-group">
+            <div class="field-label">Categoría</div>
+            <div class="combo"><span>Puertas</span><span class="combo-arrow">▾</span></div>
+            <div class="field-hint">Filtra los elementos que se pueden seleccionar en la vista</div>
+          </div>
+
+          <div class="field-group">
+            <div class="field-label">Parámetro a escribir</div>
+            <div class="combo"><span>Marca</span><span class="combo-arrow">▾</span></div>
+            <div class="field-hint">El valor incremental se escribirá en este parámetro</div>
+          </div>
+
+          <div class="fields-row">
+            <div class="mini">
+              <div class="mini-lbl">Prefijo</div>
+              <div class="mini-input">P-</div>
+            </div>
+            <div class="mini">
+              <div class="mini-lbl">Inicio</div>
+              <div class="mini-input center">1</div>
+            </div>
+            <div class="mini">
+              <div class="mini-lbl">Paso</div>
+              <div class="mini-input center">1</div>
+            </div>
+            <div class="mini">
+              <div class="mini-lbl">Sufijo</div>
+              <div class="mini-input ph">ej: -A</div>
+            </div>
+          </div>
+
+          <!-- Preview pills -->
+          <div class="preview-box">
+            <div class="preview-lbl">Vista previa de valores</div>
+            <div class="preview-pills">
+              <div class="ppill active">P-1</div>
+              <div class="parrow">→</div>
+              <div class="ppill">P-2</div>
+              <div class="parrow">→</div>
+              <div class="ppill">P-3</div>
+              <div class="parrow">→</div>
+              <div class="ppill faded">P-4</div>
+            </div>
+          </div>
+
+        </div><!-- /form -->
+
+        <!-- Footer -->
+        <div class="footer" style="margin-top:14px;">
+          <button class="btn btn-sec">Cancelar</button>
+          <button class="btn btn-pri"><span class="arr">▶</span> Iniciar</button>
+        </div>
+
+      </div><!-- /main-card -->
+
+    </div><!-- /win-body -->
+  </div><!-- /config-window -->
+</div>
+
+<!-- ════ VENTANA 2: SESIÓN FLOTANTE ════ -->
+<div class="col">
+  <div class="col-label">② Sesión activa (flotante)</div>
+
+  <div class="window session-window">
+
+    <!-- Dark header -->
+    <div class="session-header">
+      <div class="icon-box">✕</div>
+      <div>
+        <div class="route">ORDENAR · Puertas → Marca</div>
+        <div><strong>Sesión activa</strong></div>
+      </div>
+    </div>
+
+    <div class="sess-body">
+
+      <!-- Next value -->
+      <div class="next-val-section">
+        <div class="next-lbl">Siguiente valor</div>
+        <div class="next-value">P-4</div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-row">
+        <div class="stat">
+          <div class="stat-val">3</div>
+          <div class="stat-lbl">Asignados</div>
+        </div>
+        <div class="stat">
+          <div class="stat-val">P-1</div>
+          <div class="stat-lbl">Primero</div>
+        </div>
+        <div class="stat">
+          <div class="stat-val">P-3</div>
+          <div class="stat-lbl">Último</div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="actions">
+        <div class="act-btn primary">↑&nbsp; Seleccionar siguiente elemento</div>
+        <div class="act-btn-row">
+          <div class="act-btn secondary">↶&nbsp; Deshacer</div>
+          <div class="act-btn success">✓&nbsp; Finalizar</div>
+        </div>
+        <div class="act-btn danger">✕&nbsp; Cancelar (deshace todos los cambios)</div>
+      </div>
+
+      <!-- History -->
+      <div class="history">
+        <div class="hist-lbl">Historial</div>
+        <div class="hist-row">
+          <div class="hist-val">P-3</div>
+          <div class="hist-id">ID 456789</div>
+          <div class="hist-badge">Asignado</div>
+        </div>
+        <div class="hist-row">
+          <div class="hist-val">P-2</div>
+          <div class="hist-id">ID 456123</div>
+          <div class="hist-badge">Asignado</div>
+        </div>
+        <div class="hist-row">
+          <div class="hist-val">P-1</div>
+          <div class="hist-id">ID 455800</div>
+          <div class="hist-badge">Asignado</div>
+        </div>
+      </div>
+
+    </div><!-- /sess-body -->
+  </div><!-- /session-window -->
+</div>
+
+</body>
+</html>

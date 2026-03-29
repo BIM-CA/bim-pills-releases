@@ -1,0 +1,88 @@
+<Window x:Class="BIMPills.UI.Sandbox.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="BIMPills — UI Sandbox"
+        Width="340" SizeToContent="Height"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen"
+        Background="#F0F0F0">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/BIMPills.UI;component/Shared/Styles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <StackPanel Margin="20">
+
+        <!-- Header -->
+        <Border Style="{StaticResource CardBorder}" Margin="0,0,0,16">
+            <StackPanel>
+                <TextBlock Text="UI Sandbox" FontSize="18" FontWeight="Bold"
+                           Foreground="{StaticResource AccentBrush}" FontFamily="Segoe UI"/>
+                <TextBlock Text="Abre cualquier ventana con datos mock"
+                           FontSize="11" Foreground="#86868B" FontFamily="Segoe UI" Margin="0,4,0,0"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Panel Datos -->
+        <TextBlock Text="PANEL DATOS" FontSize="10" FontWeight="SemiBold"
+                   Foreground="#86868B" FontFamily="Segoe UI" Margin="4,0,0,8"/>
+
+        <Button Content="&#x1F50D;  Auditar (ModelAudit)"
+                Style="{StaticResource SecondaryButton}"
+                HorizontalAlignment="Stretch" Margin="0,0,0,6"
+                Click="OpenAuditar_Click"/>
+
+        <Button Content="&#x1F4E4;  Exportar (Familias + Planos)"
+                Style="{StaticResource SecondaryButton}"
+                HorizontalAlignment="Stretch" Margin="0,0,0,6"
+                Click="OpenExportar_Click"/>
+
+        <Button Content="&#x1F517;  Conectar (MCP)"
+                Style="{StaticResource SecondaryButton}"
+                HorizontalAlignment="Stretch" Margin="0,0,0,6"
+                Click="OpenConectar_Click"/>
+
+        <Button Content="&#x1F522;  Ordenar (Numeración)"
+                Style="{StaticResource SecondaryButton}"
+                HorizontalAlignment="Stretch" Margin="0,0,0,6"
+                Click="OpenOrdenar_Click"/>
+
+        <Button Content="&#x1F5C2;  Gestionar (Tablas)"
+                Style="{StaticResource SecondaryButton}"
+                HorizontalAlignment="Stretch" Margin="0,0,0,16"
+                Click="OpenGestionar_Click"/>
+
+        <!-- Panel Procesos -->
+        <TextBlock Text="PANEL PROCESOS" FontSize="10" FontWeight="SemiBold"
+                   Foreground="#86868B" FontFamily="Segoe UI" Margin="4,0,0,8"/>
+
+        <Button Content="&#x1F4D0;  Documentar (Acotar)"
+                Style="{StaticResource SecondaryButton}"
+                HorizontalAlignment="Stretch" Margin="0,0,0,6"
+                Click="OpenDocumentar_Click"/>
+
+        <Button Content="&#x2699;&#xFE0F;  Estandarizar (Worksets)"
+                Style="{StaticResource SecondaryButton}"
+                HorizontalAlignment="Stretch" Margin="0,0,0,16"
+                Click="OpenEstandarizar_Click"/>
+
+        <!-- Panel Info -->
+        <TextBlock Text="OTROS" FontSize="10" FontWeight="SemiBold"
+                   Foreground="#86868B" FontFamily="Segoe UI" Margin="4,0,0,8"/>
+
+        <Button Content="&#x1F4CB;  Esquemas Personalizados"
+                Style="{StaticResource SecondaryButton}"
+                HorizontalAlignment="Stretch" Margin="0,0,0,6"
+                Click="OpenCustomSchemes_Click"/>
+
+        <Button Content="&#x2139;&#xFE0F;  Acerca de"
+                Style="{StaticResource SecondaryButton}"
+                HorizontalAlignment="Stretch" Margin="0,0,0,0"
+                Click="OpenAbout_Click"/>
+
+    </StackPanel>
+</Window>

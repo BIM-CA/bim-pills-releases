@@ -2,6 +2,7 @@ using Autodesk.Revit.DB;
 using BIMPills.Core.Audit;
 using BIMPills.Core.Documentacion;
 using BIMPills.Core.Gestion;
+using BIMPills.Core.Models;
 using BIMPills.Core.Services;
 using System;
 using System.Collections.Generic;
@@ -351,10 +352,7 @@ namespace BIMPills.Revit.Context
         {
             try
             {
-                var activeView = _doc.ActiveView;
-                if (activeView == null) return 0;
-
-                return new FilteredElementCollector(_doc, activeView.Id)
+                return new FilteredElementCollector(_doc)
                     .OfCategory(BuiltInCategory.OST_Doors)
                     .WhereElementIsNotElementType()
                     .GetElementCount();
@@ -366,6 +364,339 @@ namespace BIMPills.Revit.Context
         {
             try { return _doc.ActiveView?.Name ?? "Vista desconocida"; }
             catch { return "Vista desconocida"; }
+        }
+
+        public int GetGridCountInActiveView()
+        {
+            try
+            {
+                return new FilteredElementCollector(_doc)
+                    .OfClass(typeof(Grid))
+                    .GetElementCount();
+            }
+            catch { return 0; }
+        }
+
+        public int GetWallCountInActiveView()
+        {
+            try
+            {
+                return new FilteredElementCollector(_doc)
+                    .OfCategory(BuiltInCategory.OST_Walls)
+                    .WhereElementIsNotElementType()
+                    .GetElementCount();
+            }
+            catch { return 0; }
+        }
+
+        public int GetArqLevelCount()
+        {
+            try
+            {
+                return new FilteredElementCollector(_doc)
+                    .OfClass(typeof(Level))
+                    .Cast<Level>()
+                    .Count(lv =>
+                    {
+                        var lvType = _doc.GetElement(lv.GetTypeId());
+                        return lvType != null && lvType.Name.IndexOf("ARQ", System.StringComparison.OrdinalIgnoreCase) >= 0;
+                    });
+            }
+            catch { return 0; }
+        }
+
+        // ── Exportar Planos ──
+
+        public IReadOnlyList<SheetExportInfo> GetSheets()
+        {
+            try
+            {
+                return new FilteredElementCollector(_doc)
+                    .OfClass(typeof(ViewSheet))
+                    .Cast<ViewSheet>()
+                    .Where(s => !s.IsPlaceholder)
+                    .Select(s => new SheetExportInfo(
+                        GetElementIdValue(s.Id),
+                        s.SheetNumber,
+                        s.Name,
+                        s.get_Parameter(BuiltInParameter.SHEET_CURRENT_REVISION)?.AsString() ?? "",
+                        s.LookupParameter("Discipline")?.AsString() ?? "",
+                        GetAllParameterValues(s)))
+                    .OrderBy(s => s.SheetNumber)
+                    .ToList();
+            }
+            catch { return new List<SheetExportInfo>(); }
+        }
+
+        public IReadOnlyList<string> GetSheetParameterNames()
+        {
+            try
+            {
+                var firstSheet = new FilteredElementCollector(_doc)
+                    .OfClass(typeof(ViewSheet))
+                    .FirstElement();
+
+                if (firstSheet == null) return new List<string>();
+
+                var names = new SortedSet<string>();
+                foreach (Parameter p in firstSheet.Parameters)
+                {
+                    if (p.Definition?.Name != null && p.HasValue && p.StorageType != StorageType.None)
+                        names.Add(p.Definition.Name);
+                }
+                return names.ToList();
+            }
+            catch { return new List<string>(); }
+        }
+
+        private static Dictionary<string, string> GetAllParameterValues(Element element)
+        {
+            var values = new Dictionary<string, string>();
+            try
+            {
+                foreach (Parameter p in element.Parameters)
+                {
+                    if (p.Definition?.Name == null || !p.HasValue) continue;
+                    string val;
+                    switch (p.StorageType)
+                    {
+                        case StorageType.String:
+                            val = p.AsString() ?? "";
+                            break;
+                        case StorageType.Integer:
+                            val = p.AsInteger().ToString();
+                            break;
+                        case StorageType.Double:
+                            val = p.AsValueString() ?? p.AsDouble().ToString("F2");
+                            break;
+                        case StorageType.ElementId:
+                            val = p.AsValueString() ?? "";
+                            break;
+                        default:
+                            continue;
+                    }
+                    if (!string.IsNullOrEmpty(val))
+                        values[p.Definition.Name] = val;
+                }
+            }
+            catch { }
+            return values;
+        }
+
+        public string GetProjectName()
+        {
+            try
+            {
+                return _doc.ProjectInformation?.Name ?? _doc.Title;
+            }
+            catch { return _doc.Title; }
+        }
+
+        // ── Gestionar: SheetLink ──
+
+        public IReadOnlyList<ScheduleInfo> GetSchedules()
+        {
+            try
+            {
+                return new FilteredElementCollector(_doc)
+                    .OfClass(typeof(ViewSchedule))
+                    .Cast<ViewSchedule>()
+                    .Where(vs => !vs.IsTemplate && !vs.IsTitleblockRevisionSchedule)
+                    .Select(vs =>
+                    {
+                        int rowCount = 0;
+                        try
+                        {
+                            rowCount = vs.GetTableData()
+                                         .GetSectionData(SectionType.Body)
+                                         .NumberOfRows;
+                        }
+                        catch { }
+
+                        string categoryName = "";
+                        try
+                        {
+                            if (vs.Definition.CategoryId != ElementId.InvalidElementId)
+                                categoryName = Category.GetCategory(_doc, vs.Definition.CategoryId)?.Name ?? "";
+                        }
+                        catch { }
+
+                        return new ScheduleInfo
+                        {
+                            Id           = GetElementIdValue(vs.Id),
+                            Name         = vs.Name,
+                            CategoryName = categoryName,
+                            RowCount     = rowCount,
+                            ColumnCount  = vs.Definition.GetFieldCount()
+                        };
+                    })
+                    .OrderBy(s => s.Name)
+                    .ToList();
+            }
+            catch { return new List<ScheduleInfo>(); }
+        }
+
+        public ScheduleData GetScheduleData(long scheduleId)
+        {
+            try
+            {
+                var vs = _doc.GetElement(new ElementId((int)scheduleId)) as ViewSchedule;
+                if (vs == null) return new ScheduleData();
+
+                var definition = vs.Definition;
+                var fieldCount = definition.GetFieldCount();
+
+                // Build visible fields list for column metadata
+                var fields = new List<ScheduleField>();
+                for (int i = 0; i < fieldCount; i++)
+                {
+                    var f = definition.GetField(i);
+                    if (!f.IsHidden) fields.Add(f);
+                }
+
+                var columns = fields.Select(f => new ScheduleColumnInfo
+                {
+                    Name          = f.ColumnHeading,
+                    ParameterName = f.GetName(),
+                    IsReadOnly    = f.IsCalculatedField || f.ParameterId == ElementId.InvalidElementId,
+                    StorageType   = "String"
+                }).ToList();
+
+                // Read data directly from the rendered schedule table.
+                // SectionType.Body may include: column header rows, group header rows,
+                // blank separator rows, and actual data rows. We must filter carefully.
+                var tableData = vs.GetTableData();
+                var bodyData  = tableData.GetSectionData(SectionType.Body);
+                int bodyRows  = bodyData.NumberOfRows;
+                int bodyCols  = bodyData.NumberOfColumns;
+
+                // Get elements from the schedule for ElementId mapping.
+                // These are in the same order as the actual data rows (excluding
+                // headers, group headers, and separators).
+                var elements = new List<Element>();
+                try
+                {
+                    elements = new FilteredElementCollector(_doc, vs.Id)
+                        .WhereElementIsNotElementType()
+                        .ToElements()
+                        .ToList();
+                }
+                catch { }
+
+                var rows = new List<List<string>>();
+                var elementIds = new List<long>();
+                int dataRowIdx = 0; // Counter for actual data rows (maps to elements list)
+
+                for (int r = 0; r < bodyRows; r++)
+                {
+                    // Read all cell values for this row
+                    var cellValues = new List<string>();
+                    for (int c = 0; c < bodyCols && c < columns.Count; c++)
+                    {
+                        try   { cellValues.Add(vs.GetCellText(SectionType.Body, r, c)); }
+                        catch { cellValues.Add(""); }
+                    }
+
+                    // Skip completely empty rows (separators)
+                    if (cellValues.All(v => string.IsNullOrWhiteSpace(v)))
+                        continue;
+
+                    // Skip rows that match the column headers exactly (duplicate header)
+                    if (cellValues.Count == columns.Count)
+                    {
+                        bool isHeaderRow = true;
+                        for (int c = 0; c < cellValues.Count; c++)
+                        {
+                            if (cellValues[c] != columns[c].Name)
+                            { isHeaderRow = false; break; }
+                        }
+                        if (isHeaderRow) continue;
+                    }
+
+                    // Detect group header rows: only the first cell has content,
+                    // all other cells are empty. These are category/level groupings
+                    // like "Arquitectura" and have no corresponding element.
+                    int nonEmptyCells = cellValues.Count(v => !string.IsNullOrWhiteSpace(v));
+                    if (nonEmptyCells == 1 && !string.IsNullOrWhiteSpace(cellValues[0])
+                        && cellValues.Skip(1).All(v => string.IsNullOrWhiteSpace(v)))
+                        continue;
+
+                    // This is an actual data row — add it
+                    rows.Add(cellValues);
+
+                    if (dataRowIdx < elements.Count)
+                        elementIds.Add((long)GetElementIdValue(elements[dataRowIdx].Id));
+                    else
+                        elementIds.Add(0);
+
+                    dataRowIdx++;
+                }
+
+                var schedules = GetSchedules();
+                var info = schedules.FirstOrDefault(s => s.Id == scheduleId)
+                           ?? new ScheduleInfo { Id = scheduleId, Name = vs.Name };
+
+                return new ScheduleData
+                {
+                    Schedule   = info,
+                    Columns    = columns,
+                    ElementIds = elementIds,
+                    Rows       = rows
+                };
+            }
+            catch { return new ScheduleData(); }
+        }
+
+        public ParameterUpdateResult ApplyParameterUpdates(IReadOnlyList<ParameterUpdateRequest> updates)
+        {
+            int updated = 0, skipped = 0;
+            var errors = new List<string>();
+
+            try
+            {
+                using var tx = new Transaction(_doc, "BIMPills: Importar parámetros");
+                tx.Start();
+                foreach (var req in updates)
+                {
+                    try
+                    {
+                        var element = _doc.GetElement(new ElementId((int)req.ElementId));
+                        var param   = element?.LookupParameter(req.ParameterName);
+                        if (param == null || param.IsReadOnly) { skipped++; continue; }
+
+                        switch (param.StorageType)
+                        {
+                            case StorageType.String:
+                                param.Set(req.NewValue ?? "");
+                                break;
+                            case StorageType.Integer:
+                                if (int.TryParse(req.NewValue, out int iv)) param.Set(iv);
+                                else skipped++;
+                                break;
+                            case StorageType.Double:
+                                if (double.TryParse(req.NewValue, out double dv)) param.Set(dv);
+                                else skipped++;
+                                break;
+                            default:
+                                skipped++;
+                                continue;
+                        }
+                        updated++;
+                    }
+                    catch (Exception ex)
+                    {
+                        errors.Add($"ID {req.ElementId} / {req.ParameterName}: {ex.Message}");
+                        skipped++;
+                    }
+                }
+                if (updated > 0) tx.Commit(); else tx.RollBack();
+            }
+            catch (Exception ex)
+            {
+                errors.Add($"Error de transacción: {ex.Message}");
+            }
+
+            return new ParameterUpdateResult { Updated = updated, Skipped = skipped, Errors = errors };
         }
 
         private long EstimateFamilySize(Family family)

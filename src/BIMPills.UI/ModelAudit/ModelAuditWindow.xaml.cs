@@ -204,6 +204,13 @@ namespace BIMPills.UI.ModelAudit
 
         // ── Export ─────────────────────────────────────────────────────
 
+        private void OpenExportAudit_Click(object sender, RoutedEventArgs e)
+        {
+            var exportWindow = new ExportAudit.ExportAuditWindow(_result);
+            try { exportWindow.Owner = this; } catch { }
+            exportWindow.ShowDialog();
+        }
+
         private void ExportPdf_Click(object sender, RoutedEventArgs e)
         {
             var dialog = new Microsoft.Win32.SaveFileDialog

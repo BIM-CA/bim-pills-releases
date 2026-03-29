@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BIMPills — Exportar Planos</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --azul: #212B37;
+    --naranja: #EF6337;
+    --bg: #F0F0F0;
+    --card-bg: #FFFFFF;
+    --card-border: #E5E5EA;
+    --caption: #86868B;
+    --accent-bg: #FFF3E0;
+    --green: #34C759;
+    --green-bg: #E8F5E9;
+    --metric-bg: #F9F9FB;
+  }
+
+  body {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--azul);
+    width: 920px;
+    height: 760px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ═══ HEADER ═══ */
+  .header {
+    margin: 16px 20px 0;
+    background: var(--card-bg);
+    border-radius: 10px;
+    border: 0.5px solid var(--card-border);
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+    flex-shrink: 0;
+  }
+  .header img { width: 20px; height: 32px; object-fit: contain; }
+  .header-text { display: flex; flex-direction: column; gap: 2px; }
+  .header-label { font-size: 12px; font-weight: 500; color: var(--naranja); }
+  .header-title { font-size: 15px; font-weight: 600; color: var(--azul); }
+  .header-subtitle { font-size: 12px; color: var(--caption); }
+
+  /* ═══ MAIN CARD ═══ */
+  .main-card {
+    margin: 10px 20px 0;
+    background: var(--card-bg);
+    border-radius: 10px;
+    border: 0.5px solid var(--card-border);
+    box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ═══ TOP-LEVEL TABS (Familias / Planos) ═══ */
+  .top-tab-bar {
+    display: flex;
+    border-bottom: 1px solid var(--card-border);
+    padding: 0 14px;
+    flex-shrink: 0;
+    background: #FAFAFA;
+  }
+  .top-tab {
+    padding: 12px 20px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--caption);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: color 0.1s;
+  }
+  .top-tab.active {
+    color: var(--naranja);
+    border-bottom-color: var(--naranja);
+    font-weight: 600;
+  }
+  .top-tab:hover:not(.active) { color: var(--azul); }
+  .top-tab svg { width: 14px; height: 14px; stroke-width: 2; fill: none; }
+  .top-tab.active svg { stroke: var(--naranja); }
+  .top-tab:not(.active) svg { stroke: var(--caption); }
+
+  /* ═══ INNER CONTENT ═══ */
+  .inner-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ═══ WIZARD TAB BAR ═══ */
+  .tab-bar {
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid var(--card-border);
+    padding: 0 14px;
+    flex-shrink: 0;
+    background: var(--card-bg);
+  }
+  .tab-bar-profile {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--caption);
+  }
+  .tab-bar-profile select {
+    font-size: 11px;
+    padding: 3px 6px;
+    border: 1px solid var(--card-border);
+    border-radius: 5px;
+    background: white;
+    color: var(--azul);
+    cursor: pointer;
+  }
+  .tab-bar-profile button {
+    font-size: 10px;
+    padding: 3px 8px;
+    border: 1px solid var(--card-border);
+    border-radius: 5px;
+    background: white;
+    color: var(--caption);
+    cursor: pointer;
+  }
+  .tab-bar-profile button:hover { border-color: var(--naranja); color: var(--naranja); }
+  .tab {
+    padding: 10px 16px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--caption);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: color 0.1s;
+  }
+  .tab.active {
+    color: var(--naranja);
+    border-bottom-color: var(--naranja);
+    font-weight: 600;
+  }
+  .tab.done { color: #2E7D32; }
+  .tab-num {
+    width: 18px; height: 18px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700;
+    background: #F2F2F7; color: var(--caption);
+  }
+  .tab.active .tab-num { background: var(--accent-bg); color: var(--naranja); }
+  .tab.done .tab-num { background: var(--green-bg); color: #2E7D32; }
+
+  /* ═══ TAB PANELS ═══ */
+  .tab-panel { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+  .tab-panel.active { display: flex; }
+
+  .tab-content { flex: 1; overflow-y: auto; overflow-x: visible; padding: 14px 18px; }
+  .tab-content::-webkit-scrollbar { width: 6px; }
+  .tab-content::-webkit-scrollbar-track { background: transparent; }
+  .tab-content::-webkit-scrollbar-thumb { background: #D1D1D6; border-radius: 3px; }
+
+  /* ═══ SEARCH BAR ═══ */
+  .search-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .search-input {
+    flex: 1;
+    padding: 8px 12px 8px 34px;
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    font-size: 12px;
+    font-family: 'Segoe UI', sans-serif;
+    color: var(--azul);
+    background: var(--metric-bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2386868B' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E") no-repeat 12px center;
+    transition: border-color 0.15s;
+  }
+  .search-input:focus { outline: none; border-color: var(--naranja); }
+  .search-input::placeholder { color: var(--caption); }
+
+  /* ═══ SUMMARY BAR ═══ */
+  .summary-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    padding: 6px 0;
+  }
+  .summary-text { font-size: 12px; color: var(--caption); }
+  .summary-text strong { color: var(--azul); font-weight: 600; }
+  .summary-actions { display: flex; gap: 6px; }
+  .btn-sm {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 500;
+    font-family: 'Segoe UI', sans-serif;
+    cursor: pointer;
+    border: 1px solid var(--card-border);
+    background: var(--card-bg);
+    color: var(--azul);
+    transition: background 0.15s;
+  }
+  .btn-sm:hover { background: #F2F2F7; }
+
+  /* ═══ DATA TABLE ═══ */
+  .table-wrapper {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+  }
+  .table-wrapper::-webkit-scrollbar { width: 6px; }
+  .table-wrapper::-webkit-scrollbar-track { background: transparent; }
+  .table-wrapper::-webkit-scrollbar-thumb { background: #D1D1D6; border-radius: 3px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  thead { position: sticky; top: 0; z-index: 3; background: var(--card-bg); }
+  th {
+    text-align: left; padding: 8px 12px; font-weight: 600;
+    color: var(--azul); border-bottom: 1px solid var(--card-border);
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.3px;
+    background: var(--card-bg);
+  }
+  td { padding: 6px 12px; border-bottom: 1px solid #F2F2F7; color: #3C3C43; }
+  tr:hover td { background: #F9F9FB; }
+  tr.hidden { display: none; }
+
+  .sheet-check {
+    width: 14px; height: 14px; accent-color: var(--naranja); cursor: pointer;
+  }
+
+  .disc-badge {
+    display: inline-block; padding: 2px 8px; border-radius: 4px;
+    font-size: 10px; font-weight: 600;
+  }
+  .disc-arq { background: #FFF3E0; color: #E65100; }
+  .disc-est { background: #ECEFF1; color: #37474F; }
+  .disc-mep { background: #E3F2FD; color: #1565C0; }
+  .disc-gen { background: #F3E5F5; color: #7B1FA2; }
+
+  /* ═══ FORMAT TAB ═══ */
+  .format-section { margin-bottom: 16px; }
+  .format-title { font-size: 12px; font-weight: 600; color: var(--azul); margin-bottom: 10px; }
+
+  .format-cards { display: flex; gap: 10px; }
+  .format-card {
+    flex: 1;
+    border: 1.5px solid var(--card-border);
+    border-radius: 8px;
+    padding: 14px;
+    cursor: pointer;
+    transition: border-color 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .format-card.selected { border-color: var(--naranja); background: var(--accent-bg); }
+  .format-card:hover:not(.selected) { border-color: #C5C5CA; }
+  .format-card-icon { font-size: 28px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; background: #E3F2FD; border-radius: 8px; }
+  .format-card-info {}
+  .format-card-name { font-size: 13px; font-weight: 600; color: var(--azul); }
+  .format-card-desc { font-size: 11px; color: var(--caption); margin-top: 2px; }
+  .format-card-check {
+    width: 16px; height: 16px; accent-color: var(--naranja);
+    margin-left: auto; flex-shrink: 0;
+  }
+
+  .field-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .field-label { font-size: 11px; font-weight: 600; color: var(--azul); white-space: nowrap; min-width: 140px; }
+  .field-select, .field-input {
+    flex: 1;
+    padding: 7px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--card-border);
+    font-size: 12px;
+    font-family: 'Segoe UI', sans-serif;
+    color: var(--azul);
+    background: white;
+  }
+  .field-input:focus, .field-select:focus { outline: none; border-color: var(--naranja); }
+
+  .btn-secondary {
+    padding: 7px 12px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 500;
+    font-family: 'Segoe UI', sans-serif;
+    cursor: pointer;
+    border: 1px solid var(--card-border);
+    background: var(--card-bg);
+    color: var(--azul);
+    transition: background 0.15s;
+    white-space: nowrap;
+  }
+  .btn-secondary:hover { background: #F2F2F7; }
+
+  /* ═══ EXPORT TAB ═══ */
+  .token-buttons { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; margin-bottom: 8px; }
+  .token-btn {
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    font-family: 'Segoe UI', sans-serif;
+    cursor: pointer;
+    border: 1px solid var(--card-border);
+    background: var(--metric-bg);
+    color: var(--azul);
+    transition: all 0.15s;
+  }
+  .token-btn:hover { border-color: var(--naranja); color: var(--naranja); background: var(--accent-bg); }
+
+  .preview-text {
+    font-size: 11px; color: var(--caption); margin-bottom: 12px;
+    padding: 8px 12px; background: var(--metric-bg); border-radius: 6px;
+    border: 0.5px solid var(--card-border);
+  }
+  .preview-text strong { color: var(--azul); }
+
+  /* Folder tree */
+  .folder-preview { margin-top: 4px; }
+  .folder-preview-label {
+    font-size: 10px; font-weight: 600; color: var(--caption);
+    text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 6px;
+  }
+  .folder-tree {
+    font-family: 'Consolas', 'SF Mono', monospace;
+    font-size: 11px; color: #3C3C43; line-height: 1.7;
+    padding: 10px 14px;
+    background: var(--metric-bg);
+    border: 0.5px solid var(--card-border);
+    border-radius: 8px;
+  }
+  .folder-tree .folder { color: var(--azul); font-weight: 600; }
+  .folder-tree .file { color: var(--caption); }
+
+  /* ═══ FOOTER ═══ */
+  .footer {
+    padding: 10px 20px 14px;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .footer-spacer { flex: 1; }
+  .btn-close {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    padding: 8px 20px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--azul);
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s;
+  }
+  .btn-close:hover { background: #F2F2F7; }
+  .btn-export {
+    background: var(--naranja);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 20px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn-export:hover { background: #D84E24; }
+  .btn-export svg { width: 14px; height: 14px; stroke: white; fill: none; stroke-width: 2; }
+
+  .back-link {
+    display: block; text-align: center; margin-top: 10px; margin-bottom: 4px;
+    font-size: 11px; color: var(--caption); text-decoration: none;
+  }
+  .back-link:hover { color: var(--naranja); }
+
+  /* Top-level tab panels */
+  .top-panel { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+  .top-panel.active { display: flex; }
+
+  /* Placeholder for Familias tab */
+  .placeholder {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 8px; color: var(--caption);
+  }
+  .placeholder svg { width: 48px; height: 48px; stroke: #D1D1D6; fill: none; stroke-width: 1.5; }
+  .placeholder-text { font-size: 13px; }
+  .placeholder-sub { font-size: 11px; color: #C5C5CA; }
+</style>
+</head>
+<body>
+
+<a class="back-link" href="index.html">&larr; Mockups</a>
+
+<!-- HEADER -->
+<div class="header">
+  <img src="pill-icon.png" alt="BIMPills" />
+  <div class="header-text">
+    <span class="header-label">Exportar</span>
+    <span class="header-title">Proyecto Ejemplo.rvt</span>
+    <span class="header-subtitle">Herramientas de exportacion de datos</span>
+  </div>
+</div>
+
+<!-- MAIN CARD -->
+<div class="main-card">
+
+  <!-- Top-level tabs: Familias / Planos -->
+  <div class="top-tab-bar">
+    <div class="top-tab" onclick="showTopTab(0)">
+      <svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/><line x1="12" y1="11" x2="12" y2="16" stroke-linecap="round"/><polyline points="9.5 14 12 16.5 14.5 14" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Familias
+    </div>
+    <div class="top-tab active" onclick="showTopTab(1)">
+      <svg viewBox="0 0 24 24"><rect x="2" y="3" width="16" height="12" rx="1" opacity="0.15"/><rect x="4" y="5" width="16" height="12" rx="1" opacity="0.3"/><rect x="6" y="7" width="16" height="12" rx="1"/></svg>
+      Planos
+    </div>
+  </div>
+
+  <!-- Top Panel: Familias (placeholder) -->
+  <div class="top-panel" id="top-panel-0">
+    <div class="placeholder">
+      <svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/><line x1="12" y1="11" x2="12" y2="16" stroke-linecap="round"/><polyline points="9.5 14 12 16.5 14.5 14" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span class="placeholder-text">Exportar Familias</span>
+      <span class="placeholder-sub">Ver mockup en extraer.html</span>
+    </div>
+  </div>
+
+  <!-- Top Panel: Planos -->
+  <div class="top-panel active" id="top-panel-1">
+    <div class="inner-content">
+
+      <!-- Wizard tab bar -->
+      <div class="tab-bar">
+        <div class="tab active" onclick="showWizardTab(0)">
+          <span class="tab-num">1</span>
+          Seleccion
+        </div>
+        <div class="tab" onclick="showWizardTab(1)">
+          <span class="tab-num">2</span>
+          Formato
+        </div>
+        <div class="tab" onclick="showWizardTab(2)">
+          <span class="tab-num">3</span>
+          Exportar
+        </div>
+        <div class="tab-bar-profile">
+          <span>Perfil:</span>
+          <select>
+            <option selected>Por defecto</option>
+            <option>Cliente - Entrega final</option>
+            <option>Coordinacion BIM</option>
+            <option>+ Nuevo perfil...</option>
+          </select>
+          <button>Guardar</button>
+        </div>
+      </div>
+
+      <!-- ═══ TAB 1: SELECCION ═══ -->
+      <div class="tab-panel active" id="wizard-0">
+        <div class="tab-content">
+          <!-- Search -->
+          <div class="search-bar">
+            <input type="text" class="search-input" id="searchInput" placeholder="Buscar por numero o nombre de plano..." oninput="filterSheets()"/>
+          </div>
+
+          <!-- Summary -->
+          <div class="summary-bar">
+            <span class="summary-text" id="summaryText"><strong>12</strong> de <strong>15</strong> planos seleccionados</span>
+            <div class="summary-actions">
+              <button class="btn-sm" onclick="selectAll()">Seleccionar todo</button>
+              <button class="btn-sm" onclick="deselectAll()">Deseleccionar todo</button>
+            </div>
+          </div>
+
+          <!-- Table -->
+          <div class="table-wrapper">
+            <table id="sheetsTable">
+              <thead>
+                <tr>
+                  <th style="width:30px"><input type="checkbox" class="sheet-check" id="masterCheck" onclick="toggleMaster(this)" /></th>
+                  <th>N&#186; Plano</th>
+                  <th>Nombre del Plano</th>
+                  <th>Revision</th>
+                  <th>Disciplina</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><input type="checkbox" class="sheet-check" checked onchange="updateCount()"/></td><td>A-001</td><td>Planta Baja - Arquitectura</td><td>Rev A</td><td><span class="disc-badge disc-arq">Arquitectura</span></td></tr>
+                <tr><td><input type="checkbox" class="sheet-check" checked onchange="updateCount()"/></td><td>A-002</td><td>Planta Alta - Arquitectura</td><td>Rev A</td><td><span class="disc-badge disc-arq">Arquitectura</span></td></tr>
+                <tr><td><input type="checkbox" class="sheet-check" checked onchange="updateCount()"/></td><td>A-003</td><td>Planta de Techos</td><td>Rev B</td><td><span class="disc-badge disc-arq">Arquitectura</span></td></tr>
+                <tr><td><input type="checkbox" class="sheet-check" checked onchange="updateCount()"/></td><td>A-101</td><td>Corte Longitudinal A-A</td><td>Rev A</td><td><span class="disc-badge disc-arq">Arquitectura</span></td></tr>
+                <tr><td><input type="checkbox" class="sheet-check" checked onchange="updateCount()"/></td><td>A-102</td><td>Corte Transversal B-B</td><td>Rev A</td><td><span class="disc-badge disc-arq">Arquitectura</span></td></tr>
+                <tr><td><input type="checkbox" class="sheet-check" checked onchange="updateCount()"/></td><td>A-201</td><td>Fachada Norte</td><td>Rev C</td><td><span class="disc-badge disc-arq">Arquitectura</span></td></tr>
+                <tr><td><input type="checkbox" class="sheet-check" checked onchange="updateCount()"/></td><td>A-202</td><td>Fachada Sur</td><td>Rev A</td><td><span class="disc-badge disc-arq">Arquitectura</span></td></tr>
+                <tr><td><input type="checkbox" class="sheet-check" checked onchange="updateCount()"/></td><td>E-001</td><td>Planta Baja - Estructura</td><td>Rev B</td><td><span class="disc-badge disc-est">Estructura</span></td></tr>
+                <tr><td><input type="checkbox" class="sheet-check" checked onchange="updateCount()"/></td><td>E-002</td><td>Planta Alta - Estructura</td><td>Rev A</td><td><span class="disc-badge disc-est">Estructura</span></td></tr>
+                <tr><td><input type="checkbox" class="sheet-check" checked onchange="updateCount()"/></td><td>E-101</td><td>Detalle Cimentacion</td><td>Rev A</td><td><span class="disc-badge disc-est">Estructura</span></td></tr>
+                <tr><td><input type="checkbox" class="sheet-check" onchange="updateCount()"/></td><td>I-001</td><td>Planta Baja - Instalaciones</td><td>-</td><td><span class="disc-badge disc-mep">MEP</span></td></tr>
+                <tr><td><input type="checkbox" class="sheet-check" onchange="updateCount()"/></td><td>I-002</td><td>Planta Alta - Instalaciones</td><td>-</td><td><span class="disc-badge disc-mep">MEP</span></td></tr>
+                <tr><td><input type="checkbox" class="sheet-check" checked onchange="updateCount()"/></td><td>D-001</td><td>Detalles Constructivos 1</td><td>Rev A</td><td><span class="disc-badge disc-arq">Arquitectura</span></td></tr>
+                <tr><td><input type="checkbox" class="sheet-check" checked onchange="updateCount()"/></td><td>D-002</td><td>Detalles Constructivos 2</td><td>Rev A</td><td><span class="disc-badge disc-arq">Arquitectura</span></td></tr>
+                <tr><td><input type="checkbox" class="sheet-check" onchange="updateCount()"/></td><td>G-001</td><td>Portada del Proyecto</td><td>-</td><td><span class="disc-badge disc-gen">General</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ TAB 2: FORMATO ═══ -->
+      <div class="tab-panel" id="wizard-1">
+        <div class="tab-content">
+
+          <div class="format-section">
+            <div class="format-title">Formato de salida</div>
+            <div class="format-cards">
+              <div class="format-card selected" onclick="toggleFormat(this)">
+                <span class="format-card-icon">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1565C0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <line x1="16" y1="13" x2="8" y2="13"/>
+                    <line x1="16" y1="17" x2="8" y2="17"/>
+                    <polyline points="10 9 9 9 8 9"/>
+                  </svg>
+                </span>
+                <div class="format-card-info">
+                  <div class="format-card-name">PDF</div>
+                  <div class="format-card-desc">Documento portable. Ideal para envio a clientes y revision.</div>
+                </div>
+                <input type="checkbox" class="format-card-check" checked />
+              </div>
+              <div class="format-card selected" onclick="toggleFormat(this)">
+                <span class="format-card-icon">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1565C0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2"/>
+                    <line x1="3" y1="9" x2="21" y2="9"/>
+                    <line x1="9" y1="3" x2="9" y2="21"/>
+                    <line x1="15" y1="3" x2="15" y2="21"/>
+                    <line x1="3" y1="15" x2="21" y2="15"/>
+                  </svg>
+                </span>
+                <div class="format-card-info">
+                  <div class="format-card-name">DWG</div>
+                  <div class="format-card-desc">AutoCAD Drawing. Para coordinacion e intercambio con otras disciplinas.</div>
+                </div>
+                <input type="checkbox" class="format-card-check" checked />
+              </div>
+            </div>
+          </div>
+
+          <!-- PDF settings -->
+          <div class="format-section" id="pdfConfigSection">
+            <div class="format-title">Configuración PDF</div>
+
+            <div class="field-row" style="margin-bottom:6px;">
+              <span class="field-label" style="min-width:170px; font-size:11px;">Ubicación en papel:</span>
+              <select class="field-select" style="flex:1; font-size:11px;" onchange="togglePdfOffset(this)">
+                <option selected>Centrado</option>
+                <option>Desplazamiento desde esquina</option>
+              </select>
+            </div>
+            <div id="pdfOffsetRow" style="display:none;" class="field-row" style="margin-bottom:6px;">
+              <span class="field-label" style="min-width:170px; font-size:11px;">Offset X / Y (mm):</span>
+              <input type="text" class="field-input" value="0" style="width:60px; flex:none; font-size:11px;"/>
+              <span style="margin:0 6px; font-size:11px; color:#86868B;"> / </span>
+              <input type="text" class="field-input" value="0" style="width:60px; flex:none; font-size:11px;"/>
+            </div>
+
+            <div class="field-row" style="margin-bottom:6px;">
+              <span class="field-label" style="min-width:170px; font-size:11px;">Escala / Zoom:</span>
+              <select class="field-select" style="flex:1; font-size:11px;" onchange="toggleZoomFactor(this)">
+                <option selected>Ajustar a página</option>
+                <option>Factor personalizado (%)</option>
+              </select>
+            </div>
+            <div id="pdfZoomRow" style="display:none;" class="field-row" style="margin-bottom:6px;">
+              <span class="field-label" style="min-width:170px; font-size:11px;">Factor (%):</span>
+              <input type="text" class="field-input" value="100" style="width:70px; flex:none; font-size:11px;"/>
+            </div>
+
+            <div class="field-row" style="margin-bottom:6px;">
+              <span class="field-label" style="min-width:170px; font-size:11px;">Procesamiento líneas:</span>
+              <select class="field-select" style="flex:1; font-size:11px;">
+                <option selected>Vectorial (recomendado)</option>
+                <option>Raster (sombras/transparencias)</option>
+              </select>
+            </div>
+
+            <div class="field-row" style="margin-bottom:6px;">
+              <span class="field-label" style="min-width:170px; font-size:11px;">Color:</span>
+              <select class="field-select" style="flex:1; font-size:11px;">
+                <option selected>Color</option>
+                <option>Escala de grises</option>
+                <option>Líneas en negro</option>
+              </select>
+            </div>
+
+            <div class="field-row" style="margin-bottom:10px;">
+              <span class="field-label" style="min-width:170px; font-size:11px;">Calidad raster:</span>
+              <select class="field-select" style="flex:1; font-size:11px;">
+                <option>Baja</option>
+                <option selected>Media (estándar)</option>
+                <option>Alta</option>
+                <option>Presentación (máxima)</option>
+              </select>
+            </div>
+
+            <div style="font-size:11px; font-weight:600; color:var(--azul); margin-bottom:6px;">Opciones de visibilidad</div>
+            <div style="display:flex; flex-wrap:wrap; gap:4px 16px; margin-bottom:10px;">
+              <label style="font-size:11px; display:flex; align-items:center; gap:5px; cursor:pointer;"><input type="checkbox" checked> Ocultar scope boxes</label>
+              <label style="font-size:11px; display:flex; align-items:center; gap:5px; cursor:pointer;"><input type="checkbox" checked> Ocultar crop boundaries</label>
+              <label style="font-size:11px; display:flex; align-items:center; gap:5px; cursor:pointer;"><input type="checkbox" checked> Ocultar planos de referencia</label>
+              <label style="font-size:11px; display:flex; align-items:center; gap:5px; cursor:pointer;"><input type="checkbox"> Ocultar view tags sin referencia</label>
+              <label style="font-size:11px; display:flex; align-items:center; gap:5px; cursor:pointer;"><input type="checkbox"> Links de vista en azul</label>
+            </div>
+
+            <div style="background:#EFF3FF; border:1px solid #C5CAE9; border-radius:6px; padding:8px 10px;">
+              <label style="font-size:11px; display:flex; align-items:center; gap:6px; cursor:pointer;">
+                <input type="checkbox" onchange="toggleCombineName(this)"> Combinar en un solo PDF
+              </label>
+              <div id="combineName" style="display:none; margin-top:6px; margin-left:18px;" class="field-row">
+                <span style="font-size:11px; min-width:100px;">Nombre archivo:</span>
+                <input type="text" class="field-input" value="Planos_Combinados" style="flex:1; font-size:11px;"/>
+              </div>
+            </div>
+          </div>
+
+          <!-- DWG settings — ProSheets style -->
+          <div class="format-section" id="dwgConfigSection">
+            <div class="format-title">Configuración DWG</div>
+            <div style="font-size:11px; color:#86868B; margin-bottom:4px;">Perfil de Exportación</div>
+
+            <!-- Dropdown + botón "Nueva configuración" -->
+            <select class="field-select" id="dwgConfigSelect" style="width:100%; margin-bottom:6px;">
+              <option selected>AEC Extended</option>
+              <option>AEC Standard</option>
+              <option>ISO Standard</option>
+            </select>
+            <button onclick="toggleDwgConfigForm()"
+              style="font-size:11px; color:#1565C0; background:none; border:none; cursor:pointer;
+                     padding:0; margin-bottom:10px; display:inline-flex; align-items:center; gap:4px;">
+              <span style="font-size:14px; font-weight:600; line-height:1;">+</span> Nueva configuración
+            </button>
+
+            <!-- Formulario inline (oculto por defecto) -->
+            <div id="dwgConfigForm" style="display:none; background:#F2F7FF; border:1.5px solid #BBDEFB;
+                 border-radius:8px; padding:12px 16px 12px 12px; margin-bottom:10px; box-sizing:border-box; width:100%;">
+              <div style="font-size:12px; font-weight:600; color:#1565C0; margin-bottom:10px;">Nueva configuración DWG</div>
+
+              <div style="margin-bottom:8px;">
+                <div style="font-size:11px; color:#86868B; margin-bottom:3px;">Nombre</div>
+                <input type="text" id="dwgNewName" class="field-input" placeholder="Ej. Mi Config 2018"
+                  style="width:100%; box-sizing:border-box;"/>
+              </div>
+
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">
+                <div>
+                  <div style="font-size:11px; color:#86868B; margin-bottom:3px;">Versión AutoCAD</div>
+                  <select class="field-select" id="dwgNewVersion" style="width:100%;">
+                    <option>AutoCAD 2018</option>
+                    <option>AutoCAD 2013</option>
+                    <option>AutoCAD 2010</option>
+                    <option>AutoCAD 2007</option>
+                    <option>AutoCAD 2000</option>
+                  </select>
+                </div>
+                <div>
+                  <div style="font-size:11px; color:#86868B; margin-bottom:3px;">Sólidos</div>
+                  <select class="field-select" id="dwgNewSolids" style="width:100%;">
+                    <option>Polymesh</option>
+                    <option>ACIS (SAT)</option>
+                  </select>
+                </div>
+              </div>
+
+              <label style="font-size:11px; display:flex; align-items:center; gap:6px; cursor:pointer; margin-bottom:12px;">
+                <input type="checkbox" id="dwgNewSharedCoords"> Usar coordenadas compartidas
+              </label>
+
+              <div style="display:flex; justify-content:flex-end; gap:6px;">
+                <button onclick="cancelDwgConfig()"
+                  style="font-size:11px; padding:5px 12px; border-radius:6px; border:1.5px solid #E5E5EA;
+                         background:#fff; cursor:pointer; color:#636366;">Cancelar</button>
+                <button onclick="saveDwgConfig()"
+                  style="font-size:11px; padding:5px 12px; border-radius:6px; border:none;
+                         background:#1565C0; color:#fff; cursor:pointer; font-weight:600;">Guardar</button>
+              </div>
+            </div>
+
+            <label style="font-size:11px; display:flex; align-items:flex-start; gap:6px; margin-bottom:6px; cursor:pointer;">
+              <input type="checkbox" style="margin-top:1px;"> Exportar vistas en planos y links como referencias externas
+            </label>
+            <label style="font-size:11px; display:flex; align-items:center; gap:6px; cursor:pointer;">
+              <input type="checkbox"> Limpiar archivos .pcp después de exportar
+            </label>
+          </div>
+
+
+        </div>
+      </div>
+
+      <!-- ═══ TAB 3: EXPORTAR ═══ -->
+      <div class="tab-panel" id="wizard-2">
+        <div class="tab-content">
+
+          <div class="format-section">
+            <div class="format-title">Carpeta de destino</div>
+            <div class="field-row">
+              <input type="text" class="field-input" value="C:\Proyectos\Edificio Central\Exportaciones" readonly style="flex:1; font-family: 'Consolas', 'SF Mono', monospace; font-size: 11px;" />
+              <button class="btn-secondary">Explorar...</button>
+            </div>
+          </div>
+
+          <div class="format-section">
+            <div class="format-title">Nombramiento</div>
+            <div class="field-row" style="margin-bottom: 4px;">
+              <input type="text" class="field-input" id="patternInput" value="{SheetNumber}-{SheetName}" style="flex:1; font-family: 'Consolas', 'SF Mono', monospace; font-size: 11px;" oninput="updatePreview()" />
+            </div>
+            <div class="token-buttons">
+              <button class="token-btn" onclick="insertToken('{SheetNumber}')">N&#186; Plano</button>
+              <button class="token-btn" onclick="insertToken('{SheetName}')">Nombre</button>
+              <button class="token-btn" onclick="insertToken('{Revision}')">Revision</button>
+              <button class="token-btn" onclick="insertToken('{Date}')">Fecha</button>
+              <button class="token-btn" onclick="insertToken('{ProjectName}')">Proyecto</button>
+            </div>
+            <div class="field-row" style="margin-top: 6px; margin-bottom: 4px;">
+              <select class="field-select" id="revitParamSelect" style="flex:1; font-size: 11px;">
+                <option value="">Seleccionar parámetro de Revit...</option>
+                <option value="Designed By">Designed By</option>
+                <option value="Checked By">Checked By</option>
+                <option value="Sheet Issue Date">Sheet Issue Date</option>
+                <option value="Client Name">Client Name</option>
+                <option value="Project Address">Project Address</option>
+                <option value="Organization Name">Organization Name</option>
+                <option value="Building Name">Building Name</option>
+                <option value="Author">Author</option>
+                <option value="Scale">Scale</option>
+              </select>
+              <button class="btn-secondary" style="font-size: 11px; padding: 4px 10px;" onclick="addRevitParam()">Agregar</button>
+            </div>
+            <div class="token-buttons" id="dynamicTokens"></div>
+            <div class="preview-text" id="namePreview">
+              Vista previa: <strong>A-001-Planta Baja - Arquitectura.pdf</strong>
+            </div>
+          </div>
+
+          <div class="format-section">
+            <div class="format-title">Organizacion de carpetas</div>
+            <div class="field-row" style="margin-bottom: 12px;">
+              <span class="field-label">Estructura:</span>
+              <select class="field-select" id="folderOrg" onchange="updateFolderTree()">
+                <option value="flat">Plano (sin subcarpetas)</option>
+                <option value="format" selected>Por formato (/PDF, /DWG)</option>
+                <option value="discipline">Por disciplina</option>
+                <option value="both">Formato + Disciplina</option>
+              </select>
+            </div>
+
+            <div class="folder-preview">
+              <div class="folder-preview-label">Estructura de carpetas resultante</div>
+              <div class="folder-tree" id="folderTree">
+              </div>
+            </div>
+          </div>
+
+          <!-- Export button -->
+          <div style="text-align: center; padding: 8px 0;">
+            <button class="btn-export" style="display: inline-flex; padding: 10px 28px; font-size: 13px;">
+              <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Exportar <span id="exportCount">12</span> planos
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <button class="btn-close">Cancelar</button>
+  <button class="btn-close">Cerrar</button>
+</div>
+
+<a class="back-link" href="index.html">&larr; Volver al indice</a>
+
+<script>
+  // ═══ TOP-LEVEL TABS ═══
+  function showTopTab(index) {
+    document.querySelectorAll('.top-tab').forEach((t, i) => {
+      t.classList.toggle('active', i === index);
+    });
+    document.querySelectorAll('.top-panel').forEach((p, i) => {
+      p.classList.toggle('active', i === index);
+    });
+  }
+
+  // ═══ WIZARD TABS ═══
+  let wizardTab = 0;
+  function showWizardTab(index) {
+    document.querySelectorAll('.tab-bar .tab').forEach((t, i) => {
+      t.classList.remove('active', 'done');
+      if (i < index) t.classList.add('done');
+      if (i === index) t.classList.add('active');
+    });
+    document.querySelectorAll('.tab-panel').forEach((p, i) => {
+      p.classList.toggle('active', i === index);
+    });
+    wizardTab = index;
+  }
+
+  // ═══ SEARCH ═══
+  function filterSheets() {
+    const q = document.getElementById('searchInput').value.toLowerCase();
+    const rows = document.querySelectorAll('#sheetsTable tbody tr');
+    rows.forEach(row => {
+      const num = row.cells[1].textContent.toLowerCase();
+      const name = row.cells[2].textContent.toLowerCase();
+      row.classList.toggle('hidden', q && !num.includes(q) && !name.includes(q));
+    });
+  }
+
+  // ═══ SELECT ALL / DESELECT ALL ═══
+  function selectAll() {
+    document.querySelectorAll('#sheetsTable tbody .sheet-check').forEach(cb => cb.checked = true);
+    updateCount();
+  }
+  function deselectAll() {
+    document.querySelectorAll('#sheetsTable tbody .sheet-check').forEach(cb => cb.checked = false);
+    updateCount();
+  }
+  function toggleMaster(master) {
+    document.querySelectorAll('#sheetsTable tbody .sheet-check').forEach(cb => cb.checked = master.checked);
+    updateCount();
+  }
+
+  // ═══ UPDATE COUNT ═══
+  function updateCount() {
+    const all = document.querySelectorAll('#sheetsTable tbody .sheet-check');
+    const checked = document.querySelectorAll('#sheetsTable tbody .sheet-check:checked');
+    document.getElementById('summaryText').innerHTML =
+      '<strong>' + checked.length + '</strong> de <strong>' + all.length + '</strong> planos seleccionados';
+    document.getElementById('exportCount').textContent = checked.length;
+    // Update master checkbox
+    const master = document.getElementById('masterCheck');
+    master.checked = checked.length === all.length;
+    master.indeterminate = checked.length > 0 && checked.length < all.length;
+  }
+
+  // ═══ DWG CONFIG FORM ═══
+  function toggleDwgConfigForm() {
+    const form = document.getElementById('dwgConfigForm');
+    form.style.display = form.style.display === 'none' ? 'block' : 'none';
+  }
+
+  function cancelDwgConfig() {
+    document.getElementById('dwgConfigForm').style.display = 'none';
+    document.getElementById('dwgNewName').value = '';
+  }
+
+  function saveDwgConfig() {
+    const name = document.getElementById('dwgNewName').value.trim();
+    if (!name) { document.getElementById('dwgNewName').focus(); return; }
+    const select = document.getElementById('dwgConfigSelect');
+    const opt = document.createElement('option');
+    opt.value = name;
+    opt.textContent = name;
+    opt.selected = true;
+    // Deselect all existing
+    for (let o of select.options) o.selected = false;
+    select.appendChild(opt);
+    cancelDwgConfig();
+  }
+
+  // ═══ TOKEN INSERTION ═══
+  function insertToken(token) {
+    const input = document.getElementById('patternInput');
+    const start = input.selectionStart;
+    const end = input.selectionEnd;
+    const val = input.value;
+    input.value = val.substring(0, start) + token + val.substring(end);
+    input.focus();
+    const newPos = start + token.length;
+    input.setSelectionRange(newPos, newPos);
+    updatePreview();
+  }
+
+  // ═══ REVIT PARAMETER TOKENS ═══
+  const revitParamSamples = {
+    'Designed By': 'Arq. Lopez',
+    'Checked By': 'Ing. Garcia',
+    'Sheet Issue Date': '2026-03-27',
+    'Client Name': 'Constructora ABC',
+    'Project Address': 'Av. Reforma 100',
+    'Organization Name': 'BIMPills Studio',
+    'Building Name': 'Torre Central',
+    'Author': 'Admin',
+    'Scale': '1:100'
+  };
+
+  function addRevitParam() {
+    const sel = document.getElementById('revitParamSelect');
+    const paramName = sel.value;
+    if (!paramName) return;
+    const token = '{Param:' + paramName + '}';
+    if (tokenMap[token]) return; // already added
+    tokenMap[token] = revitParamSamples[paramName] || paramName;
+    // Create dynamic button
+    const container = document.getElementById('dynamicTokens');
+    const btn = document.createElement('button');
+    btn.className = 'token-btn';
+    btn.textContent = paramName;
+    btn.onclick = function() { insertToken(token); };
+    container.appendChild(btn);
+    // Insert into pattern
+    insertToken(token);
+    sel.value = '';
+  }
+
+  // ═══ PREVIEW ═══
+  const tokenMap = {
+    '{SheetNumber}': 'A-001',
+    '{SheetName}': 'Planta Baja - Arquitectura',
+    '{Revision}': 'RevA',
+    '{Date}': '2026-03-27',
+    '{ProjectName}': 'Proyecto Ejemplo'
+  };
+
+  function updatePreview() {
+    let pattern = document.getElementById('patternInput').value;
+    let preview = pattern;
+    for (const [token, value] of Object.entries(tokenMap)) {
+      preview = preview.split(token).join(value);
+    }
+    document.getElementById('namePreview').innerHTML =
+      'Vista previa: <strong>' + preview + '.pdf</strong>';
+  }
+
+  // ═══ FORMAT CARD TOGGLE ═══
+  function toggleFormat(card) {
+    const cb = card.querySelector('.format-card-check');
+    cb.checked = !cb.checked;
+    card.classList.toggle('selected', cb.checked);
+    updateDwgConfigVisibility();
+  }
+
+  // ═══ PDF EXTRA CONTROLS ═══
+  function togglePdfOffset(sel) {
+    document.getElementById('pdfOffsetRow').style.display =
+      sel.value.includes('Desplazamiento') ? 'flex' : 'none';
+  }
+  function toggleZoomFactor(sel) {
+    document.getElementById('pdfZoomRow').style.display =
+      sel.value.includes('Factor') ? 'flex' : 'none';
+  }
+  function toggleCombineName(cb) {
+    document.getElementById('combineName').style.display = cb.checked ? 'flex' : 'none';
+  }
+
+  // ═══ DWG CONFIG FORM (legacy - kept for compat) ═══
+  function toggleDwgConfigForm() {
+    const form = document.getElementById('dwgConfigForm');
+    if (!form) return;
+    const isOpen = form.style.display !== 'none';
+    form.style.display = isOpen ? 'none' : 'block';
+    if (!isOpen) {
+      document.getElementById('dwgConfigName').value = '';
+      document.getElementById('dwgConfigName').focus();
+    }
+  }
+
+  function saveDwgConfig() {
+    const name = document.getElementById('dwgConfigName').value.trim();
+    if (!name) { alert('Ingresa un nombre para el perfil.'); return; }
+    const select = document.getElementById('dwgConfigSelect');
+    const opt = document.createElement('option');
+    opt.textContent = name;
+    opt.selected = true;
+    select.appendChild(opt);
+    toggleDwgConfigForm();
+  }
+
+  function updateDwgConfigVisibility() {
+    const cards = document.querySelectorAll('.format-card');
+    const pdfChecked = cards[0] ? cards[0].querySelector('.format-card-check')?.checked : false;
+    const dwgChecked = cards[1] ? cards[1].querySelector('.format-card-check')?.checked : false;
+
+    const pdfSection = document.getElementById('pdfConfigSection');
+    const dwgSection = document.getElementById('dwgConfigSection');
+
+    if (pdfSection) pdfSection.style.display = pdfChecked ? '' : 'none';
+    if (dwgSection) dwgSection.style.display = dwgChecked ? '' : 'none';
+  }
+
+  // ═══ FOLDER TREE ═══
+  function updateFolderTree() {
+    const org = document.getElementById('folderOrg').value;
+    const tree = document.getElementById('folderTree');
+    let html = '';
+
+    const indent1 = '&nbsp;&nbsp;&nbsp;&nbsp;';
+    const indent2 = indent1 + indent1;
+    const indent3 = indent2 + indent1;
+
+    if (org === 'flat') {
+      html = '<span class="folder">&#128193; Exportaciones/</span><br>';
+      html += indent1 + '<span class="file">&#128196; A-001-Planta Baja - Arquitectura.pdf</span><br>';
+      html += indent1 + '<span class="file">&#128196; A-001-Planta Baja - Arquitectura.dwg</span><br>';
+      html += indent1 + '<span class="file">&#128196; A-002-Planta Alta - Arquitectura.pdf</span><br>';
+      html += indent1 + '<span class="file">&#128196; A-002-Planta Alta - Arquitectura.dwg</span><br>';
+      html += indent1 + '<span class="file">... y 20 archivos mas</span>';
+    } else if (org === 'format') {
+      html = '<span class="folder">&#128193; Exportaciones/</span><br>';
+      html += indent1 + '<span class="folder">&#128193; PDF/</span><br>';
+      html += indent2 + '<span class="file">&#128196; A-001-Planta Baja - Arquitectura.pdf</span><br>';
+      html += indent2 + '<span class="file">&#128196; A-002-Planta Alta - Arquitectura.pdf</span><br>';
+      html += indent2 + '<span class="file">... y 10 archivos mas</span><br>';
+      html += indent1 + '<span class="folder">&#128193; DWG/</span><br>';
+      html += indent2 + '<span class="file">&#128196; A-001-Planta Baja - Arquitectura.dwg</span><br>';
+      html += indent2 + '<span class="file">&#128196; A-002-Planta Alta - Arquitectura.dwg</span><br>';
+      html += indent2 + '<span class="file">... y 10 archivos mas</span>';
+    } else if (org === 'discipline') {
+      html = '<span class="folder">&#128193; Exportaciones/</span><br>';
+      html += indent1 + '<span class="folder">&#128193; Arquitectura/</span><br>';
+      html += indent2 + '<span class="file">&#128196; A-001-Planta Baja - Arquitectura.pdf</span><br>';
+      html += indent2 + '<span class="file">&#128196; A-002-Planta Alta - Arquitectura.pdf</span><br>';
+      html += indent2 + '<span class="file">...</span><br>';
+      html += indent1 + '<span class="folder">&#128193; Estructura/</span><br>';
+      html += indent2 + '<span class="file">&#128196; E-001-Planta Baja - Estructura.pdf</span><br>';
+      html += indent2 + '<span class="file">...</span><br>';
+      html += indent1 + '<span class="folder">&#128193; MEP/</span><br>';
+      html += indent2 + '<span class="file">&#128196; I-001-Planta Baja - Instalaciones.pdf</span><br>';
+      html += indent2 + '<span class="file">...</span>';
+    } else if (org === 'both') {
+      html = '<span class="folder">&#128193; Exportaciones/</span><br>';
+      html += indent1 + '<span class="folder">&#128193; PDF/</span><br>';
+      html += indent2 + '<span class="folder">&#128193; Arquitectura/</span><br>';
+      html += indent3 + '<span class="file">&#128196; A-001-Planta Baja - Arquitectura.pdf</span><br>';
+      html += indent3 + '<span class="file">...</span><br>';
+      html += indent2 + '<span class="folder">&#128193; Estructura/</span><br>';
+      html += indent3 + '<span class="file">&#128196; E-001-Planta Baja - Estructura.pdf</span><br>';
+      html += indent3 + '<span class="file">...</span><br>';
+      html += indent1 + '<span class="folder">&#128193; DWG/</span><br>';
+      html += indent2 + '<span class="folder">&#128193; Arquitectura/</span><br>';
+      html += indent3 + '<span class="file">&#128196; A-001-Planta Baja - Arquitectura.dwg</span><br>';
+      html += indent3 + '<span class="file">...</span><br>';
+      html += indent2 + '<span class="folder">&#128193; Estructura/</span><br>';
+      html += indent3 + '<span class="file">&#128196; E-001-Planta Baja - Estructura.dwg</span><br>';
+      html += indent3 + '<span class="file">...</span>';
+    }
+
+    tree.innerHTML = html;
+  }
+
+  // Initialize
+  updateFolderTree();
+  updateCount();
+  updateDwgConfigVisibility();
+</script>
+</body>
+</html>

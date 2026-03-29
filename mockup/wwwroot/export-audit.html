@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BIMPills — Exportar Informe de Auditoría</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --azul: #212B37;
+    --naranja: #EF6337;
+    --bg: #F0F0F0;
+    --card-bg: #FFFFFF;
+    --card-border: #E5E5EA;
+    --caption: #86868B;
+    --accent: #1565C0;
+    --accent-bg: #E3F2FD;
+    --green: #34C759;
+    --green-bg: #E8F5E9;
+    --red: #FF3B30;
+    --yellow: #FF9500;
+  }
+
+  body {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--azul);
+    width: 920px;
+    height: 720px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .header {
+    margin: 16px 20px 0;
+    background: var(--card-bg);
+    border-radius: 10px;
+    border: 0.5px solid var(--card-border);
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+    flex-shrink: 0;
+  }
+  .header img { width: 20px; height: 32px; object-fit: contain; }
+  .header-text { display: flex; flex-direction: column; gap: 2px; }
+  .header-label { font-size: 12px; font-weight: 500; color: var(--naranja); }
+  .header-title { font-size: 15px; font-weight: 600; color: var(--azul); }
+  .header-subtitle { font-size: 12px; color: var(--caption); }
+
+  .main-card {
+    margin: 10px 20px 0;
+    background: var(--card-bg);
+    border-radius: 10px;
+    border: 0.5px solid var(--card-border);
+    box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    margin-bottom: 14px;
+  }
+
+  /* Tab bar */
+  .tab-bar {
+    display: flex;
+    border-bottom: 1px solid var(--card-border);
+    padding: 0 14px;
+    flex-shrink: 0;
+    background: #FAFAFA;
+  }
+  .tab {
+    padding: 12px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--caption);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: color 0.1s;
+  }
+  .tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+    font-weight: 600;
+  }
+  .tab-num {
+    width: 18px; height: 18px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700;
+    background: #F2F2F7; color: var(--caption);
+  }
+  .tab.active .tab-num { background: var(--accent-bg); color: var(--accent); }
+  .tab.done .tab-num { background: var(--green-bg); color: #2E7D32; }
+  .tab.done { color: #2E7D32; }
+
+  /* Tab content */
+  .tab-content { flex: 1; overflow-y: auto; padding: 16px 18px; }
+
+  /* Selection tab */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .summary-metric {
+    background: #F9F9FB;
+    border: 0.5px solid var(--card-border);
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+  }
+  .metric-value { font-size: 22px; font-weight: 700; color: var(--azul); }
+  .metric-label { font-size: 10px; color: var(--caption); margin-top: 2px; }
+  .metric-value.good { color: var(--green); }
+  .metric-value.warn { color: var(--yellow); }
+  .metric-value.bad { color: var(--red); }
+
+  .health-row {
+    display: flex; align-items: center; gap: 16px;
+    background: #F9F9FB; border: 0.5px solid var(--card-border);
+    border-radius: 8px; padding: 14px 16px; margin-bottom: 16px;
+  }
+  .health-score {
+    font-size: 36px; font-weight: 800; color: var(--green);
+    line-height: 1;
+  }
+  .health-bar-wrap { flex: 1; }
+  .health-label { font-size: 11px; color: var(--caption); margin-bottom: 6px; }
+  .health-bar { height: 8px; background: #E5E5EA; border-radius: 4px; overflow: hidden; }
+  .health-fill { height: 100%; background: var(--green); border-radius: 4px; }
+
+  .findings-title { font-size: 12px; font-weight: 600; color: var(--azul); margin-bottom: 8px; }
+  .finding-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 12px; border-radius: 6px; margin-bottom: 4px;
+    background: #F9F9FB; border: 0.5px solid var(--card-border);
+  }
+  .finding-label { font-size: 12px; color: var(--azul); }
+  .finding-badge {
+    font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px;
+  }
+  .badge-warn { background: #FFF3E0; color: #E65100; }
+  .badge-ok { background: var(--green-bg); color: #2E7D32; }
+  .badge-info { background: var(--accent-bg); color: var(--accent); }
+
+  /* Format tab */
+  .format-section { margin-bottom: 18px; }
+  .format-title { font-size: 12px; font-weight: 600; color: var(--azul); margin-bottom: 10px; }
+  .format-options { display: flex; gap: 10px; }
+  .format-option {
+    flex: 1; border: 1.5px solid var(--card-border); border-radius: 8px;
+    padding: 14px; cursor: pointer; transition: border-color 0.1s;
+  }
+  .format-option.selected { border-color: var(--accent); background: var(--accent-bg); }
+  .format-icon { font-size: 24px; margin-bottom: 8px; }
+  .format-name { font-size: 13px; font-weight: 600; color: var(--azul); margin-bottom: 3px; }
+  .format-desc { font-size: 11px; color: var(--caption); }
+
+  .profile-row {
+    display: flex; gap: 8px; align-items: center; margin-bottom: 14px;
+  }
+  .profile-select {
+    flex: 1; padding: 8px 10px; border-radius: 6px;
+    border: 1px solid var(--card-border); font-size: 12px;
+    font-family: 'Segoe UI', sans-serif; color: var(--azul);
+    background: white;
+  }
+
+  .checkbox-group { display: flex; flex-direction: column; gap: 8px; }
+  .checkbox-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 12px; background: #F9F9FB;
+    border: 0.5px solid var(--card-border); border-radius: 6px;
+    cursor: pointer;
+  }
+  .checkbox { width: 16px; height: 16px; border-radius: 3px; border: 1.5px solid var(--card-border); background: white; flex-shrink: 0; }
+  .checkbox.checked { background: var(--accent); border-color: var(--accent); display: flex; align-items: center; justify-content: center; }
+  .checkbox.checked::after { content: '✓'; color: white; font-size: 10px; font-weight: 700; }
+  .checkbox-label { font-size: 12px; color: var(--azul); }
+
+  /* Footer */
+  .footer {
+    padding: 10px 14px;
+    border-top: 1px solid var(--card-border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .footer-spacer { flex: 1; }
+
+  .btn {
+    padding: 7px 14px; border-radius: 7px; font-size: 12px; font-weight: 500;
+    font-family: 'Segoe UI', sans-serif; cursor: pointer; border: none;
+    display: inline-flex; align-items: center; gap: 5px;
+  }
+  .btn-primary { background: var(--accent); color: #FFFFFF; }
+  .btn-export { background: var(--naranja); color: #FFFFFF; }
+  .btn-secondary { background: transparent; color: var(--azul); border: 1px solid var(--card-border); }
+
+  /* Token buttons (coherent with exportar-planos) */
+  .token-buttons { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; margin-bottom: 8px; }
+  .token-btn {
+    padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: 600;
+    font-family: 'Segoe UI', sans-serif; cursor: pointer;
+    border: 1px solid var(--card-border); background: #F9F9FB; color: var(--azul);
+    transition: all 0.15s;
+  }
+  .token-btn:hover { border-color: var(--naranja); color: var(--naranja); background: #FFF3E0; }
+  .preview-text { font-size: 11px; color: #86868B; }
+
+  .back-link {
+    display: block; text-align: center; margin-top: 12px; margin-bottom: 4px;
+    font-size: 11px; color: var(--caption); text-decoration: none;
+  }
+  .back-link:hover { color: var(--naranja); }
+
+  /* Tab panels visibility */
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <img src="pill-icon.png" alt="BIMPills" />
+  <div class="header-text">
+    <span class="header-label">Datos</span>
+    <span class="header-title">Exportar Informe de Auditoría</span>
+    <span class="header-subtitle">Genera informes PDF o XLSX con health scores, hallazgos y recomendaciones</span>
+  </div>
+</div>
+
+<!-- Main card -->
+<div class="main-card">
+
+  <!-- Tab bar -->
+  <div class="tab-bar">
+    <div class="tab done" onclick="showTab(0)">
+      <span class="tab-num">✓</span>
+      Selección
+    </div>
+    <div class="tab active" onclick="showTab(1)">
+      <span class="tab-num">2</span>
+      Formato
+    </div>
+    <div class="tab" onclick="showTab(2)">
+      <span class="tab-num">3</span>
+      Exportar
+    </div>
+  </div>
+
+  <!-- Tab 1: Selección -->
+  <div class="tab-content tab-panel" id="tab-0">
+    <div class="health-row">
+      <div class="health-score">78</div>
+      <div class="health-bar-wrap">
+        <div class="health-label">Puntuación de salud del modelo</div>
+        <div class="health-bar"><div class="health-fill" style="width: 78%;"></div></div>
+      </div>
+      <div style="font-size: 12px; color: var(--caption); text-align: right;">
+        <div style="font-weight: 600; color: var(--azul);">Proyecto Demo BIM</div>
+        <div>Revit 2025 · 2026-03-27</div>
+      </div>
+    </div>
+
+    <div class="summary-grid">
+      <div class="summary-metric">
+        <div class="metric-value warn">14</div>
+        <div class="metric-label">Advertencias</div>
+      </div>
+      <div class="summary-metric">
+        <div class="metric-value bad">3</div>
+        <div class="metric-label">Sin categoría</div>
+      </div>
+      <div class="summary-metric">
+        <div class="metric-value good">142</div>
+        <div class="metric-label">Familias</div>
+      </div>
+      <div class="summary-metric">
+        <div class="metric-value warn">8</div>
+        <div class="metric-label">Purgables</div>
+      </div>
+    </div>
+
+    <div class="findings-title">Resumen de Hallazgos</div>
+    <div class="finding-row">
+      <span class="finding-label">Elementos sin categoría asignada</span>
+      <span class="finding-badge badge-warn">3 elementos</span>
+    </div>
+    <div class="finding-row">
+      <span class="finding-label">Familias con tamaño > 5 MB</span>
+      <span class="finding-badge badge-warn">5 familias</span>
+    </div>
+    <div class="finding-row">
+      <span class="finding-label">Vistas sin uso en sheets</span>
+      <span class="finding-badge badge-info">22 vistas</span>
+    </div>
+    <div class="finding-row">
+      <span class="finding-label">Modelos vinculados cargados</span>
+      <span class="finding-badge badge-ok">2 links OK</span>
+    </div>
+  </div>
+
+  <!-- Tab 2: Formato (active) -->
+  <div class="tab-content tab-panel active" id="tab-1">
+    <div class="format-section">
+      <div class="format-title">Formato de salida</div>
+      <div class="format-options">
+        <div class="format-option selected">
+          <div class="format-icon">📄</div>
+          <div class="format-name">PDF</div>
+          <div class="format-desc">Informe visual con gráficos y health score. Ideal para presentaciones.</div>
+        </div>
+        <div class="format-option">
+          <div class="format-icon">📊</div>
+          <div class="format-name">XLSX</div>
+          <div class="format-desc">Hoja de cálculo con datos tabulares. Ideal para análisis posterior.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="format-section">
+      <div class="format-title">Perfil de exportación</div>
+      <div class="profile-row">
+        <select class="profile-select">
+          <option>Informe Completo</option>
+          <option>Resumen Ejecutivo</option>
+          <option>Solo Advertencias</option>
+          <option>+ Guardar perfil actual...</option>
+        </select>
+        <button class="btn btn-secondary" style="font-size: 11px; padding: 7px 10px;">Guardar perfil</button>
+      </div>
+    </div>
+
+    <div class="format-section">
+      <div class="format-title">Contenido del informe</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item">
+          <div class="checkbox checked"></div>
+          <span class="checkbox-label">Health Score (puntuación general 0–100)</span>
+        </div>
+        <div class="checkbox-item">
+          <div class="checkbox checked"></div>
+          <span class="checkbox-label">Tabla de advertencias ordenadas por severidad</span>
+        </div>
+        <div class="checkbox-item">
+          <div class="checkbox checked"></div>
+          <span class="checkbox-label">Familias más pesadas (top 10 por MB)</span>
+        </div>
+        <div class="checkbox-item">
+          <div class="checkbox"></div>
+          <span class="checkbox-label">Elementos sin categoría asignada</span>
+        </div>
+        <div class="checkbox-item">
+          <div class="checkbox checked"></div>
+          <span class="checkbox-label">Recomendaciones accionables</span>
+        </div>
+        <div class="checkbox-item">
+          <div class="checkbox"></div>
+          <span class="checkbox-label">Metadatos (fecha, versión Revit, usuario)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 3: Exportar -->
+  <div class="tab-content tab-panel" id="tab-2">
+    <div class="format-section">
+      <div class="format-title">Carpeta de destino</div>
+      <div class="profile-row">
+        <input type="text" class="profile-select" value="C:\Users\rodrigo\Documents\BIMPills\Reports\" readonly style="flex: 1;"/>
+        <button class="btn btn-secondary" style="font-size: 11px; padding: 7px 10px;">Examinar...</button>
+      </div>
+    </div>
+
+    <div class="format-section">
+      <div class="format-title">Nombramiento</div>
+      <div style="margin-bottom: 4px;">
+        <input type="text" class="profile-select" id="auditPatternInput"
+               value="BIMPills_{project}_{date}"
+               style="flex:1; width:100%; font-family:'Consolas','SF Mono',monospace; font-size:11px;"
+               oninput="updateAuditPreview()"/>
+      </div>
+      <div class="token-buttons">
+        <button class="token-btn" onclick="insertAuditToken('{project}')">Proyecto</button>
+        <button class="token-btn" onclick="insertAuditToken('{date}')">Fecha</button>
+        <button class="token-btn" onclick="insertAuditToken('{health}')">Health Score</button>
+        <button class="token-btn" onclick="insertAuditToken('{user}')">Usuario</button>
+      </div>
+      <div style="display:flex; align-items:center; gap:6px; margin-top:6px; margin-bottom:4px;">
+        <select class="profile-select" id="auditParamSelect" style="flex:1; font-size:11px; padding:5px 8px;">
+          <option value="">Seleccionar parámetro de Revit...</option>
+          <option value="Project Number">Project Number</option>
+          <option value="Project Address">Project Address</option>
+          <option value="Client Name">Client Name</option>
+          <option value="Organization Name">Organization Name</option>
+          <option value="Building Name">Building Name</option>
+          <option value="Author">Author</option>
+          <option value="Project Status">Project Status</option>
+          <option value="Project Issue Date">Project Issue Date</option>
+        </select>
+        <button class="btn btn-secondary" style="font-size:10px; padding:4px 8px;" onclick="addAuditParam()">Agregar</button>
+      </div>
+      <div class="token-buttons" id="auditDynamicTokens"></div>
+      <div class="preview-text" id="auditNamePreview">
+        Vista previa: <strong>BIMPills_ProyectoDemo_2026-03-27.pdf</strong>
+      </div>
+    </div>
+
+    <div class="format-section">
+      <div class="format-title">Resumen de exportación</div>
+      <div style="background: #F9F9FB; border: 0.5px solid var(--card-border); border-radius: 8px; padding: 14px 16px;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+          <span style="font-size: 12px; color: var(--caption);">Formato</span>
+          <span style="font-size: 12px; font-weight: 600; color: var(--azul);">PDF</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+          <span style="font-size: 12px; color: var(--caption);">Perfil</span>
+          <span style="font-size: 12px; font-weight: 600; color: var(--azul);">Informe Completo</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+          <span style="font-size: 12px; color: var(--caption);">Secciones</span>
+          <span style="font-size: 12px; font-weight: 600; color: var(--azul);">4 de 6</span>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+          <span style="font-size: 12px; color: var(--caption);">Destino</span>
+          <span style="font-size: 11px; color: var(--azul);">...BIMPills\Reports\</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <button class="btn btn-secondary" onclick="prevTab()">
+      ← Anterior
+    </button>
+    <button class="btn btn-primary" id="next-btn" onclick="nextTab()">
+      Siguiente →
+    </button>
+    <div class="footer-spacer"></div>
+    <button class="btn btn-export" id="export-btn" style="display:none;">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/><line x1="12" y1="11" x2="12" y2="16" stroke-linecap="round"/><polyline points="9.5 14 12 16.5 14.5 14" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Exportar PDF
+    </button>
+    <button class="btn btn-secondary" style="width: 90px;">Cerrar</button>
+  </div>
+</div>
+
+<a class="back-link" href="index.html">&larr; Volver al índice</a>
+
+<script>
+  let currentTab = 1;
+
+  function showTab(index) {
+    document.querySelectorAll('.tab-panel').forEach((p, i) => {
+      p.classList.toggle('active', i === index);
+    });
+    document.querySelectorAll('.tab').forEach((t, i) => {
+      t.classList.remove('active');
+      if (i === index) t.classList.add('active');
+    });
+    currentTab = index;
+    document.getElementById('next-btn').style.display = index === 2 ? 'none' : '';
+    document.getElementById('export-btn').style.display = index === 2 ? '' : 'none';
+  }
+
+  function nextTab() {
+    if (currentTab < 2) showTab(currentTab + 1);
+  }
+
+  function prevTab() {
+    if (currentTab > 0) showTab(currentTab - 1);
+  }
+
+  // ═══ NAMING TOKENS ═══
+  const auditTokenMap = {
+    '{project}': 'ProyectoDemo',
+    '{date}': '2026-03-27',
+    '{health}': '87',
+    '{user}': 'rodrigo'
+  };
+
+  function insertAuditToken(token) {
+    const input = document.getElementById('auditPatternInput');
+    const start = input.selectionStart;
+    const end = input.selectionEnd;
+    const val = input.value;
+    input.value = val.substring(0, start) + token + val.substring(end);
+    input.focus();
+    const newPos = start + token.length;
+    input.setSelectionRange(newPos, newPos);
+    updateAuditPreview();
+  }
+
+  const auditParamSamples = {
+    'Project Number': 'PRJ-2026-001',
+    'Project Address': 'Av. Reforma 100',
+    'Client Name': 'Constructora ABC',
+    'Organization Name': 'BIMPills Studio',
+    'Building Name': 'Torre Central',
+    'Author': 'rodrigo',
+    'Project Status': 'En progreso',
+    'Project Issue Date': '2026-03-27'
+  };
+
+  function addAuditParam() {
+    const sel = document.getElementById('auditParamSelect');
+    const paramName = sel.value;
+    if (!paramName) return;
+    const token = '{Param:' + paramName + '}';
+    if (auditTokenMap[token]) return;
+    auditTokenMap[token] = auditParamSamples[paramName] || paramName;
+    const container = document.getElementById('auditDynamicTokens');
+    const btn = document.createElement('button');
+    btn.className = 'token-btn';
+    btn.textContent = paramName;
+    btn.onclick = function() { insertAuditToken(token); };
+    container.appendChild(btn);
+    insertAuditToken(token);
+    sel.value = '';
+  }
+
+  function updateAuditPreview() {
+    let pattern = document.getElementById('auditPatternInput').value;
+    let preview = pattern;
+    for (const [token, value] of Object.entries(auditTokenMap)) {
+      preview = preview.split(token).join(value);
+    }
+    document.getElementById('auditNamePreview').innerHTML =
+      'Vista previa: <strong>' + preview + '.pdf</strong>';
+  }
+</script>
+</body>
+</html>

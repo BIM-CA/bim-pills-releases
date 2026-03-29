@@ -20,6 +20,10 @@ namespace BIMPills.Revit.Application
                 ["export"]        = RibbonIconFactory.CreateExportIcon,
                 ["documentacion"] = RibbonIconFactory.CreateDocumentacionIcon,
                 ["gestion"]       = RibbonIconFactory.CreateGestionIcon,
+                ["dimension"]     = RibbonIconFactory.CreateDimensionIcon,
+                ["connect"]       = RibbonIconFactory.CreateConnectIcon,
+                ["ordering"]      = RibbonIconFactory.CreateOrderingIcon,
+                ["datamanager"]   = RibbonIconFactory.CreateDataManagerIcon,
             };
 
         public RibbonBuilder(UIControlledApplication app)

@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BIMPills — Gestionar (Mockup)</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --azul: #212B37;
+    --naranja: #EF6337;
+    --blanco: #FBFAF8;
+    --bg: #F0F0F0;
+    --card-bg: #FFFFFF;
+    --card-border: #E5E5EA;
+    --caption: #8E8E93;
+    --metric-bg: #F9F9FB;
+    --green: #34C759;
+    --red: #FF3B30;
+    --blue: #1565C0;
+    --blue-bg: #E3F2FD;
+    --yellow-bg: #FFF9C4;
+    --yellow-fg: #F57F17;
+  }
+
+  body {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--azul);
+    width: 960px;
+    height: 700px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ═══ ENCABEZADO ═══ */
+  .header {
+    margin: 16px 20px 0;
+    background: var(--card-bg);
+    border-radius: 10px;
+    border: 0.5px solid var(--card-border);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+    flex-shrink: 0;
+  }
+  .header img { width: 24px; height: 38px; object-fit: contain; }
+  .header-text { display: flex; flex-direction: column; gap: 1px; }
+  .header-label { font-size: 12px; font-weight: 500; color: var(--naranja); }
+  .header-title { font-size: 17px; font-weight: 600; color: var(--azul); }
+
+  /* ═══ CONTENIDO PRINCIPAL ═══ */
+  .main-card {
+    margin: 12px 20px 0;
+    background: var(--card-bg);
+    border-radius: 10px;
+    border: 0.5px solid var(--card-border);
+    box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  /* Tab strip */
+  .tab-strip {
+    display: flex;
+    border-bottom: 1px solid var(--card-border);
+    padding: 0 16px;
+    flex-shrink: 0;
+  }
+  .tab {
+    padding: 10px 18px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--caption);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: all 0.15s;
+  }
+  .tab.active {
+    color: var(--azul);
+    border-bottom-color: var(--naranja);
+  }
+  .tab:hover:not(.active) { color: var(--azul); }
+  .tab.future { color: #C7C7CC; cursor: default; font-style: italic; }
+
+  /* ═══ LAYOUT PRINCIPAL — 2 columnas ═══ */
+  .content {
+    flex: 1;
+    display: flex;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  /* Col 1: Lista de tablas */
+  .schedule-panel {
+    width: 240px;
+    min-width: 200px;
+    border-right: 1px solid var(--card-border);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+  }
+  .schedule-panel-header {
+    padding: 12px 14px 8px;
+    flex-shrink: 0;
+  }
+  .schedule-panel-title {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--caption);
+    margin-bottom: 8px;
+  }
+  .search-box {
+    width: 100%;
+    height: 30px;
+    border: 1px solid #D1D1D6;
+    border-radius: 6px;
+    padding: 0 10px 0 30px;
+    font-size: 12px;
+    font-family: inherit;
+    background: white url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2386868B' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='M21 21l-4.35-4.35'/%3E%3C/svg%3E") 10px center no-repeat;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .search-box:focus { border-color: var(--blue); }
+
+  .schedule-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 4px 6px;
+  }
+  .schedule-item {
+    padding: 8px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.12s;
+    margin-bottom: 2px;
+  }
+  .schedule-item:hover { background: #F5F5F7; }
+  .schedule-item.selected { background: var(--blue-bg); }
+  .schedule-item-name {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--azul);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .schedule-item.selected .schedule-item-name { color: var(--blue); font-weight: 600; }
+  .schedule-item-meta {
+    font-size: 10px;
+    color: var(--caption);
+    margin-top: 2px;
+  }
+
+  /* Col 2: Datos y acciones */
+  .data-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  /* Toolbar */
+  .toolbar {
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid #F2F2F7;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+  }
+  .toolbar-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+    border: 1px solid var(--card-border);
+    background: var(--card-bg);
+    color: var(--azul);
+  }
+  .btn:hover { background: #F2F2F7; }
+  .btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; }
+  .btn.primary {
+    background: var(--azul);
+    color: white;
+    border-color: var(--azul);
+  }
+  .btn.primary:hover { background: #2D3A49; }
+  .btn.success {
+    background: #E8F5E9;
+    color: #2E7D32;
+    border-color: #A5D6A7;
+  }
+  .btn.success:hover { background: #C8E6C9; }
+  .btn.disabled {
+    opacity: 0.45;
+    cursor: default;
+    pointer-events: none;
+  }
+  .toolbar-sep {
+    width: 1px;
+    height: 20px;
+    background: var(--card-border);
+    margin: 0 2px;
+  }
+  .toolbar-info {
+    font-size: 11px;
+    color: var(--caption);
+    margin-left: auto;
+  }
+  .toolbar-info strong { color: var(--azul); }
+
+  /* Data grid */
+  .data-grid-wrapper {
+    flex: 1;
+    overflow: auto;
+    min-height: 0;
+  }
+  .data-grid {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+  }
+  .data-grid thead {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+  .data-grid th {
+    background: #F9F9FB;
+    border-bottom: 1px solid var(--card-border);
+    padding: 7px 10px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: var(--caption);
+    white-space: nowrap;
+    user-select: none;
+  }
+  .data-grid th.readonly { background: var(--yellow-bg); color: var(--yellow-fg); }
+  .data-grid td {
+    padding: 6px 10px;
+    border-bottom: 1px solid #F2F2F7;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 180px;
+  }
+  .data-grid tr:hover td { background: #FAFAFA; }
+  .data-grid tr:nth-child(even) td { background: #FDFDFE; }
+  .data-grid tr:nth-child(even):hover td { background: #FAFAFA; }
+  .data-grid td.readonly {
+    background: #FFFDE7 !important;
+    color: #9E9D24;
+    font-style: italic;
+  }
+
+  /* Legend */
+  .legend {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-left: auto;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 10px;
+    color: var(--caption);
+  }
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+  .legend-dot.editable { background: var(--card-bg); border: 1.5px solid #D1D1D6; }
+  .legend-dot.readonly { background: var(--yellow-bg); border: 1.5px solid #F0E68C; }
+  .legend-dot.modified { background: #E8F5E9; border: 1.5px solid #A5D6A7; }
+
+  /* ═══ FOOTER ═══ */
+  .footer {
+    padding: 10px 20px;
+    border-top: 1px solid var(--card-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .footer-status {
+    font-size: 11px;
+    color: var(--caption);
+  }
+  .footer-status strong { color: var(--azul); }
+  .btn-close {
+    padding: 6px 20px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+    border: 1px solid var(--card-border);
+    background: var(--card-bg);
+    color: var(--azul);
+    transition: background 0.15s;
+  }
+  .btn-close:hover { background: #F2F2F7; }
+
+  /* ═══ IMPORT OVERLAY (shown after importing) ═══ */
+  .import-bar {
+    padding: 8px 14px;
+    background: #E8F5E9;
+    border-bottom: 1px solid #C8E6C9;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: #2E7D32;
+    flex-shrink: 0;
+  }
+  .import-bar svg { width: 14px; height: 14px; stroke: #2E7D32; fill: none; stroke-width: 2; flex-shrink: 0; }
+  .import-bar .count { font-weight: 700; }
+  .import-bar .btn-apply {
+    margin-left: auto;
+    background: #2E7D32;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 5px 14px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .import-bar .btn-apply:hover { background: #1B5E20; }
+  .import-bar .btn-dismiss {
+    background: transparent;
+    color: #2E7D32;
+    border: 1px solid #A5D6A7;
+    border-radius: 5px;
+    padding: 5px 10px;
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  /* Export destination row */
+  .export-dest {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: #F9F9FB;
+    border-bottom: 1px solid #F2F2F7;
+    flex-shrink: 0;
+  }
+  .export-dest label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--caption);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    flex-shrink: 0;
+  }
+  .export-dest-path {
+    flex: 1;
+    height: 26px;
+    border: 1px solid #D1D1D6;
+    border-radius: 5px;
+    padding: 0 8px;
+    font-size: 11px;
+    font-family: inherit;
+    background: white;
+    color: var(--azul);
+    outline: none;
+  }
+  .export-dest-path:focus { border-color: var(--blue); }
+  .btn-browse {
+    padding: 4px 10px;
+    border: 1px solid #D1D1D6;
+    border-radius: 5px;
+    font-size: 10px;
+    font-weight: 500;
+    background: white;
+    color: var(--azul);
+    cursor: pointer;
+    font-family: inherit;
+    flex-shrink: 0;
+  }
+  .btn-browse:hover { background: #F5F5F7; }
+
+  /* Modified cell highlight */
+  .data-grid td.modified {
+    background: #E8F5E9 !important;
+    color: #2E7D32;
+    font-weight: 600;
+  }
+
+  /* Mockup note */
+  .mockup-badge {
+    position: fixed;
+    top: 8px;
+    right: 8px;
+    background: var(--naranja);
+    color: white;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    z-index: 100;
+  }
+</style>
+</head>
+<body>
+
+<div class="mockup-badge">MOCKUP</div>
+
+<!-- ═══════════════════ ENCABEZADO ═══════════════════ -->
+<div class="header">
+  <img src="pill-icon.png" alt="BIMPills">
+  <div class="header-text">
+    <span class="header-label">Gestionar</span>
+    <span class="header-title">Proyecto Edificio Central — ARQ</span>
+  </div>
+</div>
+
+<!-- ═══════════════════ CONTENIDO PRINCIPAL ═══════════════════ -->
+<div class="main-card">
+
+  <!-- Tab strip -->
+  <div class="tab-strip">
+    <div class="tab active">Tablas</div>
+    <div class="tab future">Pronto...</div>
+  </div>
+
+  <!-- Import bar (visible after importing Excel with changes) -->
+  <div class="import-bar">
+    <svg viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
+    <span><span class="count">23</span> cambios detectados desde <strong>Schedule_Export_28-03.xlsx</strong></span>
+    <button class="btn-dismiss">Descartar</button>
+    <button class="btn-apply">Aplicar al modelo</button>
+  </div>
+
+  <!-- Export destination -->
+  <div class="export-dest">
+    <label>Exportar a:</label>
+    <input class="export-dest-path" type="text" value="C:\Users\guita\Documents\BIMPills\Exports" readonly>
+    <button class="btn-browse">Examinar...</button>
+  </div>
+
+  <!-- 3-column layout -->
+  <div class="content">
+
+    <!-- ══ Col 1: Lista de tablas ══ -->
+    <div class="schedule-panel">
+      <div class="schedule-panel-header">
+        <div class="schedule-panel-title">Tablas del modelo</div>
+        <input class="search-box" type="text" placeholder="Buscar tabla...">
+      </div>
+      <div class="schedule-list">
+        <div class="schedule-item selected">
+          <div class="schedule-item-name">Tabla de Puertas</div>
+          <div class="schedule-item-meta">Puertas · 48 filas</div>
+        </div>
+        <div class="schedule-item">
+          <div class="schedule-item-name">Tabla de Muros</div>
+          <div class="schedule-item-meta">Muros · 124 filas</div>
+        </div>
+        <div class="schedule-item">
+          <div class="schedule-item-name">Tabla de Ventanas</div>
+          <div class="schedule-item-meta">Ventanas · 86 filas</div>
+        </div>
+        <div class="schedule-item">
+          <div class="schedule-item-name">Cuantificación Pisos</div>
+          <div class="schedule-item-meta">Pisos · 32 filas</div>
+        </div>
+        <div class="schedule-item">
+          <div class="schedule-item-name">Tabla de Habitaciones</div>
+          <div class="schedule-item-meta">Habitaciones · 67 filas</div>
+        </div>
+        <div class="schedule-item">
+          <div class="schedule-item-name">Tabla de Columnas EST</div>
+          <div class="schedule-item-meta">Columnas · 41 filas</div>
+        </div>
+        <div class="schedule-item">
+          <div class="schedule-item-name">Luminarias MEP</div>
+          <div class="schedule-item-meta">Luminarias · 112 filas</div>
+        </div>
+        <div class="schedule-item">
+          <div class="schedule-item-name">Aparatos Sanitarios</div>
+          <div class="schedule-item-meta">Sanitarios · 29 filas</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ Col 2: Datos ══ -->
+    <div class="data-panel">
+
+      <!-- Toolbar -->
+      <div class="toolbar">
+        <div class="toolbar-group">
+          <button class="btn primary">
+            <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Exportar Excel
+          </button>
+          <button class="btn">
+            <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Importar Excel
+          </button>
+        </div>
+        <div class="toolbar-sep"></div>
+        <div class="legend">
+          <div class="legend-item">
+            <div class="legend-dot editable"></div>
+            <span>Editable</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot readonly"></div>
+            <span>Solo lectura</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot modified"></div>
+            <span>Modificado</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Data grid -->
+      <div class="data-grid-wrapper">
+        <table class="data-grid">
+          <thead>
+            <tr>
+              <th>Marca</th>
+              <th>Nivel</th>
+              <th class="readonly">Familia</th>
+              <th class="readonly">Tipo</th>
+              <th>Ancho</th>
+              <th>Alto</th>
+              <th>Comentarios</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="modified">P-001</td>
+              <td>Nivel 1</td>
+              <td class="readonly">Puerta Sencilla</td>
+              <td class="readonly">90 x 210</td>
+              <td>0.90</td>
+              <td>2.10</td>
+              <td class="modified">Acceso principal</td>
+            </tr>
+            <tr>
+              <td>P-002</td>
+              <td>Nivel 1</td>
+              <td class="readonly">Puerta Sencilla</td>
+              <td class="readonly">80 x 210</td>
+              <td>0.80</td>
+              <td>2.10</td>
+              <td>Baño PB</td>
+            </tr>
+            <tr>
+              <td>P-003</td>
+              <td>Nivel 1</td>
+              <td class="readonly">Puerta Doble</td>
+              <td class="readonly">120 x 210</td>
+              <td>1.20</td>
+              <td>2.10</td>
+              <td></td>
+            </tr>
+            <tr>
+              <td class="modified">P-004</td>
+              <td>Nivel 2</td>
+              <td class="readonly">Puerta Sencilla</td>
+              <td class="readonly">90 x 210</td>
+              <td>0.90</td>
+              <td>2.10</td>
+              <td class="modified">Dormitorio principal</td>
+            </tr>
+            <tr>
+              <td>P-005</td>
+              <td>Nivel 2</td>
+              <td class="readonly">Puerta Sencilla</td>
+              <td class="readonly">80 x 210</td>
+              <td>0.80</td>
+              <td>2.10</td>
+              <td>Baño PA</td>
+            </tr>
+            <tr>
+              <td>P-006</td>
+              <td>Nivel 2</td>
+              <td class="readonly">Puerta Corrediza</td>
+              <td class="readonly">90 x 210</td>
+              <td>0.90</td>
+              <td>2.10</td>
+              <td></td>
+            </tr>
+            <tr>
+              <td>P-007</td>
+              <td>Nivel 1</td>
+              <td class="readonly">Puerta Sencilla</td>
+              <td class="readonly">70 x 210</td>
+              <td>0.70</td>
+              <td>2.10</td>
+              <td>Closet</td>
+            </tr>
+            <tr>
+              <td>P-008</td>
+              <td>Nivel 1</td>
+              <td class="readonly">Puerta Doble</td>
+              <td class="readonly">160 x 210</td>
+              <td>1.60</td>
+              <td>2.10</td>
+              <td>Sala de reuniones</td>
+            </tr>
+            <tr>
+              <td>P-009</td>
+              <td>Nivel 3</td>
+              <td class="readonly">Puerta Sencilla</td>
+              <td class="readonly">90 x 210</td>
+              <td>0.90</td>
+              <td>2.10</td>
+              <td></td>
+            </tr>
+            <tr>
+              <td>P-010</td>
+              <td>Nivel 3</td>
+              <td class="readonly">Puerta Corrediza</td>
+              <td class="readonly">120 x 210</td>
+              <td>1.20</td>
+              <td>2.10</td>
+              <td>Terraza</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <span class="footer-status">
+      <strong>Tabla de Puertas</strong> · 48 elementos · 7 columnas · <span style="color:#2E7D32; font-weight:600;">23 cambios pendientes</span>
+    </span>
+    <button class="btn-close">Cerrar</button>
+  </div>
+
+</div>
+
+<!-- ═══ FOOTER SPACER ═══ -->
+<div style="height: 16px; flex-shrink: 0;"></div>
+
+</body>
+</html>

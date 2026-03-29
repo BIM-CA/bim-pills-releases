@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BIMPills — Ordenar (Mockup)</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --azul: #212B37;
+    --naranja: #EF6337;
+    --blanco: #FBFAF8;
+    --bg: #F0F0F0;
+    --card-bg: #FFFFFF;
+    --card-border: #E5E5EA;
+    --caption: #8E8E93;
+    --green: #34C759;
+    --red: #FF3B30;
+    --blue: #1565C0;
+    --blue-bg: #E3F2FD;
+  }
+
+  body {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--azul);
+    padding: 30px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 40px;
+  }
+
+  .mockup-badge {
+    position: fixed;
+    top: 8px;
+    right: 8px;
+    background: var(--naranja);
+    color: white;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    z-index: 100;
+  }
+
+  .page-title {
+    text-align: center;
+  }
+  .page-title h1 {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .page-title p {
+    font-size: 12px;
+    color: var(--caption);
+  }
+
+  .section-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--caption);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--card-border);
+  }
+
+  /* ═══════════════════════════════════════════════════ */
+  /* VENTANA 1: CONFIGURACION (MODAL)                   */
+  /* ═══════════════════════════════════════════════════ */
+  .config-window {
+    width: 440px;
+    background: var(--card-bg);
+    border-radius: 12px;
+    border: 0.5px solid var(--card-border);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+    overflow: hidden;
+  }
+
+  /* Header */
+  .config-header {
+    padding: 16px 20px 14px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    border-bottom: 1px solid var(--card-border);
+  }
+  .config-header img { width: 22px; height: 34px; object-fit: contain; }
+  .config-header-text { display: flex; flex-direction: column; gap: 1px; }
+  .config-header-label { font-size: 12px; font-weight: 500; color: var(--naranja); }
+  .config-header-title { font-size: 16px; font-weight: 600; color: var(--azul); }
+
+  /* Form */
+  .config-form {
+    padding: 18px 20px;
+  }
+  .form-group {
+    margin-bottom: 14px;
+  }
+  .form-group:last-child { margin-bottom: 0; }
+  .form-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--azul);
+    margin-bottom: 5px;
+    display: block;
+  }
+  .form-hint {
+    font-size: 10px;
+    color: var(--caption);
+    margin-top: 3px;
+  }
+  .form-select, .form-input {
+    width: 100%;
+    height: 34px;
+    border: 1px solid #D1D1D6;
+    border-radius: 6px;
+    padding: 0 10px;
+    font-size: 12px;
+    font-family: inherit;
+    background: white;
+    color: var(--azul);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .form-select:focus, .form-input:focus { border-color: var(--blue); }
+
+  /* Inline fields row */
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 10px;
+  }
+
+  /* Preview */
+  .preview-box {
+    margin-top: 16px;
+    background: #F9F9FB;
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    text-align: center;
+  }
+  .preview-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--caption);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+  }
+  .preview-values {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .preview-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--azul);
+    background: white;
+    border: 1px solid var(--card-border);
+    border-radius: 6px;
+    padding: 6px 14px;
+    min-width: 60px;
+  }
+  .preview-value.current {
+    background: var(--blue-bg);
+    border-color: var(--blue);
+    color: var(--blue);
+  }
+  .preview-arrow {
+    font-size: 14px;
+    color: var(--caption);
+  }
+
+  /* Footer buttons */
+  .config-footer {
+    padding: 14px 20px;
+    border-top: 1px solid var(--card-border);
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border-radius: 6px;
+    padding: 7px 18px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+    border: 1px solid var(--card-border);
+    background: var(--card-bg);
+    color: var(--azul);
+  }
+  .btn:hover { background: #F2F2F7; }
+  .btn.primary {
+    background: var(--azul);
+    color: white;
+    border-color: var(--azul);
+  }
+  .btn.primary:hover { background: #2D3A49; }
+  .btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+  /* ═══════════════════════════════════════════════════ */
+  /* VENTANA 2: SESION FLOTANTE (MODELESS)              */
+  /* ═══════════════════════════════════════════════════ */
+  .session-window {
+    width: 320px;
+    background: var(--card-bg);
+    border-radius: 12px;
+    border: 0.5px solid var(--card-border);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+    overflow: hidden;
+  }
+
+  .session-header {
+    padding: 12px 16px;
+    background: var(--azul);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .session-header-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .session-header-icon svg { width: 14px; height: 14px; stroke: white; fill: none; stroke-width: 2; }
+  .session-header-text { flex: 1; }
+  .session-header-label { font-size: 10px; color: rgba(255,255,255,0.6); font-weight: 500; }
+  .session-header-title { font-size: 13px; font-weight: 600; color: white; }
+
+  .session-body {
+    padding: 16px;
+  }
+
+  /* Next value display */
+  .next-value-box {
+    text-align: center;
+    margin-bottom: 14px;
+  }
+  .next-value-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--caption);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+  .next-value {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--blue);
+    letter-spacing: 1px;
+  }
+
+  /* Progress / counter */
+  .session-stats {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 14px;
+    padding: 8px 12px;
+    background: #F9F9FB;
+    border-radius: 6px;
+  }
+  .session-stat {
+    text-align: center;
+  }
+  .session-stat-value {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--azul);
+  }
+  .session-stat-label {
+    font-size: 9px;
+    color: var(--caption);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .session-stat-sep {
+    width: 1px;
+    height: 24px;
+    background: var(--card-border);
+  }
+
+  /* Session buttons */
+  .session-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+  .session-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+    border: 1px solid var(--card-border);
+    background: var(--card-bg);
+    color: var(--azul);
+  }
+  .session-btn:hover { background: #F2F2F7; }
+  .session-btn svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; }
+  .session-btn.pick {
+    background: var(--blue);
+    color: white;
+    border-color: var(--blue);
+    grid-column: 1 / -1;
+  }
+  .session-btn.pick:hover { background: #0D47A1; }
+  .session-btn.pick svg { stroke: white; }
+  .session-btn.finish {
+    background: #E8F5E9;
+    color: #2E7D32;
+    border-color: #A5D6A7;
+  }
+  .session-btn.finish:hover { background: #C8E6C9; }
+  .session-btn.cancel {
+    background: #FFEBEE;
+    color: #C62828;
+    border-color: #FFCDD2;
+  }
+  .session-btn.cancel:hover { background: #FFCDD2; }
+
+  /* History list */
+  .session-history {
+    margin-top: 12px;
+    border-top: 1px solid var(--card-border);
+    padding-top: 10px;
+  }
+  .session-history-title {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--caption);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin-bottom: 6px;
+  }
+  .history-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+    font-size: 11px;
+  }
+  .history-item .hi-num {
+    font-weight: 700;
+    color: var(--blue);
+    width: 50px;
+  }
+  .history-item .hi-id {
+    color: var(--caption);
+    flex: 1;
+  }
+  .history-item .hi-badge {
+    font-size: 9px;
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: 3px;
+    background: #E8F5E9;
+    color: #2E7D32;
+  }
+
+  /* ═══════════════════════════════════════════════════ */
+  /* FLOW DIAGRAM                                       */
+  /* ═══════════════════════════════════════════════════ */
+  .flow-diagram {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 24px;
+    background: var(--card-bg);
+    border-radius: 10px;
+    border: 0.5px solid var(--card-border);
+    box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+  }
+  .flow-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    text-align: center;
+  }
+  .flow-step-num {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--azul);
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .flow-step-label {
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--azul);
+    max-width: 90px;
+  }
+  .flow-arrow {
+    font-size: 16px;
+    color: var(--caption);
+  }
+</style>
+</head>
+<body>
+
+<div class="mockup-badge">MOCKUP</div>
+
+<div class="page-title">
+  <h1>Ordenar — Mockup de Interfaces</h1>
+  <p>Numeración incremental interactiva · Sprint 3</p>
+</div>
+
+<!-- ═══ FLOW DIAGRAM ═══ -->
+<div>
+  <div class="section-label">Flujo de uso</div>
+  <div class="flow-diagram">
+    <div class="flow-step">
+      <div class="flow-step-num">1</div>
+      <div class="flow-step-label">Click "Ordenar" en Ribbon</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">
+      <div class="flow-step-num">2</div>
+      <div class="flow-step-label">Configurar valores</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">
+      <div class="flow-step-num">3</div>
+      <div class="flow-step-label">Click "Iniciar"</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">
+      <div class="flow-step-num">4</div>
+      <div class="flow-step-label">Ventana flotante + selección</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">
+      <div class="flow-step-num">5</div>
+      <div class="flow-step-label">"Finalizar" o "Cancelar"</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ VENTANA DE CONFIGURACION ═══ -->
+<div>
+  <div class="section-label">Paso 2 — Ventana de configuración (Modal)</div>
+  <div class="config-window">
+
+    <div class="config-header">
+      <img src="pill-icon.png" alt="BIMPills">
+      <div class="config-header-text">
+        <span class="config-header-label">Ordenar</span>
+        <span class="config-header-title">Numeración Incremental</span>
+      </div>
+    </div>
+
+    <div class="config-form">
+
+      <div class="form-group">
+        <label class="form-label">Categoría</label>
+        <select class="form-select">
+          <option>Puertas</option>
+          <option>Ventanas</option>
+          <option>Muros</option>
+          <option>Habitaciones</option>
+          <option>Columnas estructurales</option>
+        </select>
+        <div class="form-hint">Filtra los elementos que se pueden seleccionar en la vista</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Parámetro a escribir</label>
+        <select class="form-select">
+          <option>Marca</option>
+          <option>Comentarios</option>
+          <option>Número de puerta</option>
+        </select>
+        <div class="form-hint">El valor incremental se escribirá en este parámetro</div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Prefijo</label>
+          <input class="form-input" type="text" value="P-" placeholder="ej: A-">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Inicio</label>
+          <input class="form-input" type="number" value="1">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Paso</label>
+          <input class="form-input" type="number" value="1">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Sufijo</label>
+          <input class="form-input" type="text" value="" placeholder="ej: -A">
+        </div>
+      </div>
+
+      <div class="preview-box">
+        <div class="preview-label">Vista previa de valores</div>
+        <div class="preview-values">
+          <div class="preview-value current">P-1</div>
+          <div class="preview-arrow">→</div>
+          <div class="preview-value">P-2</div>
+          <div class="preview-arrow">→</div>
+          <div class="preview-value">P-3</div>
+          <div class="preview-arrow">→</div>
+          <div class="preview-value" style="color:#C7C7CC;">P-4</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="config-footer">
+      <button class="btn">Cancelar</button>
+      <button class="btn primary">
+        <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+        Iniciar
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══ VENTANA FLOTANTE DE SESION ═══ -->
+<div>
+  <div class="section-label">Paso 4 — Ventana flotante de sesión (Modeless, Topmost)</div>
+  <div style="display: flex; gap: 32px; align-items: flex-start;">
+
+    <!-- Floating window -->
+    <div class="session-window">
+
+      <div class="session-header">
+        <div class="session-header-icon">
+          <svg viewBox="0 0 24 24"><path d="M16 3h5v5"/><path d="M4 20L21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/></svg>
+        </div>
+        <div class="session-header-text">
+          <span class="session-header-label">ORDENAR · Puertas → Marca</span>
+          <span class="session-header-title">Sesión activa</span>
+        </div>
+      </div>
+
+      <div class="session-body">
+
+        <div class="next-value-box">
+          <div class="next-value-label">Siguiente valor</div>
+          <div class="next-value">P-4</div>
+        </div>
+
+        <div class="session-stats">
+          <div class="session-stat">
+            <div class="session-stat-value">3</div>
+            <div class="session-stat-label">Asignados</div>
+          </div>
+          <div class="session-stat-sep"></div>
+          <div class="session-stat">
+            <div class="session-stat-value">P-1</div>
+            <div class="session-stat-label">Primero</div>
+          </div>
+          <div class="session-stat-sep"></div>
+          <div class="session-stat">
+            <div class="session-stat-value">P-3</div>
+            <div class="session-stat-label">Último</div>
+          </div>
+        </div>
+
+        <div class="session-actions">
+          <div class="session-btn pick" style="grid-column: 1 / -1;">
+            <svg viewBox="0 0 24 24"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/></svg>
+            Seleccionar siguiente elemento
+          </div>
+          <div class="session-btn">
+            <svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 105.64-12.23L1 10"/></svg>
+            Deshacer
+          </div>
+          <div class="session-btn finish">
+            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            Finalizar
+          </div>
+          <div class="session-btn cancel" style="grid-column: 1 / -1;">
+            <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            Cancelar (deshace todos los cambios)
+          </div>
+        </div>
+
+        <div class="session-history">
+          <div class="session-history-title">Historial</div>
+          <div class="history-item">
+            <span class="hi-num">P-3</span>
+            <span class="hi-id">ID 456789</span>
+            <span class="hi-badge">Asignado</span>
+          </div>
+          <div class="history-item">
+            <span class="hi-num">P-2</span>
+            <span class="hi-id">ID 456123</span>
+            <span class="hi-badge">Asignado</span>
+          </div>
+          <div class="history-item">
+            <span class="hi-num">P-1</span>
+            <span class="hi-id">ID 455800</span>
+            <span class="hi-badge">Asignado</span>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Explanation card -->
+    <div style="max-width: 280px; padding: 16px 20px; background: white; border-radius: 10px; border: 0.5px solid #E5E5EA; box-shadow: 0 1px 6px rgba(0,0,0,0.04);">
+      <div style="font-size: 12px; font-weight: 600; margin-bottom: 10px; color: #212B37;">Comportamiento</div>
+      <ul style="font-size: 11px; color: #636366; line-height: 1.7; padding-left: 16px;">
+        <li><strong>Seleccionar:</strong> Entra en modo PickObject de Revit. El usuario toca un elemento de la categoría y se le asigna el valor actual.</li>
+        <li><strong>Deshacer:</strong> Revierte el último valor asignado y retrocede el contador.</li>
+        <li><strong>Finalizar:</strong> Cierra la ventana. Los cambios quedan en el modelo (cada asignación fue una transacción individual).</li>
+        <li><strong>Cancelar:</strong> Deshace TODOS los valores asignados en esta sesión y cierra.</li>
+        <li>La ventana es <strong>Topmost</strong> (siempre visible) y de tipo <strong>ToolWindow</strong>.</li>
+        <li>Solo se pueden seleccionar elementos de la categoría configurada.</li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>

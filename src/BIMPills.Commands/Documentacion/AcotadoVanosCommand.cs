@@ -24,13 +24,16 @@ namespace BIMPills.Commands.Documentacion
                     "Verifica que el proyecto contenga al menos un DimensionType.");
             }
 
-            var doorCount = context.Document.GetDoorCountInActiveView();
-            var viewName = context.Document.GetActiveViewName();
+            var doorCount  = context.Document.GetDoorCountInActiveView();
+            var gridCount  = context.Document.GetGridCountInActiveView();
+            var wallCount  = context.Document.GetWallCountInActiveView();
+            var levelCount = context.Document.GetArqLevelCount();
+            var viewName   = context.Document.GetActiveViewName();
 
-            LastResult = new AcotadoVanosData(doorCount, dimensionTypes, viewName);
+            LastResult = new AcotadoVanosData(doorCount, dimensionTypes, viewName, gridCount, wallCount, levelCount);
 
-            context.Logger.Info($"Acotado de Vanos: {doorCount} puertas en '{viewName}', {dimensionTypes.Count} tipos de cota.");
-            return CommandResult.Ok($"{doorCount} puertas detectadas en la vista.");
+            context.Logger.Info($"Acotado de Vanos: {doorCount} puertas, {gridCount} ejes, {wallCount} muros, {levelCount} niveles ARQ en '{viewName}', {dimensionTypes.Count} tipos de cota.");
+            return CommandResult.Ok($"{doorCount} puertas, {gridCount} ejes, {wallCount} muros, {levelCount} niveles ARQ detectados.");
         }
     }
 }

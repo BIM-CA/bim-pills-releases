@@ -6,7 +6,9 @@
         MinWidth="480" MinHeight="600"
         ResizeMode="CanResizeWithGrip"
         WindowStartupLocation="CenterScreen"
-        Background="{StaticResource BackgroundBrush}">
+        Background="#F0F0F0"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True">
 
     <Window.Resources>
         <ResourceDictionary>
@@ -19,14 +21,14 @@
                 <Setter Property="Width" Value="24"/>
                 <Setter Property="Height" Value="24"/>
                 <Setter Property="CornerRadius" Value="12"/>
-                <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
+                <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
                 <Setter Property="Margin" Value="0,0,10,0"/>
             </Style>
 
             <!-- Scheme card style -->
             <Style x:Key="SchemeCard" TargetType="Border">
                 <Setter Property="Background" Value="White"/>
-                <Setter Property="BorderBrush" Value="{StaticResource SeparatorBrush}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource SeparatorBrush}"/>
                 <Setter Property="BorderThickness" Value="1.5"/>
                 <Setter Property="CornerRadius" Value="8"/>
                 <Setter Property="Padding" Value="12,10"/>
@@ -41,19 +43,19 @@
                 <Setter Property="Margin" Value="0,0,6,0"/>
                 <Setter Property="Cursor" Value="Hand"/>
                 <Setter Property="Background" Value="White"/>
-                <Setter Property="BorderBrush" Value="{StaticResource SeparatorBrush}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource SeparatorBrush}"/>
                 <Setter Property="BorderThickness" Value="1"/>
             </Style>
 
             <!-- Preset button style -->
             <Style x:Key="PresetButton" TargetType="Button">
                 <Setter Property="Background" Value="White"/>
-                <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
+                <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}"/>
                 <Setter Property="FontSize" Value="11"/>
                 <Setter Property="FontFamily" Value="Segoe UI"/>
                 <Setter Property="Padding" Value="10,4"/>
                 <Setter Property="Margin" Value="0,0,4,0"/>
-                <Setter Property="BorderBrush" Value="{StaticResource SeparatorBrush}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource SeparatorBrush}"/>
                 <Setter Property="BorderThickness" Value="1"/>
                 <Setter Property="Cursor" Value="Hand"/>
                 <Setter Property="Template">
@@ -118,6 +120,7 @@
                     <Button Content="Cancelar"
                             Style="{StaticResource SecondaryButton}"
                             Width="90"
+                            IsCancel="True"
                             Click="CancelButton_Click"/>
                     <Button x:Name="ExecuteBtn"
                             Style="{StaticResource PrimaryButton}"
@@ -258,9 +261,9 @@
                     </StackPanel>
                     <TextBlock Text="Tipo de cota del proyecto que se utilizará para crear las dimensiones."
                                Style="{StaticResource CaptionText}" Margin="34,0,0,8" TextWrapping="Wrap"/>
-                    <ComboBox x:Name="DimTypeCombo" Margin="34,0,0,0"
-                              FontSize="13" FontFamily="Segoe UI"
-                              Padding="10,8" Height="36"/>
+                    <ComboBox x:Name="DimTypeCombo"
+                              Style="{StaticResource BIMPillsComboBox}"
+                              Margin="34,0,0,0"/>
                 </StackPanel>
 
                 <!-- ─── STEP 4: Distancia de la cota ─── -->

@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BIMPills — Esquemas de Cotas Personalizados</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --azul: #212B37;
+    --naranja: #EF6337;
+    --bg: #F0F0F0;
+    --card-bg: #FFFFFF;
+    --card-border: #E5E5EA;
+    --caption: #86868B;
+    --accent: #1565C0;
+    --accent-bg: #E3F2FD;
+    --green-bg: #E8F5E9;
+    --green: #2E7D32;
+  }
+
+  body {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--azul);
+    width: 920px;
+    height: 720px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .header {
+    margin: 16px 20px 0;
+    background: var(--card-bg);
+    border-radius: 10px;
+    border: 0.5px solid var(--card-border);
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+    flex-shrink: 0;
+  }
+  .header img { width: 20px; height: 32px; object-fit: contain; }
+  .header-text { display: flex; flex-direction: column; gap: 2px; }
+  .header-label { font-size: 12px; font-weight: 500; color: var(--naranja); }
+  .header-title { font-size: 15px; font-weight: 600; color: var(--azul); }
+  .header-subtitle { font-size: 12px; color: var(--caption); }
+
+  .main-card {
+    margin: 10px 20px 0;
+    background: var(--card-bg);
+    border-radius: 10px;
+    border: 0.5px solid var(--card-border);
+    box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    margin-bottom: 14px;
+  }
+
+  .tool-header {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--card-border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .tool-icon {
+    width: 30px; height: 30px; border-radius: 7px;
+    background: var(--accent-bg);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .tool-icon svg { width: 15px; height: 15px; }
+  .tool-title { font-size: 14px; font-weight: 600; color: var(--azul); }
+
+  .schemes-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 14px;
+  }
+
+  .scheme-item {
+    background: var(--card-bg);
+    border: 0.5px solid var(--card-border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+  .scheme-item:hover { background: #F9F9FB; }
+  .scheme-item.selected { background: #EBF3FB; border-color: #90CAF9; }
+
+  .scheme-color {
+    width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; margin-top: 3px;
+  }
+
+  .scheme-info { flex: 1; }
+  .scheme-name { font-size: 13px; font-weight: 600; color: var(--azul); margin-bottom: 3px; }
+  .scheme-desc { font-size: 11px; color: var(--caption); margin-bottom: 6px; }
+  .scheme-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+  .scheme-tag {
+    background: #F2F2F7; color: var(--azul);
+    font-size: 9px; font-weight: 600; padding: 2px 6px; border-radius: 3px;
+  }
+  .scheme-tag-accent {
+    background: var(--accent-bg); color: var(--accent);
+    font-size: 9px; font-weight: 600; padding: 2px 6px; border-radius: 3px;
+  }
+
+  .scheme-meta { text-align: right; flex-shrink: 0; }
+  .scheme-rules { font-size: 11px; color: var(--caption); margin-bottom: 3px; }
+  .scheme-date { font-size: 10px; color: #C7C7CC; }
+
+  .footer {
+    padding: 10px 14px;
+    border-top: 1px solid var(--card-border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .footer-spacer { flex: 1; }
+
+  .btn {
+    padding: 7px 14px; border-radius: 7px; font-size: 12px; font-weight: 500;
+    font-family: 'Segoe UI', sans-serif; cursor: pointer; border: none;
+    display: inline-flex; align-items: center; gap: 5px;
+  }
+  .btn-primary { background: var(--accent); color: #FFFFFF; }
+  .btn-secondary {
+    background: transparent; color: var(--azul);
+    border: 1px solid var(--card-border);
+  }
+
+  .back-link {
+    display: block; text-align: center; margin-top: 12px; margin-bottom: 4px;
+    font-size: 11px; color: var(--caption); text-decoration: none;
+  }
+  .back-link:hover { color: var(--naranja); }
+
+  /* ── Modal ── */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.45); z-index: 100;
+    align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: white; border-radius: 12px;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.2);
+    width: 560px; max-width: 96vw; max-height: 90vh;
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+  .modal-header {
+    padding: 16px 20px 12px; border-bottom: 1px solid #F2F2F7;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .modal-title { font-size: 15px; font-weight: 700; color: var(--azul); }
+  .modal-close {
+    width: 28px; height: 28px; border-radius: 50%; border: none;
+    background: #F2F2F7; cursor: pointer; display: flex;
+    align-items: center; justify-content: center;
+    font-size: 14px; color: var(--caption);
+  }
+  .modal-close:hover { background: #E5E5EA; }
+  .modal-body { padding: 16px 20px; overflow-y: auto; flex: 1; }
+  .modal-footer {
+    padding: 12px 20px; border-top: 1px solid #F2F2F7;
+    display: flex; justify-content: flex-end; gap: 8px; flex-shrink: 0;
+  }
+
+  /* Form fields */
+  .field-group { margin-bottom: 14px; }
+  .field-label { font-size: 12px; font-weight: 600; color: var(--azul); margin-bottom: 5px; }
+  .field-input {
+    width: 100%; padding: 8px 10px; border-radius: 6px;
+    border: 1px solid var(--card-border); font-size: 12px;
+    font-family: 'Segoe UI', sans-serif; color: var(--azul);
+    background: white;
+  }
+  .field-input:focus { outline: none; border-color: var(--accent); }
+  .field-textarea {
+    width: 100%; padding: 8px 10px; border-radius: 6px;
+    border: 1px solid var(--card-border); font-size: 12px;
+    font-family: 'Segoe UI', sans-serif; color: var(--azul);
+    background: white; resize: none; height: 60px;
+  }
+  .field-textarea:focus { outline: none; border-color: var(--accent); }
+
+  /* Checkboxes grid */
+  .checkbox-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .cb-item {
+    display: flex; align-items: center; gap: 7px;
+    padding: 7px 10px; border-radius: 6px;
+    border: 1px solid var(--card-border); cursor: pointer;
+    font-size: 11px; color: var(--azul); font-weight: 500;
+    transition: background 0.1s;
+  }
+  .cb-item:hover { background: #F9F9FB; }
+  .cb-item.checked { background: var(--accent-bg); border-color: #90CAF9; color: var(--accent); }
+  .cb-box {
+    width: 14px; height: 14px; border-radius: 3px;
+    border: 1.5px solid var(--card-border); background: white; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .cb-item.checked .cb-box { background: var(--accent); border-color: var(--accent); }
+  .cb-item.checked .cb-box::after { content: '✓'; color: white; font-size: 9px; font-weight: 800; }
+
+  /* Wall filter section */
+  .wall-filter-box {
+    display: none;
+    background: #F0F7FF; border: 1px solid #BBDEFB; border-radius: 8px;
+    padding: 12px 14px; margin-top: 8px;
+  }
+  .wall-filter-box.visible { display: block; }
+  .wall-filter-title {
+    font-size: 11px; font-weight: 700; color: var(--accent);
+    text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 8px;
+  }
+  /* Door/Window filter section */
+  .dw-filter-box {
+    display: none;
+    background: #FFF8F0; border: 1px solid #FFD699; border-radius: 8px;
+    padding: 12px 14px; margin-top: 8px;
+  }
+  .dw-filter-box.visible { display: block; }
+  .dw-filter-title {
+    font-size: 11px; font-weight: 700; color: #E65100;
+    text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 8px;
+  }
+  .dw-filter-box .filter-select,
+  .dw-filter-box .filter-input,
+  .dw-filter-box .filter-condition { border-color: #FFD699; }
+  .dw-info-box {
+    background: #FFF3E0; border: 1px solid #FFD699; border-radius: 5px;
+    padding: 6px 10px; font-size: 10px; color: #BF360C; margin-top: 6px;
+  }
+  /* Column/Beam filter section */
+  .cb-filter-box {
+    display: none;
+    background: #F0F8F0; border: 1px solid #A5D6A7; border-radius: 8px;
+    padding: 12px 14px; margin-top: 8px;
+  }
+  .cb-filter-box.visible { display: block; }
+  .cb-filter-title {
+    font-size: 11px; font-weight: 700; color: #2E7D32;
+    text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 8px;
+  }
+  .cb-filter-box .filter-select { border-color: #A5D6A7; }
+  .filter-row { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; }
+  .filter-row:last-child { margin-bottom: 0; }
+  .filter-label { font-size: 11px; color: var(--azul); font-weight: 500; width: 80px; flex-shrink: 0; }
+  .filter-select {
+    padding: 5px 8px; border-radius: 5px; border: 1px solid #BBDEFB;
+    font-size: 11px; font-family: inherit; color: var(--azul); background: white; flex: 1;
+  }
+  .filter-input {
+    padding: 5px 8px; border-radius: 5px; border: 1px solid #BBDEFB;
+    font-size: 11px; font-family: inherit; color: var(--azul); background: white; flex: 1;
+  }
+  .filter-condition {
+    padding: 5px 8px; border-radius: 5px; border: 1px solid #BBDEFB;
+    font-size: 11px; font-family: inherit; color: var(--azul); background: white; width: 80px;
+  }
+
+  /* Rules list */
+  .rules-header {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;
+  }
+  .btn-add-rule {
+    padding: 4px 10px; border-radius: 5px; font-size: 11px; font-weight: 600;
+    font-family: inherit; cursor: pointer; border: 1px dashed var(--accent);
+    background: var(--accent-bg); color: var(--accent);
+    display: flex; align-items: center; gap: 4px;
+  }
+  /* Rule card */
+  .rule-card {
+    border: 0.5px solid var(--card-border); border-radius: 8px;
+    margin-bottom: 8px; background: #FAFAFA; overflow: hidden;
+  }
+  .rule-card-main {
+    display: grid; grid-template-columns: 1fr 1fr auto auto;
+    gap: 6px; align-items: center; padding: 8px 10px;
+  }
+  .rule-card-refs {
+    display: none;
+    padding: 0 10px 10px; gap: 6px;
+    border-top: 1px solid var(--card-border);
+    background: #F0F7FF;
+  }
+  .rule-card-refs.visible { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 10px; }
+  .ref-label { font-size: 10px; color: var(--accent); font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; width: 100%; }
+  .ref-pair { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 180px; }
+  .ref-pair-label { font-size: 11px; color: var(--azul); font-weight: 500; white-space: nowrap; }
+  .ref-select {
+    flex: 1; padding: 5px 7px; border-radius: 5px; border: 1px solid #BBDEFB;
+    font-size: 11px; font-family: inherit; color: var(--azul); background: white;
+  }
+  .rule-select {
+    padding: 5px 8px; border-radius: 5px;
+    border: 1px solid var(--card-border); font-size: 11px;
+    font-family: inherit; color: var(--azul); background: white;
+  }
+  .rule-format {
+    padding: 5px 8px; border-radius: 5px;
+    border: 1px solid var(--card-border); font-size: 11px;
+    font-family: inherit; color: var(--azul); background: white;
+  }
+  .rule-toggle {
+    width: 28px; height: 16px; border-radius: 8px;
+    background: var(--accent); cursor: pointer; flex-shrink: 0;
+    position: relative; border: none;
+  }
+  .rule-toggle::after {
+    content: ''; position: absolute; width: 12px; height: 12px;
+    background: white; border-radius: 50%; top: 2px; right: 2px;
+  }
+  .rule-toggle.off { background: #C7C7CC; }
+  .rule-toggle.off::after { right: auto; left: 2px; }
+  .rule-delete {
+    width: 22px; height: 22px; border-radius: 4px; border: none;
+    background: none; cursor: pointer; color: #C7C7CC; font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .rule-delete:hover { color: #FF3B30; background: #FFEBEE; }
+  .rules-col-labels {
+    display: grid; grid-template-columns: 1fr 1fr auto auto;
+    gap: 6px; padding: 0 10px; margin-bottom: 4px;
+  }
+  .rules-col-labels span { font-size: 10px; color: var(--caption); font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <img src="pill-icon.png" alt="BIMPills" />
+  <div class="header-text">
+    <span class="header-label">Procesos</span>
+    <span class="header-title">Esquemas de Cotas Personalizados</span>
+    <span class="header-subtitle">Crea y gestiona esquemas de acotado basados en reglas para puertas, ventanas y más</span>
+  </div>
+</div>
+
+<!-- Main card -->
+<div class="main-card">
+  <!-- Tool header -->
+  <div class="tool-header">
+    <div class="tool-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#1565C0" stroke-width="1.8">
+        <line x1="4" y1="6" x2="20" y2="6" stroke-linecap="round"/>
+        <line x1="4" y1="6" x2="4" y2="10" stroke-linecap="round"/>
+        <line x1="20" y1="6" x2="20" y2="10" stroke-linecap="round"/>
+        <line x1="12" y1="8" x2="12" y2="18" stroke-linecap="round" stroke-dasharray="2 2"/>
+        <line x1="4" y1="18" x2="20" y2="18" stroke-linecap="round"/>
+        <line x1="4" y1="14" x2="4" y2="18" stroke-linecap="round"/>
+        <line x1="20" y1="14" x2="20" y2="18" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <span class="tool-title">Esquemas de Acotado</span>
+  </div>
+
+  <!-- Schemes list -->
+  <div class="schemes-scroll">
+
+    <!-- Selected scheme -->
+    <div class="scheme-item selected">
+      <div class="scheme-color" style="background: #1565C0;"></div>
+      <div class="scheme-info">
+        <div class="scheme-name">Acotado Estándar</div>
+        <div class="scheme-desc">Anchura y altura para puertas y ventanas, formato métrico.</div>
+        <div class="scheme-tags">
+          <span class="scheme-tag">Puertas</span>
+          <span class="scheme-tag">Ventanas</span>
+          <span class="scheme-tag-accent">4 reglas</span>
+        </div>
+      </div>
+      <div class="scheme-meta">
+        <div class="scheme-rules">4 reglas activas</div>
+        <div class="scheme-date">2026-03-20</div>
+      </div>
+    </div>
+
+    <!-- Second scheme -->
+    <div class="scheme-item">
+      <div class="scheme-color" style="background: #EF6337;"></div>
+      <div class="scheme-info">
+        <div class="scheme-name">Vanos de Fachada</div>
+        <div class="scheme-desc">Esquema detallado para elementos de fachada con etiquetas personalizadas.</div>
+        <div class="scheme-tags">
+          <span class="scheme-tag">Ventanas</span>
+          <span class="scheme-tag">Muros Cortina</span>
+          <span class="scheme-tag-accent">6 reglas</span>
+        </div>
+      </div>
+      <div class="scheme-meta">
+        <div class="scheme-rules">6 reglas activas</div>
+        <div class="scheme-date">2026-03-22</div>
+      </div>
+    </div>
+
+    <!-- Third scheme -->
+    <div class="scheme-item">
+      <div class="scheme-color" style="background: #34C759;"></div>
+      <div class="scheme-info">
+        <div class="scheme-name">Espacios Interiores</div>
+        <div class="scheme-desc">Dimensiones de habitaciones y espacios interiores con área.</div>
+        <div class="scheme-tags">
+          <span class="scheme-tag">Espacios</span>
+          <span class="scheme-tag">Habitaciones</span>
+          <span class="scheme-tag-accent">3 reglas</span>
+        </div>
+      </div>
+      <div class="scheme-meta">
+        <div class="scheme-rules">3 reglas activas</div>
+        <div class="scheme-date">2026-03-25</div>
+      </div>
+    </div>
+
+    <!-- Fourth scheme -->
+    <div class="scheme-item">
+      <div class="scheme-color" style="background: #9C27B0;"></div>
+      <div class="scheme-info">
+        <div class="scheme-name">Estructura Principal</div>
+        <div class="scheme-desc">Esquema para vigas, columnas y pilares estructurales.</div>
+        <div class="scheme-tags">
+          <span class="scheme-tag">Columnas</span>
+          <span class="scheme-tag">Vigas</span>
+          <span class="scheme-tag-accent">2 reglas</span>
+        </div>
+      </div>
+      <div class="scheme-meta">
+        <div class="scheme-rules">2 reglas activas</div>
+        <div class="scheme-date">2026-03-26</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <button class="btn btn-primary" onclick="openSchemeEditor()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Nuevo
+    </button>
+    <button class="btn btn-secondary" onclick="openSchemeEditor(true)">Editar</button>
+    <button class="btn btn-secondary">Duplicar</button>
+    <button class="btn btn-secondary">Eliminar</button>
+    <div class="footer-spacer"></div>
+    <button class="btn btn-secondary" style="width: 90px;">Cerrar</button>
+  </div>
+</div>
+
+<a class="back-link" href="index.html">&larr; Volver al índice</a>
+
+<!-- ── Modal: Nuevo / Editar esquema ── -->
+<div class="modal-overlay" id="schemeEditorModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modalTitle">Nuevo Esquema</span>
+      <button class="modal-close" onclick="closeSchemeEditor()">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- Nombre -->
+      <div class="field-group">
+        <div class="field-label">Nombre del esquema</div>
+        <input type="text" class="field-input" id="fieldName" placeholder="Ej: Acotado Estándar" value="" />
+      </div>
+
+      <!-- Descripción -->
+      <div class="field-group">
+        <div class="field-label">Descripción</div>
+        <textarea class="field-textarea" id="fieldDesc" placeholder="Describe para qué sirve este esquema..."></textarea>
+      </div>
+
+      <!-- Tipos de elemento aplicables -->
+      <div class="field-group">
+        <div class="field-label">Tipos de elemento aplicables</div>
+        <div class="checkbox-grid">
+          <div class="cb-item checked" id="cbPuertas" onclick="toggleCbDW(this)">
+            <div class="cb-box"></div>Puertas
+          </div>
+          <div class="cb-item checked" id="cbVentanas" onclick="toggleCbDW(this)">
+            <div class="cb-box"></div>Ventanas
+          </div>
+          <div class="cb-item" onclick="toggleCb(this)">
+            <div class="cb-box"></div>Espacios
+          </div>
+          <div class="cb-item" id="cbMuros" onclick="toggleCbMuros(this)">
+            <div class="cb-box"></div>Muros
+          </div>
+          <div class="cb-item" id="cbColumnas" onclick="toggleCbCV(this)">
+            <div class="cb-box"></div>Columnas
+          </div>
+          <div class="cb-item" id="cbVigas" onclick="toggleCbCV(this)">
+            <div class="cb-box"></div>Vigas
+          </div>
+        </div>
+
+        <!-- Panel condicional: opciones de puertas/ventanas -->
+        <div class="dw-filter-box visible" id="dwFilterBox">
+          <div class="dw-filter-title">&#x1F6AA; Opciones de Puertas y Ventanas</div>
+          <div class="filter-row">
+            <span class="filter-label">Filtrar por</span>
+            <select class="filter-select">
+              <option value="all">Todos</option>
+              <option value="typename">Nombre de tipo</option>
+              <option value="param">Parámetro personalizado</option>
+            </select>
+          </div>
+          <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #FFD699;">
+            <div class="dw-filter-title" style="margin-bottom:6px;">&#x21D4; Referencia de ancho</div>
+            <div class="filter-row">
+              <span class="filter-label">Dirección</span>
+              <select class="filter-select">
+                <option selected>Izquierda → Derecha (Left → Right)</option>
+                <option>Centro horizontal (CenterLeftRight)</option>
+              </select>
+            </div>
+            <div class="dw-filter-title" style="margin-bottom:6px; margin-top:8px;">&#x21D5; Referencia de alto</div>
+            <div class="filter-row">
+              <span class="filter-label">Dirección</span>
+              <select class="filter-select">
+                <option selected>Inferior → Superior (Bottom → Top)</option>
+                <option>Centro vertical (CenterElevation)</option>
+              </select>
+            </div>
+          </div>
+          <div class="dw-info-box" style="margin-top: 10px;">
+            <strong>Parámetros disponibles:</strong> Ancho, Alto, Altura de antepecho, Altura de dintel, Hueco bruto (ancho), Hueco bruto (alto)
+          </div>
+        </div>
+
+        <!-- Panel condicional: opciones de columnas/vigas -->
+        <div class="cb-filter-box" id="cvFilterBox">
+          <div class="cb-filter-title">&#x1F3DB; Opciones de Columnas y Vigas</div>
+          <div style="margin-bottom: 10px;">
+            <div class="cb-filter-title" style="margin-bottom:6px;">&#x21D4; Referencia de sección</div>
+            <div class="filter-row">
+              <span class="filter-label">Dirección</span>
+              <select class="filter-select">
+                <option selected>Izquierda → Derecha (Left → Right)</option>
+                <option>Frontal → Posterior (Front → Back)</option>
+                <option>Eje Frontal-Posterior (CenterFrontBack)</option>
+                <option>Eje Izquierda-Derecha (CenterLeftRight)</option>
+              </select>
+            </div>
+          </div>
+          <div style="padding-top: 10px; border-top: 1px solid #A5D6A7;">
+            <div class="cb-filter-title" style="margin-bottom:6px;">&#x21D5; Referencia de longitud <span style="font-weight:400; text-transform:none;">(vigas)</span></div>
+            <div class="filter-row">
+              <span class="filter-label">Dirección</span>
+              <select class="filter-select">
+                <option selected>Punto inicio → Punto fin (Endpoints)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel condicional: opciones de muros -->
+        <div class="wall-filter-box" id="wallFilterBox">
+          <div class="wall-filter-title">&#x1F9F1; Opciones de Muros</div>
+
+          <!-- Filtro por tipo de muro -->
+          <div class="filter-row">
+            <span class="filter-label">Filtrar por</span>
+            <select class="filter-select" id="wallFilterParam" onchange="updateWallFilterInput()">
+              <option value="all">Todos los muros</option>
+              <option value="typename">Nombre de tipo</option>
+              <option value="function">Función</option>
+              <option value="fire">Resistencia al fuego</option>
+              <option value="param">Parámetro personalizado</option>
+            </select>
+          </div>
+          <div id="wallFilterValueRow" class="filter-row" style="display:none;">
+            <span class="filter-label">Condición</span>
+            <select class="filter-condition" id="wallFilterCond">
+              <option>contiene</option>
+              <option>igual a</option>
+              <option>empieza con</option>
+            </select>
+            <input type="text" class="filter-input" id="wallFilterValue" placeholder='Ej: "Exterior", "300"…' />
+          </div>
+          <div id="wallParamNameRow" class="filter-row" style="display:none;">
+            <span class="filter-label">Parámetro</span>
+            <input type="text" class="filter-input" placeholder="Nombre del parámetro de Revit" />
+          </div>
+
+          <!-- Referencia de acotado para muros -->
+          <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #BBDEFB;">
+            <div class="wall-filter-title" style="margin-bottom:6px;">&#x21D4; Referencia de acotado</div>
+            <div class="filter-row">
+              <span class="filter-label">Inicio</span>
+              <select class="filter-select" id="wallRefStart">
+                <option>Eje central del muro</option>
+                <option>Eje central del núcleo</option>
+                <option>Cara exterior (acabado)</option>
+                <option selected>Cara exterior (núcleo)</option>
+                <option>Cara interior (núcleo)</option>
+                <option>Cara interior (acabado)</option>
+              </select>
+            </div>
+            <div class="filter-row">
+              <span class="filter-label">Fin</span>
+              <select class="filter-select" id="wallRefEnd">
+                <option>Eje central del muro</option>
+                <option>Eje central del núcleo</option>
+                <option>Cara exterior (acabado)</option>
+                <option>Cara exterior (núcleo)</option>
+                <option selected>Cara interior (núcleo)</option>
+                <option>Cara interior (acabado)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reglas -->
+      <div class="field-group">
+        <div class="rules-header">
+          <div class="field-label" style="margin-bottom:0;">Reglas de acotado</div>
+          <button class="btn-add-rule" onclick="addRule()">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Añadir regla
+          </button>
+        </div>
+        <div class="rules-col-labels">
+          <span>Parámetro</span><span>Formato</span><span>Act.</span><span></span>
+        </div>
+        <div id="rulesList">
+          <!-- Rule 1 -->
+          <div class="rule-card">
+            <div class="rule-card-main">
+              <select class="rule-select">
+                <option selected>Ancho</option>
+                <option>Alto</option>
+                <option>Longitud</option>
+                <option>Grosor</option>
+                <option>Área</option>
+                <option>Perímetro</option>
+              </select>
+              <input type="text" class="rule-format" value="{value} mm" />
+              <button class="rule-toggle" title="Activa"></button>
+              <button class="rule-delete" onclick="removeRule(this)" title="Eliminar">&#x2715;</button>
+            </div>
+          </div>
+          <!-- Rule 2 -->
+          <div class="rule-card">
+            <div class="rule-card-main">
+              <select class="rule-select">
+                <option>Ancho</option>
+                <option selected>Alto</option>
+                <option>Longitud</option>
+                <option>Grosor</option>
+                <option>Área</option>
+                <option>Perímetro</option>
+              </select>
+              <input type="text" class="rule-format" value="{value} mm" />
+              <button class="rule-toggle" title="Activa"></button>
+              <button class="rule-delete" onclick="removeRule(this)" title="Eliminar">&#x2715;</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeSchemeEditor()">Cancelar</button>
+      <button class="btn btn-primary" onclick="closeSchemeEditor()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var wallsActive = false;
+
+function openSchemeEditor(isEdit) {
+  var modal = document.getElementById('schemeEditorModal');
+  document.getElementById('modalTitle').textContent = isEdit ? 'Editar Esquema' : 'Nuevo Esquema';
+  document.getElementById('fieldName').value = isEdit ? 'Acotado Estándar' : '';
+  document.getElementById('fieldDesc').value = isEdit ? 'Anchura y altura para puertas y ventanas, formato métrico.' : '';
+  modal.classList.add('open');
+}
+
+function closeSchemeEditor() {
+  document.getElementById('schemeEditorModal').classList.remove('open');
+}
+
+function toggleCb(el) { el.classList.toggle('checked'); }
+
+function toggleCbMuros(el) {
+  el.classList.toggle('checked');
+  wallsActive = el.classList.contains('checked');
+  document.getElementById('wallFilterBox').classList.toggle('visible', wallsActive);
+  document.querySelectorAll('.rule-card-refs').forEach(function(r) {
+    r.classList.toggle('visible', wallsActive);
+  });
+}
+
+function toggleCbDW(el) {
+  el.classList.toggle('checked');
+  var p = document.getElementById('cbPuertas').classList.contains('checked');
+  var v = document.getElementById('cbVentanas').classList.contains('checked');
+  document.getElementById('dwFilterBox').classList.toggle('visible', p || v);
+}
+
+function toggleCbCV(el) {
+  el.classList.toggle('checked');
+  var c = document.getElementById('cbColumnas').classList.contains('checked');
+  var b = document.getElementById('cbVigas').classList.contains('checked');
+  document.getElementById('cvFilterBox').classList.toggle('visible', c || b);
+}
+
+function updateWallFilterInput() {
+  var val = document.getElementById('wallFilterParam').value;
+  document.getElementById('wallFilterValueRow').style.display = (val === 'typename' || val === 'function' || val === 'fire') ? 'flex' : 'none';
+  document.getElementById('wallParamNameRow').style.display = (val === 'param') ? 'flex' : 'none';
+  if (val === 'function') {
+    document.getElementById('wallFilterValue').placeholder = 'Exterior, Interior, Retaining…';
+  } else if (val === 'fire') {
+    document.getElementById('wallFilterValue').placeholder = '60, 90, 120 min…';
+  } else {
+    document.getElementById('wallFilterValue').placeholder = 'Ej: "Exterior", "300"…';
+  }
+}
+
+var ruleOptions = '<option>Ancho</option><option>Alto</option><option>Longitud</option><option>Grosor</option><option>Área</option><option>Perímetro</option>';
+var refOptions = '<option>Eje central del muro</option><option>Eje central del núcleo</option><option>Cara exterior (acabado)</option><option>Cara exterior (núcleo)</option><option>Cara interior (núcleo)</option><option>Cara interior (acabado)</option>';
+
+function addRule() {
+  var list = document.getElementById('rulesList');
+  var card = document.createElement('div');
+  card.className = 'rule-card';
+  card.innerHTML =
+    '<div class="rule-card-main">'
+    + '<select class="rule-select">' + ruleOptions + '</select>'
+    + '<input type="text" class="rule-format" value="{value} mm" />'
+    + '<button class="rule-toggle" title="Activa"></button>'
+    + '<button class="rule-delete" onclick="removeRule(this)" title="Eliminar">&#x2715;</button>'
+    + '</div>'
+    + '<div class="rule-card-refs' + (wallsActive ? ' visible' : '') + '">'
+    + '<span class="ref-label">Referencia de acotado para muros</span>'
+    + '<div class="ref-pair"><span class="ref-pair-label">Inicio:</span><select class="ref-select">' + refOptions + '</select></div>'
+    + '<div class="ref-pair"><span class="ref-pair-label">Fin:</span><select class="ref-select">' + refOptions + '</select></div>'
+    + '</div>';
+  list.appendChild(card);
+}
+
+function removeRule(btn) { btn.closest('.rule-card').remove(); }
+
+document.getElementById('schemeEditorModal').addEventListener('click', function(e) {
+  if (e.target === this) closeSchemeEditor();
+});
+</script>
+
+</body>
+</html>

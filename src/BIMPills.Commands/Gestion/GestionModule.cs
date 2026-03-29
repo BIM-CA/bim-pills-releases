@@ -18,7 +18,7 @@ namespace BIMPills.Commands.Gestion
             builder.AddPushButton(
                 tabName:             TabName,
                 panelName:           PanelName,
-                buttonName:          "Gestión",
+                buttonName:          "Estandarizar",
                 tooltip:             "Crear y gestionar subproyectos (Worksets) del modelo",
                 commandTypeFullName: "BIMPills.Revit.Commands.Gestion.GestionRevitCommand",
                 assemblyPath:        revitDll,

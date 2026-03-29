@@ -1,0 +1,320 @@
+<UserControl x:Class="BIMPills.UI.Documentacion.AcotadoVanosPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/BIMPills.UI;component/Shared/Styles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+        <!-- Step number circle style -->
+        <Style x:Key="StepCircle" TargetType="Border">
+            <Setter Property="Width" Value="24"/>
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
+            <Setter Property="Margin" Value="0,0,10,0"/>
+        </Style>
+
+        <!-- Scope chip style -->
+        <Style x:Key="ScopeChip" TargetType="Border">
+            <Setter Property="CornerRadius" Value="14"/>
+            <Setter Property="Padding" Value="14,6"/>
+            <Setter Property="Margin" Value="0,0,6,0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource SeparatorBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+
+        <!-- Preset button style -->
+        <Style x:Key="PresetButton" TargetType="Button">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="Padding" Value="10,4"/>
+            <Setter Property="Margin" Value="0,0,4,0"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource SeparatorBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#F5F5F5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <DockPanel>
+
+        <!-- FOOTER — Cancelar (naranja) left, Acotar (azul) right -->
+        <Border DockPanel.Dock="Bottom" Background="White"
+                BorderBrush="{DynamicResource SeparatorBrush}" BorderThickness="0,1,0,0"
+                Padding="16,10">
+            <DockPanel LastChildFill="False">
+                <Button DockPanel.Dock="Left"
+                        Content="Cancelar (ESC)"
+                        Style="{DynamicResource PrimaryButton}"
+                        Width="120"
+                        IsCancel="True"
+                        Click="CancelButton_Click"/>
+                <StackPanel DockPanel.Dock="Left" VerticalAlignment="Center" Margin="12,0,0,0">
+                    <TextBlock x:Name="StatusText"
+                               Text="0 puertas detectadas"
+                               Foreground="{DynamicResource AccentBrush}"
+                               FontSize="12" FontFamily="Segoe UI"/>
+                    <TextBlock x:Name="ResultStatusLabel"
+                               Text=""
+                               FontSize="11" FontFamily="Segoe UI"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               TextWrapping="Wrap"
+                               Visibility="Collapsed"/>
+                </StackPanel>
+
+                <Button x:Name="ExecuteBtn"
+                        DockPanel.Dock="Right"
+                        Style="{DynamicResource SecondaryButton}"
+                        Padding="18,0"
+                        Click="ExecuteButton_Click">
+                    <StackPanel Orientation="Horizontal">
+                        <Canvas Width="14" Height="14" Margin="0,0,6,0">
+                            <Polyline Points="3,7 6,10 11,4" Stroke="White" StrokeThickness="2"
+                                      StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                        </Canvas>
+                        <TextBlock Text="Acotar" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+            </DockPanel>
+        </Border>
+
+        <!-- CONTENT (scrollable) -->
+        <Grid>
+        <ScrollViewer x:Name="MainScroll"
+                      VerticalScrollBarVisibility="Auto" Padding="20,16,20,8"
+                      ScrollChanged="MainScroll_ScrollChanged">
+            <StackPanel>
+
+                <!-- STEP 1: Alcance -->
+                <StackPanel Margin="0,0,0,20">
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                        <Border Style="{DynamicResource StepCircle}">
+                            <TextBlock Text="1" Foreground="White" FontSize="12" FontWeight="Bold"
+                                       FontFamily="Segoe UI"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <TextBlock Text="Alcance" Style="{DynamicResource SubHeaderText}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <TextBlock Text="¿En qué elementos aplicar el acotado?"
+                               Style="{DynamicResource CaptionText}" Margin="34,0,0,8"/>
+                    <StackPanel Orientation="Horizontal" Margin="34,0,0,0">
+                        <Border x:Name="ChipActiveView" Style="{DynamicResource ScopeChip}"
+                                Background="#FFF0EBE6" BorderBrush="{DynamicResource AccentBrush}"
+                                MouseLeftButtonDown="ScopeChip_Click" Tag="active-view">
+                            <TextBlock Text="Vista activa" FontSize="12" FontFamily="Segoe UI"
+                                       Foreground="{DynamicResource AccentBrush}" FontWeight="Medium"/>
+                        </Border>
+                        <Border x:Name="ChipSelection" Style="{DynamicResource ScopeChip}"
+                                MouseLeftButtonDown="ScopeChip_Click" Tag="selection">
+                            <TextBlock Text="Selección" FontSize="12" FontFamily="Segoe UI"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"/>
+                        </Border>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- STEP 2: Esquema de acotado (ComboBox) -->
+                <StackPanel Margin="0,0,0,20">
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                        <Border Style="{DynamicResource StepCircle}">
+                            <TextBlock Text="2" Foreground="White" FontSize="12" FontWeight="Bold"
+                                       FontFamily="Segoe UI"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <TextBlock Text="Esquema de acotado" Style="{DynamicResource SubHeaderText}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <TextBlock Text="Elige el esquema de cotas que se aplicará automáticamente."
+                               Style="{DynamicResource CaptionText}" Margin="34,0,0,8" TextWrapping="Wrap"/>
+
+                    <!-- Selected scheme display + change button -->
+                    <Border Margin="34,0,0,0"
+                            Background="White" BorderBrush="{DynamicResource SeparatorBrush}"
+                            BorderThickness="1" CornerRadius="8" Padding="12,10">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                <TextBlock x:Name="SchemeNameText"
+                                           Text="Anchos de vanos"
+                                           FontSize="13" FontWeight="SemiBold" FontFamily="Segoe UI"
+                                           Foreground="{DynamicResource PrimaryBrush}"/>
+                                <TextBlock x:Name="SchemeDescText"
+                                           Text="Cota el ancho de cada vano de puerta visible en la vista"
+                                           FontSize="11" FontFamily="Segoe UI"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           TextWrapping="Wrap" Margin="0,2,0,0"/>
+                            </StackPanel>
+                            <Button Grid.Column="1"
+                                    Content="Cambiar"
+                                    FontSize="11" FontFamily="Segoe UI"
+                                    Padding="12,5" Margin="12,0,0,0"
+                                    VerticalAlignment="Center"
+                                    Style="{DynamicResource TertiaryButton}"
+                                    Click="SchemePickerButton_Click"/>
+                        </Grid>
+                    </Border>
+                </StackPanel>
+
+                <!-- STEP 2b: Extremo de rejilla (solo visible para esquemas de ejes) -->
+                <StackPanel x:Name="GridEndpointPanel" Margin="0,0,0,20" Visibility="Collapsed">
+                    <TextBlock Text="¿En qué extremo(s) de la rejilla colocar la cota?"
+                               Style="{DynamicResource CaptionText}" Margin="34,0,0,8"/>
+                    <StackPanel Orientation="Horizontal" Margin="34,0,0,0">
+                        <Border x:Name="ChipEndpointEnd" Style="{DynamicResource ScopeChip}"
+                                Background="#FFF0EBE6" BorderBrush="{DynamicResource AccentBrush}"
+                                MouseLeftButtonDown="EndpointChip_Click" Tag="end">
+                            <TextBlock Text="Fin" FontSize="12" FontFamily="Segoe UI"
+                                       Foreground="{DynamicResource AccentBrush}" FontWeight="Medium"/>
+                        </Border>
+                        <Border x:Name="ChipEndpointStart" Style="{DynamicResource ScopeChip}"
+                                MouseLeftButtonDown="EndpointChip_Click" Tag="start">
+                            <TextBlock Text="Inicio" FontSize="12" FontFamily="Segoe UI"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"/>
+                        </Border>
+                        <Border x:Name="ChipEndpointBoth" Style="{DynamicResource ScopeChip}"
+                                MouseLeftButtonDown="EndpointChip_Click" Tag="both">
+                            <TextBlock Text="Ambos" FontSize="12" FontFamily="Segoe UI"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"/>
+                        </Border>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- STEP 3: Estilo de cota -->
+                <StackPanel Margin="0,0,0,20">
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                        <Border Style="{DynamicResource StepCircle}">
+                            <TextBlock Text="3" Foreground="White" FontSize="12" FontWeight="Bold"
+                                       FontFamily="Segoe UI"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <TextBlock Text="Estilo de cota" Style="{DynamicResource SubHeaderText}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <TextBlock Text="Tipo de cota del proyecto que se utilizará para crear las dimensiones."
+                               Style="{DynamicResource CaptionText}" Margin="34,0,0,8" TextWrapping="Wrap"/>
+                    <ComboBox x:Name="DimTypeCombo"
+                              Style="{DynamicResource BIMPillsComboBox}"
+                              Margin="34,0,0,0"/>
+                </StackPanel>
+
+                <!-- STEP 4: Distancia de la cota -->
+                <StackPanel Margin="0,0,0,12">
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                        <Border Style="{DynamicResource StepCircle}">
+                            <TextBlock Text="4" Foreground="White" FontSize="12" FontWeight="Bold"
+                                       FontFamily="Segoe UI"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <TextBlock Text="Distancia de la cota" Style="{DynamicResource SubHeaderText}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <TextBlock x:Name="OffsetDescription"
+                               Text="Separación entre la línea de cota y el elemento acotado (en milímetros)."
+                               Style="{DynamicResource CaptionText}" Margin="34,0,0,8" TextWrapping="Wrap"/>
+
+                    <DockPanel Margin="34,0,0,0">
+                        <Border DockPanel.Dock="Right" Background="{DynamicResource AlternateRowBrush}"
+                                CornerRadius="6" Padding="6,2" Margin="10,0,0,0"
+                                BorderBrush="{DynamicResource SeparatorBrush}" BorderThickness="1">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBox x:Name="OffsetValueText" Text="150"
+                                         FontSize="16" FontWeight="SemiBold"
+                                         FontFamily="Segoe UI" Foreground="{DynamicResource AccentBrush}"
+                                         Background="Transparent" BorderThickness="0"
+                                         Width="50" TextAlignment="Right"
+                                         VerticalAlignment="Center"
+                                         LostFocus="OffsetInput_LostFocus"
+                                         KeyDown="OffsetInput_KeyDown"/>
+                                <TextBlock Text=" mm" FontSize="11"
+                                           FontFamily="Segoe UI" Foreground="{DynamicResource TextSecondaryBrush}"
+                                           VerticalAlignment="Bottom" Margin="0,0,0,4"/>
+                            </StackPanel>
+                        </Border>
+                        <Slider x:Name="OffsetSlider"
+                                Minimum="-5000" Maximum="5000" Value="150"
+                                TickFrequency="10" IsSnapToTickEnabled="True"
+                                VerticalAlignment="Center"
+                                ValueChanged="OffsetSlider_ValueChanged"/>
+                    </DockPanel>
+
+                    <StackPanel Orientation="Horizontal" Margin="34,8,0,0">
+                        <Button Content="100" Style="{DynamicResource PresetButton}"
+                                Click="PresetButton_Click" Tag="100"/>
+                        <Button Content="150" Style="{DynamicResource PresetButton}"
+                                Click="PresetButton_Click" Tag="150"
+                                BorderBrush="{DynamicResource AccentBrush}" Foreground="{DynamicResource AccentBrush}"/>
+                        <Button Content="200" Style="{DynamicResource PresetButton}"
+                                Click="PresetButton_Click" Tag="200"/>
+                        <Button Content="300" Style="{DynamicResource PresetButton}"
+                                Click="PresetButton_Click" Tag="300"/>
+                        <Button Content="500" Style="{DynamicResource PresetButton}"
+                                Click="PresetButton_Click" Tag="500"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- INFO BOX -->
+                <Border Background="#F0F7FF" CornerRadius="8" Padding="12,10" Margin="0,4,0,0"
+                        BorderBrush="#D0E3F7" BorderThickness="1">
+                    <DockPanel>
+                        <TextBlock DockPanel.Dock="Left" Text="&#xE946;"
+                                   FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                   Foreground="#1565C0" Margin="0,0,10,0"
+                                   VerticalAlignment="Top"/>
+                        <TextBlock x:Name="InfoText" TextWrapping="Wrap"
+                                   FontSize="12" FontFamily="Segoe UI"
+                                   Foreground="#1565C0" LineHeight="18">
+                            Se crearán cotas en la <Bold>vista activa</Bold> para cada puerta visible.
+                            Las cotas existentes no serán duplicadas.
+                        </TextBlock>
+                    </DockPanel>
+                </Border>
+
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Scroll hint — hidden when at bottom -->
+        <Border x:Name="ScrollHint"
+                VerticalAlignment="Bottom" Height="48"
+                IsHitTestVisible="False" Visibility="Collapsed">
+            <Border.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <GradientStop Color="#00F5F5F7" Offset="0"/>
+                    <GradientStop Color="#CCF5F5F7" Offset="1"/>
+                </LinearGradientBrush>
+            </Border.Background>
+            <Canvas Width="16" Height="9"
+                    HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,8">
+                <Polyline Points="0,0 8,8 16,0"
+                          Stroke="#AEAEB2" StrokeThickness="1.5"
+                          StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+            </Canvas>
+        </Border>
+        </Grid>
+
+    </DockPanel>
+</UserControl>

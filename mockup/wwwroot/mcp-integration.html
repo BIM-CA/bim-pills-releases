@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BIMPills — Conectar Servicios MCP</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --azul: #212B37;
+    --naranja: #EF6337;
+    --blanco: #FBFAF8;
+    --bg: #F0F0F0;
+    --card-bg: #FFFFFF;
+    --card-border: #E5E5EA;
+    --caption: #86868B;
+    --accent: #1565C0;
+    --accent-bg: #E3F2FD;
+    --green: #34C759;
+    --green-bg: #E8F5E9;
+    --red: #FF3B30;
+    --red-bg: #FFEBEE;
+    --yellow-bg: #FFF8E1;
+    --yellow: #F9A825;
+  }
+
+  body {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--azul);
+    width: 920px;
+    height: 720px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* Header card */
+  .header {
+    margin: 16px 20px 0;
+    background: var(--card-bg);
+    border-radius: 10px;
+    border: 0.5px solid var(--card-border);
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+    flex-shrink: 0;
+  }
+  .header img { width: 20px; height: 32px; object-fit: contain; }
+  .header-text { display: flex; flex-direction: column; gap: 2px; }
+  .header-label { font-size: 12px; font-weight: 500; color: var(--naranja); }
+  .header-title { font-size: 15px; font-weight: 600; color: var(--azul); }
+  .header-subtitle { font-size: 12px; color: var(--caption); }
+
+  /* Main card */
+  .main-card {
+    margin: 10px 20px 0;
+    background: var(--card-bg);
+    border-radius: 10px;
+    border: 0.5px solid var(--card-border);
+    box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    margin-bottom: 14px;
+  }
+
+  /* Tool header */
+  .tool-header {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--card-border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .tool-icon {
+    width: 30px; height: 30px; border-radius: 7px;
+    background: var(--accent-bg);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .tool-icon svg { width: 15px; height: 15px; }
+  .tool-title { font-size: 14px; font-weight: 600; color: var(--azul); }
+
+  /* Connections list */
+  .connections-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 14px;
+  }
+
+  .connection-item {
+    background: var(--card-bg);
+    border: 0.5px solid var(--card-border);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+  .connection-item:hover { background: #F9F9FB; }
+  .connection-item.selected { background: #EBF3FB; border-color: #90CAF9; }
+
+  .conn-status-dot {
+    width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+  }
+  .dot-connected { background: var(--green); }
+  .dot-disconnected { background: var(--caption); }
+  .dot-error { background: var(--red); }
+
+  .conn-info { flex: 1; min-width: 0; }
+  .conn-name-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+  .conn-name { font-size: 13px; font-weight: 600; color: var(--azul); }
+  .conn-badge {
+    padding: 2px 7px; border-radius: 3px; font-size: 9px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.3px;
+  }
+  .badge-connected { background: var(--green-bg); color: #2E7D32; }
+  .badge-disconnected { background: #F2F2F7; color: var(--caption); }
+  .badge-error { background: var(--red-bg); color: #C62828; }
+  .badge-unknown { background: var(--accent-bg); color: var(--accent); }
+
+  .conn-endpoint { font-size: 11px; color: var(--caption); margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .conn-caps { font-size: 10px; color: #C7C7CC; }
+  .conn-tested { font-size: 10px; color: var(--caption); flex-shrink: 0; text-align: right; }
+
+  /* Empty state */
+  .empty-state {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 60px 20px; color: var(--caption); text-align: center;
+  }
+  .empty-state svg { width: 48px; height: 48px; margin-bottom: 16px; opacity: 0.3; }
+  .empty-state p { font-size: 12px; line-height: 1.6; }
+
+  /* Footer */
+  .footer {
+    padding: 10px 14px;
+    border-top: 1px solid var(--card-border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .footer-spacer { flex: 1; }
+
+  .btn {
+    padding: 7px 14px; border-radius: 7px; font-size: 12px; font-weight: 500;
+    font-family: 'Segoe UI', sans-serif; cursor: pointer; border: none;
+    display: inline-flex; align-items: center; gap: 5px;
+  }
+  .btn-primary { background: var(--accent); color: #FFFFFF; }
+  .btn-secondary {
+    background: transparent; color: var(--azul);
+    border: 1px solid var(--card-border);
+  }
+  .btn-secondary:hover { background: #F2F2F7; }
+
+  /* Back link */
+  .back-link {
+    display: block; text-align: center; margin-top: 12px; margin-bottom: 4px;
+    font-size: 11px; color: var(--caption); text-decoration: none;
+  }
+  .back-link:hover { color: var(--naranja); }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <img src="pill-icon.png" alt="BIMPills" />
+  <div class="header-text">
+    <span class="header-label">Integración</span>
+    <span class="header-title">Conectar Servicios MCP</span>
+    <span class="header-subtitle">Gestiona conexiones con servicios de Protocolo de Contexto de Modelo</span>
+  </div>
+</div>
+
+<!-- Main card -->
+<div class="main-card">
+  <!-- Tool header -->
+  <div class="tool-header">
+    <div class="tool-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#1565C0" stroke-width="1.8">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
+        <path d="M5.64 5.64l2.12 2.12M16.24 16.24l2.12 2.12M5.64 18.36l2.12-2.12M16.24 7.76l2.12-2.12" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <span class="tool-title">Conexiones MCP</span>
+  </div>
+
+  <!-- Connections list -->
+  <div class="connections-scroll">
+
+    <!-- Connected item (selected) -->
+    <div class="connection-item selected">
+      <div class="conn-status-dot dot-connected"></div>
+      <div class="conn-info">
+        <div class="conn-name-row">
+          <span class="conn-name">Claude MCP Local</span>
+          <span class="conn-badge badge-connected">Conectado</span>
+        </div>
+        <div class="conn-endpoint">http://localhost:3000/mcp</div>
+        <div class="conn-caps">Capacidades: 5</div>
+      </div>
+      <div class="conn-tested">2026-03-27 10:42</div>
+    </div>
+
+    <!-- Disconnected item -->
+    <div class="connection-item">
+      <div class="conn-status-dot dot-disconnected"></div>
+      <div class="conn-info">
+        <div class="conn-name-row">
+          <span class="conn-name">Servidor BIM Cloud</span>
+          <span class="conn-badge badge-disconnected">Desconectado</span>
+        </div>
+        <div class="conn-endpoint">https://bim-cloud.example.com/api/mcp</div>
+        <div class="conn-caps">Capacidades: 0</div>
+      </div>
+      <div class="conn-tested">2026-03-25 16:30</div>
+    </div>
+
+    <!-- Error item -->
+    <div class="connection-item">
+      <div class="conn-status-dot dot-error"></div>
+      <div class="conn-info">
+        <div class="conn-name-row">
+          <span class="conn-name">Análisis Estructural API</span>
+          <span class="conn-badge badge-error">Error</span>
+        </div>
+        <div class="conn-endpoint">https://structural.api.internal/mcp/v2</div>
+        <div class="conn-caps">Capacidades: 3</div>
+      </div>
+      <div class="conn-tested">2026-03-26 09:15</div>
+    </div>
+
+    <!-- Unknown item -->
+    <div class="connection-item">
+      <div class="conn-status-dot" style="background: #C7C7CC;"></div>
+      <div class="conn-info">
+        <div class="conn-name-row">
+          <span class="conn-name">Nueva Conexión</span>
+          <span class="conn-badge badge-unknown">Desconocido</span>
+        </div>
+        <div class="conn-endpoint">(sin endpoint configurado)</div>
+        <div class="conn-caps">Capacidades: 0</div>
+      </div>
+      <div class="conn-tested">Nunca</div>
+    </div>
+
+  </div>
+
+  <!-- Footer buttons -->
+  <div class="footer">
+    <button class="btn btn-primary">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Nueva Conexión
+    </button>
+    <button class="btn btn-secondary">Editar</button>
+    <button class="btn btn-secondary">Probar</button>
+    <button class="btn btn-secondary">Eliminar</button>
+    <div class="footer-spacer"></div>
+    <button class="btn btn-secondary" style="width: 90px;">Cerrar</button>
+  </div>
+</div>
+
+<a class="back-link" href="index.html">&larr; Volver al índice</a>
+
+</body>
+</html>

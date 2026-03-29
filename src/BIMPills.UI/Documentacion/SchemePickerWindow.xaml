@@ -1,0 +1,241 @@
+<Window x:Class="BIMPills.UI.Documentacion.SchemePickerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Esquema de acotado"
+        Width="460" SizeToContent="Height"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner"
+        Background="#F0F0F0"
+        FontFamily="Segoe UI"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/BIMPills.UI;component/Shared/Styles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- Scheme card base style -->
+            <Style x:Key="SchemeCard" TargetType="Border">
+                <Setter Property="Background" Value="White"/>
+                <Setter Property="BorderBrush" Value="#E5E5EA"/>
+                <Setter Property="BorderThickness" Value="1.5"/>
+                <Setter Property="CornerRadius" Value="8"/>
+                <Setter Property="Padding" Value="14,12"/>
+                <Setter Property="Margin" Value="0,0,0,8"/>
+                <Setter Property="Cursor" Value="Hand"/>
+            </Style>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <DockPanel Margin="20,16,20,16">
+
+        <!-- Header -->
+        <StackPanel DockPanel.Dock="Top" Margin="0,0,0,16">
+            <TextBlock Text="Elige un esquema de acotado"
+                       FontSize="15" FontWeight="SemiBold"
+                       Foreground="{StaticResource PrimaryBrush}"/>
+            <TextBlock Text="Selecciona el patrón de cotas que se creará automáticamente."
+                       FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"
+                       Margin="0,3,0,0"/>
+        </StackPanel>
+
+        <!-- Footer -->
+        <Border DockPanel.Dock="Bottom" Margin="0,8,0,0">
+            <DockPanel>
+                <TextBlock x:Name="ComingSoonNote"
+                           Text="Esquemas personalizados — Próximamente"
+                           FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"
+                           VerticalAlignment="Center"
+                           Visibility="Collapsed"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="Cancelar"
+                            Style="{StaticResource SecondaryButton}"
+                            Width="90"
+                            Click="Cancel_Click"/>
+                    <Button x:Name="ConfirmBtn"
+                            Content="Seleccionar"
+                            Style="{StaticResource PrimaryButton}"
+                            Width="110"
+                            Margin="8,0,0,0"
+                            IsEnabled="False"
+                            Click="Confirm_Click"/>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- Scheme cards -->
+        <StackPanel>
+
+            <!-- Card 1: Anchos de vanos -->
+            <Border x:Name="CardOpeningWidth" Style="{StaticResource SchemeCard}"
+                    MouseLeftButtonDown="Card_Click" Tag="opening-width">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="36"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="24"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Icon -->
+                    <Border Grid.Column="0" Width="30" Height="30" CornerRadius="7"
+                            Background="#E3F2FD" HorizontalAlignment="Left" VerticalAlignment="Top">
+                        <TextBlock Text="&#xE8B9;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                   Foreground="#1565C0"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+
+                    <!-- Text -->
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock Text="Anchos de vanos" FontSize="13" FontWeight="SemiBold"
+                                   Foreground="{StaticResource PrimaryBrush}"/>
+                        <TextBlock Text="Cota el ancho de cada vano de puerta visible en la vista"
+                                   FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"
+                                   TextWrapping="Wrap" Margin="0,2,0,0"/>
+                    </StackPanel>
+
+                    <!-- Checkmark -->
+                    <TextBlock x:Name="CheckOpeningWidth" Grid.Column="2"
+                               Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                               Foreground="{StaticResource AccentBrush}"
+                               VerticalAlignment="Center" HorizontalAlignment="Center"
+                               Visibility="Collapsed"/>
+                </Grid>
+            </Border>
+
+            <!-- Card 2: Cotas a ejes -->
+            <Border x:Name="CardGridCombined" Style="{StaticResource SchemeCard}"
+                    MouseLeftButtonDown="Card_Click" Tag="grid-combined">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="36"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="24"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Border Grid.Column="0" Width="30" Height="30" CornerRadius="7"
+                            Background="#E3F2FD" HorizontalAlignment="Left" VerticalAlignment="Top">
+                        <TextBlock Text="&#xE81E;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                   Foreground="#1565C0"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock Text="Cotas a ejes" FontSize="13" FontWeight="SemiBold"
+                                   Foreground="{StaticResource PrimaryBrush}"/>
+                        <TextBlock Text="Cotas totales y parciales entre rejillas en una acción"
+                                   FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"
+                                   TextWrapping="Wrap" Margin="0,2,0,0"/>
+                    </StackPanel>
+
+                    <TextBlock x:Name="CheckGridCombined" Grid.Column="2"
+                               Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                               Foreground="{StaticResource AccentBrush}"
+                               VerticalAlignment="Center" HorizontalAlignment="Center"
+                               Visibility="Collapsed"/>
+                </Grid>
+            </Border>
+
+            <!-- Card 3: Cotas espacios interiores -->
+            <Border x:Name="CardInteriorSpaces" Style="{StaticResource SchemeCard}"
+                    MouseLeftButtonDown="Card_Click" Tag="interior-spaces">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="36"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="24"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Border Grid.Column="0" Width="30" Height="30" CornerRadius="7"
+                            Background="#E3F2FD" HorizontalAlignment="Left" VerticalAlignment="Top">
+                        <TextBlock Text="&#xE909;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                   Foreground="#1565C0"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock Text="Cotas espacios interiores" FontSize="13" FontWeight="SemiBold"
+                                   Foreground="{StaticResource PrimaryBrush}"/>
+                        <TextBlock Text="Dimensiones H y V del espacio usando contornos de habitación"
+                                   FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"
+                                   TextWrapping="Wrap" Margin="0,2,0,0"/>
+                    </StackPanel>
+
+                    <TextBlock x:Name="CheckInteriorSpaces" Grid.Column="2"
+                               Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                               Foreground="{StaticResource AccentBrush}"
+                               VerticalAlignment="Center" HorizontalAlignment="Center"
+                               Visibility="Collapsed"/>
+                </Grid>
+            </Border>
+
+            <!-- Card 4: Niveles ARQ -->
+            <Border x:Name="CardArqLevels" Style="{StaticResource SchemeCard}"
+                    MouseLeftButtonDown="Card_Click" Tag="arq-levels">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="36"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="24"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Border Grid.Column="0" Width="30" Height="30" CornerRadius="7"
+                            Background="#E3F2FD" HorizontalAlignment="Left" VerticalAlignment="Top">
+                        <TextBlock Text="&#xE81C;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                   Foreground="#1565C0"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock Text="Niveles ARQ" FontSize="13" FontWeight="SemiBold"
+                                   Foreground="{StaticResource PrimaryBrush}"/>
+                        <TextBlock Text="Cotas totales y parciales entre niveles cuyo tipo contiene ARQ"
+                                   FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"
+                                   TextWrapping="Wrap" Margin="0,2,0,0"/>
+                    </StackPanel>
+
+                    <TextBlock x:Name="CheckArqLevels" Grid.Column="2"
+                               Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                               Foreground="{StaticResource AccentBrush}"
+                               VerticalAlignment="Center" HorizontalAlignment="Center"
+                               Visibility="Collapsed"/>
+                </Grid>
+            </Border>
+
+            <!-- Card 5: Custom -->
+            <Border x:Name="CardCustom" Style="{StaticResource SchemeCard}"
+                    MouseLeftButtonDown="Card_Click" Tag="custom" Margin="0,0,0,0">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="36"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="24"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Border Grid.Column="0" Width="30" Height="30" CornerRadius="7"
+                            Background="#E3F2FD" HorizontalAlignment="Left" VerticalAlignment="Top">
+                        <TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                   Foreground="#1565C0"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock Text="Esquema personalizado" FontSize="13" FontWeight="SemiBold"
+                                   Foreground="{StaticResource PrimaryBrush}"/>
+                        <TextBlock Text="Define y guarda tus propios patrones de acotado"
+                                   FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"
+                                   TextWrapping="Wrap" Margin="0,2,0,0"/>
+                    </StackPanel>
+
+                    <TextBlock x:Name="CheckCustom" Grid.Column="2"
+                               Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                               Foreground="{StaticResource AccentBrush}"
+                               VerticalAlignment="Center" HorizontalAlignment="Center"
+                               Visibility="Collapsed"/>
+                </Grid>
+            </Border>
+
+        </StackPanel>
+    </DockPanel>
+</Window>

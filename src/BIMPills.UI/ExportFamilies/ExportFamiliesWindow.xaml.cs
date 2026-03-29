@@ -81,8 +81,9 @@ namespace BIMPills.UI.ExportFamilies
             string basePath = _selectedFolder ?? "C:\\...";
             string projectFolder = SanitizeFileName(
                 !string.IsNullOrEmpty(_documentTitle) ? _documentTitle : "Proyecto");
-            var categories = _families.Select(f => f.Category).Distinct().OrderBy(c => c).Take(4).ToList();
-            int totalCategories = _families.Select(f => f.Category).Distinct().Count();
+            var distinctCategories = _families.Select(f => f.Category).Distinct().ToList();
+            var categories = distinctCategories.OrderBy(c => c).Take(4).ToList();
+            int totalCategories = distinctCategories.Count;
 
             var lines = new List<string>
             {

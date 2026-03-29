@@ -1,0 +1,64 @@
+<Window x:Class="BIMPills.UI.Documentacion.ConfirmDimensionWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Confirmar acotado"
+        Width="420" SizeToContent="Height"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="#F5F5F7"
+        FontFamily="Segoe UI"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../Shared/Styles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="12"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="16"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0">
+            <TextBlock Text="Confirmar acotado"
+                       FontSize="17" FontWeight="SemiBold"
+                       Foreground="#1D1D1F"/>
+            <TextBlock x:Name="SubtitleText"
+                       FontSize="13" Foreground="#6E6E73"
+                       Margin="0,4,0,0" TextWrapping="Wrap"/>
+        </StackPanel>
+
+        <!-- Detail rows -->
+        <Border Grid.Row="2"
+                Background="White" CornerRadius="10"
+                BorderBrush="#E5E5EA" BorderThickness="1"
+                Padding="16,12">
+            <StackPanel x:Name="DetailsPanel" />
+        </Border>
+
+        <!-- Buttons -->
+        <Grid Grid.Row="4">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="8"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <Button Grid.Column="0" Content="Cancelar"
+                    Style="{StaticResource SecondaryButton}"
+                    Click="Cancel_Click"/>
+            <Button Grid.Column="2" x:Name="ConfirmBtn"
+                    Content="Acotar"
+                    Style="{StaticResource PrimaryButton}"
+                    Click="Confirm_Click"/>
+        </Grid>
+    </Grid>
+</Window>

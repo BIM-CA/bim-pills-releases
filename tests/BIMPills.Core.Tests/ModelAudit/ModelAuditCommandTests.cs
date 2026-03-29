@@ -139,6 +139,18 @@ namespace BIMPills.Core.Tests.ModelAudit
         };
         public int GetDoorCountInActiveView()                            => 5;
         public string GetActiveViewName()                                => "Level 1";
+        public int GetGridCountInActiveView()                            => 4;
+        public int GetWallCountInActiveView()                            => 8;
+
+        public int GetArqLevelCount()                                        => 3;
+
+        // Export Sheets
+        public IReadOnlyList<Models.SheetExportInfo> GetSheets()           => new List<Models.SheetExportInfo>();
+        public string GetProjectName()                                     => "TestProject";
+        // SheetLink
+        public IReadOnlyList<Models.ScheduleInfo> GetSchedules()                                               => new List<Models.ScheduleInfo>();
+        public Models.ScheduleData GetScheduleData(long scheduleId)                                           => new Models.ScheduleData();
+        public Models.ParameterUpdateResult ApplyParameterUpdates(IReadOnlyList<Models.ParameterUpdateRequest> u) => new Models.ParameterUpdateResult();
     }
 
     internal sealed class NullLogger : ILogger

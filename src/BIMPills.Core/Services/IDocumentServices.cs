@@ -1,6 +1,7 @@
 using BIMPills.Core.Audit;
 using BIMPills.Core.Documentacion;
 using BIMPills.Core.Gestion;
+using BIMPills.Core.Models;
 using System.Collections.Generic;
 
 namespace BIMPills.Core.Services
@@ -56,5 +57,33 @@ namespace BIMPills.Core.Services
 
         /// <summary>Nombre de la vista activa.</summary>
         string GetActiveViewName();
+
+        /// <summary>Cantidad de rejillas (grids) visibles en la vista activa.</summary>
+        int GetGridCountInActiveView();
+
+        /// <summary>Cantidad de muros visibles en la vista activa.</summary>
+        int GetWallCountInActiveView();
+
+        /// <summary>Cantidad de niveles cuyo tipo empieza con "ARQ".</summary>
+        int GetArqLevelCount();
+
+        // ── Exportar Planos ──
+
+        /// <summary>Obtiene todos los planos (ViewSheets) del modelo.</summary>
+        IReadOnlyList<SheetExportInfo> GetSheets();
+
+        /// <summary>Obtiene el nombre del proyecto desde ProjectInformation.</summary>
+        string GetProjectName();
+
+        // ── Gestionar: SheetLink ──
+
+        /// <summary>Obtiene todas las tablas de planificación (ViewSchedules) del modelo.</summary>
+        IReadOnlyList<ScheduleInfo> GetSchedules();
+
+        /// <summary>Extrae los datos completos de una tabla de planificación.</summary>
+        ScheduleData GetScheduleData(long scheduleId);
+
+        /// <summary>Aplica actualizaciones de parámetros en lote dentro de una transacción.</summary>
+        ParameterUpdateResult ApplyParameterUpdates(IReadOnlyList<ParameterUpdateRequest> updates);
     }
 }

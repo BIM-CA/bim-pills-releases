@@ -1,11 +1,15 @@
 <Window x:Class="BIMPills.UI.Documentacion.DocumentacionWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="BIMPills — Documentación"
-        Width="500" Height="360"
-        ResizeMode="NoResize"
+        xmlns:local="clr-namespace:BIMPills.UI.Documentacion"
+        Title="BIMPills — Documentar"
+        Width="540" Height="780"
+        MinWidth="480" MinHeight="600"
+        ResizeMode="CanResizeWithGrip"
         WindowStartupLocation="CenterScreen"
-        Background="#F0F0F0">
+        Background="#F0F0F0"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True">
 
     <Window.Resources>
         <ResourceDictionary>
@@ -15,61 +19,81 @@
         </ResourceDictionary>
     </Window.Resources>
 
-    <DockPanel Margin="20">
+    <DockPanel Margin="20,16,20,14">
 
-        <!-- Header -->
-        <Border DockPanel.Dock="Top" Style="{StaticResource CardBorder}" Margin="0,0,0,12">
+        <!-- Header card — same as Gestión -->
+        <Border DockPanel.Dock="Top" Style="{StaticResource CardBorder}" Margin="0,0,0,10">
             <StackPanel Orientation="Horizontal">
                 <Image Source="/BIMPills.UI;component/Resources/pill-icon.png"
                        Width="20" Height="32" Margin="0,0,12,0"
                        RenderOptions.BitmapScalingMode="HighQuality"/>
                 <StackPanel>
-                    <TextBlock Text="Documentación"
+                    <TextBlock Text="Documentar"
                                FontSize="12" FontWeight="Medium"
                                Foreground="{StaticResource AccentBrush}"
                                FontFamily="Segoe UI"/>
-                    <TextBlock Text="BIMPills"
+                    <TextBlock x:Name="DocumentName"
                                FontSize="15" FontWeight="SemiBold"
                                Foreground="{StaticResource PrimaryBrush}"
+                               FontFamily="Segoe UI"/>
+                    <TextBlock x:Name="SubtitleText"
+                               Text="Herramientas de documentación automática"
+                               FontSize="11"
+                               Foreground="{StaticResource TextSecondaryBrush}"
                                FontFamily="Segoe UI"/>
                 </StackPanel>
             </StackPanel>
         </Border>
 
-        <!-- Footer -->
-        <Button DockPanel.Dock="Bottom"
-                Content="Cerrar"
-                Style="{StaticResource SecondaryButton}"
-                Width="90"
-                HorizontalAlignment="Right"
-                Click="CloseButton_Click"/>
-
-        <!-- Empty state -->
+        <!-- Main content card — contains tool header + AcotadoPanel (with its own footer) -->
         <Border Style="{StaticResource CardBorder}">
-            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                <!-- Document icon -->
-                <Border Width="52" Height="52" CornerRadius="13"
-                        Background="#F2F2F7"
-                        HorizontalAlignment="Center"
-                        Margin="0,0,0,14">
-                    <TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets"
-                               FontSize="24" Foreground="#C7C7CC"
-                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            <DockPanel>
+
+                <!-- Tab bar — estilo global folder -->
+                <Border DockPanel.Dock="Top"
+                        BorderBrush="#E5E5EA" BorderThickness="0,0,0,1"
+                        Background="Transparent">
+                    <StackPanel Orientation="Horizontal" Margin="14,0">
+                        <Border Style="{StaticResource TabHeaderActive}">
+                            <TextBlock Style="{StaticResource TabHeaderTextActive}"
+                                       Text="Acotado"/>
+                        </Border>
+                        <Border Padding="12,9,12,8">
+                            <TextBlock Text="Pronto..." FontSize="12" FontStyle="Italic"
+                                       Foreground="#C7C7CC" FontFamily="Segoe UI"/>
+                        </Border>
+                    </StackPanel>
                 </Border>
-                <TextBlock Text="Próximamente"
-                           FontSize="15" FontWeight="SemiBold"
-                           Foreground="{StaticResource PrimaryBrush}"
-                           HorizontalAlignment="Center"
-                           FontFamily="Segoe UI"
-                           Margin="0,0,0,6"/>
-                <TextBlock Text="Las herramientas de documentación estarán&#x0a;disponibles en una próxima actualización."
-                           FontSize="12"
-                           Foreground="{StaticResource TextSecondaryBrush}"
-                           HorizontalAlignment="Center"
-                           TextAlignment="Center"
-                           LineHeight="18"
-                           FontFamily="Segoe UI"/>
-            </StackPanel>
+
+                <!-- Tool header — like Gestión's "Subproyectos" -->
+                <Border DockPanel.Dock="Top"
+                        BorderBrush="#E5E5EA" BorderThickness="0,0,0,1"
+                        Padding="14,12">
+                    <StackPanel Orientation="Horizontal">
+                        <Border Width="30" Height="30" CornerRadius="7"
+                                Background="#E3F2FD" Margin="0,0,10,0">
+                            <TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets"
+                                       FontSize="14" Foreground="#1565C0"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <TextBlock Text="Acotado"
+                                   FontSize="14" FontWeight="SemiBold"
+                                   Foreground="{StaticResource PrimaryBrush}"
+                                   VerticalAlignment="Center"
+                                   FontFamily="Segoe UI"/>
+                        <TextBlock Text="Acotado automático de elementos"
+                                   FontSize="11"
+                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                   VerticalAlignment="Center"
+                                   Margin="12,0,0,0"
+                                   FontFamily="Segoe UI"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Acotado panel (has its own footer with Cancelar/Acotar buttons) -->
+                <local:AcotadoVanosPanel x:Name="AcotadoPanel"/>
+
+            </DockPanel>
         </Border>
 
     </DockPanel>

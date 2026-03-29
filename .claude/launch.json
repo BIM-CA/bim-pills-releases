@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "mockup",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": ["run", "--project", "mockup/mockup.csproj"],
+      "port": 3000
+    }
+  ]
+}

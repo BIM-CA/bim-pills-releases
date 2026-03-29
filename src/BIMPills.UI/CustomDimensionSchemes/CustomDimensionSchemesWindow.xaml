@@ -1,0 +1,107 @@
+<Window x:Class="BIMPills.UI.CustomDimensionSchemes.CustomDimensionSchemesWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:BIMPills.UI.CustomDimensionSchemes"
+        Title="BIMPills — Esquemas de Cotas"
+        Width="920" Height="720"
+        MinWidth="720" MinHeight="560"
+        WindowStartupLocation="CenterScreen"
+        Background="#F0F0F0"
+        WindowStyle="SingleBorderWindow"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/BIMPills.UI;component/Shared/Styles.xaml"/>
+                <ResourceDictionary Source="/BIMPills.UI;component/Shared/Icons.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <DockPanel Margin="20,16,20,14">
+
+        <!-- Header card -->
+        <Border DockPanel.Dock="Top" Style="{StaticResource CardBorder}" Margin="0,0,0,10">
+            <StackPanel Orientation="Horizontal" Margin="4,0">
+                <Image Source="/BIMPills.UI;component/Resources/pill-icon.png"
+                       Width="20" Height="32"
+                       RenderOptions.BitmapScalingMode="HighQuality"/>
+                <StackPanel Margin="10,0,0,0">
+                    <TextBlock Text="Dimensionamiento"
+                               FontSize="12" FontWeight="Medium"
+                               Foreground="{StaticResource AccentBrush}"
+                               FontFamily="Segoe UI"/>
+                    <TextBlock Text="Esquemas Personalizados"
+                               FontSize="15" FontWeight="SemiBold"
+                               Foreground="{StaticResource PrimaryBrush}"
+                               FontFamily="Segoe UI"/>
+                    <TextBlock Text="Crea y gestiona esquemas de cotas basados en reglas"
+                               Style="{StaticResource CaptionText}"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- Main content card -->
+        <Border Style="{StaticResource CardBorder}">
+            <DockPanel>
+
+                <!-- Tool header -->
+                <Border DockPanel.Dock="Top"
+                        BorderBrush="#E5E5EA" BorderThickness="0,0,0,1"
+                        Padding="14,12">
+                    <StackPanel Orientation="Horizontal">
+                        <Border Width="30" Height="30" CornerRadius="7"
+                                Background="#E3F2FD" Margin="0,0,10,0">
+                            <TextBlock Text="&#xECC6;" FontFamily="Segoe MDL2 Assets"
+                                       FontSize="14" Foreground="#1565C0"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <TextBlock Text="Esquemas de Cotas"
+                                   FontSize="14" FontWeight="SemiBold"
+                                   Foreground="{StaticResource PrimaryBrush}"
+                                   VerticalAlignment="Center"
+                                   FontFamily="Segoe UI"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Footer — Cerrar left -->
+                <Border DockPanel.Dock="Bottom"
+                        BorderBrush="#E5E5EA" BorderThickness="0,1,0,0"
+                        Padding="14,10">
+                    <DockPanel LastChildFill="False">
+                        <Button DockPanel.Dock="Left"
+                                Content="Cerrar (ESC)"
+                                Style="{StaticResource PrimaryButton}"
+                                Width="120"
+                                IsCancel="True"
+                                Click="Close_Click"/>
+                    </DockPanel>
+                </Border>
+
+                <!-- Placeholder Próximamente -->
+                <Border VerticalAlignment="Center" HorizontalAlignment="Center" Margin="20">
+                    <StackPanel HorizontalAlignment="Center">
+                        <Border Width="52" Height="52" CornerRadius="13"
+                                Background="#FFF3EE" HorizontalAlignment="Center"
+                                Margin="0,0,0,14">
+                            <TextBlock Text="⏳" FontSize="24"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <TextBlock Text="Esquemas personalizados"
+                                   FontSize="14" FontWeight="SemiBold"
+                                   Foreground="{StaticResource PrimaryBrush}"
+                                   FontFamily="Segoe UI" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Próximamente — exportación e importación XML"
+                                   FontSize="11" Foreground="#86868B" FontFamily="Segoe UI"
+                                   HorizontalAlignment="Center" TextAlignment="Center"
+                                   TextWrapping="Wrap" Margin="0,6,0,0" MaxWidth="240"/>
+                    </StackPanel>
+                </Border>
+
+            </DockPanel>
+        </Border>
+
+    </DockPanel>
+</Window>

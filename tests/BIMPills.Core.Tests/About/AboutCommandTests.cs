@@ -27,7 +27,7 @@ namespace BIMPills.Core.Tests.About
 
             Assert.NotNull(AboutCommand.LastResult);
             Assert.Equal("BIMPills", AboutCommand.LastResult!.PluginName);
-            Assert.Equal("1.0.0-alpha.1", AboutCommand.LastResult.Version);
+            Assert.Equal("1.0.0-alpha.2", AboutCommand.LastResult.Version);
             Assert.Equal("Rodrigo Flores + BIM-CA Team", AboutCommand.LastResult.Developer);
             Assert.Equal("BIM-CA", AboutCommand.LastResult.Company);
             Assert.Equal("https://bim-ca.com", AboutCommand.LastResult.Website);
@@ -81,10 +81,19 @@ namespace BIMPills.Core.Tests.About
             => new System.Collections.Generic.List<Gestion.WorksetInfo>();
         public bool CreateWorkset(string name) => true;
         public bool RenameWorkset(long worksetId, string newName) => true;
-        public System.Collections.Generic.IReadOnlyList<Documentacion.DimensionTypeInfo> GetDimensionTypes()
-            => new System.Collections.Generic.List<Documentacion.DimensionTypeInfo>();
+        public System.Collections.Generic.IReadOnlyList<BIMPills.Core.Documentacion.DimensionTypeInfo> GetDimensionTypes()
+            => new System.Collections.Generic.List<BIMPills.Core.Documentacion.DimensionTypeInfo>();
         public int GetDoorCountInActiveView() => 0;
         public string GetActiveViewName() => "Level 1";
+        public int GetGridCountInActiveView() => 0;
+        public int GetWallCountInActiveView() => 0;
+        public int GetArqLevelCount() => 0;
+        public System.Collections.Generic.IReadOnlyList<Models.SheetExportInfo> GetSheets()
+            => new System.Collections.Generic.List<Models.SheetExportInfo>();
+        public string GetProjectName() => "TestProject";
+        public System.Collections.Generic.IReadOnlyList<Models.ScheduleInfo> GetSchedules()                             => new System.Collections.Generic.List<Models.ScheduleInfo>();
+        public Models.ScheduleData GetScheduleData(long scheduleId)                                                     => new Models.ScheduleData();
+        public Models.ParameterUpdateResult ApplyParameterUpdates(System.Collections.Generic.IReadOnlyList<Models.ParameterUpdateRequest> u) => new Models.ParameterUpdateResult();
     }
 
     internal sealed class NullAboutLogger : ILogger

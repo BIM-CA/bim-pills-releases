@@ -23,6 +23,7 @@ namespace BIMPills.UI.About
             DeveloperText.Text = _info.Developer;
             CompanyText.Text = _info.Company;
             WebsiteText.Text = _info.Website;
+            SupportEmailText.Text = _info.SupportEmail;
             CopyrightText.Text = _info.Copyright;
         }
 
@@ -31,6 +32,15 @@ namespace BIMPills.UI.About
             Process.Start(new ProcessStartInfo
             {
                 FileName = _info.Website,
+                UseShellExecute = true
+            });
+        }
+
+        private void SupportEmail_Click(object sender, MouseButtonEventArgs e)
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = $"mailto:{_info.SupportEmail}",
                 UseShellExecute = true
             });
         }

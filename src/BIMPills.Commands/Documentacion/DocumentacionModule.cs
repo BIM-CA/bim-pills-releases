@@ -18,8 +18,8 @@ namespace BIMPills.Commands.Documentacion
             builder.AddPushButton(
                 tabName:             TabName,
                 panelName:           PanelName,
-                buttonName:          "Documentación",
-                tooltip:             "Herramientas de documentación del modelo (próximamente)",
+                buttonName:          "Documentar",
+                tooltip:             "Herramientas de documentación automática del modelo",
                 commandTypeFullName: "BIMPills.Revit.Commands.Documentacion.DocumentacionRevitCommand",
                 assemblyPath:        revitDll,
                 iconKey:             "documentacion");

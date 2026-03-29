@@ -7,7 +7,9 @@
         MinWidth="720" MinHeight="560"
         WindowStartupLocation="CenterScreen"
         Background="#F0F0F0"
-        WindowStyle="SingleBorderWindow">
+        WindowStyle="SingleBorderWindow"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True">
 
     <Window.Resources>
         <ResourceDictionary>
@@ -57,472 +59,471 @@
                 <Setter Property="CornerRadius" Value="4"/>
                 <Setter Property="Padding" Value="8,2"/>
                 <Setter Property="HorizontalAlignment" Value="Left"/>
+                <Setter Property="VerticalAlignment" Value="Center"/>
             </Style>
         </ResourceDictionary>
     </Window.Resources>
 
-    <Grid Margin="0">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
+    <DockPanel Margin="20,16,20,14">
 
-        <!-- ═══════════════════════════════════════════
-             Encabezado — Barra superior
-             ═══════════════════════════════════════════ -->
-        <Border Grid.Row="0"
-                Background="White"
-                BorderBrush="#E5E5EA"
-                BorderThickness="0,0,0,0.5"
-                Padding="24,18,24,16">
-            <Border.Effect>
-                <DropShadowEffect ShadowDepth="1" BlurRadius="6" Opacity="0.04" Color="Black"/>
-            </Border.Effect>
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-
-                <Image Grid.Column="0"
-                       Source="/BIMPills.UI;component/Resources/pill-icon.png"
-                       Width="28" Height="44"
-                       Margin="0,0,14,0"
-                       VerticalAlignment="Center"
+        <!-- Header card -->
+        <Border DockPanel.Dock="Top" Style="{StaticResource CardBorder}" Margin="0,0,0,10">
+            <StackPanel Orientation="Horizontal" Margin="4,0">
+                <Image Source="/BIMPills.UI;component/Resources/pill-icon.png"
+                       Width="20" Height="32"
                        RenderOptions.BitmapScalingMode="HighQuality"/>
-
-                <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                    <TextBlock Text="Auditoría de Modelo"
+                <StackPanel Margin="10,0,0,0">
+                    <TextBlock Text="Auditoría"
                                FontSize="12" FontWeight="Medium"
-                               Foreground="#EF6337" FontFamily="Segoe UI"/>
+                               Foreground="{StaticResource AccentBrush}"
+                               FontFamily="Segoe UI"/>
                     <TextBlock x:Name="DocumentName"
-                               FontSize="17" FontWeight="SemiBold"
-                               Foreground="#212B37" FontFamily="Segoe UI"
-                               Margin="0,3,0,0"/>
+                               FontSize="15" FontWeight="SemiBold"
+                               Foreground="{StaticResource PrimaryBrush}"
+                               FontFamily="Segoe UI"/>
                     <TextBlock x:Name="SubtitleText"
-                               Style="{StaticResource CaptionText}"
-                               Margin="0,3,0,0"/>
+                               Style="{StaticResource CaptionText}"/>
                 </StackPanel>
-            </Grid>
+            </StackPanel>
         </Border>
 
-        <!-- ═══════════════════════════════════════════
-             Dashboard de Salud del Modelo
-             ═══════════════════════════════════════════ -->
-        <Border Grid.Row="1" Margin="20,16,20,0">
-            <Border Background="White" CornerRadius="10"
-                    BorderBrush="#E5E5EA" BorderThickness="0.5" Padding="20,16">
-                <Border.Effect>
-                    <DropShadowEffect ShadowDepth="1" BlurRadius="8" Opacity="0.06" Color="Black"/>
-                </Border.Effect>
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
+        <!-- Main content card -->
+        <Border Style="{StaticResource CardBorder}">
+            <DockPanel>
 
-                    <!-- Indicador circular de salud -->
-                    <Grid Grid.Column="0" Width="96" Height="88" Margin="0,0,20,0">
-                        <Grid HorizontalAlignment="Left" VerticalAlignment="Center"
-                              Width="80" Height="80">
-                            <!-- Fondo del anillo -->
-                            <Ellipse Width="80" Height="80" StrokeThickness="6" Stroke="#E5E5EA"/>
-                            <!-- Anillo de progreso completo (visible solo al 100%) -->
-                            <Ellipse x:Name="HealthFullRing" Width="80" Height="80"
-                                     StrokeThickness="6" Visibility="Collapsed">
-                                <Ellipse.Stroke>
-                                    <SolidColorBrush x:Name="HealthFullRingBrush" Color="#34C759"/>
-                                </Ellipse.Stroke>
-                            </Ellipse>
-                            <!-- Anillo de progreso parcial -->
-                            <Canvas Width="80" Height="80">
-                                <Path x:Name="HealthArc" StrokeThickness="6" StrokeStartLineCap="Round" StrokeEndLineCap="Round">
-                                    <Path.Stroke>
-                                        <SolidColorBrush x:Name="HealthArcBrush" Color="#34C759"/>
-                                    </Path.Stroke>
-                                </Path>
-                            </Canvas>
-                            <!-- Score central -->
-                            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                                <TextBlock x:Name="HealthScoreText"
-                                           FontSize="22" FontWeight="Bold"
-                                           Foreground="#212B37" FontFamily="Segoe UI"
-                                           HorizontalAlignment="Center"/>
-                                <TextBlock x:Name="HealthLevelText"
-                                           FontSize="9" FontWeight="Medium"
-                                           HorizontalAlignment="Center"
-                                           FontFamily="Segoe UI"/>
-                            </StackPanel>
-                        </Grid>
-                        <!-- Botón de información (i) -->
-                        <Button x:Name="HealthInfoButton"
-                                HorizontalAlignment="Right"
-                                VerticalAlignment="Top"
-                                Width="22" Height="22"
-                                Margin="0,0,0,0"
-                                Cursor="Hand"
-                                Click="HealthInfo_Click"
-                                ToolTip="Ver metodología de evaluación">
-                            <Button.Template>
-                                <ControlTemplate TargetType="Button">
-                                    <Border x:Name="InfoBorder"
+                <!-- Tool header -->
+                <Border DockPanel.Dock="Top"
+                        BorderBrush="#E5E5EA" BorderThickness="0,0,0,1"
+                        Padding="14,12">
+                    <StackPanel Orientation="Horizontal">
+                        <Border Width="30" Height="30" CornerRadius="7"
+                                Background="#E3F2FD" Margin="0,0,10,0">
+                            <TextBlock Text="&#xE9D9;" FontFamily="Segoe MDL2 Assets"
+                                       FontSize="14" Foreground="#1565C0"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <TextBlock Text="Auditoría de Modelo"
+                                   FontSize="14" FontWeight="SemiBold"
+                                   Foreground="{StaticResource PrimaryBrush}"
+                                   VerticalAlignment="Center"
+                                   FontFamily="Segoe UI"/>
+                        <TextBlock Text="Análisis de calidad del modelo BIM"
+                                   FontSize="11"
+                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                   VerticalAlignment="Center"
+                                   Margin="12,0,0,0"
+                                   FontFamily="Segoe UI"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Footer inside content card -->
+                <!-- Footer — Cerrar left, actions right -->
+                <Border DockPanel.Dock="Bottom"
+                        BorderBrush="#E5E5EA" BorderThickness="0,1,0,0"
+                        Padding="14,10">
+                    <DockPanel LastChildFill="False">
+                        <Button DockPanel.Dock="Left"
+                                Content="Cerrar (ESC)"
+                                Style="{StaticResource PrimaryButton}"
+                                Width="120"
+                                IsCancel="True"
+                                Click="CloseButton_Click"/>
+
+                        <Button DockPanel.Dock="Right"
+                                Content="Exportar informe"
+                                Style="{StaticResource SecondaryButton}"
+                                Padding="18,0"
+                                Click="OpenExportAudit_Click"/>
+                    </DockPanel>
+                </Border>
+
+                <!-- Scrollable content area -->
+                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel>
+
+                        <!-- Dashboard de Salud del Modelo -->
+                        <Border Margin="14,14,14,0"
+                                Background="#F9F9FB" CornerRadius="8"
+                                BorderBrush="#E5E5EA" BorderThickness="0.5"
+                                Padding="16,14">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Indicador circular de salud -->
+                                <Grid Grid.Column="0" Width="96" Height="88" Margin="0,0,20,0">
+                                    <Grid HorizontalAlignment="Left" VerticalAlignment="Center"
+                                          Width="80" Height="80">
+                                        <!-- Fondo del anillo -->
+                                        <Ellipse Width="80" Height="80" StrokeThickness="6" Stroke="#E5E5EA"/>
+                                        <!-- Anillo de progreso completo (visible solo al 100%) -->
+                                        <Ellipse x:Name="HealthFullRing" Width="80" Height="80"
+                                                 StrokeThickness="6" Visibility="Collapsed">
+                                            <Ellipse.Stroke>
+                                                <SolidColorBrush x:Name="HealthFullRingBrush" Color="#34C759"/>
+                                            </Ellipse.Stroke>
+                                        </Ellipse>
+                                        <!-- Anillo de progreso parcial -->
+                                        <Canvas Width="80" Height="80">
+                                            <Path x:Name="HealthArc" StrokeThickness="6" StrokeStartLineCap="Round" StrokeEndLineCap="Round">
+                                                <Path.Stroke>
+                                                    <SolidColorBrush x:Name="HealthArcBrush" Color="#34C759"/>
+                                                </Path.Stroke>
+                                            </Path>
+                                        </Canvas>
+                                        <!-- Score central -->
+                                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                            <TextBlock x:Name="HealthScoreText"
+                                                       FontSize="22" FontWeight="Bold"
+                                                       Foreground="{StaticResource PrimaryBrush}"
+                                                       FontFamily="Segoe UI"
+                                                       HorizontalAlignment="Center"/>
+                                            <TextBlock x:Name="HealthLevelText"
+                                                       FontSize="9" FontWeight="Medium"
+                                                       HorizontalAlignment="Center"
+                                                       FontFamily="Segoe UI"/>
+                                        </StackPanel>
+                                    </Grid>
+                                    <!-- Botón de información (i) -->
+                                    <Button x:Name="HealthInfoButton"
+                                            HorizontalAlignment="Right"
+                                            VerticalAlignment="Top"
                                             Width="22" Height="22"
-                                            CornerRadius="11"
-                                            Background="#E5E5EA"
-                                            BorderThickness="0">
-                                        <TextBlock Text="i"
-                                                   FontSize="12" FontWeight="SemiBold"
-                                                   FontFamily="Georgia"
-                                                   FontStyle="Italic"
-                                                   Foreground="#86868B"
-                                                   HorizontalAlignment="Center"
-                                                   VerticalAlignment="Center"/>
-                                    </Border>
-                                    <ControlTemplate.Triggers>
-                                        <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter TargetName="InfoBorder" Property="Background" Value="#007AFF"/>
-                                            <Setter TargetName="InfoBorder" Property="TextBlock.Foreground" Value="White"/>
-                                        </Trigger>
-                                    </ControlTemplate.Triggers>
-                                </ControlTemplate>
-                            </Button.Template>
-                        </Button>
-                    </Grid>
-
-                    <!-- Métricas en tarjetas -->
-                    <UniformGrid Grid.Column="1" Rows="1" Columns="4">
-                        <!-- Peso del modelo -->
-                        <Border Margin="4,0" Padding="12,10" Background="#F9F9FB" CornerRadius="8">
-                            <StackPanel>
-                                <TextBlock Text="Peso" FontSize="11" Foreground="#8E8E93" FontFamily="Segoe UI"/>
-                                <TextBlock x:Name="FileSizeText"
-                                           FontSize="16" FontWeight="SemiBold"
-                                           Foreground="#212B37" FontFamily="Segoe UI"
-                                           Margin="0,4,0,0"/>
-                            </StackPanel>
-                        </Border>
-                        <!-- Elementos -->
-                        <Border Margin="4,0" Padding="12,10" Background="#F9F9FB" CornerRadius="8">
-                            <StackPanel>
-                                <TextBlock Text="Elementos" FontSize="11" Foreground="#8E8E93" FontFamily="Segoe UI"/>
-                                <TextBlock x:Name="TotalElementsText"
-                                           FontSize="16" FontWeight="SemiBold"
-                                           Foreground="#212B37" FontFamily="Segoe UI"
-                                           Margin="0,4,0,0"/>
-                            </StackPanel>
-                        </Border>
-                        <!-- Advertencias -->
-                        <Border Margin="4,0" Padding="12,10" Background="#F9F9FB" CornerRadius="8">
-                            <StackPanel>
-                                <TextBlock Text="Advertencias" FontSize="11" Foreground="#8E8E93" FontFamily="Segoe UI"/>
-                                <TextBlock x:Name="WarningsCountText"
-                                           FontSize="16" FontWeight="SemiBold"
-                                           FontFamily="Segoe UI"
-                                           Margin="0,4,0,0"/>
-                            </StackPanel>
-                        </Border>
-                        <!-- Purgables -->
-                        <Border Margin="4,0" Padding="12,10" Background="#F9F9FB" CornerRadius="8">
-                            <StackPanel>
-                                <TextBlock Text="Purgables" FontSize="11" Foreground="#8E8E93" FontFamily="Segoe UI"/>
-                                <TextBlock x:Name="PurgeableCountText"
-                                           FontSize="16" FontWeight="SemiBold"
-                                           Foreground="#EF6337" FontFamily="Segoe UI"
-                                           Margin="0,4,0,0"/>
-                            </StackPanel>
-                        </Border>
-                    </UniformGrid>
-                </Grid>
-            </Border>
-        </Border>
-
-        <!-- ═══════════════════════════════════════════
-             Pestañas con datos detallados
-             ═══════════════════════════════════════════ -->
-        <Border Grid.Row="2" Margin="20,16,20,0">
-            <Border Background="White" CornerRadius="10"
-                    BorderBrush="#E5E5EA" BorderThickness="0.5" Padding="0">
-                <Border.Effect>
-                    <DropShadowEffect ShadowDepth="1" BlurRadius="8" Opacity="0.06" Color="Black"/>
-                </Border.Effect>
-
-                <TabControl Style="{StaticResource BIMPillsTabControl}"
-                            Margin="12,8,12,12">
-
-                    <!-- Advertencias -->
-                    <TabItem Header="{Binding WarningsHeader}" Style="{StaticResource BIMPillsTabItem}">
-                        <Grid Margin="0,8,0,0">
-                            <DataGrid x:Name="WarningsGrid"
-                                      Style="{StaticResource BIMPillsDataGrid}">
-                                <DataGrid.Columns>
-                                    <DataGridTextColumn Header="Severidad"    Binding="{Binding Severity}"     Width="100"/>
-                                    <DataGridTextColumn Header="Descripción"  Binding="{Binding Description}"  Width="*"/>
-                                    <DataGridTextColumn Header="Elementos"    Binding="{Binding ElementCount}" Width="90"/>
-                                </DataGrid.Columns>
-                            </DataGrid>
-                            <TextBlock x:Name="WarningsScrollUp" Text="&#x25B2; más advertencias arriba"
-                                       HorizontalAlignment="Center" VerticalAlignment="Top"
-                                       FontSize="10" FontFamily="Segoe UI" Foreground="#86868B"
-                                       Background="#EEFFFFFF" Padding="12,3" Margin="0,28,0,0"
-                                       IsHitTestVisible="False" Visibility="Collapsed"/>
-                            <TextBlock x:Name="WarningsScrollDown" Text="&#x25BC; más advertencias abajo"
-                                       HorizontalAlignment="Center" VerticalAlignment="Bottom"
-                                       FontSize="10" FontFamily="Segoe UI" Foreground="#86868B"
-                                       Background="#EEFFFFFF" Padding="12,3"
-                                       IsHitTestVisible="False" Visibility="Collapsed"/>
-                        </Grid>
-                    </TabItem>
-
-                    <!-- Familias agrupadas por categoría -->
-                    <TabItem Header="{Binding FamiliesHeader}" Style="{StaticResource BIMPillsTabItem}">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                            </Grid.RowDefinitions>
-
-                            <!-- Summary bar -->
-                            <TextBlock x:Name="FamiliesSummaryText"
-                                       Grid.Row="0"
-                                       FontSize="11" FontFamily="Segoe UI"
-                                       Foreground="#86868B"
-                                       Margin="4,8,4,4"/>
-
-                            <!-- Grouped families -->
-                            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                                <ItemsControl x:Name="FamiliesGrouped">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Border BorderBrush="#E5E5EA" BorderThickness="0,0,0,1" Margin="0,0,0,2">
-                                                <Expander IsExpanded="True" Padding="0">
-                                                    <Expander.Header>
-                                                        <Grid Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Expander}, Converter={x:Static local:SubtractConverter.Instance}}">
-                                                            <Grid.ColumnDefinitions>
-                                                                <ColumnDefinition Width="Auto"/>
-                                                                <ColumnDefinition Width="Auto"/>
-                                                                <ColumnDefinition Width="*"/>
-                                                                <ColumnDefinition Width="Auto"/>
-                                                            </Grid.ColumnDefinitions>
-                                                            <Border Grid.Column="0" CornerRadius="4" Padding="8,2" Margin="0,0,8,0"
-                                                                    Background="{Binding BadgeBackground}">
-                                                                <TextBlock Text="{Binding Category}" FontSize="11" FontWeight="SemiBold"
-                                                                           Foreground="{Binding BadgeForeground}" FontFamily="Segoe UI"/>
-                                                            </Border>
-                                                            <TextBlock Grid.Column="1" Text="{Binding CountLabel}"
-                                                                       FontSize="11" Foreground="#86868B" FontFamily="Segoe UI"
-                                                                       VerticalAlignment="Center"/>
-                                                            <TextBlock Grid.Column="3" Text="{Binding SizeLabel}"
-                                                                       FontSize="11" FontWeight="SemiBold" Foreground="#212B37"
-                                                                       FontFamily="Segoe UI" VerticalAlignment="Center"
-                                                                       Margin="0,0,8,0"/>
-                                                        </Grid>
-                                                    </Expander.Header>
-                                                    <DataGrid ItemsSource="{Binding Families}"
-                                                              Style="{StaticResource BIMPillsDataGrid}"
-                                                              Margin="20,0,0,4"
-                                                              MaxHeight="200">
-                                                        <DataGrid.Columns>
-                                                            <DataGridTextColumn Header="Familia"    Binding="{Binding Name}"          Width="*"/>
-                                                            <DataGridTextColumn Header="Tamaño"     Binding="{Binding SizeLabel}"     Width="90"/>
-                                                            <DataGridTextColumn Header="Instancias" Binding="{Binding InstanceCount}" Width="80"/>
-                                                        </DataGrid.Columns>
-                                                    </DataGrid>
-                                                </Expander>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </ScrollViewer>
-                        </Grid>
-                    </TabItem>
-
-                    <!-- Vistas sin colocar -->
-                    <TabItem Header="{Binding ViewsHeader}" Style="{StaticResource BIMPillsTabItem}">
-                        <Grid Margin="0,8,0,0">
-                            <DataGrid x:Name="ViewsGrid"
-                                      Style="{StaticResource BIMPillsDataGrid}">
-                                <DataGrid.Columns>
-                                    <DataGridTextColumn Header="Vista"  Binding="{Binding Name}"     Width="*"/>
-                                    <DataGridTextColumn Header="Tipo"   Binding="{Binding ViewType}" Width="160"/>
-                                </DataGrid.Columns>
-                            </DataGrid>
-                            <TextBlock x:Name="ViewsScrollUp" Text="&#x25B2; más vistas arriba"
-                                       HorizontalAlignment="Center" VerticalAlignment="Top"
-                                       FontSize="10" FontFamily="Segoe UI" Foreground="#86868B"
-                                       Background="#EEFFFFFF" Padding="12,3" Margin="0,28,0,0"
-                                       IsHitTestVisible="False" Visibility="Collapsed"/>
-                            <TextBlock x:Name="ViewsScrollDown" Text="&#x25BC; más vistas abajo"
-                                       HorizontalAlignment="Center" VerticalAlignment="Bottom"
-                                       FontSize="10" FontFamily="Segoe UI" Foreground="#86868B"
-                                       Background="#EEFFFFFF" Padding="12,3"
-                                       IsHitTestVisible="False" Visibility="Collapsed"/>
-                        </Grid>
-                    </TabItem>
-
-                    <!-- Elementos huérfanos -->
-                    <TabItem Header="{Binding OrphansHeader}" Style="{StaticResource BIMPillsTabItem}">
-                        <Grid Margin="0,8,0,0">
-                            <DataGrid x:Name="OrphansGrid"
-                                      Style="{StaticResource BIMPillsDataGrid}">
-                                <DataGrid.Columns>
-                                    <DataGridTextColumn Header="ID"     Binding="{Binding Id}"   Width="100"/>
-                                    <DataGridTextColumn Header="Nombre" Binding="{Binding Name}" Width="*"/>
-                                </DataGrid.Columns>
-                            </DataGrid>
-                            <TextBlock x:Name="OrphansScrollUp" Text="&#x25B2; más elementos arriba"
-                                       HorizontalAlignment="Center" VerticalAlignment="Top"
-                                       FontSize="10" FontFamily="Segoe UI" Foreground="#86868B"
-                                       Background="#EEFFFFFF" Padding="12,3" Margin="0,28,0,0"
-                                       IsHitTestVisible="False" Visibility="Collapsed"/>
-                            <TextBlock x:Name="OrphansScrollDown" Text="&#x25BC; más elementos abajo"
-                                       HorizontalAlignment="Center" VerticalAlignment="Bottom"
-                                       FontSize="10" FontFamily="Segoe UI" Foreground="#86868B"
-                                       Background="#EEFFFFFF" Padding="12,3"
-                                       IsHitTestVisible="False" Visibility="Collapsed"/>
-                        </Grid>
-                    </TabItem>
-
-                    <!-- Elementos purgables — rediseñado con selección -->
-                    <TabItem Header="{Binding PurgeableHeader}" Style="{StaticResource BIMPillsTabItem}">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                            </Grid.RowDefinitions>
-
-                            <!-- Barra de acción de purgables -->
-                            <Border Grid.Row="0" Background="#F9F9FB" CornerRadius="6"
-                                    Padding="12,8" Margin="0,8,0,4">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-
-                                    <TextBlock x:Name="PurgeSelectionText"
-                                               Grid.Column="0"
-                                               VerticalAlignment="Center"
-                                               FontSize="12" FontFamily="Segoe UI"
-                                               Foreground="#86868B"
-                                               Text="0 de 0 seleccionados"/>
-
-                                    <Button x:Name="SelectAllButton"
-                                            Grid.Column="1"
-                                            Content="Seleccionar todo"
-                                            Style="{StaticResource SecondaryButton}"
-                                            Padding="12,5"
-                                            FontSize="12"
-                                            Margin="8,0,8,0"
-                                            Click="SelectAll_Click"/>
-
-                                    <Button x:Name="PurgeSelectedButton"
-                                            Grid.Column="2"
-                                            Content="Purgar seleccionados"
-                                            Style="{StaticResource PrimaryButton}"
-                                            Padding="12,5"
-                                            FontSize="12"
-                                            IsEnabled="False"
-                                            Click="PurgeSelected_Click"/>
+                                            Cursor="Hand"
+                                            Click="HealthInfo_Click"
+                                            ToolTip="Ver metodología de evaluación">
+                                        <Button.Template>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border x:Name="InfoBorder"
+                                                        Width="22" Height="22"
+                                                        CornerRadius="11"
+                                                        Background="#E5E5EA"
+                                                        BorderThickness="0">
+                                                    <TextBlock Text="i"
+                                                               FontSize="12" FontWeight="SemiBold"
+                                                               FontFamily="Georgia"
+                                                               FontStyle="Italic"
+                                                               Foreground="#86868B"
+                                                               HorizontalAlignment="Center"
+                                                               VerticalAlignment="Center"/>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="InfoBorder" Property="Background" Value="#007AFF"/>
+                                                        <Setter TargetName="InfoBorder" Property="TextBlock.Foreground" Value="White"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Button.Template>
+                                    </Button>
                                 </Grid>
-                            </Border>
 
-                            <!-- Grid con scroll hints -->
-                            <Grid Grid.Row="1">
-                                <DataGrid x:Name="PurgeableGrid"
-                                          Style="{StaticResource BIMPillsDataGrid}"
-                                          IsReadOnly="False"
-                                          SelectionMode="Single"
-                                          Margin="0,0,0,0">
-                                    <DataGrid.Columns>
-                                        <DataGridTemplateColumn Header="" Width="40">
-                                            <DataGridTemplateColumn.CellTemplate>
-                                                <DataTemplate>
-                                                    <CheckBox IsChecked="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
-                                                              HorizontalAlignment="Center"
-                                                              VerticalAlignment="Center"
-                                                              Click="PurgeCheckBox_Click"/>
-                                                </DataTemplate>
-                                            </DataGridTemplateColumn.CellTemplate>
-                                        </DataGridTemplateColumn>
-                                        <DataGridTextColumn Header="Nombre"    Binding="{Binding Name}"     Width="*"   IsReadOnly="True"/>
-                                        <DataGridTemplateColumn Header="Tipo" Width="100" IsReadOnly="True">
-                                            <DataGridTemplateColumn.CellTemplate>
-                                                <DataTemplate>
-                                                    <Border Style="{StaticResource TypeBadge}"
-                                                            Background="{Binding ItemType, Converter={x:Static local:TypeToBrushConverter.Instance}}">
-                                                        <TextBlock Text="{Binding ItemType}"
-                                                                   FontSize="11" FontFamily="Segoe UI"
-                                                                   Foreground="White"/>
-                                                    </Border>
-                                                </DataTemplate>
-                                            </DataGridTemplateColumn.CellTemplate>
-                                        </DataGridTemplateColumn>
-                                        <DataGridTextColumn Header="Categoría" Binding="{Binding Category}" Width="140" IsReadOnly="True"/>
-                                        <DataGridTextColumn Header="Tamaño"    Binding="{Binding SizeLabel}" Width="90" IsReadOnly="True"/>
-                                    </DataGrid.Columns>
-                                </DataGrid>
-
-                                <!-- Scroll hints -->
-                                <TextBlock x:Name="ScrollUpHint"
-                                           Text="&#x25B2; más elementos arriba"
-                                           HorizontalAlignment="Center"
-                                           VerticalAlignment="Top"
-                                           FontSize="10" FontFamily="Segoe UI"
-                                           Foreground="#86868B"
-                                           Background="#DDFFFFFF"
-                                           Padding="8,2"
-                                           Visibility="Collapsed"
-                                           IsHitTestVisible="False"/>
-                                <TextBlock x:Name="ScrollDownHint"
-                                           Text="&#x25BC; más elementos abajo"
-                                           HorizontalAlignment="Center"
-                                           VerticalAlignment="Bottom"
-                                           FontSize="10" FontFamily="Segoe UI"
-                                           Foreground="#86868B"
-                                           Background="#DDFFFFFF"
-                                           Padding="8,2"
-                                           Visibility="Collapsed"
-                                           IsHitTestVisible="False"/>
+                                <!-- Métricas en tarjetas -->
+                                <UniformGrid Grid.Column="1" Rows="1" Columns="4">
+                                    <!-- Peso del modelo -->
+                                    <Border Margin="4,0" Padding="12,10" Background="White" CornerRadius="8"
+                                            BorderBrush="#E5E5EA" BorderThickness="0.5">
+                                        <StackPanel>
+                                            <TextBlock Text="Peso" FontSize="11" Foreground="#8E8E93" FontFamily="Segoe UI"/>
+                                            <TextBlock x:Name="FileSizeText"
+                                                       FontSize="16" FontWeight="SemiBold"
+                                                       Foreground="{StaticResource PrimaryBrush}"
+                                                       FontFamily="Segoe UI"
+                                                       Margin="0,4,0,0"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <!-- Elementos -->
+                                    <Border Margin="4,0" Padding="12,10" Background="White" CornerRadius="8"
+                                            BorderBrush="#E5E5EA" BorderThickness="0.5">
+                                        <StackPanel>
+                                            <TextBlock Text="Elementos" FontSize="11" Foreground="#8E8E93" FontFamily="Segoe UI"/>
+                                            <TextBlock x:Name="TotalElementsText"
+                                                       FontSize="16" FontWeight="SemiBold"
+                                                       Foreground="{StaticResource PrimaryBrush}"
+                                                       FontFamily="Segoe UI"
+                                                       Margin="0,4,0,0"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <!-- Advertencias -->
+                                    <Border Margin="4,0" Padding="12,10" Background="White" CornerRadius="8"
+                                            BorderBrush="#E5E5EA" BorderThickness="0.5">
+                                        <StackPanel>
+                                            <TextBlock Text="Advertencias" FontSize="11" Foreground="#8E8E93" FontFamily="Segoe UI"/>
+                                            <TextBlock x:Name="WarningsCountText"
+                                                       FontSize="16" FontWeight="SemiBold"
+                                                       FontFamily="Segoe UI"
+                                                       Margin="0,4,0,0"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <!-- Purgables -->
+                                    <Border Margin="4,0" Padding="12,10" Background="White" CornerRadius="8"
+                                            BorderBrush="#E5E5EA" BorderThickness="0.5">
+                                        <StackPanel>
+                                            <TextBlock Text="Purgables" FontSize="11" Foreground="#8E8E93" FontFamily="Segoe UI"/>
+                                            <TextBlock x:Name="PurgeableCountText"
+                                                       FontSize="16" FontWeight="SemiBold"
+                                                       Foreground="{StaticResource AccentBrush}"
+                                                       FontFamily="Segoe UI"
+                                                       Margin="0,4,0,0"/>
+                                        </StackPanel>
+                                    </Border>
+                                </UniformGrid>
                             </Grid>
-                        </Grid>
-                    </TabItem>
+                        </Border>
 
-                </TabControl>
-            </Border>
+                        <!-- Pestañas con datos detallados -->
+                        <Border Margin="14,12,14,14" MinHeight="360">
+                            <TabControl Style="{StaticResource BIMPillsTabControl}"
+                                        Margin="0">
+
+                                <!-- Advertencias -->
+                                <TabItem Header="{Binding WarningsHeader}" Style="{StaticResource BIMPillsTabItem}">
+                                    <Grid Margin="0,8,0,0" Height="300">
+                                        <DataGrid x:Name="WarningsGrid"
+                                                  Style="{StaticResource BIMPillsDataGrid}">
+                                            <DataGrid.Columns>
+                                                <DataGridTextColumn Header="Severidad"    Binding="{Binding Severity}"     Width="100"/>
+                                                <DataGridTextColumn Header="Descripción"  Binding="{Binding Description}"  Width="*"/>
+                                                <DataGridTextColumn Header="Elementos"    Binding="{Binding ElementCount}" Width="90"/>
+                                            </DataGrid.Columns>
+                                        </DataGrid>
+                                        <TextBlock x:Name="WarningsScrollUp" Text="&#x25B2; más advertencias arriba"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Top"
+                                                   FontSize="10" FontFamily="Segoe UI" Foreground="#86868B"
+                                                   Background="#EEFFFFFF" Padding="12,3" Margin="0,28,0,0"
+                                                   IsHitTestVisible="False" Visibility="Collapsed"/>
+                                        <TextBlock x:Name="WarningsScrollDown" Text="&#x25BC; más advertencias abajo"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Bottom"
+                                                   FontSize="10" FontFamily="Segoe UI" Foreground="#86868B"
+                                                   Background="#EEFFFFFF" Padding="12,3"
+                                                   IsHitTestVisible="False" Visibility="Collapsed"/>
+                                    </Grid>
+                                </TabItem>
+
+                                <!-- Familias agrupadas por categoría -->
+                                <TabItem Header="{Binding FamiliesHeader}" Style="{StaticResource BIMPillsTabItem}">
+                                    <Grid Height="300">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="*"/>
+                                        </Grid.RowDefinitions>
+
+                                        <!-- Summary bar -->
+                                        <TextBlock x:Name="FamiliesSummaryText"
+                                                   Grid.Row="0"
+                                                   FontSize="11" FontFamily="Segoe UI"
+                                                   Foreground="#86868B"
+                                                   Margin="4,8,4,4"/>
+
+                                        <!-- Grouped families -->
+                                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                                            <ItemsControl x:Name="FamiliesGrouped">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Border BorderBrush="#E5E5EA" BorderThickness="0,0,0,1" Margin="0,0,0,2">
+                                                            <Expander IsExpanded="True" Padding="0">
+                                                                <Expander.Header>
+                                                                    <Grid Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Expander}, Converter={x:Static local:SubtractConverter.Instance}}">
+                                                                        <Grid.ColumnDefinitions>
+                                                                            <ColumnDefinition Width="Auto"/>
+                                                                            <ColumnDefinition Width="Auto"/>
+                                                                            <ColumnDefinition Width="*"/>
+                                                                            <ColumnDefinition Width="Auto"/>
+                                                                        </Grid.ColumnDefinitions>
+                                                                        <Border Grid.Column="0" CornerRadius="4" Padding="8,2" Margin="0,0,8,0"
+                                                                                Background="{Binding BadgeBackground}">
+                                                                            <TextBlock Text="{Binding Category}" FontSize="11" FontWeight="SemiBold"
+                                                                                       Foreground="{Binding BadgeForeground}" FontFamily="Segoe UI"/>
+                                                                        </Border>
+                                                                        <TextBlock Grid.Column="1" Text="{Binding CountLabel}"
+                                                                                   FontSize="11" Foreground="#86868B" FontFamily="Segoe UI"
+                                                                                   VerticalAlignment="Center"/>
+                                                                        <TextBlock Grid.Column="3" Text="{Binding SizeLabel}"
+                                                                                   FontSize="11" FontWeight="SemiBold" Foreground="#212B37"
+                                                                                   FontFamily="Segoe UI" VerticalAlignment="Center"
+                                                                                   Margin="0,0,8,0"/>
+                                                                    </Grid>
+                                                                </Expander.Header>
+                                                                <DataGrid ItemsSource="{Binding Families}"
+                                                                          Style="{StaticResource BIMPillsDataGrid}"
+                                                                          Margin="20,0,0,4"
+                                                                          MaxHeight="200">
+                                                                    <DataGrid.Columns>
+                                                                        <DataGridTextColumn Header="Familia"    Binding="{Binding Name}"          Width="*"/>
+                                                                        <DataGridTextColumn Header="Tamaño"     Binding="{Binding SizeLabel}"     Width="90"/>
+                                                                        <DataGridTextColumn Header="Instancias" Binding="{Binding InstanceCount}" Width="80"/>
+                                                                    </DataGrid.Columns>
+                                                                </DataGrid>
+                                                            </Expander>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </ScrollViewer>
+                                    </Grid>
+                                </TabItem>
+
+                                <!-- Vistas sin colocar -->
+                                <TabItem Header="{Binding ViewsHeader}" Style="{StaticResource BIMPillsTabItem}">
+                                    <Grid Margin="0,8,0,0" Height="300">
+                                        <DataGrid x:Name="ViewsGrid"
+                                                  Style="{StaticResource BIMPillsDataGrid}">
+                                            <DataGrid.Columns>
+                                                <DataGridTextColumn Header="Vista"  Binding="{Binding Name}"     Width="*"/>
+                                                <DataGridTextColumn Header="Tipo"   Binding="{Binding ViewType}" Width="160"/>
+                                            </DataGrid.Columns>
+                                        </DataGrid>
+                                        <TextBlock x:Name="ViewsScrollUp" Text="&#x25B2; más vistas arriba"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Top"
+                                                   FontSize="10" FontFamily="Segoe UI" Foreground="#86868B"
+                                                   Background="#EEFFFFFF" Padding="12,3" Margin="0,28,0,0"
+                                                   IsHitTestVisible="False" Visibility="Collapsed"/>
+                                        <TextBlock x:Name="ViewsScrollDown" Text="&#x25BC; más vistas abajo"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Bottom"
+                                                   FontSize="10" FontFamily="Segoe UI" Foreground="#86868B"
+                                                   Background="#EEFFFFFF" Padding="12,3"
+                                                   IsHitTestVisible="False" Visibility="Collapsed"/>
+                                    </Grid>
+                                </TabItem>
+
+                                <!-- Elementos huérfanos -->
+                                <TabItem Header="{Binding OrphansHeader}" Style="{StaticResource BIMPillsTabItem}">
+                                    <Grid Margin="0,8,0,0" Height="300">
+                                        <DataGrid x:Name="OrphansGrid"
+                                                  Style="{StaticResource BIMPillsDataGrid}">
+                                            <DataGrid.Columns>
+                                                <DataGridTextColumn Header="ID"     Binding="{Binding Id}"   Width="100"/>
+                                                <DataGridTextColumn Header="Nombre" Binding="{Binding Name}" Width="*"/>
+                                            </DataGrid.Columns>
+                                        </DataGrid>
+                                        <TextBlock x:Name="OrphansScrollUp" Text="&#x25B2; más elementos arriba"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Top"
+                                                   FontSize="10" FontFamily="Segoe UI" Foreground="#86868B"
+                                                   Background="#EEFFFFFF" Padding="12,3" Margin="0,28,0,0"
+                                                   IsHitTestVisible="False" Visibility="Collapsed"/>
+                                        <TextBlock x:Name="OrphansScrollDown" Text="&#x25BC; más elementos abajo"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Bottom"
+                                                   FontSize="10" FontFamily="Segoe UI" Foreground="#86868B"
+                                                   Background="#EEFFFFFF" Padding="12,3"
+                                                   IsHitTestVisible="False" Visibility="Collapsed"/>
+                                    </Grid>
+                                </TabItem>
+
+                                <!-- Elementos purgables — rediseñado con selección -->
+                                <TabItem Header="{Binding PurgeableHeader}" Style="{StaticResource BIMPillsTabItem}">
+                                    <Grid Height="300">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="*"/>
+                                        </Grid.RowDefinitions>
+
+                                        <!-- Barra de acción de purgables -->
+                                        <Border Grid.Row="0" Background="#F9F9FB" CornerRadius="6"
+                                                Padding="12,8" Margin="0,8,0,4">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <TextBlock x:Name="PurgeSelectionText"
+                                                           Grid.Column="0"
+                                                           VerticalAlignment="Center"
+                                                           FontSize="12" FontFamily="Segoe UI"
+                                                           Foreground="#86868B"
+                                                           Text="0 de 0 seleccionados"/>
+
+                                                <Button x:Name="SelectAllButton"
+                                                        Grid.Column="1"
+                                                        Content="Seleccionar todo"
+                                                        Style="{StaticResource SecondaryButton}"
+                                                        Padding="12,5"
+                                                        FontSize="12"
+                                                        Margin="8,0,8,0"
+                                                        Click="SelectAll_Click"/>
+
+                                                <Button x:Name="PurgeSelectedButton"
+                                                        Grid.Column="2"
+                                                        Content="Purgar seleccionados"
+                                                        Style="{StaticResource PrimaryButton}"
+                                                        Padding="12,5"
+                                                        FontSize="12"
+                                                        IsEnabled="False"
+                                                        Click="PurgeSelected_Click"/>
+                                            </Grid>
+                                        </Border>
+
+                                        <!-- Grid con scroll hints -->
+                                        <Grid Grid.Row="1">
+                                            <DataGrid x:Name="PurgeableGrid"
+                                                      Style="{StaticResource BIMPillsDataGrid}"
+                                                      IsReadOnly="False"
+                                                      SelectionMode="Single">
+                                                <DataGrid.Columns>
+                                                    <DataGridTemplateColumn Header="" Width="40">
+                                                        <DataGridTemplateColumn.CellTemplate>
+                                                            <DataTemplate>
+                                                                <CheckBox IsChecked="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                                                                          HorizontalAlignment="Center"
+                                                                          VerticalAlignment="Center"
+                                                                          Click="PurgeCheckBox_Click"/>
+                                                            </DataTemplate>
+                                                        </DataGridTemplateColumn.CellTemplate>
+                                                    </DataGridTemplateColumn>
+                                                    <DataGridTextColumn Header="Nombre"    Binding="{Binding Name}"     Width="*"   IsReadOnly="True"/>
+                                                    <DataGridTemplateColumn Header="Tipo" Width="100" IsReadOnly="True">
+                                                        <DataGridTemplateColumn.CellTemplate>
+                                                            <DataTemplate>
+                                                                <Border Style="{StaticResource TypeBadge}"
+                                                                        Background="{Binding ItemType, Converter={x:Static local:TypeToBrushConverter.Instance}}">
+                                                                    <TextBlock Text="{Binding ItemType}"
+                                                                               FontSize="11" FontFamily="Segoe UI"
+                                                                               Foreground="White"/>
+                                                                </Border>
+                                                            </DataTemplate>
+                                                        </DataGridTemplateColumn.CellTemplate>
+                                                    </DataGridTemplateColumn>
+                                                    <DataGridTextColumn Header="Categoría" Binding="{Binding Category}" Width="140" IsReadOnly="True"/>
+                                                    <DataGridTextColumn Header="Tamaño"    Binding="{Binding SizeLabel}" Width="90" IsReadOnly="True"/>
+                                                </DataGrid.Columns>
+                                            </DataGrid>
+
+                                            <!-- Scroll hints -->
+                                            <TextBlock x:Name="ScrollUpHint"
+                                                       Text="&#x25B2; más elementos arriba"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Top"
+                                                       FontSize="10" FontFamily="Segoe UI"
+                                                       Foreground="#86868B"
+                                                       Background="#DDFFFFFF"
+                                                       Padding="8,2"
+                                                       Visibility="Collapsed"
+                                                       IsHitTestVisible="False"/>
+                                            <TextBlock x:Name="ScrollDownHint"
+                                                       Text="&#x25BC; más elementos abajo"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Bottom"
+                                                       FontSize="10" FontFamily="Segoe UI"
+                                                       Foreground="#86868B"
+                                                       Background="#DDFFFFFF"
+                                                       Padding="8,2"
+                                                       Visibility="Collapsed"
+                                                       IsHitTestVisible="False"/>
+                                        </Grid>
+                                    </Grid>
+                                </TabItem>
+
+                            </TabControl>
+                        </Border>
+
+                    </StackPanel>
+                </ScrollViewer>
+
+            </DockPanel>
         </Border>
-
-        <!-- ═══════════════════════════════════════════
-             Pie de página — Exportar + Cerrar
-             ═══════════════════════════════════════════ -->
-        <Border Grid.Row="3" Padding="24,12,24,16">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-
-                <Button Grid.Column="0"
-                        Content="Exportar informe HTML"
-                        Style="{StaticResource DarkPrimaryButton}"
-                        Click="ExportPdf_Click"/>
-
-                <Button Grid.Column="1"
-                        Content="Exportar CSV"
-                        Style="{StaticResource SecondaryButton}"
-                        Margin="8,0,0,0"
-                        Click="ExportCsv_Click"/>
-
-                <Button Grid.Column="3"
-                        Content="Cerrar"
-                        Style="{StaticResource SecondaryButton}"
-                        Width="100"
-                        Click="CloseButton_Click"/>
-            </Grid>
-        </Border>
-    </Grid>
+    </DockPanel>
 </Window>

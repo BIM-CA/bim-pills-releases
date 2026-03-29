@@ -1,6 +1,8 @@
 using Autodesk.Revit.DB;
 using BIMPills.Commands.Gestion;
 using BIMPills.Core.Commands;
+using BIMPills.Core.Services;
+using BIMPills.Infrastructure.DI;
 using BIMPills.Revit.Commands;
 using BIMPills.UI.Gestion;
 using System;
@@ -19,6 +21,8 @@ namespace BIMPills.Revit.Commands.Gestion
 
             var doc = CommandData?.Application.ActiveUIDocument.Document;
 
+            var logger = ServiceLocator.IsRegistered<ILogger>() ? ServiceLocator.Get<ILogger>() : null;
+
             Func<string, bool>? createCallback = null;
             Func<long, string, bool>? renameCallback = null;
 
@@ -26,6 +30,7 @@ namespace BIMPills.Revit.Commands.Gestion
             {
                 createCallback = (name) =>
                 {
+                    logger?.Info($"[Gestion] Creando subproyecto (workset): '{name}'");
                     try
                     {
                         using (var tx = new Transaction(doc, "BIMPills: Crear subproyecto"))
@@ -33,14 +38,20 @@ namespace BIMPills.Revit.Commands.Gestion
                             tx.Start();
                             Workset.Create(doc, name);
                             tx.Commit();
+                            logger?.Info($"[Gestion] Subproyecto '{name}' creado correctamente.");
                             return true;
                         }
                     }
-                    catch { return false; }
+                    catch (Exception ex)
+                    {
+                        logger?.Error($"[Gestion] Error al crear subproyecto '{name}'", ex);
+                        return false;
+                    }
                 };
 
                 renameCallback = (worksetId, newName) =>
                 {
+                    logger?.Info($"[Gestion] Renombrando workset Id={worksetId} → '{newName}'");
                     try
                     {
                         using (var tx = new Transaction(doc, "BIMPills: Renombrar subproyecto"))
@@ -49,10 +60,15 @@ namespace BIMPills.Revit.Commands.Gestion
                             var wsId = new WorksetId((int)worksetId);
                             WorksetTable.RenameWorkset(doc, wsId, newName);
                             tx.Commit();
+                            logger?.Info($"[Gestion] Workset Id={worksetId} renombrado a '{newName}' correctamente.");
                             return true;
                         }
                     }
-                    catch { return false; }
+                    catch (Exception ex)
+                    {
+                        logger?.Error($"[Gestion] Error al renombrar workset Id={worksetId}", ex);
+                        return false;
+                    }
                 };
             }
 

@@ -5,7 +5,7 @@ namespace BIMPills.Core.Documentacion
     /// </summary>
     public sealed class AcotadoVanosSettings
     {
-        /// <summary>Esquema de acotado: "opening-width" o "wall-chain".</summary>
+        /// <summary>Esquema de acotado: "opening-width", "grid-combined" o "interior-spaces".</summary>
         public string Scheme { get; set; } = "opening-width";
 
         /// <summary>ID del DimensionType seleccionado.</summary>
@@ -16,5 +16,11 @@ namespace BIMPills.Core.Documentacion
 
         /// <summary>True = vista activa, False = selección actual.</summary>
         public bool UseActiveView { get; set; } = true;
+
+        /// <summary>
+        /// Para esquemas de ejes: en qué extremo(s) colocar la cota.
+        /// "both" = ambos extremos, "start" = inicio, "end" = fin.
+        /// </summary>
+        public string GridEndpoint { get; set; } = "end";
     }
 }

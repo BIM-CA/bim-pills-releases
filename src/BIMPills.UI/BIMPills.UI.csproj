@@ -13,6 +13,7 @@
   <ItemGroup>
     <ProjectReference Include="..\BIMPills.Core\BIMPills.Core.csproj" />
     <ProjectReference Include="..\BIMPills.Commands\BIMPills.Commands.csproj" />
+    <ProjectReference Include="..\BIMPills.Infrastructure\BIMPills.Infrastructure.csproj" />
   </ItemGroup>
 
   <!-- Imágenes embebidas como Resource (accesibles via pack URI) -->
@@ -21,6 +22,11 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="ClosedXML" Version="0.105.0" />
+  </ItemGroup>
+
+  <!-- .NET Framework 4.8 (Revit 2024) needs explicit System.Net.Http reference -->
+  <ItemGroup Condition="'$(RevitVersion)' == '2024'">
+    <Reference Include="System.Net.Http" />
   </ItemGroup>
 
 </Project>

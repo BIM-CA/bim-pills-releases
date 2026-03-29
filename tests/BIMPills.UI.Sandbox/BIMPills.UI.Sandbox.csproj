@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <RootNamespace>BIMPills.UI.Sandbox</RootNamespace>
+    <AssemblyName>BIMPills.UI.Sandbox</AssemblyName>
+    <Platforms>x64</Platforms>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\BIMPills.UI\BIMPills.UI.csproj"/>
+    <ProjectReference Include="..\..\src\BIMPills.Core\BIMPills.Core.csproj"/>
+    <ProjectReference Include="..\..\src\BIMPills.Infrastructure\BIMPills.Infrastructure.csproj"/>
+    <ProjectReference Include="..\..\src\BIMPills.Commands\BIMPills.Commands.csproj"/>
+  </ItemGroup>
+</Project>

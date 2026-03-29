@@ -1,8 +1,11 @@
 using Autodesk.Revit.DB;
 using BIMPills.Commands.ModelAudit;
 using BIMPills.Core.Commands;
+using BIMPills.Core.Services;
+using BIMPills.Infrastructure.DI;
 using BIMPills.Revit.Commands;
 using BIMPills.UI.ModelAudit;
+using System;
 using System.Collections.Generic;
 
 namespace BIMPills.Revit.Commands.ModelAudit
@@ -19,11 +22,16 @@ namespace BIMPills.Revit.Commands.ModelAudit
 
             var doc = CommandData?.Application.ActiveUIDocument.Document;
 
+            var logger = ServiceLocator.IsRegistered<ILogger>() ? ServiceLocator.Get<ILogger>() : null;
+
             System.Action<IReadOnlyList<long>>? purgeCallback = null;
             if (doc != null)
             {
                 purgeCallback = ids =>
                 {
+                    logger?.Info($"[ModelAudit] Iniciando purga de {ids.Count} elementos...");
+                    int purged = 0;
+                    int failed = 0;
                     using (var trans = new Transaction(doc, "BIMPills - Purgar elementos"))
                     {
                         trans.Start();
@@ -40,11 +48,17 @@ namespace BIMPills.Revit.Commands.ModelAudit
                                     elem.Pinned = false;
 
                                 doc.Delete(elementId);
+                                purged++;
                             }
-                            catch { /* Elemento no eliminable — continuar */ }
+                            catch (Exception ex)
+                            {
+                                logger?.Warning($"[ModelAudit] No se pudo eliminar elemento Id={id}: {ex.Message}");
+                                failed++;
+                            }
                         }
                         trans.Commit();
                     }
+                    logger?.Info($"[ModelAudit] Purga completada: {purged} eliminados, {failed} omitidos.");
                 };
             }
 

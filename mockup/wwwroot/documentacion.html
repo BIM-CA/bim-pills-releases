@@ -21,23 +21,22 @@
     font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
     background: var(--bg);
     color: var(--azul);
-    width: 580px;
-    height: 400px;
-    margin: 0 auto;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
   }
 
+  .window {
+    width: 560px; margin: 30px auto; border-radius: 10px;
+    background: var(--card-bg); box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+    overflow: hidden; border: 0.5px solid var(--card-border);
+    display: flex; flex-direction: column;
+    max-height: 90vh;
+  }
+
+  /* Header */
   .header {
-    margin: 16px 20px 0;
     background: var(--card-bg);
-    border-radius: 10px;
-    border: 0.5px solid var(--card-border);
+    border-bottom: 0.5px solid var(--card-border);
     padding: 14px 20px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
+    display: flex; align-items: center; gap: 14px;
     box-shadow: 0 1px 6px rgba(0,0,0,0.04);
     flex-shrink: 0;
   }
@@ -47,21 +46,45 @@
   .header-title { font-size: 17px; font-weight: 600; color: var(--azul); }
   .header-subtitle { font-size: 12px; color: var(--caption); }
 
-  .empty-section {
-    margin: 12px 20px 0;
-    background: var(--card-bg);
-    border-radius: 10px;
-    border: 0.5px solid var(--card-border);
-    box-shadow: 0 1px 8px rgba(0,0,0,0.06);
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 40px;
+  /* Tabs */
+  .tabs {
+    display: flex; background: var(--card-bg);
+    border-bottom: 1px solid var(--card-border);
+    flex-shrink: 0;
+  }
+  .tab {
+    padding: 10px 20px; font-size: 12.5px; font-weight: 500;
+    color: var(--caption); cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.15s;
+    font-family: inherit;
+    background: none; border-top: none; border-left: none; border-right: none;
+  }
+  .tab:hover { color: var(--azul); background: #FAFAFA; }
+  .tab.active {
+    color: var(--naranja); border-bottom-color: var(--naranja);
+    font-weight: 600;
+  }
+  .tab.disabled {
+    opacity: 0.4; cursor: default; pointer-events: none;
   }
 
+  /* Tab content */
+  .tab-content { display: none; flex: 1; overflow: hidden; flex-direction: column; }
+  .tab-content.active { display: flex; }
+
+  /* Acotado content — embedded iframe */
+  .tab-content iframe {
+    width: 100%; flex: 1; border: none;
+    min-height: 700px;
+  }
+
+  /* Próximamente tab */
+  .empty-section {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center; padding: 40px;
+  }
   .empty-icon {
     width: 56px; height: 56px; border-radius: 14px;
     background: #F2F2F7;
@@ -69,73 +92,68 @@
     margin-bottom: 16px;
   }
   .empty-icon svg { width: 28px; height: 28px; stroke: #C7C7CC; fill: none; stroke-width: 1.5; }
-
-  .empty-title {
-    font-size: 15px;
-    font-weight: 600;
-    color: var(--azul);
-    margin-bottom: 6px;
-  }
-  .empty-desc {
-    font-size: 12px;
-    color: var(--caption);
-    line-height: 1.5;
-    max-width: 300px;
-  }
-
-  .footer {
-    padding: 10px 20px 14px;
-    display: flex;
-    justify-content: flex-end;
-    flex-shrink: 0;
-  }
-  .btn-close {
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
-    border-radius: 8px;
-    padding: 7px 20px;
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--azul);
-    cursor: pointer;
-    font-family: inherit;
-    transition: background 0.15s;
-  }
-  .btn-close:hover { background: #F2F2F7; }
+  .empty-title { font-size: 15px; font-weight: 600; color: var(--azul); margin-bottom: 6px; }
+  .empty-desc { font-size: 12px; color: var(--caption); line-height: 1.5; max-width: 300px; }
 
   .back-link {
-    position: fixed; top: 8px; left: 8px;
+    display: block; text-align: center; padding: 12px;
     font-size: 11px; color: var(--caption); text-decoration: none;
   }
-  .back-link:hover { color: var(--azul); }
+  .back-link:hover { color: var(--azul); text-decoration: underline; }
 </style>
 </head>
 <body>
 
-<a class="back-link" href="index.html">&larr; Mockups</a>
+<div class="window">
 
-<div class="header">
-  <img src="pill-icon.png" alt="BIMPills" />
-  <div class="header-text">
-    <span class="header-label">Documentación</span>
-    <span class="header-title">Proyecto_Residencial_2026</span>
-    <span class="header-subtitle">Modelo local</span>
+  <!-- Header -->
+  <div class="header">
+    <img src="pill-icon.png" alt="BIMPills" />
+    <div class="header-text">
+      <span class="header-label">Documentación</span>
+      <span class="header-title">BIMPills</span>
+      <span class="header-subtitle">Herramientas de documentación automática</span>
+    </div>
   </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('acotado')">Acotado</button>
+    <button class="tab disabled">Próximamente</button>
+  </div>
+
+  <!-- Tab: Acotado de Vanos -->
+  <div class="tab-content active" id="tab-acotado">
+    <iframe src="acotado.html"></iframe>
+  </div>
+
+  <!-- Tab: Próximamente -->
+  <div class="tab-content" id="tab-prox">
+    <div class="empty-section">
+      <div class="empty-icon">
+        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      </div>
+      <div class="empty-title">Más herramientas próximamente</div>
+      <div class="empty-desc">
+        Nuevas herramientas de documentación estarán disponibles en futuras versiones de BIM Pills.
+      </div>
+    </div>
+  </div>
+
 </div>
 
-<div class="empty-section">
-  <div class="empty-icon">
-    <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-  </div>
-  <div class="empty-title">Próximamente</div>
-  <div class="empty-desc">
-    Las herramientas de documentación estarán disponibles en una próxima actualización de BIM Pills.
-  </div>
-</div>
+<a class="back-link" href="index.html">&larr; Volver al índice</a>
 
-<div class="footer">
-  <button class="btn-close">Cerrar</button>
-</div>
+<script>
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  if (tab === 'acotado') {
+    document.querySelectorAll('.tab')[0].classList.add('active');
+    document.getElementById('tab-acotado').classList.add('active');
+  }
+}
+</script>
 
 </body>
 </html>

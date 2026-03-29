@@ -5,7 +5,9 @@
         Width="440" Height="480"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterScreen"
-        Background="#F0F0F0">
+        Background="#F0F0F0"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True">
 
     <Window.Resources>
         <ResourceDictionary>
@@ -80,38 +82,71 @@
             </Grid>
         </Border>
 
-        <!-- Enlace al sitio web -->
-        <Border Style="{StaticResource CardBorder}" Margin="0,0,0,12">
-            <StackPanel HorizontalAlignment="Center">
-                <TextBlock Text="Visitar sitio web"
-                           FontSize="13"
-                           Foreground="{StaticResource AccentBrush}"
-                           HorizontalAlignment="Center"
-                           Cursor="Hand"
-                           MouseLeftButtonUp="Website_Click"
-                           FontFamily="Segoe UI"/>
-                <TextBlock x:Name="WebsiteText"
-                           FontSize="11"
-                           Foreground="{StaticResource TextSecondaryBrush}"
-                           HorizontalAlignment="Center"
-                           Margin="0,3,0,0"
-                           FontFamily="Segoe UI"/>
-            </StackPanel>
-        </Border>
+        <!-- Sitio web + Soporte (lado a lado) -->
+        <Grid Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="8"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Enlace al sitio web -->
+            <Border Grid.Column="0" Style="{StaticResource CardBorder}">
+                <StackPanel HorizontalAlignment="Center">
+                    <TextBlock Text="Visitar sitio web"
+                               FontSize="11"
+                               Foreground="{StaticResource TextSecondaryBrush}"
+                               HorizontalAlignment="Center"
+                               Margin="0,0,0,4"
+                               FontFamily="Segoe UI"/>
+                    <TextBlock x:Name="WebsiteText"
+                               FontSize="13"
+                               Foreground="{StaticResource AccentBrush}"
+                               HorizontalAlignment="Center"
+                               Cursor="Hand"
+                               MouseLeftButtonUp="Website_Click"
+                               TextWrapping="Wrap"
+                               TextAlignment="Center"
+                               FontFamily="Segoe UI"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Soporte -->
+            <Border Grid.Column="2" Style="{StaticResource CardBorder}">
+                <StackPanel HorizontalAlignment="Center">
+                    <TextBlock Text="Soporte técnico"
+                               FontSize="11"
+                               Foreground="{StaticResource TextSecondaryBrush}"
+                               HorizontalAlignment="Center"
+                               Margin="0,0,0,4"
+                               FontFamily="Segoe UI"/>
+                    <TextBlock x:Name="SupportEmailText"
+                               FontSize="13"
+                               Foreground="{StaticResource AccentBrush}"
+                               HorizontalAlignment="Center"
+                               Cursor="Hand"
+                               MouseLeftButtonUp="SupportEmail_Click"
+                               TextWrapping="Wrap"
+                               TextAlignment="Center"
+                               FontFamily="Segoe UI"/>
+                </StackPanel>
+            </Border>
+        </Grid>
 
         <!-- Copyright -->
         <TextBlock x:Name="CopyrightText"
                    FontSize="11"
                    Foreground="{StaticResource TextSecondaryBrush}"
                    HorizontalAlignment="Center"
-                   Margin="0,0,0,10"
+                   Margin="0,0,0,12"
                    FontFamily="Segoe UI"/>
 
         <!-- Botón cerrar -->
-        <Button Content="Cerrar"
-                Style="{StaticResource SecondaryButton}"
-                Width="100"
+        <Button Content="Cerrar (ESC)"
+                Style="{StaticResource PrimaryButton}"
+                Width="120"
                 HorizontalAlignment="Center"
+                IsCancel="True"
                 Click="CloseButton_Click"/>
 
     </StackPanel>

@@ -1,13 +1,19 @@
 using Autodesk.Revit.UI;
 using BIMPills.Commands.About;
+using BIMPills.Commands.CustomDimensionSchemes;
+using BIMPills.Commands.DataManager;
 using BIMPills.Commands.Documentacion;
 using BIMPills.Commands.ExportFamilies;
 using BIMPills.Commands.Gestion;
+using BIMPills.Commands.MCPIntegration;
 using BIMPills.Commands.ModelAudit;
+using BIMPills.Commands.Ordering;
 using BIMPills.Core.Modules;
 using BIMPills.Core.Services;
 using BIMPills.Infrastructure.DI;
 using BIMPills.Infrastructure.Logging;
+using BIMPills.Infrastructure.Persistence;
+using BIMPills.Infrastructure.Services;
 using BIMPills.Revit.Compatibility;
 using System;
 using System.Collections.Generic;
@@ -39,10 +45,18 @@ namespace BIMPills.Revit.Application
                 var versionLabel = new RevitVersionAdapterImpl().VersionLabel;
                 logger.Info($"Versión de Revit: {versionLabel}");
 
-                // 3. Ribbon builder
+                // 3. Sprint 2 services
+                ServiceLocator.Register<IDimensionSchemeService>(new DimensionSchemeService(new JsonSchemeRepository()));
+                ServiceLocator.Register<IMCPDiscoveryService>(new MCPDiscoveryService(new JsonMCPConnectionRepository()));
+                logger.Info("Servicios Sprint 2 registrados: IDimensionSchemeService, IMCPDiscoveryService");
+
+                // 4. Global exception handlers — prevent any BIMPills exception from crashing Revit
+                RegisterGlobalExceptionHandlers(logger);
+
+                // 5. Ribbon builder
                 var ribbon = new RibbonBuilder(app);
 
-                // 4. Load modules — add new modules here as the plugin grows
+                // 6. Load modules — add new modules here as the plugin grows
                 foreach (var module in GetModules())
                 {
                     logger.Info($"Cargando módulo: {module.GetType().Name} (Tab: {module.TabName}, Panel: {module.PanelName})");
@@ -67,6 +81,46 @@ namespace BIMPills.Revit.Application
             }
         }
 
+        /// <summary>
+        /// Registers global unhandled-exception handlers so that no BIMPills exception
+        /// can propagate unhandled and crash Revit.
+        /// </summary>
+        private static void RegisterGlobalExceptionHandlers(ILogger logger)
+        {
+            // Catch all unhandled WPF UI-thread exceptions — prevents Revit crash
+            System.Windows.Threading.Dispatcher.CurrentDispatcher.UnhandledException += (s, e) =>
+            {
+                try
+                {
+                    logger?.Error("Excepción no controlada en hilo UI de BIMPills", e.Exception);
+
+                    System.Windows.MessageBox.Show(
+                        $"Ocurrió un error inesperado en BIMPills:\n\n{e.Exception?.Message}\n\nEl error ha sido registrado en el log.",
+                        "BIMPills — Error inesperado",
+                        System.Windows.MessageBoxButton.OK,
+                        System.Windows.MessageBoxImage.Error);
+                }
+                finally
+                {
+                    // CRITICAL: prevents crash propagation to Revit
+                    e.Handled = true;
+                }
+            };
+
+            // Catch unhandled non-UI thread exceptions (best-effort logging; CLR may still terminate)
+            AppDomain.CurrentDomain.UnhandledException += (s, e) =>
+            {
+                try
+                {
+                    logger?.Error("Excepción fatal en AppDomain de BIMPills", e.ExceptionObject as Exception);
+                }
+                catch
+                {
+                    // Swallow — we cannot let the handler itself throw
+                }
+            };
+        }
+
         public Result OnShutdown(UIControlledApplication app)
         {
             if (ServiceLocator.IsRegistered<ILogger>())
@@ -81,6 +135,11 @@ namespace BIMPills.Revit.Application
             // Panel: Datos
             yield return new ModelAuditModule();
             yield return new ExportFamiliesModule();
+            // CustomDimensionSchemesModule — se accede desde Documentar → Acotar
+            // ExportAudit — se accede desde la ventana de Auditoría (sin módulo propio)
+            yield return new MCPIntegrationModule();
+            yield return new OrderingModule();
+            yield return new DataManagerModule();
             // Panel: Procesos
             yield return new DocumentacionModule();
             yield return new GestionModule();
