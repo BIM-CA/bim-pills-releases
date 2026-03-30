@@ -6,6 +6,9 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <AssemblyName>BIMPills.Core</AssemblyName>
     <RootNamespace>BIMPills.Core</RootNamespace>
+    <!-- Override common.props: Core must emit AssemblyInformationalVersionAttribute so
+         AboutInfo.Version can read it via reflection at runtime. -->
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
   </PropertyGroup>
 
 </Project>
