@@ -1280,6 +1280,196 @@ namespace BIMPills.Revit.Documentacion
             return wallNormal;
         }
 
+        // ── Vanos exteriores: longitud de muros de fachada ──
+
+        /// <summary>
+        /// Crea una cota de longitud total para cada muro exterior visible en la vista activa.
+        /// Los muros se detectan por la propiedad WallType.Function == Exterior; si el modelo
+        /// no tiene ninguno marcado así, se dimensionan todos los muros de la vista.
+        /// Requiere una vista en planta.
+        /// </summary>
+        public static AcotadoVanosResult CreateExteriorWallDimensions(
+            Document doc,
+            AcotadoVanosSettings settings)
+        {
+            var logger = ServiceLocator.IsRegistered<ILogger>() ? ServiceLocator.Get<ILogger>() : null;
+            logger?.Info("[DoorDimensioningService] Iniciando CreateExteriorWallDimensions...");
+            try
+            {
+                var view = doc.ActiveView;
+                if (view == null)
+                    return new AcotadoVanosResult(0, 0, 0, "No hay vista activa.");
+
+                if (view.ViewType != ViewType.FloorPlan && view.ViewType != ViewType.CeilingPlan)
+                    return new AcotadoVanosResult(0, 0, 0,
+                        "Este esquema requiere una vista en planta. La vista activa es de tipo " + view.ViewType + ".");
+
+                var dimTypeId = new ElementId(settings.DimensionTypeId);
+                var dimType   = doc.GetElement(dimTypeId) as DimensionType;
+
+                double offsetFeet = settings.OffsetMm / 304.8;
+
+                // Collect walls visible in the current view
+                var allWalls = new FilteredElementCollector(doc, view.Id)
+                    .OfCategory(BuiltInCategory.OST_Walls)
+                    .WhereElementIsNotElementType()
+                    .Cast<Wall>()
+                    .Where(w => (w.Location as LocationCurve)?.Curve is Line)
+                    .ToList();
+
+                if (allWalls.Count == 0)
+                    return new AcotadoVanosResult(0, 0, 0, "No se encontraron muros en la vista activa.");
+
+                // Prefer walls whose WallType is marked Exterior; fall back to all walls
+                var exteriorWalls = allWalls
+                    .Where(w => w.WallType?.Function == WallFunction.Exterior)
+                    .ToList();
+
+                var targetWalls = exteriorWalls.Count > 0 ? exteriorWalls : allWalls;
+
+                int created   = 0;
+                int skipped   = 0;
+                int processed = 0;
+
+                var options = new Options { ComputeReferences = true, View = view };
+
+                using (var tx = new Transaction(doc, "BIMPills: Vanos Exteriores"))
+                {
+                    try
+                    {
+                        tx.Start();
+
+                        foreach (var wall in targetWalls)
+                        {
+                            processed++;
+                            try
+                            {
+                                var wallCurve = (wall.Location as LocationCurve)!.Curve as Line;
+                                if (wallCurve == null) { skipped++; continue; }
+
+                                var dim = CreateExteriorWallLengthDimension(
+                                    doc, view, wall, wallCurve, dimType, offsetFeet, options);
+
+                                if (dim != null)
+                                    created++;
+                                else
+                                    skipped++;
+                            }
+                            catch
+                            {
+                                skipped++;
+                            }
+                        }
+
+                        if (created > 0)
+                            tx.Commit();
+                        else
+                            tx.RollBack();
+                    }
+                    catch (Exception ex)
+                    {
+                        if (tx.GetStatus() == TransactionStatus.Started)
+                            tx.RollBack();
+                        logger?.Error("[DoorDimensioningService] Transacción revertida en CreateExteriorWallDimensions", ex);
+                        return new AcotadoVanosResult(0, 0, 0, $"Error durante la operación: {ex.Message}");
+                    }
+                }
+
+                var fallbackNote = exteriorWalls.Count == 0
+                    ? " (ningún muro marcado como Exterior — se acotaron todos los muros)"
+                    : "";
+                var msg = created > 0
+                    ? $"Se crearon {created} cotas en {processed} muros{fallbackNote}."
+                    : $"No se crearon cotas nuevas.{fallbackNote}";
+                if (skipped > 0)
+                    msg += $" {skipped} muros omitidos.";
+
+                return new AcotadoVanosResult(created, processed, skipped, msg);
+            }
+            catch (Exception ex)
+            {
+                logger?.Error("[DoorDimensioningService] Error en CreateExteriorWallDimensions", ex);
+                return new AcotadoVanosResult(0, 0, 0, $"Error inesperado al acotar vanos exteriores: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Crea una cota de longitud total de un muro usando las caras extremas como referencias.
+        /// La cota se coloca en el lado exterior del muro a la distancia especificada por offsetFeet.
+        /// </summary>
+        private static Dimension? CreateExteriorWallLengthDimension(
+            Document doc, View view, Wall wall, Line wallCurve,
+            DimensionType? dimType, double offsetFeet, Options geomOptions)
+        {
+            var wallDir    = wallCurve.Direction.Normalize();
+            var wallNormal = new XYZ(-wallDir.Y, wallDir.X, 0).Normalize();
+            var wallStart  = wallCurve.GetEndPoint(0);
+
+            var refArray = new ReferenceArray();
+
+            // Scan wall geometry for faces perpendicular to the wall direction (i.e. the end-cap faces)
+            var wallGeom = wall.get_Geometry(geomOptions);
+            if (wallGeom == null) return null;
+
+            var endCapFaces = new List<(Face face, Reference reference, double projection)>();
+
+            foreach (var gObj in wallGeom)
+            {
+                var solid = gObj as Solid;
+                if (solid == null || solid.Faces.Size == 0) continue;
+
+                foreach (Face face in solid.Faces)
+                {
+                    Reference? faceRef = face.Reference;
+                    if (faceRef == null) continue;
+
+                    // End-cap faces are perpendicular to the wall (normal is parallel to wallDir)
+                    if (face is PlanarFace pf)
+                    {
+                        var normal = pf.FaceNormal.Normalize();
+                        double dotAlongWall = Math.Abs(normal.DotProduct(wallDir));
+                        if (dotAlongWall < 0.95) continue; // not an end-cap face
+
+                        var facePt = pf.Origin;
+                        double proj = (facePt - wallStart).DotProduct(wallDir);
+                        endCapFaces.Add((face, faceRef, proj));
+                    }
+                }
+            }
+
+            if (endCapFaces.Count < 2) return null;
+
+            // Use the two extreme faces (min and max projection along wall) as dimension references
+            var sorted   = endCapFaces.OrderBy(f => f.projection).ToList();
+            var startRef = sorted.First().reference;
+            var endRef   = sorted.Last().reference;
+
+            refArray.Append(startRef);
+            refArray.Append(endRef);
+
+            if (refArray.Size < 2) return null;
+
+            // Place dimension line on the exterior side of the wall
+            // Determine exterior direction: use wall normal, offset outward
+            var wallHalfThick = wall.Width / 2.0;
+            var wallMid       = wallCurve.Evaluate(0.5, true);
+
+            // Offset the dimension line to the exterior face + extra offset
+            var dimPt   = wallMid + wallNormal * (wallHalfThick + offsetFeet);
+            var dimLine = Line.CreateBound(
+                dimPt - wallDir * 1.0,  // extend slightly past wall ends
+                dimPt + wallDir * 1.0);
+
+            try
+            {
+                return doc.Create.NewDimension(view, dimLine, refArray, dimType);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
         private static bool HasExistingDimension(Document doc, View view, FamilyInstance door)
         {
             // Buscar cotas existentes que referencien este elemento

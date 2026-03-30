@@ -32,10 +32,11 @@ namespace BIMPills.Revit.Commands.Documentacion
                     var doc = CommandData!.Application.ActiveUIDocument.Document;
                     var result = settings.Scheme switch
                     {
-                        "wall-chain" => DoorDimensioningService.CreateWallChainDimensions(doc, settings),
-                        "grid-combined" => DoorDimensioningService.CreateGridDimensions(doc, settings),
+                        "wall-chain"      => DoorDimensioningService.CreateWallChainDimensions(doc, settings),
+                        "grid-combined"   => DoorDimensioningService.CreateGridDimensions(doc, settings),
                         "interior-spaces" => DoorDimensioningService.CreateInteriorSpaceDimensions(doc, settings),
-                        "arq-levels" => DoorDimensioningService.CreateArqLevelDimensions(doc, settings),
+                        "arq-levels"      => DoorDimensioningService.CreateArqLevelDimensions(doc, settings),
+                        "exterior-walls"  => DoorDimensioningService.CreateExteriorWallDimensions(doc, settings),
                         _ => DoorDimensioningService.CreateOpeningWidthDimensions(doc, settings),
                     };
                     logger?.Info($"Acotado completado: {result.DimensionsCreated} cotas creadas.");

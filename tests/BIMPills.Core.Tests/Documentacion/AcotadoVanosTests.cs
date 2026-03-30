@@ -111,9 +111,9 @@ namespace BIMPills.Core.Tests.Documentacion
         }
 
         [Fact]
-        public void AvailableSchemes_HasFourEntries()
+        public void AvailableSchemes_HasFiveEntries()
         {
-            Assert.Equal(4, AcotadoVanosData.AvailableSchemes.Count);
+            Assert.Equal(5, AcotadoVanosData.AvailableSchemes.Count);
         }
 
         [Fact]
@@ -126,6 +126,7 @@ namespace BIMPills.Core.Tests.Documentacion
             Assert.Contains("grid-combined", ids);
             Assert.Contains("interior-spaces", ids);
             Assert.Contains("arq-levels", ids);
+            Assert.Contains("exterior-walls", ids);
         }
     }
 

@@ -44,6 +44,7 @@ namespace BIMPills.UI.Documentacion
             new("grid-combined",   "Cotas a ejes",              "Cotas totales y parciales entre rejillas en una acción"),
             new("interior-spaces", "Cotas espacios interiores", "Dimensiones H y V del espacio usando contornos de habitación"),
             new("arq-levels",      "Niveles ARQ",               "Cotas totales y parciales entre niveles cuyo tipo contiene ARQ"),
+            new("exterior-walls",  "Vanos exteriores",          "Longitud total de cada muro exterior de fachada en planta"),
         };
 
         private void Populate()
@@ -91,6 +92,14 @@ namespace BIMPills.UI.Documentacion
                         : "0 niveles ARQ detectados";
                     if (ExecuteBtn != null)
                         ExecuteBtn.IsEnabled = levelCount >= 2 && DimTypeCombo.SelectedItem != null;
+                    break;
+                case "exterior-walls":
+                    var extWallCount = _data?.WallCount ?? 0;
+                    StatusText.Text = extWallCount > 0
+                        ? $"{extWallCount} muros detectados en la vista"
+                        : "0 muros detectados";
+                    if (ExecuteBtn != null)
+                        ExecuteBtn.IsEnabled = extWallCount > 0 && DimTypeCombo.SelectedItem != null;
                     break;
                 default:
                     var doorCount = _data?.DoorCount ?? 0;
@@ -200,6 +209,8 @@ namespace BIMPills.UI.Documentacion
                         => "Distancia desde el muro más cercano hacia el interior de la habitación. Valores negativos mueven la cota hacia el exterior (en milímetros).",
                     "arq-levels"
                         => "Distancia desde el extremo del nivel hasta la línea de cota. Valores negativos invierten la dirección (en milímetros).",
+                    "exterior-walls"
+                        => "Distancia desde la cara exterior del muro hasta la línea de cota (en milímetros).",
                     _ => "Separación entre la línea de cota y el elemento acotado (en milímetros).",
                 };
             }
@@ -234,6 +245,11 @@ namespace BIMPills.UI.Documentacion
                     InfoText.Inlines.Add(new System.Windows.Documents.Run("Se crearán cotas totales y parciales entre niveles cuyo tipo contiene "));
                     InfoText.Inlines.Add(new System.Windows.Documents.Bold(new System.Windows.Documents.Run("ARQ")));
                     InfoText.Inlines.Add(new System.Windows.Documents.Run(". Se colocan en los extremos seleccionados (inicio/fin/ambos). Requiere sección o alzado."));
+                    break;
+                case "exterior-walls":
+                    InfoText.Inlines.Add(new System.Windows.Documents.Run("Se crearán cotas de longitud total para cada "));
+                    InfoText.Inlines.Add(new System.Windows.Documents.Bold(new System.Windows.Documents.Run("muro exterior")));
+                    InfoText.Inlines.Add(new System.Windows.Documents.Run(" visible en la vista activa. Si ningún muro está marcado como Exterior, se acotarán todos los muros. Requiere vista en planta."));
                     break;
                 default:
                     InfoText.Inlines.Add(new System.Windows.Documents.Run("Se crearán cotas en la "));
@@ -399,6 +415,7 @@ namespace BIMPills.UI.Documentacion
                 "grid-combined"    => _data?.GridCount  ?? 0,
                 "interior-spaces"  => _data?.WallCount  ?? 0,
                 "arq-levels"       => _data?.LevelCount ?? 0,
+                "exterior-walls"   => _data?.WallCount  ?? 0,
                 _                  => _data?.DoorCount  ?? 0
             };
             var elementLabel = _selectedScheme switch
@@ -406,6 +423,7 @@ namespace BIMPills.UI.Documentacion
                 "grid-combined"    => "ejes",
                 "interior-spaces"  => "muros",
                 "arq-levels"       => "niveles ARQ",
+                "exterior-walls"   => "muros exteriores",
                 _                  => "puertas"
             };
 

@@ -29,10 +29,11 @@ namespace BIMPills.Core.Documentacion
         /// <summary>Esquemas de acotado disponibles.</summary>
         public static IReadOnlyList<SchemeOptionInfo> AvailableSchemes { get; } = new List<SchemeOptionInfo>
         {
-            new("opening-width", "Anchos de vanos", "Cota el ancho de cada vano de puerta visible en la vista"),
-            new("grid-combined", "Cotas a ejes", "Cotas totales y parciales entre rejillas en una acción"),
+            new("opening-width",   "Anchos de vanos",           "Cota el ancho de cada vano de puerta visible en la vista"),
+            new("grid-combined",   "Cotas a ejes",              "Cotas totales y parciales entre rejillas en una acción"),
             new("interior-spaces", "Cotas espacios interiores", "Dimensiones H y V del espacio usando contornos de habitación"),
-            new("arq-levels", "Niveles ARQ", "Cotas totales y parciales entre niveles cuyo tipo empieza con ARQ")
+            new("arq-levels",      "Niveles ARQ",               "Cotas totales y parciales entre niveles cuyo tipo empieza con ARQ"),
+            new("exterior-walls",  "Vanos exteriores",          "Longitud total de cada muro exterior de fachada en planta")
         };
 
         public AcotadoVanosData(
