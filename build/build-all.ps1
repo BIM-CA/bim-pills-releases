@@ -18,17 +18,25 @@ $dotnet = "dotnet"
 foreach ($version in $Versions) {
     Write-Host "`n=== Compilando para Revit $version ===" -ForegroundColor Cyan
 
-    $outDir = Join-Path $solutionDir "dist\Revit$version\BIMPills"
+    # Build (NO usamos --output: WPF genera subcarpeta net*-windows que rompe la carga de Revit)
     & $dotnet build "$solutionDir\src\BIMPills.Revit\BIMPills.Revit.csproj" `
         -c $Configuration `
         -p:RevitVersion=$version `
-        --output $outDir `
         --nologo
 
     if ($LASTEXITCODE -ne 0) {
         Write-Error "Build falló para Revit $version"
         exit 1
     }
+
+    # Determinar el framework de salida según versión de Revit
+    $tfm = if ($version -eq "2024") { "net48-windows" } else { "net8.0-windows" }
+    $binDir = Join-Path $solutionDir "src\BIMPills.Revit\bin\$Configuration\$tfm"
+    $outDir = Join-Path $solutionDir "dist\Revit$version\BIMPills"
+
+    # Copiar flat desde bin/Release/<tfm>/ → dist/ (preserva estructura plana esperada por Revit)
+    New-Item -ItemType Directory -Force -Path $outDir | Out-Null
+    Copy-Item "$binDir\*" $outDir -Force -Recurse
 
     # Copy manifest
     $manifestSrc  = Join-Path $solutionDir "manifests\Revit$version\BIMPills.addin"
