@@ -27,7 +27,7 @@ namespace BIMPills.Core.Tests.About
 
             Assert.NotNull(AboutCommand.LastResult);
             Assert.Equal("BIMPills", AboutCommand.LastResult!.PluginName);
-            Assert.Equal("1.0.0-alpha.2", AboutCommand.LastResult.Version);
+            Assert.Equal("1.0.0-beta.1", AboutCommand.LastResult.Version);
             Assert.Equal("Rodrigo Flores + BIM-CA Team", AboutCommand.LastResult.Developer);
             Assert.Equal("BIM-CA", AboutCommand.LastResult.Company);
             Assert.Equal("https://bim-ca.com", AboutCommand.LastResult.Website);

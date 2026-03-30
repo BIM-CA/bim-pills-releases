@@ -1,109 +1,31 @@
 # BIMPills
 
-**BIMPills** is a Revit plugin for architectural model quality assurance, dimensioning automation, and external service integration.
+**BIMPills** es un plugin de Revit para control de calidad de modelos BIM, automatización de acotado, gestión de worksets, numeración incremental de elementos y sincronización de tablas con Excel.
+
+**Latest Release:** v1.0.0-beta.1 (2026-03-30) — Sprint 3 complete
+**Support:** support@bim-ca.com | Website Chat
+
+---
 
 ## Features
 
 ### Sprint 1 (v1.0.0-alpha.2) ✅
-- **Auditar (Model Audit)** — Comprehensive model health analysis with health score, warnings, purgeable items
-- **Documentar (Acotado)** — Intelligent automatic dimensioning for architectural drawings with multi-schema support
-- **Gestión** — Purgeable elements management
-- **Exportar Familias** — Export loaded families to external format
-- **Multi-version support** — Revit 2024, 2025, 2026
+- **Auditar** — Análisis de salud del modelo: warnings, elementos purgables, health score
+- **Documentar (Acotado)** — Acotado automático inteligente: espacios interiores, vanos, ejes
+- **Estandarizar** — Gestión y estandarización de worksets
+- **Exportar Familias** — Exportación de familias cargadas
+- **Multi-version** — Revit 2024, 2025, 2026
 
-### Sprint 2 (v1.0.0 Beta) — In Progress
-- **Exportar (Export Audit)** — Export audit reports to PDF/XLSX with customizable profiles
-- **Esquemas (Custom Dimension Schemes)** — Create, edit, validate custom dimensioning schemas with JSON persistence
-- **Conectar (MCP Integration)** — Manage connections to Model Context Protocol (MCP) external services
+### Sprint 2 (v1.0.0-alpha.3) ✅
+- **Exportar (Audit + Planos)** — Exportación de reportes de auditoría y planos a XLSX/PDF
+- **Esquemas personalizados** — Creación, edición y persistencia de esquemas de acotado en JSON
+- **Conectar (MCP)** — Gestión de conexiones a servicios externos vía Model Context Protocol
 
-## Architecture
+### Sprint 3 (v1.0.0-beta.1) ✅
+- **Ordenar** — Numeración incremental interactiva de elementos con prefijo/paso/sufijo configurable
+- **Gestionar (SheetLink)** — Exportación de tablas de planificación a Excel y reimportación masiva de parámetros
 
-BIMPills follows a **4-layer clean architecture**:
-
-```
-┌─────────────────────────────────────────────────────────┐
-│ UI Layer (WPF)                                          │
-│ └── *.xaml + *.xaml.cs windows                         │
-├─────────────────────────────────────────────────────────┤
-│ Commands Layer (Business Logic)                         │
-│ └── IPluginCommand implementations (no RevitAPI)      │
-├─────────────────────────────────────────────────────────┤
-│ Core Layer (Pure Abstractions)                         │
-│ ├── Interfaces (IPluginCommand, IPluginModule)         │
-│ ├── Models (audit results, profiles, schemas)         │
-│ └── Services (IAuditReportExporter, IDimensionScheme) │
-├─────────────────────────────────────────────────────────┤
-│ Infrastructure Layer (Persistence)                      │
-│ ├── JSON repositories (profiles, schemes, connections) │
-│ └── Exporters (PDF, XLSX)                              │
-├─────────────────────────────────────────────────────────┤
-│ Revit Adapter Layer                                     │
-│ ├── RevitApplication.cs (ribbon + module registration) │
-│ ├── RevitCommandBase (external command bridge)         │
-│ └── Revit-specific adapters (RevitCommandContext)      │
-└─────────────────────────────────────────────────────────┘
-        ↓
-      RevitAPI.dll
-```
-
-### Dependency Graph
-
-```
-Core (pure abstractions)
-  ↑
-  ├─ Infrastructure (JSON, PDF/XLSX export)
-  ├─ Commands (business logic)
-  ├─ UI (WPF windows)
-  └─ Revit.Adapter (RevitAPI bridge)
-```
-
-## Projects
-
-| Project | Purpose | References |
-|---------|---------|-----------|
-| `BIMPills.Core` | Interfaces, models, service contracts | Nothing (pure abstractions) |
-| `BIMPills.Commands` | Command logic without RevitAPI | Core only |
-| `BIMPills.Infrastructure` | JSON persistence, exporters | Core, Newtonsoft.Json, ClosedXML |
-| `BIMPills.UI` | WPF windows and XAML | Core, Commands |
-| `BIMPills.Revit` | RevitAPI adapter, ribbon builder | All above + RevitAPI.dll |
-| `BIMPills.Core.Tests` | xUnit tests for Core/Commands | Core, Commands, xUnit |
-
-## Building
-
-### All Versions (2024, 2025, 2026)
-
-```bash
-cd G:\Claude\Code
-
-# Restore and build for Revit 2026
-dotnet restore
-dotnet build -p:RevitVersion=2026 -c Release
-
-# Run tests
-dotnet test tests/BIMPills.Core.Tests/ -c Release
-```
-
-### Multi-Version Build (for installer)
-
-```powershell
-$versions = @("2024", "2025", "2026")
-foreach ($v in $versions) {
-    dotnet build src/BIMPills.Revit/ -p:RevitVersion=$v -c Release
-}
-```
-
-## Installation
-
-### Manual
-1. Build the project for your Revit version
-2. Copy `BIMPills.Revit.dll` to: `%APPDATA%/Autodesk/Revit/Addins/{RevitYear}/`
-3. Copy `BIMPills.addin` manifest to the same directory
-4. Restart Revit
-
-### Installer (InnoSetup)
-```bash
-# See installer/BIMPills.iss for multi-version packaging
-```
+---
 
 ## Ribbon Layout
 
@@ -111,79 +33,128 @@ foreach ($v in $versions) {
 Tab: BIMPills
 ├── Panel: Datos
 │   ├── Auditar         [ModelAudit]
-│   ├── Exportar        [ExportAudit]
-│   ├── Esquemas        [CustomDimensionSchemes]
-│   └── Conectar        [MCPIntegration]
+│   ├── Exportar        [ExportAudit + ExportSheets]
+│   ├── Conectar        [MCPIntegration]
+│   ├── Ordenar         [Ordering]
+│   └── Gestionar       [DataManager / SheetLink]
 ├── Panel: Procesos
 │   ├── Documentar      [Acotado]
-│   └── Gestión         [Gestion]
+│   └── Estandarizar    [Gestion / Worksets]
 └── Panel: Información
     └── Acerca de       [About]
 ```
 
-## Data Persistence
+---
 
-### Locations
+## Architecture
 
-All user data is persisted in:
+BIMPills sigue una **arquitectura limpia de 4 capas**:
+
 ```
-%APPDATA%/Autodesk/Revit/Addins/BIMPills/
-├── Profiles/reports.json         (Export profiles)
-├── Schemes/dimensions.json        (Custom dimension schemas)
-└── MCPConnections/connections.json (MCP service connections)
+┌─────────────────────────────────────────────────────────┐
+│ UI Layer (WPF)                                          │
+│ └── *.xaml + *.xaml.cs windows                         │
+├─────────────────────────────────────────────────────────┤
+│ Commands Layer (Business Logic)                         │
+│ └── IPluginCommand implementations (sin RevitAPI)      │
+├─────────────────────────────────────────────────────────┤
+│ Core Layer (Pure Abstractions)                         │
+│ ├── Interfaces (IPluginCommand, IPluginModule)         │
+│ ├── Models (audit results, ordering, schedules)       │
+│ └── Services (IDocumentServices, ILogger)             │
+├─────────────────────────────────────────────────────────┤
+│ Infrastructure Layer (Persistence)                      │
+│ ├── JSON repositories (profiles, schemes, connections) │
+│ └── Exporters (XLSX via ClosedXML)                     │
+├─────────────────────────────────────────────────────────┤
+│ Revit Adapter Layer                                     │
+│ ├── RevitApplication.cs (ribbon + module registration) │
+│ ├── RevitCommandBase (external command bridge)         │
+│ └── RevitDocumentServices (IDocumentServices impl.)    │
+└─────────────────────────────────────────────────────────┘
+        ↓
+      RevitAPI.dll
 ```
 
-### Format
+### Projects
 
-- **JSON** — Human-readable configuration
-- **Newtonsoft.Json** — Serialization/deserialization
-- **DPAPI** — Credential encryption (MCP connections)
+| Project | Purpose | References |
+|---------|---------|-----------|
+| `BIMPills.Core` | Interfaces, models, service contracts | Nothing (pure abstractions) |
+| `BIMPills.Commands` | Command logic without RevitAPI | Core only |
+| `BIMPills.Infrastructure` | JSON persistence, XLSX exporters | Core, Newtonsoft.Json, ClosedXML |
+| `BIMPills.UI` | WPF windows and XAML | Core, Commands |
+| `BIMPills.Revit` | RevitAPI adapter, ribbon builder | All above + RevitAPI.dll |
+| `BIMPills.Core.Tests` | xUnit tests for Core/Commands | Core, Commands, xUnit |
 
-## Enum: MCPConnectionStatus
+---
 
-```csharp
-public enum MCPConnectionStatus
-{
-    Connected,
-    Disconnected,
-    Error,
-    Unknown
+## Building
+
+### Single version
+
+```bash
+dotnet restore
+dotnet build -p:RevitVersion=2026 -c Release
+dotnet test tests/BIMPills.Core.Tests/ -c Release
+```
+
+### Multi-version (for installer)
+
+```powershell
+foreach ($v in @("2024", "2025", "2026")) {
+    dotnet build src/BIMPills.Revit/ -p:RevitVersion=$v -c Release
 }
 ```
+
+### Version targets
+
+| Revit | Framework | Symbol |
+|-------|-----------|--------|
+| 2024 | `net48-windows` (.NET 4.8) | `REVIT2024` |
+| 2025 | `net8.0-windows` (.NET 8) | `REVIT2025` |
+| 2026 | `net8.0-windows` (.NET 8) | `REVIT2026` |
+
+---
+
+## Installation
+
+### Installer (recommended)
+
+Run `installer/output/BIMPills_Setup_1.0.0-beta.1.exe` — selecciona las versiones de Revit a instalar. Detecta y reemplaza versiones anteriores automáticamente.
+
+### Manual
+
+1. Build para tu versión de Revit
+2. Copia las DLLs a: `%APPDATA%\Autodesk\Revit\Addins\{Year}\BIMPills\`
+3. Copia `BIMPills.addin` a: `%APPDATA%\Autodesk\Revit\Addins\{Year}\`
+4. Reinicia Revit
+
+---
 
 ## Testing
 
 ```bash
-# Run all Core layer tests
 dotnet test tests/BIMPills.Core.Tests/ -c Release
-
-# Results: 7 tests passing ✅
-# - ModelAuditCommand tests
-# - Dimension schema validation
-# - Export result validation
+# 32+ tests passing ✅
 ```
 
-## Development Notes
+Tests cubiertos: ModelAudit, AcotadoVanos, About, RibbonDuplicates (todos los módulos)
 
-### Nullable Reference Types
+---
 
-The project uses nullable reference types (`#nullable enable`). Properties without default values trigger `CS8618` warnings — use `required` keyword or `?` nullable marker.
+## Data Persistence
 
-### Async File Operations
+```
+%APPDATA%\Autodesk\Revit\Addins\BIMPills\
+├── Profiles\reports.json          (Export profiles)
+├── Schemes\dimensions.json        (Custom dimension schemas)
+├── MCPConnections\connections.json (MCP service connections)
+└── Exports\                        (Schedule Excel exports)
+```
 
-Repository classes use `Task.Run(() => File.ReadAllText())` for netstandard2.0 compatibility (async methods like `File.ReadAllTextAsync` require .NET Core 2.0+).
-
-### Multi-Version Compatibility
-
-- **Revit 2024** → .NET Framework 4.8 (`net48-windows`)
-- **Revit 2025+** → .NET 8 (`net8.0-windows`)
-- Conditional compilation symbols: `REVIT2024`, `REVIT2025`, `REVIT2026`
+---
 
 ## License
 
 Copyright © 2026 BIM-CA. All rights reserved.
-
----
-
-**Latest Release:** v1.0.0-alpha.2 (2026-03-27)
-**Status:** Sprint 2 in progress

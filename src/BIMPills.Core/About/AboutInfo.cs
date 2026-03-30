@@ -3,7 +3,7 @@ namespace BIMPills.Core.About
     public sealed class AboutInfo
     {
         public string PluginName => "BIMPills";
-        public string Version => "1.0.0-alpha.2";
+        public string Version => "1.0.0-beta.1";
         public string Developer => "Rodrigo Flores + BIM-CA Team";
         public string Company => "BIM-CA";
         public string Website => "https://bim-ca.com";
