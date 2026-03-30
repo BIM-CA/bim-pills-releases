@@ -283,7 +283,7 @@
                                       Background="#E5E5EA"
                                       HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
 
-                        <!-- Right: empty state or toolbar + data grid -->
+                        <!-- Right: empty state | preview area | diff area -->
                         <Grid Grid.Column="2">
 
                             <!-- Empty state (visible when no table selected) -->
@@ -356,6 +356,77 @@
                                           SelectionMode="Extended"
                                           AutoGeneratingColumn="PreviewGrid_AutoGeneratingColumn"/>
 
+
+                            </DockPanel>
+
+                            <!-- Diff preview area (shown when import is pending) -->
+                            <DockPanel x:Name="DiffArea" Visibility="Collapsed" Margin="8,0,0,0">
+
+                                <!-- Diff header -->
+                                <Border DockPanel.Dock="Top"
+                                        BorderBrush="#F2F2F7" BorderThickness="0,0,0,1"
+                                        Padding="12,10">
+                                    <DockPanel>
+                                        <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
+                                            <Border Width="28" Height="28" CornerRadius="6"
+                                                    Background="#E8F5E9" Margin="0,0,8,0" VerticalAlignment="Center">
+                                                <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="12"
+                                                           Foreground="#2E7D32" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                            <StackPanel VerticalAlignment="Center">
+                                                <TextBlock Text="Vista previa de cambios" FontSize="13" FontWeight="SemiBold"
+                                                           Foreground="{StaticResource PrimaryBrush}" FontFamily="Segoe UI"/>
+                                                <TextBlock x:Name="DiffCountLabel" Text=""
+                                                           FontSize="11" Foreground="#86868B" FontFamily="Segoe UI"/>
+                                            </StackPanel>
+                                        </StackPanel>
+                                        <!-- Legend -->
+                                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal"
+                                                    VerticalAlignment="Center" Margin="0,0,4,0">
+                                            <Border Width="10" Height="10" CornerRadius="2"
+                                                    Background="#E8F5E9" BorderBrush="#A5D6A7"
+                                                    BorderThickness="1.5" Margin="0,0,4,0"/>
+                                            <TextBlock Text="Cambio pendiente" FontSize="10"
+                                                       Foreground="#86868B" FontFamily="Segoe UI"
+                                                       VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </DockPanel>
+                                </Border>
+
+                                <!-- Diff data grid -->
+                                <DataGrid x:Name="DiffGrid"
+                                          Style="{StaticResource BIMPillsDataGrid}"
+                                          AutoGenerateColumns="False"
+                                          IsReadOnly="True"
+                                          CanUserAddRows="False"
+                                          CanUserDeleteRows="False"
+                                          CanUserReorderColumns="True"
+                                          CanUserResizeColumns="True"
+                                          SelectionMode="Single">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="TABLA" Binding="{Binding Tabla}"
+                                                            Width="160" MinWidth="80"/>
+                                        <DataGridTextColumn Header="ELEMENTO ID" Binding="{Binding ElementId}"
+                                                            Width="100" MinWidth="80"/>
+                                        <DataGridTextColumn Header="PARÁMETRO" Binding="{Binding Parametro}"
+                                                            Width="180" MinWidth="100"/>
+                                        <DataGridTextColumn Header="NUEVO VALOR" Binding="{Binding NuevoValor}"
+                                                            Width="*" MinWidth="100"/>
+                                    </DataGrid.Columns>
+                                    <DataGrid.RowStyle>
+                                        <Style TargetType="DataGridRow">
+                                            <Setter Property="Background" Value="#F1F8E9"/>
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="#DCEDC8"/>
+                                                </Trigger>
+                                                <Trigger Property="IsSelected" Value="True">
+                                                    <Setter Property="Background" Value="#C5E1A5"/>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </DataGrid.RowStyle>
+                                </DataGrid>
 
                             </DockPanel>
 

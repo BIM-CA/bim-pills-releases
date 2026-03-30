@@ -14,6 +14,15 @@ using System.Windows.Data;
 
 namespace BIMPills.UI.DataManager
 {
+    /// <summary>View model for one row in the diff preview grid.</summary>
+    internal sealed class DiffItem
+    {
+        public string Tabla      { get; set; } = "";
+        public long   ElementId  { get; set; }
+        public string Parametro  { get; set; } = "";
+        public string NuevoValor { get; set; } = "";
+    }
+
     public partial class GestionarWindow : Window
     {
         private readonly IDocumentServices _documentServices;
@@ -370,7 +379,6 @@ namespace BIMPills.UI.DataManager
 
             try
             {
-                // Try multi-sheet import first
                 var multiUpdates = _importer.ImportMultiple(dlg.FileName);
 
                 if (multiUpdates.Count == 0)
@@ -380,23 +388,40 @@ namespace BIMPills.UI.DataManager
                     return;
                 }
 
-                // Flatten all updates and show summary
+                // Flatten updates and build diff items
                 _pendingUpdates = new List<ParameterUpdateRequest>();
-                var summary = new List<string>();
+                var diffItems   = new List<DiffItem>();
 
                 foreach (var kvp in multiUpdates)
                 {
                     _pendingUpdates.AddRange(kvp.Value);
-                    summary.Add($"• {kvp.Key}: {kvp.Value.Count} parámetros");
+                    foreach (var u in kvp.Value)
+                    {
+                        diffItems.Add(new DiffItem
+                        {
+                            Tabla      = kvp.Key,
+                            ElementId  = u.ElementId,
+                            Parametro  = u.ParameterName,
+                            NuevoValor = u.NewValue
+                        });
+                    }
                 }
 
                 if (_pendingUpdates.Count > 0)
                 {
                     var sheetCount = multiUpdates.Count;
                     ImportBarText.Text = sheetCount == 1
-                        ? $"  {_pendingUpdates.Count} cambios detectados desde {Path.GetFileName(dlg.FileName)}"
+                        ? $"  {_pendingUpdates.Count} cambios desde {Path.GetFileName(dlg.FileName)}"
                         : $"  {_pendingUpdates.Count} cambios en {sheetCount} tablas desde {Path.GetFileName(dlg.FileName)}";
                     ImportBar.Visibility = Visibility.Visible;
+
+                    // Show diff preview in right panel
+                    DiffCountLabel.Text = $"{_pendingUpdates.Count} cambios pendientes";
+                    DiffGrid.ItemsSource = diffItems;
+                    EmptyState.Visibility   = Visibility.Collapsed;
+                    PreviewArea.Visibility  = Visibility.Collapsed;
+                    DiffArea.Visibility     = Visibility.Visible;
+
                     StatusLabel.Text = $"{_pendingUpdates.Count} cambios pendientes en {sheetCount} tabla(s)";
                 }
                 else
@@ -413,7 +438,16 @@ namespace BIMPills.UI.DataManager
         private void DiscardImport_Click(object sender, RoutedEventArgs e)
         {
             _pendingUpdates.Clear();
+            DiffGrid.ItemsSource = null;
             ImportBar.Visibility = Visibility.Collapsed;
+            DiffArea.Visibility  = Visibility.Collapsed;
+
+            // Restore the panel that was visible before import
+            if (_currentData != null)
+                PreviewArea.Visibility = Visibility.Visible;
+            else
+                EmptyState.Visibility = Visibility.Visible;
+
             StatusLabel.Text = ScheduleListBox.SelectedItem is ScheduleInfo sel
                 ? $"{sel.Name}  ·  {_currentData?.Rows.Count ?? 0} elementos  ·  {_currentData?.Columns.Count ?? 0} columnas"
                 : $"{_allSchedules.Count} tablas disponibles";
@@ -445,13 +479,20 @@ namespace BIMPills.UI.DataManager
                     result.Errors.Count > 0 ? MessageBoxImage.Warning : MessageBoxImage.Information);
 
                 _pendingUpdates.Clear();
+                DiffGrid.ItemsSource = null;
                 ImportBar.Visibility = Visibility.Collapsed;
+                DiffArea.Visibility  = Visibility.Collapsed;
 
-                // Reload data
+                // Reload data and restore preview panel
                 if (ScheduleListBox.SelectedItem is ScheduleInfo sel)
                 {
                     _currentData = _documentServices.GetScheduleData(sel.Id);
                     RefreshPreviewGrid();
+                    PreviewArea.Visibility = Visibility.Visible;
+                }
+                else
+                {
+                    EmptyState.Visibility = Visibility.Visible;
                 }
             }
             catch (Exception ex)

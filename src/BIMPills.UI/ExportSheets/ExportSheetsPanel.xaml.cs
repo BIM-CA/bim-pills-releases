@@ -1,5 +1,6 @@
 using BIMPills.Core.Models;
 using BIMPills.Core.Services;
+using BIMPills.Infrastructure.Persistence;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -459,9 +460,120 @@ namespace BIMPills.UI.ExportSheets
 
         private void SaveProfile_Click(object sender, RoutedEventArgs e)
         {
-            // TODO: Implement profile save dialog
-            MessageBox.Show("Guardar perfil \u2014 próximamente.",
-                "BIMPills", MessageBoxButton.OK, MessageBoxImage.Information);
+            var name = PromptForProfileName();
+            if (string.IsNullOrWhiteSpace(name)) return;
+
+            try
+            {
+                var profile = new SheetExportProfile
+                {
+                    Name               = name.Trim(),
+                    Format             = GetSelectedFormat(),
+                    NamingConvention   = new SheetNamingConvention { Pattern = NamingPatternBox?.Text ?? "{SheetNumber}-{SheetName}" },
+                    FolderOrganization = GetSelectedFolderOrganization(),
+                    DwgExportConfigId  = (DwgSetupCombo.SelectedItem as ComboBoxItem)?.Tag is DwgExportConfig cfg ? cfg.Id : ""
+                };
+
+                var repo = new JsonSheetExportProfileRepository();
+                repo.CreateAsync(profile).GetAwaiter().GetResult();
+
+                MessageBox.Show($"Perfil «{profile.Name}» guardado correctamente.",
+                    "BIMPills — Exportar planos",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al guardar el perfil: {ex.Message}",
+                    "BIMPills — Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private SheetExportFormat GetSelectedFormat()
+        {
+            bool pdf = PdfCheck.IsChecked == true;
+            bool dwg = DwgCheck.IsChecked == true;
+            if (pdf && dwg) return SheetExportFormat.Both;
+            if (dwg)         return SheetExportFormat.DWG;
+            return SheetExportFormat.PDF;
+        }
+
+        /// <summary>Shows a small inline dialog to enter a profile name. Returns null if cancelled.</summary>
+        private static string? PromptForProfileName()
+        {
+            var dlg = new Window
+            {
+                Title               = "BIMPills — Guardar perfil",
+                Width               = 380,
+                Height              = 150,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                ResizeMode          = ResizeMode.NoResize,
+                Background          = System.Windows.Media.Brushes.White,
+                WindowStyle         = WindowStyle.ToolWindow
+            };
+
+            var grid = new Grid { Margin = new Thickness(18) };
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(8) });
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+            var lbl = new TextBlock
+            {
+                Text       = "Nombre del perfil:",
+                FontSize   = 12,
+                FontFamily = new System.Windows.Media.FontFamily("Segoe UI"),
+                Margin     = new Thickness(0, 0, 0, 6)
+            };
+            Grid.SetRow(lbl, 0);
+
+            var tb = new TextBox
+            {
+                Height       = 30,
+                FontSize     = 12,
+                FontFamily   = new System.Windows.Media.FontFamily("Segoe UI"),
+                Padding      = new Thickness(6, 4, 6, 4),
+                BorderBrush  = System.Windows.Media.Brushes.LightGray,
+                BorderThickness = new Thickness(1),
+                Text         = $"Perfil {DateTime.Now:yyyy-MM-dd}"
+            };
+            Grid.SetRow(tb, 1);
+
+            var btns = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
+            Grid.SetRow(btns, 3);
+
+            string? result = null;
+            var ok = new Button
+            {
+                Content     = "Guardar",
+                Width       = 80,
+                Height      = 28,
+                Margin      = new Thickness(0, 0, 8, 0),
+                IsDefault   = true,
+                FontFamily  = new System.Windows.Media.FontFamily("Segoe UI"),
+                Background  = System.Windows.Media.Brushes.White
+            };
+            ok.Click += (_, __) => { result = tb.Text; dlg.DialogResult = true; };
+
+            var cancel = new Button
+            {
+                Content    = "Cancelar",
+                Width      = 80,
+                Height     = 28,
+                IsCancel   = true,
+                FontFamily = new System.Windows.Media.FontFamily("Segoe UI")
+            };
+
+            btns.Children.Add(ok);
+            btns.Children.Add(cancel);
+            grid.Children.Add(lbl);
+            grid.Children.Add(tb);
+            grid.Children.Add(btns);
+            dlg.Content = grid;
+
+            tb.Loaded += (_, __) => { tb.SelectAll(); tb.Focus(); };
+
+            dlg.ShowDialog();
+            return result;
         }
 
         // ── DWG Config (resolved from DwgSetupCombo tag + extra checkboxes) ──
