@@ -1,5 +1,6 @@
 using BIMPills.Core.Models;
 using BIMPills.Infrastructure.DI;
+using BIMPills.Infrastructure.Security;
 using BIMPills.Core.Services;
 using System;
 using System.Collections.Generic;
@@ -40,24 +41,46 @@ namespace BIMPills.UI.MCPIntegration
         {
             try
             {
-                if (System.IO.File.Exists(_claudeConfigPath))
+                if (!System.IO.File.Exists(_claudeConfigPath)) return;
+
+                var json = System.IO.File.ReadAllText(_claudeConfigPath, Encoding.UTF8);
+                var data = Newtonsoft.Json.JsonConvert.DeserializeObject<ClaudeConfig>(
+                    json,
+                    new Newtonsoft.Json.JsonSerializerSettings { TypeNameHandling = Newtonsoft.Json.TypeNameHandling.None });
+
+                if (data == null || string.IsNullOrEmpty(data.ApiKey)) return;
+
+                // Decrypt the stored API key (DPAPI). If decryption fails the value is
+                // legacy plaintext — use it as-is and re-save in encrypted form.
+                if (!SecureStorage.TryUnprotect(data.ApiKey, out var apiKey))
                 {
-                    var json = System.IO.File.ReadAllText(_claudeConfigPath);
-                    var data = Newtonsoft.Json.JsonConvert.DeserializeObject<ClaudeConfig>(json);
-                    if (data != null && !string.IsNullOrEmpty(data.ApiKey))
-                    {
-                        ApiKeyBox.Password = data.ApiKey;
-                        SetClaudeStatus(true, "Configurado — API Key guardada");
-                        foreach (System.Windows.Controls.ComboBoxItem item in ModelCombo.Items)
-                            if (item.Tag?.ToString() == data.Model)
-                                item.IsSelected = true;
-                    }
+                    Debug.WriteLine("[BIMPills] Migrating Claude API key to encrypted storage.");
+                    SaveClaudeConfig(apiKey, data.Model); // re-save encrypted
                 }
+
+                ApiKeyBox.Password = apiKey;
+                SetClaudeStatus(true, "Configurado — API Key guardada");
+                foreach (System.Windows.Controls.ComboBoxItem item in ModelCombo.Items)
+                    if (item.Tag?.ToString() == data.Model)
+                        item.IsSelected = true;
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"[BIMPills] Error loading Claude config: {ex.Message}");
             }
+        }
+
+        /// <summary>Encrypts <paramref name="apiKey"/> with DPAPI and writes the config file.</summary>
+        private void SaveClaudeConfig(string apiKey, string model)
+        {
+            var encrypted = SecureStorage.Protect(apiKey);
+            var config    = new ClaudeConfig { ApiKey = encrypted, Model = model };
+            var dir       = System.IO.Path.GetDirectoryName(_claudeConfigPath)!;
+            System.IO.Directory.CreateDirectory(dir);
+            System.IO.File.WriteAllText(
+                _claudeConfigPath,
+                Newtonsoft.Json.JsonConvert.SerializeObject(config, Newtonsoft.Json.Formatting.Indented),
+                Encoding.UTF8);
         }
 
         private void ApiKey_Changed(object sender, RoutedEventArgs e)
@@ -144,11 +167,9 @@ namespace BIMPills.UI.MCPIntegration
             {
                 var selectedModel = (ModelCombo.SelectedItem as System.Windows.Controls.ComboBoxItem)
                     ?.Tag?.ToString() ?? "claude-sonnet-4-5";
-                var config = new ClaudeConfig { ApiKey = apiKey, Model = selectedModel };
-                var dir = System.IO.Path.GetDirectoryName(_claudeConfigPath)!;
-                System.IO.Directory.CreateDirectory(dir);
-                System.IO.File.WriteAllText(_claudeConfigPath,
-                    Newtonsoft.Json.JsonConvert.SerializeObject(config, Newtonsoft.Json.Formatting.Indented));
+
+                SaveClaudeConfig(apiKey, selectedModel);   // ← encrypts with DPAPI
+
                 SetClaudeStatus(true, "✓ Configuración guardada correctamente");
                 MessageBox.Show(
                     "Claude AI configurado correctamente.\n\nAhora puedes usar el análisis AI desde el informe de auditoría.",
