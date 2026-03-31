@@ -1,5 +1,5 @@
 using BIMPills.Core.About;
-using System.Diagnostics;
+using BIMPills.UI.Helpers;
 using System.Windows;
 using System.Windows.Input;
 
@@ -28,22 +28,10 @@ namespace BIMPills.UI.About
         }
 
         private void Website_Click(object sender, MouseButtonEventArgs e)
-        {
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = _info.Website,
-                UseShellExecute = true
-            });
-        }
+            => ProcessHelper.OpenUrl(_info.Website);
 
         private void SupportEmail_Click(object sender, MouseButtonEventArgs e)
-        {
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = $"mailto:{_info.SupportEmail}",
-                UseShellExecute = true
-            });
-        }
+            => ProcessHelper.OpenUrl($"mailto:{_info.SupportEmail}");
 
         private void CloseButton_Click(object sender, RoutedEventArgs e) => Close();
     }

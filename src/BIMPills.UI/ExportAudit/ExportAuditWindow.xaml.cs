@@ -95,11 +95,7 @@ namespace BIMPills.UI.ExportAudit
 
                 if (result == MessageBoxResult.Yes)
                 {
-                    Process.Start(new ProcessStartInfo
-                    {
-                        FileName = outputPath,
-                        UseShellExecute = true
-                    });
+                    Helpers.ProcessHelper.OpenDocument(outputPath);
                 }
             }
             catch (Exception ex)

@@ -236,11 +236,7 @@ namespace BIMPills.UI.ModelAudit
 
                 if (openResult == MessageBoxResult.Yes)
                 {
-                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-                    {
-                        FileName = dialog.FileName,
-                        UseShellExecute = true
-                    });
+                    Helpers.ProcessHelper.OpenDocument(dialog.FileName);
                 }
             }
             catch (Exception ex)

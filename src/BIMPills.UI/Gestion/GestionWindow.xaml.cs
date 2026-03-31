@@ -272,10 +272,7 @@ namespace BIMPills.UI.Gestion
                     "BIMPills", MessageBoxButton.YesNo, MessageBoxImage.Information);
 
                 if (openResult == MessageBoxResult.Yes)
-                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-                    {
-                        FileName = dlg.FileName, UseShellExecute = true
-                    });
+                    Helpers.ProcessHelper.OpenDocument(dlg.FileName);
             }
             catch (Exception ex)
             {

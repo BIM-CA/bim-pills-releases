@@ -362,8 +362,7 @@ namespace BIMPills.UI.DataManager
                 MessageBoxImage.Information);
 
             if (result == MessageBoxResult.Yes)
-                System.Diagnostics.Process.Start(
-                    new System.Diagnostics.ProcessStartInfo(path) { UseShellExecute = true });
+                Helpers.ProcessHelper.OpenDocument(path);
         }
 
         // ── Import ─────────────────────────────────────────────────────────────

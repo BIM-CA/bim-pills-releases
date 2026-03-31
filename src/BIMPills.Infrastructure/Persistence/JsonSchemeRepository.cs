@@ -21,14 +21,21 @@ namespace BIMPills.Infrastructure.Persistence
             EnsureDirectoryExists();
         }
 
+        private static readonly JsonSerializerSettings _jsonSettings = new JsonSerializerSettings
+        {
+            TypeNameHandling = TypeNameHandling.None,
+            Formatting       = Formatting.Indented
+        };
+
         public async Task<List<CustomDimensionScheme>> GetAllAsync()
         {
             var filePath = Path.Combine(_schemeDirectory, "dimensions.json");
             if (!File.Exists(filePath))
                 return new List<CustomDimensionScheme>();
 
-            var json = await Task.Run(() => File.ReadAllText(filePath));
-            return JsonConvert.DeserializeObject<List<CustomDimensionScheme>>(json) ?? new List<CustomDimensionScheme>();
+            var json = await Task.Run(() => File.ReadAllText(filePath, System.Text.Encoding.UTF8));
+            return JsonConvert.DeserializeObject<List<CustomDimensionScheme>>(json, _jsonSettings)
+                   ?? new List<CustomDimensionScheme>();
         }
 
         public async Task<CustomDimensionScheme?> GetByIdAsync(string schemeId)
@@ -72,8 +79,8 @@ namespace BIMPills.Infrastructure.Persistence
         private async Task SaveAsync(List<CustomDimensionScheme> schemes)
         {
             var filePath = Path.Combine(_schemeDirectory, "dimensions.json");
-            var json = JsonConvert.SerializeObject(schemes, Formatting.Indented);
-            await Task.Run(() => File.WriteAllText(filePath, json));
+            var json = JsonConvert.SerializeObject(schemes, _jsonSettings);
+            await Task.Run(() => File.WriteAllText(filePath, json, System.Text.Encoding.UTF8));
         }
 
         private void EnsureDirectoryExists()

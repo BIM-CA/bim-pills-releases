@@ -22,14 +22,21 @@ namespace BIMPills.Infrastructure.Persistence
             EnsureDirectoryExists();
         }
 
+        private static readonly JsonSerializerSettings _jsonSettings = new JsonSerializerSettings
+        {
+            TypeNameHandling = TypeNameHandling.None,
+            Formatting       = Formatting.Indented
+        };
+
         public async Task<List<SheetExportProfile>> GetAllAsync()
         {
             var filePath = Path.Combine(_profileDirectory, FileName);
             if (!File.Exists(filePath))
                 return new List<SheetExportProfile>();
 
-            var json = await Task.Run(() => File.ReadAllText(filePath));
-            return JsonConvert.DeserializeObject<List<SheetExportProfile>>(json) ?? new List<SheetExportProfile>();
+            var json = await Task.Run(() => File.ReadAllText(filePath, System.Text.Encoding.UTF8));
+            return JsonConvert.DeserializeObject<List<SheetExportProfile>>(json, _jsonSettings)
+                   ?? new List<SheetExportProfile>();
         }
 
         public async Task<SheetExportProfile?> GetByIdAsync(string profileId)
@@ -73,8 +80,8 @@ namespace BIMPills.Infrastructure.Persistence
         private async Task SaveAsync(List<SheetExportProfile> profiles)
         {
             var filePath = Path.Combine(_profileDirectory, FileName);
-            var json = JsonConvert.SerializeObject(profiles, Formatting.Indented);
-            await Task.Run(() => File.WriteAllText(filePath, json));
+            var json = JsonConvert.SerializeObject(profiles, _jsonSettings);
+            await Task.Run(() => File.WriteAllText(filePath, json, System.Text.Encoding.UTF8));
         }
 
         private void EnsureDirectoryExists()

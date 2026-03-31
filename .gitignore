@@ -14,8 +14,38 @@ project.lock.json
 ## OS
 .DS_Store
 Thumbs.db
+desktop.ini
 
 ## Logs
 *.log
 logs/
 installer/output/
+
+## Secrets & credentials — NEVER commit these
+.env
+.env.*
+.env.local
+*.pem
+*.pfx
+*.key
+*.p12
+*.cer
+credentials.*
+token.*
+secrets/
+appsettings.*.json
+local.settings.json
+launchSettings.json
+
+## IDE
+.idea/
+*.iml
+.vscode/settings.json
+.vscode/launch.json
+
+## Temporary / scratch files
+*.tmp
+*.bak
+*.swp
+*~
+README_STYLED.md
