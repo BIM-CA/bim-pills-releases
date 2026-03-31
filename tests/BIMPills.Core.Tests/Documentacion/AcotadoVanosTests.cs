@@ -264,6 +264,182 @@ namespace BIMPills.Core.Tests.Documentacion
         }
     }
 
+    // ── AcotadoVanosCommand — extended coverage ───────────────────────────────
+
+    public class AcotadoVanosCommandExtendedTests
+    {
+        [Fact]
+        public void Execute_ZeroDoors_StillSucceeds()
+        {
+            var docs = new FakeAcotadoDocServices { DoorCount = 0 };
+            var result = new AcotadoVanosCommand().Execute(new FakeAcotadoContext(docs));
+
+            Assert.True(result.Success);
+        }
+
+        [Fact]
+        public void Execute_ZeroGrids_StillSucceeds()
+        {
+            var docs = new FakeAcotadoDocServices { GridCount = 0 };
+            var result = new AcotadoVanosCommand().Execute(new FakeAcotadoContext(docs));
+
+            Assert.True(result.Success);
+        }
+
+        [Fact]
+        public void Execute_ZeroWalls_StillSucceeds()
+        {
+            var docs = new FakeAcotadoDocServices { WallCount = 0 };
+            var result = new AcotadoVanosCommand().Execute(new FakeAcotadoContext(docs));
+
+            Assert.True(result.Success);
+        }
+
+        [Fact]
+        public void Execute_SetsLastResultLevelCount()
+        {
+            var docs = new FakeAcotadoDocServices(); // GetArqLevelCount() = 3
+            new AcotadoVanosCommand().Execute(new FakeAcotadoContext(docs));
+
+            Assert.Equal(3, AcotadoVanosCommand.LastResult!.LevelCount);
+        }
+
+        [Fact]
+        public void Execute_MessageContainsLevelCount()
+        {
+            var docs = new FakeAcotadoDocServices(); // GetArqLevelCount() = 3
+            var result = new AcotadoVanosCommand().Execute(new FakeAcotadoContext(docs));
+
+            Assert.Contains("3", result.Message); // niveles ARQ
+        }
+
+        [Fact]
+        public void Execute_SetsLastResultActiveViewName()
+        {
+            var docs = new FakeAcotadoDocServices { ViewName = "Planta Baja - ARQ" };
+            new AcotadoVanosCommand().Execute(new FakeAcotadoContext(docs));
+
+            Assert.Equal("Planta Baja - ARQ", AcotadoVanosCommand.LastResult!.ActiveViewName);
+        }
+
+        [Fact]
+        public void Execute_OverridesLastResultOnSuccessiveRuns()
+        {
+            var docs1 = new FakeAcotadoDocServices { DoorCount = 2, ViewName = "Vista A" };
+            var docs2 = new FakeAcotadoDocServices { DoorCount = 7, ViewName = "Vista B" };
+
+            new AcotadoVanosCommand().Execute(new FakeAcotadoContext(docs1));
+            new AcotadoVanosCommand().Execute(new FakeAcotadoContext(docs2));
+
+            Assert.Equal(7, AcotadoVanosCommand.LastResult!.DoorCount);
+            Assert.Equal("Vista B", AcotadoVanosCommand.LastResult.ActiveViewName);
+        }
+
+        [Fact]
+        public void Execute_MultipleDimensionTypes_AllPopulated()
+        {
+            var dimTypes = new List<DimensionTypeInfo>
+            {
+                new DimensionTypeInfo(1, "Linear 2.5mm"),
+                new DimensionTypeInfo(2, "Linear 3.5mm"),
+                new DimensionTypeInfo(3, "Diagonal 2mm")
+            };
+            var docs = new FakeAcotadoDocServices { DimTypes = dimTypes };
+            new AcotadoVanosCommand().Execute(new FakeAcotadoContext(docs));
+
+            Assert.Equal(3, AcotadoVanosCommand.LastResult!.DimensionTypes.Count);
+        }
+    }
+
+    // ── AcotadoVanosData — extended coverage ──────────────────────────────────
+
+    public class AcotadoVanosDataExtendedTests
+    {
+        [Fact]
+        public void Constructor_WithLevelCount_SetsLevelCount()
+        {
+            var data = new AcotadoVanosData(5, new List<DimensionTypeInfo>(), "Vista", 4, 10, levelCount: 6);
+
+            Assert.Equal(6, data.LevelCount);
+        }
+
+        [Fact]
+        public void Constructor_LevelCountDefaultIsZero()
+        {
+            var data = new AcotadoVanosData(0, new List<DimensionTypeInfo>(), "Vista");
+
+            Assert.Equal(0, data.LevelCount);
+        }
+
+        [Fact]
+        public void Constructor_EmptyViewName_IsValid()
+        {
+            var data = new AcotadoVanosData(0, new List<DimensionTypeInfo>(), "");
+
+            Assert.Equal("", data.ActiveViewName);
+        }
+
+        [Fact]
+        public void Constructor_ZeroAllCounts_IsValid()
+        {
+            var data = new AcotadoVanosData(0, new List<DimensionTypeInfo>(), "Vista", 0, 0, 0);
+
+            Assert.Equal(0, data.DoorCount);
+            Assert.Equal(0, data.GridCount);
+            Assert.Equal(0, data.WallCount);
+            Assert.Equal(0, data.LevelCount);
+        }
+
+        [Fact]
+        public void AvailableSchemes_AllHaveNonEmptyNames()
+        {
+            foreach (var scheme in AcotadoVanosData.AvailableSchemes)
+            {
+                Assert.False(string.IsNullOrWhiteSpace(scheme.Name),
+                    $"Scheme '{scheme.Id}' has empty name");
+                Assert.False(string.IsNullOrWhiteSpace(scheme.Description),
+                    $"Scheme '{scheme.Id}' has empty description");
+            }
+        }
+
+        [Fact]
+        public void AvailableSchemes_IdsAreUnique()
+        {
+            var ids = new HashSet<string>();
+            foreach (var scheme in AcotadoVanosData.AvailableSchemes)
+                Assert.True(ids.Add(scheme.Id), $"Duplicate scheme id: {scheme.Id}");
+        }
+    }
+
+    // ── AcotadoVanosSettings — extended coverage ──────────────────────────────
+
+    public class AcotadoVanosSettingsExtendedTests
+    {
+        [Fact]
+        public void OffsetMm_NegativeValue_IsValid()
+        {
+            var s = new AcotadoVanosSettings { OffsetMm = -300 };
+            Assert.Equal(-300, s.OffsetMm);
+        }
+
+        [Fact]
+        public void OffsetMm_LargeValue_IsValid()
+        {
+            var s = new AcotadoVanosSettings { OffsetMm = 5000 };
+            Assert.Equal(5000, s.OffsetMm);
+        }
+
+        [Fact]
+        public void Scheme_AllAvailableIds_AreAssignable()
+        {
+            foreach (var scheme in AcotadoVanosData.AvailableSchemes)
+            {
+                var s = new AcotadoVanosSettings { Scheme = scheme.Id };
+                Assert.Equal(scheme.Id, s.Scheme);
+            }
+        }
+    }
+
     // ── Test doubles ─────────────────────────────────────────────────────────
 
     internal sealed class FakeAcotadoContext : ICommandContext

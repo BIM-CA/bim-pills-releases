@@ -19,75 +19,99 @@ namespace BIMPills.Revit.Commands.Ordering
 
         protected override void OnSuccess(IPluginCommand command)
         {
-            var uiApp = CommandData!.Application;
-            var doc   = uiApp.ActiveUIDocument.Document;
+            var uiApp  = CommandData!.Application;
+            var doc    = uiApp.ActiveUIDocument.Document;
+            var viewId = doc.ActiveView.Id;
 
-            // Categorías por tipo (Modelo / Anotación) — paso 1 del wizard
+            // ── Categorías filtradas por vista activa ────────────────────────────
+            // Sólo aparecen las categorías que tienen elementos presentes en la vista.
             Func<string, IReadOnlyList<string>> getCategoriesByType = type =>
             {
                 var catType = type == "Modelo" ? CategoryType.Model : CategoryType.Annotation;
-                var cats = doc.Settings.Categories
-                    .Cast<Category>()
-                    .Where(c => c.AllowsBoundParameters && c.CategoryType == catType)
-                    .Select(c => c.Name)
-                    .OrderBy(n => n)
-                    .Distinct()
-                    .ToList();
-
-                // Asegurar que Ejes (Grids) aparezca en Anotación aunque no esté en Settings
-                if (catType == CategoryType.Annotation &&
-                    !cats.Any(n => n.Equals("Ejes", StringComparison.OrdinalIgnoreCase) ||
-                                   n.Equals("Grids", StringComparison.OrdinalIgnoreCase)))
+                try
                 {
-                    cats.Insert(0, "Ejes");
-                }
+                    var cats = new FilteredElementCollector(doc, viewId)
+                        .WhereElementIsNotElementType()
+                        .Cast<Element>()
+                        .Where(e => e.Category?.CategoryType == catType)
+                        .Select(e => e.Category!.Name)
+                        .Distinct()
+                        .OrderBy(n => n)
+                        .ToList();
 
-                return cats;
+                    return cats;
+                }
+                catch
+                {
+                    // Fallback si la vista no admite colector (ej. tabla de planificación)
+                    return doc.Settings.Categories
+                        .Cast<Category>()
+                        .Where(c => c.CategoryType == catType &&
+                                    (catType == CategoryType.Annotation || c.AllowsBoundParameters))
+                        .Select(c => c.Name)
+                        .OrderBy(n => n)
+                        .ToList();
+                }
             };
 
-            // Parámetros por categoría — instancia + tipo, sin duplicados
+            // ── Parámetros editables — instancia + tipo, unión de todas las familias ─
+            // Se recorren TODOS los elementos de la categoría en la vista para reunir
+            // los parámetros de cada familia distinta; así no se pierde ningún campo.
             Func<string, IReadOnlyList<string>> getParams = categoryName =>
             {
                 try
                 {
-                    var cat = doc.Settings.Categories
-                        .Cast<Category>()
-                        .FirstOrDefault(c => c.Name.Equals(categoryName,
-                            StringComparison.OrdinalIgnoreCase));
-
-                    // Caso especial: Ejes / Grids
-                    if (cat == null &&
-                        (categoryName.Equals("Ejes", StringComparison.OrdinalIgnoreCase) ||
-                         categoryName.Equals("Grids", StringComparison.OrdinalIgnoreCase)))
-                    {
-                        var grid = new FilteredElementCollector(doc)
-                            .OfClass(typeof(Grid))
-                            .FirstElement();
-                        if (grid == null) return new List<string>();
-                        return CollectParameters(grid);
-                    }
-
-                    if (cat == null) return new List<string>();
-
-                    var elem = new FilteredElementCollector(doc)
-                        .OfCategoryId(cat.Id)
+                    // Elementos de la categoría en la vista activa
+                    var elemsInView = new FilteredElementCollector(doc, viewId)
                         .WhereElementIsNotElementType()
-                        .FirstElement();
-                    if (elem == null) return new List<string>();
+                        .Cast<Element>()
+                        .Where(e => e.Category?.Name.Equals(categoryName,
+                            StringComparison.OrdinalIgnoreCase) == true)
+                        .ToList();
 
-                    // Parámetros de instancia
-                    var paramNames = CollectParameters(elem);
-
-                    // Parámetros de tipo
-                    var typeElem = doc.GetElement(elem.GetTypeId());
-                    if (typeElem != null)
+                    // Fallback al documento completo si no hay nada en la vista
+                    if (elemsInView.Count == 0)
                     {
-                        foreach (var p in CollectParameters(typeElem))
-                            if (!paramNames.Contains(p))
-                                paramNames.Add(p);
+                        var cat = doc.Settings.Categories
+                            .Cast<Category>()
+                            .FirstOrDefault(c => c.Name.Equals(categoryName,
+                                StringComparison.OrdinalIgnoreCase));
+                        if (cat != null)
+                        {
+                            var fallbackElem = new FilteredElementCollector(doc)
+                                .OfCategoryId(cat.Id)
+                                .WhereElementIsNotElementType()
+                                .FirstElement();
+                            if (fallbackElem != null)
+                                elemsInView = new List<Element> { fallbackElem };
+                        }
                     }
 
-                    return paramNames.OrderBy(n => n).ToList();
+                    if (elemsInView.Count == 0) return new List<string>();
+
+                    // Acumular parámetros de instancia y tipo de cada familia distinta.
+                    // Se usa el TypeId como clave para no procesar la misma familia dos veces.
+                    var seen     = new HashSet<ElementId>();
+                    var allNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                    foreach (var elem in elemsInView)
+                    {
+                        // Parámetros de instancia (siempre, para cada elemento único)
+                        foreach (var p in CollectParameters(elem))
+                            allNames.Add(p);
+
+                        // Parámetros de tipo — uno por TypeId único
+                        var typeId = elem.GetTypeId();
+                        if (typeId != ElementId.InvalidElementId && seen.Add(typeId))
+                        {
+                            var typeElem = doc.GetElement(typeId);
+                            if (typeElem != null)
+                                foreach (var p in CollectParameters(typeElem))
+                                    allNames.Add(p);
+                        }
+                    }
+
+                    return allNames.OrderBy(n => n).ToList();
                 }
                 catch { return new List<string>(); }
             };

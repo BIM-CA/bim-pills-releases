@@ -28,6 +28,11 @@ namespace BIMPills.Revit.Application
         {
             try
             {
+                // 0. Assembly resolver — en .NET 8 el CLR no sondea el directorio del add-in
+                //    automáticamente; sin esto las DLLs de BIMPills no se encuentran al instanciar
+                //    ventanas WPF la primera vez.
+                RegisterAssemblyResolver();
+
                 // 1. Logger
                 var logDir = Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
@@ -126,6 +131,33 @@ namespace BIMPills.Revit.Application
             if (ServiceLocator.IsRegistered<ILogger>())
                 ServiceLocator.Get<ILogger>().Info("BIMPills cerrado.");
             return Result.Succeeded;
+        }
+
+        // ── Assembly resolver (solo Revit 2026 / .NET 8) ───────────────────────
+        // En .NET 8, Revit no agrega el directorio del add-in al probing path.
+        // Sin esto, cualquier DLL de BIMPills (BIMPills.UI, etc.) lanza
+        // FileNotFoundException al instanciarse por primera vez.
+        private static void RegisterAssemblyResolver()
+        {
+#if !REVIT2024          // Solo necesario en .NET 8 (2025/2026); .NET Framework lo resuelve solo
+            var addinDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? "";
+
+            AppDomain.CurrentDomain.AssemblyResolve += (_, args) =>
+            {
+                try
+                {
+                    var name = new AssemblyName(args.Name).Name;
+                    if (string.IsNullOrEmpty(name)) return null;
+
+                    var path = Path.Combine(addinDir, name + ".dll");
+                    return File.Exists(path) ? Assembly.LoadFrom(path) : null;
+                }
+                catch
+                {
+                    return null;
+                }
+            };
+#endif
         }
 
         // ── Registro de módulos ─────────────────────────────────────────────────
