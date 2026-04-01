@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore NuGet packages
+        run: dotnet restore
+
+      - name: Build Core
+        run: dotnet build src/BIMPills.Core/ -c Release --no-restore
+
+      - name: Build Commands
+        run: dotnet build src/BIMPills.Commands/ -c Release --no-restore
+
+      - name: Build Infrastructure
+        run: dotnet build src/BIMPills.Infrastructure/ -c Release --no-restore
+
+      # Note: BIMPills.Revit and BIMPills.UI depend on RevitAPI/WPF assemblies
+      # which are not available on CI runners — only testable projects are built.
+
+      - name: Run tests
+        run: dotnet test tests/BIMPills.Core.Tests/ -c Release --no-restore --logger "trx;LogFileName=test-results.trx"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: tests/BIMPills.Core.Tests/TestResults/test-results.trx

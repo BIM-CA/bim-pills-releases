@@ -8,17 +8,20 @@ using BIMPills.Commands.Gestion;
 using BIMPills.Commands.MCPIntegration;
 using BIMPills.Commands.ModelAudit;
 using BIMPills.Commands.Ordering;
+using BIMPills.Core.Licensing;
 using BIMPills.Core.Modules;
 using BIMPills.Core.Services;
 using BIMPills.Infrastructure.DI;
 using BIMPills.Infrastructure.Logging;
 using BIMPills.Infrastructure.Persistence;
+using BIMPills.Infrastructure.Licensing;
 using BIMPills.Infrastructure.Services;
 using BIMPills.Revit.Compatibility;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using System.Threading.Tasks;
 
 namespace BIMPills.Revit.Application
 {
@@ -55,13 +58,16 @@ namespace BIMPills.Revit.Application
                 ServiceLocator.Register<IMCPDiscoveryService>(new MCPDiscoveryService(new JsonMCPConnectionRepository()));
                 logger.Info("Servicios Sprint 2 registrados: IDimensionSchemeService, IMCPDiscoveryService");
 
-                // 4. Global exception handlers — prevent any BIMPills exception from crashing Revit
+                // 4. License service — validates against Airtable, caches locally (DPAPI)
+                RegisterLicenseService(logger);
+
+                // 5. Global exception handlers — prevent any BIMPills exception from crashing Revit
                 RegisterGlobalExceptionHandlers(logger);
 
-                // 5. Ribbon builder
+                // 6. Ribbon builder
                 var ribbon = new RibbonBuilder(app);
 
-                // 6. Load modules — add new modules here as the plugin grows
+                // 7. Load modules — add new modules here as the plugin grows
                 foreach (var module in GetModules())
                 {
                     logger.Info($"Cargando módulo: {module.GetType().Name} (Tab: {module.TabName}, Panel: {module.PanelName})");
@@ -124,6 +130,54 @@ namespace BIMPills.Revit.Application
                     // Swallow — we cannot let the handler itself throw
                 }
             };
+        }
+
+        /// <summary>
+        /// Registers the license service and triggers an async background validation.
+        /// Commands check the cached result synchronously via ILicenseService.IsValid.
+        /// </summary>
+        private static void RegisterLicenseService(ILogger logger)
+        {
+            var apiKey = AirtableConfig.LoadApiKey();
+            if (apiKey == null)
+            {
+                logger.Warning("Airtable API key no configurada — licencias deshabilitadas hasta activar.");
+                // Register a null-state service so commands can check IsValid (returns false)
+                var emptyService = new AirtableLicenseService("placeholder");
+                ServiceLocator.Register<ILicenseService>(emptyService);
+                return;
+            }
+
+            var cache = new LicenseCache();
+            var service = new AirtableLicenseService(apiKey, cache);
+            ServiceLocator.Register<ILicenseService>(service);
+
+            // Read cached license to check if re-validation is needed
+            var cached = cache.Load();
+            if (cached != null && cache.IsCacheFresh())
+            {
+                logger.Info($"Licencia en cache válida — Plan: {cached.Plan}, Estado: {cached.Status}");
+            }
+            else if (cached != null)
+            {
+                logger.Info("Cache de licencia expirado — revalidando en background...");
+                Task.Run(async () =>
+                {
+                    try
+                    {
+                        await service.ValidateAsync(cached.LicenseKey);
+                        logger.Info("Licencia revalidada contra Airtable.");
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.Warning($"No se pudo revalidar licencia: {ex.Message}");
+                    }
+                });
+            }
+            else
+            {
+                logger.Info("Sin licencia en cache — se requerirá activación.");
+            }
         }
 
         public Result OnShutdown(UIControlledApplication app)

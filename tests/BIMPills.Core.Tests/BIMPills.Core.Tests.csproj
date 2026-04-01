@@ -22,6 +22,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\BIMPills.Core\BIMPills.Core.csproj" />
     <ProjectReference Include="..\..\src\BIMPills.Commands\BIMPills.Commands.csproj" />
+    <ProjectReference Include="..\..\src\BIMPills.Infrastructure\BIMPills.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

@@ -78,8 +78,8 @@ namespace BIMPills.Core.Tests.About
             => new System.Collections.Generic.List<Audit.FamilyExportInfo>();
         public bool ExportFamily(long familyId, string destinationPath)
             => true;
-        public System.Collections.Generic.IReadOnlyList<Gestion.WorksetInfo> GetWorksets()
-            => new System.Collections.Generic.List<Gestion.WorksetInfo>();
+        public System.Collections.Generic.IReadOnlyList<BIMPills.Core.Gestion.WorksetInfo> GetWorksets()
+            => new System.Collections.Generic.List<BIMPills.Core.Gestion.WorksetInfo>();
         public bool CreateWorkset(string name) => true;
         public bool RenameWorkset(long worksetId, string newName) => true;
         public System.Collections.Generic.IReadOnlyList<BIMPills.Core.Documentacion.DimensionTypeInfo> GetDimensionTypes()

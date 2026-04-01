@@ -1,6 +1,7 @@
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using BIMPills.Core.Commands;
+using BIMPills.Core.Licensing;
 using BIMPills.Infrastructure.DI;
 using BIMPills.Core.Services;
 using BIMPills.Revit.Context;
@@ -41,6 +42,31 @@ namespace BIMPills.Revit.Commands
 
                 logger?.Info($"Iniciando comando: {GetType().Name}");
 
+                // License gate — block commands when license is fully expired
+                if (ServiceLocator.IsRegistered<ILicenseService>())
+                {
+                    var license = ServiceLocator.Get<ILicenseService>();
+                    if (license.IsGracePeriod)
+                    {
+                        var cached = license.GetCachedLicense();
+                        var daysLeft = cached?.ExpiresAt.HasValue == true
+                            ? Math.Max(0, 7 - (int)(DateTime.UtcNow - cached.ExpiresAt.Value).TotalDays)
+                            : 0;
+                        TaskDialog.Show("BIMPills",
+                            $"Tu licencia est\u00E1 en periodo de gracia ({daysLeft} d\u00EDas restantes).\n" +
+                            "Contacta soporte@bim-ca.com para renovar.");
+                    }
+                    else if (license.IsExpired)
+                    {
+                        TaskDialog.Show("BIMPills",
+                            "Tu licencia ha expirado.\n\n" +
+                            "Contacta soporte@bim-ca.com para renovar\n" +
+                            "o activa una nueva licencia desde Acerca de.");
+                        message = "Licencia expirada.";
+                        return Result.Cancelled;
+                    }
+                }
+
                 var context = new RevitCommandContext(commandData);
                 var command = CreateCommand();
                 var result  = command.Execute(context);
@@ -71,6 +97,11 @@ namespace BIMPills.Revit.Commands
 
                 logger?.Info($"Comando {GetType().Name} completado.");
                 return Result.Succeeded;
+            }
+            catch (OperationCanceledException)
+            {
+                logger?.Info($"Comando {GetType().Name} cancelado por el usuario.");
+                return Result.Cancelled;
             }
             catch (Exception ex)
             {

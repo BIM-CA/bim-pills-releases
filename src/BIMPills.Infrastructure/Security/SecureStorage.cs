@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -50,9 +51,15 @@ namespace BIMPills.Infrastructure.Security
                 result = Unprotect(value);
                 return true;
             }
-            catch
+            catch (CryptographicException)
             {
-                // Value is either plaintext (legacy) or encrypted by a different user/machine.
+                // Data was encrypted by a different user/machine.
+                result = value;
+                return false;
+            }
+            catch (FormatException)
+            {
+                // Value is not valid Base64 — likely legacy plaintext.
                 result = value;
                 return false;
             }
