@@ -17,7 +17,7 @@ namespace BIMPills.Infrastructure.Licensing
     {
         private const string BaseId = "app7VyLuZOE0akwDw";
         private const string TableId = "tblaCoF8RCnf8hky8";
-        private const string SoftwareName = "BIM PILLS";
+        private const string SoftwarePrefix = "BIM Pills";   // matches "BIM Pills Pro - Mensual", "BIM Pills Pro - Anual", "BIM Pills Pro - Colaborador"
         private const int GracePeriodDays = 7;
 
         private readonly LicenseCache _cache;
@@ -107,7 +107,7 @@ namespace BIMPills.Infrastructure.Licensing
 
             try
             {
-                var formula = Uri.EscapeDataString($"AND({{License Key}}=\"{licenseKey}\",{{Software}}=\"{SoftwareName}\")");
+                var formula = Uri.EscapeDataString($"{{License Key}}=\"{licenseKey}\"");
                 var url = $"https://api.airtable.com/v0/{BaseId}/{TableId}?filterByFormula={formula}&maxRecords=1";
 
                 var request = new HttpRequestMessage(HttpMethod.Get, url);
@@ -127,6 +127,11 @@ namespace BIMPills.Infrastructure.Licensing
                 var fields = record["fields"];
                 if (fields == null) return null;
 
+                // Validate this is a BIM Pills license (not a record from another product in the same base)
+                var software = fields["Software"]?.ToString() ?? "";
+                if (!software.StartsWith(SoftwarePrefix, StringComparison.OrdinalIgnoreCase))
+                    return null;
+
                 var status = fields["Estado Suscripci\u00F3n"]?.ToString() ?? "";
                 var remoteMachineId = fields["Machine ID"]?.ToString() ?? "";
 
@@ -137,7 +142,7 @@ namespace BIMPills.Infrastructure.Licensing
                 var license = new LicenseInfo
                 {
                     LicenseKey = licenseKey,
-                    Software = SoftwareName,
+                    Software = software,
                     Plan = fields["Plan"]?.ToString() ?? "",
                     Status = status,
                     ExpiresAt = fields["Fecha Vencimiento"]?.Type == JTokenType.Date
@@ -167,7 +172,7 @@ namespace BIMPills.Infrastructure.Licensing
             try
             {
                 // First validate the key exists
-                var formula = Uri.EscapeDataString($"AND({{License Key}}=\"{licenseKey}\",{{Software}}=\"{SoftwareName}\")");
+                var formula = Uri.EscapeDataString($"{{License Key}}=\"{licenseKey}\"");
                 var url = $"https://api.airtable.com/v0/{BaseId}/{TableId}?filterByFormula={formula}&maxRecords=1";
 
                 var request = new HttpRequestMessage(HttpMethod.Get, url);
@@ -186,6 +191,11 @@ namespace BIMPills.Infrastructure.Licensing
                 var recordId = record["id"]?.ToString();
                 var fields = record["fields"];
                 if (fields == null || recordId == null) return false;
+
+                // Validate this is a BIM Pills license
+                var softwareValue = fields["Software"]?.ToString() ?? "";
+                if (!softwareValue.StartsWith(SoftwarePrefix, StringComparison.OrdinalIgnoreCase))
+                    return false;
 
                 var remoteMachineId = fields["Machine ID"]?.ToString() ?? "";
                 var status = fields["Estado Suscripci\u00F3n"]?.ToString() ?? "";
@@ -222,7 +232,7 @@ namespace BIMPills.Infrastructure.Licensing
                 var license = new LicenseInfo
                 {
                     LicenseKey = licenseKey,
-                    Software = SoftwareName,
+                    Software = softwareValue,
                     Plan = fields["Plan"]?.ToString() ?? "",
                     Status = status,
                     ExpiresAt = ParseDate(fields["Fecha Vencimiento"]?.ToString()),
