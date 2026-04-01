@@ -11,39 +11,11 @@ namespace BIMPills.UI.Licensing
 {
     public partial class LicenseActivationWindow : Window
     {
-        private bool _apiKeyAlreadyConfigured;
-
         public bool LicenseActivated { get; private set; }
 
         public LicenseActivationWindow()
         {
             InitializeComponent();
-            ConfigureApiKeyVisibility();
-        }
-
-        private void ConfigureApiKeyVisibility()
-        {
-            _apiKeyAlreadyConfigured = AirtableConfig.HasApiKey();
-
-            if (_apiKeyAlreadyConfigured)
-            {
-                ApiKeyPanel.Visibility = Visibility.Collapsed;
-                ApiKeyConfiguredBadge.Visibility = Visibility.Visible;
-            }
-            else
-            {
-                ApiKeyPanel.Visibility = Visibility.Visible;
-                ApiKeyConfiguredBadge.Visibility = Visibility.Collapsed;
-            }
-        }
-
-        private void ChangeApiKey_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
-        {
-            _apiKeyAlreadyConfigured = false;
-            TxtApiKey.Password = "";
-            ApiKeyPanel.Visibility = Visibility.Visible;
-            ApiKeyConfiguredBadge.Visibility = Visibility.Collapsed;
-            TxtApiKey.Focus();
         }
 
         private async void Activate_Click(object sender, RoutedEventArgs e)
@@ -57,34 +29,15 @@ namespace BIMPills.UI.Licensing
                 return;
             }
 
-            string apiKey;
-            if (_apiKeyAlreadyConfigured)
-            {
-                apiKey = AirtableConfig.LoadApiKey() ?? "";
-            }
-            else
-            {
-                apiKey = TxtApiKey.Password.Trim();
-                if (string.IsNullOrWhiteSpace(apiKey))
-                {
-                    ShowStatus("Ingresa tu Airtable API Key.", isError: true);
-                    TxtApiKey.Focus();
-                    return;
-                }
-            }
-
             BtnActivate.IsEnabled = false;
             BtnActivate.Content = "Validando...";
-            ShowStatus("Conectando con el servidor de licencias...", isError: false, isInfo: true);
+            ShowStatus("Conectando con el servidor de licencias...", isInfo: true);
 
             try
             {
-                if (!_apiKeyAlreadyConfigured)
-                    AirtableConfig.SaveApiKey(apiKey);
-
                 var machineId = MachineIdProvider.GetMachineId();
                 var cache = new LicenseCache();
-                var service = new AirtableLicenseService(apiKey, cache);
+                var service = new AirtableLicenseService(cache);
 
                 var success = await Task.Run(() => service.ActivateAsync(licenseKey, machineId));
 
@@ -104,7 +57,7 @@ namespace BIMPills.UI.Licensing
                     if (!string.IsNullOrEmpty(expiry))
                         msg += $" · Vence: {expiry}";
 
-                    ShowStatus(msg, isError: false, isSuccess: true);
+                    ShowStatus(msg, isSuccess: true);
 
                     await Task.Delay(1500);
                     DialogResult = true;

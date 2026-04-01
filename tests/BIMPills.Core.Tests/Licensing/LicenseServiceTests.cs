@@ -148,8 +148,10 @@ namespace BIMPills.Core.Tests.Licensing
                 var cache = new LicenseCache(tempDir);
                 var service = new AirtableLicenseService("fake-key", cache);
 
+                // No cache = never activated, not "expired"
                 Assert.False(service.IsValid);
-                Assert.True(service.IsExpired);
+                Assert.False(service.IsActivated);
+                Assert.False(service.IsExpired);
                 Assert.False(service.IsGracePeriod);
             }
             finally

@@ -12,9 +12,9 @@ using BIMPills.Core.Licensing;
 using BIMPills.Core.Modules;
 using BIMPills.Core.Services;
 using BIMPills.Infrastructure.DI;
+using BIMPills.Infrastructure.Licensing;
 using BIMPills.Infrastructure.Logging;
 using BIMPills.Infrastructure.Persistence;
-using BIMPills.Infrastructure.Licensing;
 using BIMPills.Infrastructure.Services;
 using BIMPills.Revit.Compatibility;
 using System;
@@ -138,21 +138,10 @@ namespace BIMPills.Revit.Application
         /// </summary>
         private static void RegisterLicenseService(ILogger logger)
         {
-            var apiKey = AirtableConfig.LoadApiKey();
-            if (apiKey == null)
-            {
-                logger.Warning("Airtable API key no configurada — licencias deshabilitadas hasta activar.");
-                // Register a null-state service so commands can check IsValid (returns false)
-                var emptyService = new AirtableLicenseService("placeholder");
-                ServiceLocator.Register<ILicenseService>(emptyService);
-                return;
-            }
-
             var cache = new LicenseCache();
-            var service = new AirtableLicenseService(apiKey, cache);
+            var service = new AirtableLicenseService(cache);
             ServiceLocator.Register<ILicenseService>(service);
 
-            // Read cached license to check if re-validation is needed
             var cached = cache.Load();
             if (cached != null && cache.IsCacheFresh())
             {
@@ -176,7 +165,7 @@ namespace BIMPills.Revit.Application
             }
             else
             {
-                logger.Info("Sin licencia en cache — se requerirá activación.");
+                logger.Info("Sin licencia en cache — se requerirá activación al primer uso.");
             }
         }
 

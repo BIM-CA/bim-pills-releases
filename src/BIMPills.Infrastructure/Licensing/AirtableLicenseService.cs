@@ -20,13 +20,43 @@ namespace BIMPills.Infrastructure.Licensing
         private const string SoftwarePrefix = "BIM Pills";   // matches "BIM Pills Pro - Mensual", "BIM Pills Pro - Anual", "BIM Pills Pro - Colaborador"
         private const int GracePeriodDays = 7;
 
+        // Airtable read/write token — XOR-obfuscated so it doesn't appear as plaintext
+        // in the compiled binary. Key = { 'B','I','M' } (0x42,0x49,0x4D).
+        // To rotate: re-run the XOR transform on the new token and update _tokenData.
+        private static readonly byte[] _xorKey = { 0x42, 0x49, 0x4D };
+        private static readonly byte[] _tokenData =
+        {
+            0x32,0x28,0x39,0x2A,0x0D,0x19,0x2A,0x38,0x1C,0x0A,0x38,0x1C,0x16,0x79,0x1F,0x21,
+            0x22,0x63,0x7A,0x70,0x7E,0x75,0x7F,0x7D,0x71,0x2F,0x2E,0x20,0x7E,0x2C,0x76,0x7E,
+            0x7F,0x77,0x2A,0x7E,0x71,0x7D,0x2C,0x74,0x79,0x2B,0x75,0x7A,0x7C,0x77,0x78,0x79,
+            0x76,0x2B,0x7F,0x74,0x2A,0x2E,0x76,0x7D,0x74,0x26,0x7F,0x28,0x24,0x79,0x7C,0x70,
+            0x2D,0x29,0x7A,0x2A,0x2F,0x7B,0x7E,0x29,0x21,0x2C,0x7D,0x24,0x79,0x7F,0x7B,0x7D,
+            0x7E,0x21
+        };
+
+        private static string ResolveToken()
+        {
+            var chars = new char[_tokenData.Length];
+            for (int i = 0; i < _tokenData.Length; i++)
+                chars[i] = (char)(_tokenData[i] ^ _xorKey[i % _xorKey.Length]);
+            return new string(chars);
+        }
+
         private readonly LicenseCache _cache;
         private readonly string _apiKey;
         private readonly string _machineId;
 
         private static readonly HttpClient _http = new HttpClient();
 
-        public AirtableLicenseService(string apiKey, LicenseCache? cache = null)
+        public AirtableLicenseService(LicenseCache? cache = null)
+        {
+            _apiKey = ResolveToken();
+            _cache = cache ?? new LicenseCache();
+            _machineId = MachineIdProvider.GetMachineId();
+        }
+
+        // Constructor for tests — allows injecting a custom key
+        internal AirtableLicenseService(string apiKey, LicenseCache? cache = null)
         {
             _apiKey = apiKey ?? throw new ArgumentNullException(nameof(apiKey));
             _cache = cache ?? new LicenseCache();
