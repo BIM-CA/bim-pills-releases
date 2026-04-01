@@ -16,6 +16,11 @@ namespace BIMPills.Revit.Commands
         protected abstract IPluginCommand CreateCommand();
 
         /// <summary>
+        /// Override to false in commands that must run regardless of license state (e.g. About).
+        /// </summary>
+        protected virtual bool RequiresLicense => true;
+
+        /// <summary>
         /// The ExternalCommandData from the current execution.
         /// Available during and after Execute (including OnSuccess).
         /// </summary>
@@ -42,28 +47,43 @@ namespace BIMPills.Revit.Commands
 
                 logger?.Info($"Iniciando comando: {GetType().Name}");
 
-                // License gate — block commands when license is fully expired
-                if (ServiceLocator.IsRegistered<ILicenseService>())
+                // License gate — skip for commands that explicitly opt out (e.g. About)
+                if (RequiresLicense && ServiceLocator.IsRegistered<ILicenseService>())
                 {
                     var license = ServiceLocator.Get<ILicenseService>();
-                    if (license.IsGracePeriod)
+
+                    if (!license.IsActivated)
+                    {
+                        // Never activated — show activation window
+                        var dlg = new BIMPills.UI.Licensing.LicenseActivationWindow();
+                        dlg.ShowDialog();
+                        if (!dlg.LicenseActivated)
+                        {
+                            message = "Se requiere una licencia activa para usar BIMPills.";
+                            return Result.Cancelled;
+                        }
+                        // Re-read license after activation
+                    }
+                    else if (license.IsGracePeriod)
                     {
                         var cached = license.GetCachedLicense();
                         var daysLeft = cached?.ExpiresAt.HasValue == true
                             ? Math.Max(0, 7 - (int)(DateTime.UtcNow - cached.ExpiresAt.Value).TotalDays)
                             : 0;
-                        TaskDialog.Show("BIMPills",
-                            $"Tu licencia est\u00E1 en periodo de gracia ({daysLeft} d\u00EDas restantes).\n" +
-                            "Contacta soporte@bim-ca.com para renovar.");
+                        TaskDialog.Show("BIMPills — Licencia por vencer",
+                            $"Tu licencia est\u00E1 en periodo de gracia.\n" +
+                            $"Quedan {daysLeft} d\u00EDa(s) para el bloqueo.\n\n" +
+                            "Renueva desde BIMPills \u2192 Acerca de.");
                     }
                     else if (license.IsExpired)
                     {
-                        TaskDialog.Show("BIMPills",
-                            "Tu licencia ha expirado.\n\n" +
-                            "Contacta soporte@bim-ca.com para renovar\n" +
-                            "o activa una nueva licencia desde Acerca de.");
-                        message = "Licencia expirada.";
-                        return Result.Cancelled;
+                        var dlg = new BIMPills.UI.Licensing.LicenseActivationWindow();
+                        dlg.ShowDialog();
+                        if (!dlg.LicenseActivated)
+                        {
+                            message = "Licencia expirada. Activa una licencia v\u00E1lida para continuar.";
+                            return Result.Cancelled;
+                        }
                     }
                 }
 

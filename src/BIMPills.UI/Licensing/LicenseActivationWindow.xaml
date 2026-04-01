@@ -2,10 +2,11 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="BIMPills — Activar Licencia"
-        Width="440" Height="340"
+        Width="460" Height="Auto"
+        SizeToContent="Height"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterScreen"
-        Background="#F0F0F0"
+        Background="#F5F6FA"
         UseLayoutRounding="True"
         SnapsToDevicePixels="True">
 
@@ -14,99 +15,181 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="/BIMPills.UI;component/Shared/Styles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
+            <BooleanToVisibilityConverter x:Key="BoolToVis"/>
         </ResourceDictionary>
     </Window.Resources>
 
-    <StackPanel Margin="28,20,28,16">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <!-- Header azul -->
+            <RowDefinition Height="Auto"/>
+            <!-- Contenido -->
+        </Grid.RowDefinitions>
 
-        <!-- Header -->
-        <Image Source="/BIMPills.UI;component/Resources/pill-icon.png"
-               Width="36" Height="56"
-               Margin="0,0,0,8"
-               HorizontalAlignment="Center"
-               RenderOptions.BitmapScalingMode="HighQuality"/>
+        <!-- ── Header ─────────────────────────────────────── -->
+        <Border Grid.Row="0" Background="{StaticResource PrimaryBrush}" Padding="28,20,28,20">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <Image Source="/BIMPills.UI;component/Resources/pill-icon.png"
+                       Width="32" Height="50"
+                       Margin="0,0,14,0"
+                       RenderOptions.BitmapScalingMode="HighQuality"
+                       VerticalAlignment="Center"/>
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="BIMPills"
+                               FontSize="18" FontWeight="Bold"
+                               Foreground="White"
+                               FontFamily="Segoe UI"/>
+                    <TextBlock Text="Activación de Licencia"
+                               FontSize="12"
+                               Foreground="#B3D4FF"
+                               FontFamily="Segoe UI"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
 
-        <TextBlock Text="Activar Licencia"
-                   FontSize="20" FontWeight="SemiBold"
-                   Foreground="{StaticResource PrimaryBrush}"
-                   HorizontalAlignment="Center"
-                   FontFamily="Segoe UI"/>
+        <!-- ── Contenido ───────────────────────────────────── -->
+        <StackPanel Grid.Row="1" Margin="28,20,28,24">
 
-        <TextBlock Text="Ingresa tu License Key para activar BIMPills en esta máquina."
-                   FontSize="12"
-                   Foreground="{StaticResource TextSecondaryBrush}"
-                   HorizontalAlignment="Center"
-                   Margin="0,4,0,16"
-                   TextWrapping="Wrap"
-                   TextAlignment="Center"
-                   FontFamily="Segoe UI"/>
+            <!-- Subtítulo -->
+            <TextBlock x:Name="SubtitleText"
+                       Text="Ingresa tu License Key para activar BIMPills en esta máquina."
+                       FontSize="12"
+                       Foreground="{StaticResource TextSecondaryBrush}"
+                       TextWrapping="Wrap"
+                       Margin="0,0,0,18"
+                       FontFamily="Segoe UI"/>
 
-        <!-- License Key input -->
-        <Border Style="{StaticResource CardBorder}" Margin="0,0,0,8">
-            <StackPanel>
-                <TextBlock Text="License Key"
-                           Style="{StaticResource CaptionText}"
-                           Margin="0,0,0,6"/>
+            <!-- License Key -->
+            <TextBlock Text="LICENSE KEY"
+                       FontSize="10" FontWeight="SemiBold"
+                       Foreground="{StaticResource TextSecondaryBrush}"
+
+                       Margin="0,0,0,6"
+                       FontFamily="Segoe UI"/>
+            <Border Background="White"
+                    BorderBrush="#DDE1EA"
+                    BorderThickness="1"
+                    CornerRadius="4"
+                    Margin="0,0,0,14">
                 <TextBox x:Name="TxtLicenseKey"
-                         FontSize="14"
+                         FontSize="13"
                          FontFamily="Consolas"
-                         Padding="8,6"
-                         MaxLength="64"/>
+                         Padding="10,8"
+                         BorderThickness="0"
+                         Background="Transparent"
+                         MaxLength="64"
+                         ToolTip="UUID de tu licencia (formato: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)"/>
+            </Border>
+
+            <!-- API Key (solo si no está configurada) -->
+            <StackPanel x:Name="ApiKeyPanel" Visibility="Collapsed" Margin="0,0,0,14">
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                    <TextBlock Text="AIRTABLE API KEY"
+                               FontSize="10" FontWeight="SemiBold"
+                               Foreground="{StaticResource TextSecondaryBrush}"
+        
+                               FontFamily="Segoe UI"/>
+                    <TextBlock Text=" (solo se pide una vez)"
+                               FontSize="10"
+                               Foreground="#A0A8BB"
+                               FontFamily="Segoe UI"/>
+                </StackPanel>
+                <Border Background="White"
+                        BorderBrush="#DDE1EA"
+                        BorderThickness="1"
+                        CornerRadius="4">
+                    <PasswordBox x:Name="TxtApiKey"
+                                 FontSize="13"
+                                 FontFamily="Consolas"
+                                 Padding="10,8"
+                                 BorderThickness="0"
+                                 Background="Transparent"
+                                 MaxLength="200"/>
+                </Border>
             </StackPanel>
-        </Border>
 
-        <!-- Airtable API Key input -->
-        <Border Style="{StaticResource CardBorder}" Margin="0,0,0,12">
-            <StackPanel>
-                <TextBlock Text="Airtable API Key"
-                           Style="{StaticResource CaptionText}"
-                           Margin="0,0,0,6"/>
-                <PasswordBox x:Name="TxtApiKey"
-                             FontSize="13"
-                             FontFamily="Consolas"
-                             Padding="8,6"
-                             MaxLength="128"/>
-            </StackPanel>
-        </Border>
+            <!-- API Key ya configurada (badge) -->
+            <Border x:Name="ApiKeyConfiguredBadge"
+                    Background="#EBF5EB"
+                    BorderBrush="#C3E6C3"
+                    BorderThickness="1"
+                    CornerRadius="4"
+                    Padding="10,6"
+                    Margin="0,0,0,14"
+                    Visibility="Collapsed">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="✓ "
+                               FontSize="12"
+                               Foreground="#2E7D32"
+                               FontFamily="Segoe UI"/>
+                    <TextBlock Text="API Key configurada"
+                               FontSize="12"
+                               Foreground="#2E7D32"
+                               FontFamily="Segoe UI"/>
+                    <TextBlock Text=" · "
+                               FontSize="12"
+                               Foreground="#A5C8A5"
+                               FontFamily="Segoe UI"/>
+                    <TextBlock x:Name="BtnChangeApiKey"
+                               Text="Cambiar"
+                               FontSize="12"
+                               Foreground="{StaticResource AccentBrush}"
+                               Cursor="Hand"
+                               FontFamily="Segoe UI"
+                               MouseLeftButtonUp="ChangeApiKey_Click"/>
+                </StackPanel>
+            </Border>
 
-        <!-- Status message -->
-        <TextBlock x:Name="StatusText"
-                   FontSize="12"
-                   Foreground="{StaticResource TextSecondaryBrush}"
-                   HorizontalAlignment="Center"
-                   Margin="0,0,0,12"
-                   TextWrapping="Wrap"
-                   TextAlignment="Center"
-                   FontFamily="Segoe UI"/>
+            <!-- Status -->
+            <Border x:Name="StatusBorder"
+                    CornerRadius="4"
+                    Padding="10,8"
+                    Margin="0,0,0,16"
+                    Visibility="Collapsed">
+                <TextBlock x:Name="StatusText"
+                           FontSize="12"
+                           TextWrapping="Wrap"
+                           FontFamily="Segoe UI"/>
+            </Border>
 
-        <!-- Buttons -->
-        <Grid>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="8"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
+            <!-- Botones -->
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="10"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
 
-            <Button Grid.Column="0"
-                    Content="Activar"
-                    Style="{StaticResource PrimaryButton}"
-                    Click="Activate_Click"
-                    x:Name="BtnActivate"/>
+                <Button Grid.Column="0"
+                        x:Name="BtnActivate"
+                        Content="Activar licencia"
+                        Style="{StaticResource PrimaryButton}"
+                        Click="Activate_Click"
+                        Height="36"/>
 
-            <Button Grid.Column="2"
-                    Content="Cancelar"
-                    Style="{StaticResource SecondaryButton}"
-                    IsCancel="True"
-                    Click="Cancel_Click"/>
-        </Grid>
+                <Button Grid.Column="2"
+                        Content="Cancelar"
+                        Style="{StaticResource SecondaryButton}"
+                        IsCancel="True"
+                        Height="36"
+                        MinWidth="90"
+                        Click="Cancel_Click"/>
+            </Grid>
 
-        <!-- Buy link -->
-        <TextBlock HorizontalAlignment="Center" Margin="0,10,0,0">
-            <Hyperlink x:Name="BuyLink" Click="Buy_Click">
-                <Run Text="¿No tienes licencia? Compra aquí"
-                     FontSize="11" FontFamily="Segoe UI"/>
-            </Hyperlink>
-        </TextBlock>
+            <!-- Comprar link -->
+            <TextBlock HorizontalAlignment="Center" Margin="0,14,0,0">
+                <Run Text="¿No tienes licencia? "
+                     FontSize="11"
+                     Foreground="{StaticResource TextSecondaryBrush}"
+                     FontFamily="Segoe UI"/>
+                <Hyperlink Click="Buy_Click" TextDecorations="Underline">
+                    <Run Text="Obtén una en bim-ca.com"
+                         FontSize="11"
+                         FontFamily="Segoe UI"/>
+                </Hyperlink>
+            </TextBlock>
 
-    </StackPanel>
+        </StackPanel>
+    </Grid>
 </Window>

@@ -10,5 +10,6 @@ namespace BIMPills.Core.Licensing
         bool IsValid { get; }
         bool IsExpired { get; }
         bool IsGracePeriod { get; }
+        bool IsActivated { get; }  // true si hay alguna licencia cacheada (activada alguna vez)
     }
 }

@@ -56,12 +56,14 @@ namespace BIMPills.Infrastructure.Licensing
             }
         }
 
+        public bool IsActivated => _cache.Load() != null;
+
         public bool IsExpired
         {
             get
             {
                 var license = _cache.Load();
-                if (license == null) return true;
+                if (license == null) return false;  // nunca activada — no "expirada", solo sin activar
                 if (license.Status == "Activo") return false;
                 if (license.Status == "Grace Period") return false;
 
