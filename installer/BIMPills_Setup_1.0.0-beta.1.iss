@@ -160,12 +160,14 @@ Source: "{#BinDir2024}\Newtonsoft.Json.dll";                  DestDir: "{userapp
 Source: "{#BinDir2024}\RBush.dll";                            DestDir: "{userappdata}\Autodesk\Revit\Addins\2024\BIMPills"; Flags: ignoreversion; Components: revit2024
 Source: "{#BinDir2024}\SixLabors.Fonts.dll";                  DestDir: "{userappdata}\Autodesk\Revit\Addins\2024\BIMPills"; Flags: ignoreversion; Components: revit2024
 
-; Polyfills .NET Framework 4.8 (requeridos por ClosedXML y DocumentFormat.OpenXml en net48)
+; Polyfills .NET Framework 4.8 (requeridos por ClosedXML, DocumentFormat.OpenXml y DPAPI en net48)
 Source: "{#BinDir2024}\Microsoft.Bcl.HashCode.dll";                    DestDir: "{userappdata}\Autodesk\Revit\Addins\2024\BIMPills"; Flags: ignoreversion; Components: revit2024
 Source: "{#BinDir2024}\System.Buffers.dll";                            DestDir: "{userappdata}\Autodesk\Revit\Addins\2024\BIMPills"; Flags: ignoreversion; Components: revit2024
+Source: "{#BinDir2024}\System.CodeDom.dll";                            DestDir: "{userappdata}\Autodesk\Revit\Addins\2024\BIMPills"; Flags: ignoreversion; Components: revit2024
 Source: "{#BinDir2024}\System.Memory.dll";                             DestDir: "{userappdata}\Autodesk\Revit\Addins\2024\BIMPills"; Flags: ignoreversion; Components: revit2024
 Source: "{#BinDir2024}\System.Numerics.Vectors.dll";                   DestDir: "{userappdata}\Autodesk\Revit\Addins\2024\BIMPills"; Flags: ignoreversion; Components: revit2024
 Source: "{#BinDir2024}\System.Runtime.CompilerServices.Unsafe.dll";    DestDir: "{userappdata}\Autodesk\Revit\Addins\2024\BIMPills"; Flags: ignoreversion; Components: revit2024
+Source: "{#BinDir2024}\System.Security.Cryptography.ProtectedData.dll"; DestDir: "{userappdata}\Autodesk\Revit\Addins\2024\BIMPills"; Flags: ignoreversion; Components: revit2024
 
 ; Símbolos de depuración 2024
 Source: "{#BinDir2024}\BIMPills.Revit.pdb";         DestDir: "{userappdata}\Autodesk\Revit\Addins\2024\BIMPills"; Flags: ignoreversion skipifsourcedoesntexist; Components: revit2024

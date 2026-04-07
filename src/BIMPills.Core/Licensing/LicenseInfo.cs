@@ -12,5 +12,6 @@ namespace BIMPills.Core.Licensing
         public string MachineId { get; set; } = "";
         public string HolderName { get; set; } = "";
         public DateTime ValidatedAt { get; set; }
+        public string AirtableRecordId { get; set; } = "";
     }
 }

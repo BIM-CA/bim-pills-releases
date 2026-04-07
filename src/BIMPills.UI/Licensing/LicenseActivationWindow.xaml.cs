@@ -109,6 +109,6 @@ namespace BIMPills.UI.Licensing
         private void Cancel_Click(object sender, RoutedEventArgs e) => Close();
 
         private void Buy_Click(object sender, RoutedEventArgs e)
-            => ProcessHelper.OpenUrl("https://bim-ca.com");
+            => ProcessHelper.OpenUrl("https://app.recurrente.com/s/prototype-s-a?category=ca_heoljscz");
     }
 }

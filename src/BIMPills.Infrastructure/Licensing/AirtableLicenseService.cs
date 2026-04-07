@@ -173,16 +173,17 @@ namespace BIMPills.Infrastructure.Licensing
 
                 var license = new LicenseInfo
                 {
-                    LicenseKey = licenseKey,
-                    Software = software,
-                    Plan = fields["Plan"]?.ToString() ?? "",
-                    Status = status,
-                    ExpiresAt = fields["Fecha Vencimiento"]?.Type == JTokenType.Date
+                    LicenseKey       = licenseKey,
+                    Software         = software,
+                    Plan             = fields["Plan"]?.ToString() ?? "",
+                    Status           = status,
+                    ExpiresAt        = fields["Fecha Vencimiento"]?.Type == JTokenType.Date
                         ? fields["Fecha Vencimiento"]?.ToObject<DateTime>()
                         : ParseDate(fields["Fecha Vencimiento"]?.ToString()),
-                    MachineId = _machineId,
-                    HolderName = fields["Nombre Completo"]?.ToString() ?? "",
-                    ValidatedAt = DateTime.UtcNow
+                    MachineId        = _machineId,
+                    HolderName       = ParseStringField(fields["Nombre Completo"]),
+                    ValidatedAt      = DateTime.UtcNow,
+                    AirtableRecordId = recordId ?? ""
                 };
 
                 _cache.Save(license);
@@ -263,14 +264,15 @@ namespace BIMPills.Infrastructure.Licensing
                 // Cache locally
                 var license = new LicenseInfo
                 {
-                    LicenseKey = licenseKey,
-                    Software = softwareValue,
-                    Plan = fields["Plan"]?.ToString() ?? "",
-                    Status = status,
-                    ExpiresAt = ParseDate(fields["Fecha Vencimiento"]?.ToString()),
-                    MachineId = machineId,
-                    HolderName = fields["Nombre Completo"]?.ToString() ?? "",
-                    ValidatedAt = DateTime.UtcNow
+                    LicenseKey       = licenseKey,
+                    Software         = softwareValue,
+                    Plan             = fields["Plan"]?.ToString() ?? "",
+                    Status           = status,
+                    ExpiresAt        = ParseDate(fields["Fecha Vencimiento"]?.ToString()),
+                    MachineId        = machineId,
+                    HolderName       = ParseStringField(fields["Nombre Completo"]),
+                    ValidatedAt      = DateTime.UtcNow,
+                    AirtableRecordId = recordId ?? ""
                 };
                 _cache.Save(license);
 
@@ -279,6 +281,46 @@ namespace BIMPills.Infrastructure.Licensing
             catch
             {
                 return false;
+            }
+        }
+
+        /// <summary>
+        /// Clears the Machine ID binding in Airtable and deletes the local cache,
+        /// allowing the license key to be activated on a different machine.
+        /// </summary>
+        public async Task<bool> DeactivateAsync()
+        {
+            try
+            {
+                var cached = _cache.Load();
+
+                // Clear local cache first regardless of network result
+                _cache.Clear();
+
+                if (cached == null || string.IsNullOrEmpty(cached.AirtableRecordId))
+                    return true; // Nothing to deregister remotely
+
+                var patchUrl = $"https://api.airtable.com/v0/{BaseId}/{TableId}/{cached.AirtableRecordId}";
+                var patchBody = new JObject
+                {
+                    ["fields"] = new JObject
+                    {
+                        ["Machine ID"] = ""
+                    }
+                };
+
+                var request = new HttpRequestMessage(new HttpMethod("PATCH"), patchUrl)
+                {
+                    Content = new StringContent(patchBody.ToString(), Encoding.UTF8, "application/json")
+                };
+                request.Headers.Add("Authorization", $"Bearer {_apiKey}");
+
+                var response = await _http.SendAsync(request);
+                return response.IsSuccessStatusCode;
+            }
+            catch
+            {
+                return true; // Cache is already cleared — consider it success
             }
         }
 
@@ -307,6 +349,20 @@ namespace BIMPills.Infrastructure.Licensing
             {
                 // Best-effort update, don't fail the validation
             }
+        }
+
+        /// <summary>
+        /// Reads a field that may be a plain string or a Airtable lookup array (["value"]).
+        /// </summary>
+        private static string ParseStringField(JToken? token)
+        {
+            if (token == null) return "";
+            if (token.Type == JTokenType.Array)
+            {
+                var arr = token as JArray;
+                return arr?.Count > 0 ? arr[0]?.ToString() ?? "" : "";
+            }
+            return token.ToString();
         }
 
         private static DateTime? ParseDate(string? value)

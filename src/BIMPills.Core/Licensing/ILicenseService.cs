@@ -6,10 +6,11 @@ namespace BIMPills.Core.Licensing
     {
         Task<LicenseInfo?> ValidateAsync(string licenseKey);
         Task<bool> ActivateAsync(string licenseKey, string machineId);
+        Task<bool> DeactivateAsync();
         LicenseInfo? GetCachedLicense();
         bool IsValid { get; }
         bool IsExpired { get; }
         bool IsGracePeriod { get; }
-        bool IsActivated { get; }  // true si hay alguna licencia cacheada (activada alguna vez)
+        bool IsActivated { get; }
     }
 }

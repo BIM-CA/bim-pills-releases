@@ -562,17 +562,8 @@ namespace BIMPills.Revit.Context
                     StorageType   = "String"
                 }).ToList();
 
-                // Read data directly from the rendered schedule table.
-                // SectionType.Body may include: column header rows, group header rows,
-                // blank separator rows, and actual data rows. We must filter carefully.
-                var tableData = vs.GetTableData();
-                var bodyData  = tableData.GetSectionData(SectionType.Body);
-                int bodyRows  = bodyData.NumberOfRows;
-                int bodyCols  = bodyData.NumberOfColumns;
-
-                // Get elements from the schedule for ElementId mapping.
-                // These are in the same order as the actual data rows (excluding
-                // headers, group headers, and separators).
+                // Get only the actual elements in this schedule (excludes totals,
+                // group headers, subtotals, and grand totals entirely).
                 var elements = new List<Element>();
                 try
                 {
@@ -583,53 +574,43 @@ namespace BIMPills.Revit.Context
                 }
                 catch { }
 
-                var rows = new List<List<string>>();
+                // Read parameter values directly from each element — this guarantees
+                // only real data rows, with no totals or group headers.
+                var rows       = new List<List<string>>();
                 var elementIds = new List<long>();
-                int dataRowIdx = 0; // Counter for actual data rows (maps to elements list)
 
-                for (int r = 0; r < bodyRows; r++)
+                foreach (var element in elements)
                 {
-                    // Read all cell values for this row
                     var cellValues = new List<string>();
-                    for (int c = 0; c < bodyCols && c < columns.Count; c++)
+                    foreach (var field in fields)
                     {
-                        try   { cellValues.Add(vs.GetCellText(SectionType.Body, r, c)); }
-                        catch { cellValues.Add(""); }
-                    }
-
-                    // Skip completely empty rows (separators)
-                    if (cellValues.All(v => string.IsNullOrWhiteSpace(v)))
-                        continue;
-
-                    // Skip rows that match the column headers exactly (duplicate header)
-                    if (cellValues.Count == columns.Count)
-                    {
-                        bool isHeaderRow = true;
-                        for (int c = 0; c < cellValues.Count; c++)
+                        string val = "";
+                        try
                         {
-                            if (cellValues[c] != columns[c].Name)
-                            { isHeaderRow = false; break; }
+                            if (!field.IsCalculatedField && field.ParameterId != ElementId.InvalidElementId)
+                            {
+                                // Look up by matching ElementId in the element's parameter collection
+                                var param = element.Parameters
+                                    .Cast<Parameter>()
+                                    .FirstOrDefault(p => p.Id == field.ParameterId);
+                                if (param != null)
+                                {
+                                    val = param.StorageType switch
+                                    {
+                                        StorageType.String    => param.AsString() ?? "",
+                                        StorageType.Integer   => param.AsInteger().ToString(),
+                                        StorageType.Double    => param.AsValueString() ?? "",
+                                        StorageType.ElementId => param.AsValueString() ?? "",
+                                        _                     => ""
+                                    };
+                                }
+                            }
                         }
-                        if (isHeaderRow) continue;
+                        catch { }
+                        cellValues.Add(val);
                     }
-
-                    // Detect group header rows: only the first cell has content,
-                    // all other cells are empty. These are category/level groupings
-                    // like "Arquitectura" and have no corresponding element.
-                    int nonEmptyCells = cellValues.Count(v => !string.IsNullOrWhiteSpace(v));
-                    if (nonEmptyCells == 1 && !string.IsNullOrWhiteSpace(cellValues[0])
-                        && cellValues.Skip(1).All(v => string.IsNullOrWhiteSpace(v)))
-                        continue;
-
-                    // This is an actual data row — add it
                     rows.Add(cellValues);
-
-                    if (dataRowIdx < elements.Count)
-                        elementIds.Add((long)GetElementIdValue(elements[dataRowIdx].Id));
-                    else
-                        elementIds.Add(0);
-
-                    dataRowIdx++;
+                    elementIds.Add((long)GetElementIdValue(element.Id));
                 }
 
                 var schedules = GetSchedules();

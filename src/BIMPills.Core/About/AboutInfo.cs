@@ -6,11 +6,18 @@ namespace BIMPills.Core.About
     public sealed class AboutInfo
     {
         public string PluginName => "BIMPills";
-        public string Version =>
-            typeof(AboutInfo).Assembly
-                .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
-                ?.InformationalVersion
-                ?? "0.0.0";
+        public string Version
+        {
+            get
+            {
+                var full = typeof(AboutInfo).Assembly
+                    .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
+                    ?.InformationalVersion ?? "0.0.0";
+                // Strip build metadata (+commitHash) — show only semver portion
+                var plusIdx = full.IndexOf('+');
+                return plusIdx >= 0 ? full.Substring(0, plusIdx) : full;
+            }
+        }
         public string Developer => "Rodrigo Flores + BIM-CA Team";
         public string Company => "BIM-CA";
         public string Website => "https://bim-ca.com";

@@ -4,19 +4,23 @@ using BIMPills.Core.About;
 using BIMPills.Core.Audit;
 using BIMPills.Core.Documentacion;
 using BIMPills.Core.Gestion;
+using BIMPills.Core.Licensing;
 using BIMPills.Core.Models;
 using BIMPills.Core.Services;
+using BIMPills.Infrastructure.DI;
 using BIMPills.UI.About;
 using BIMPills.UI.CustomDimensionSchemes;
 using BIMPills.UI.DataManager;
 using BIMPills.UI.Documentacion;
 using BIMPills.UI.ExportFamilies;
 using BIMPills.UI.Gestion;
+using BIMPills.UI.Licensing;
 using BIMPills.UI.MCPIntegration;
 using BIMPills.UI.ModelAudit;
 using BIMPills.UI.Ordering;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.Windows;
 
 namespace BIMPills.UI.Sandbox
@@ -262,12 +266,61 @@ namespace BIMPills.UI.Sandbox
             }
         }
 
-        // ── Acerca de ────────────────────────────────────────────────────────────
+        // ── Activación de licencia ───────────────────────────────────────────────
 
-        private void OpenAbout_Click(object sender, RoutedEventArgs e)
+        private void OpenActivacion_Click(object sender, RoutedEventArgs e)
         {
             try
             {
+                var win = new LicenseActivationWindow();
+                win.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error abriendo LicenseActivationWindow:\n{ex.Message}", "Sandbox — Error");
+            }
+        }
+
+        // ── Acerca de (variantes de licencia) ────────────────────────────────────
+
+        private void OpenAboutNoLicense_Click(object sender, RoutedEventArgs e)
+            => OpenAboutWithLicense(null);
+
+        private void OpenAboutActive_Click(object sender, RoutedEventArgs e)
+            => OpenAboutWithLicense(new MockLicenseService
+            {
+                MockLicense = new LicenseInfo
+                {
+                    Plan       = "Pro Anual",
+                    Status     = "Activo",
+                    HolderName = "Rodrigo Flores",
+                    ExpiresAt  = DateTime.Today.AddMonths(11),
+                    ValidatedAt = DateTime.UtcNow
+                }
+            });
+
+        private void OpenAboutGrace_Click(object sender, RoutedEventArgs e)
+            => OpenAboutWithLicense(new MockLicenseService
+            {
+                MockLicense = new LicenseInfo
+                {
+                    Plan       = "Pro Mensual",
+                    Status     = "Grace Period",
+                    HolderName = "Rodrigo Flores",
+                    ExpiresAt  = DateTime.Today.AddDays(-3),
+                    ValidatedAt = DateTime.UtcNow
+                }
+            });
+
+        private void OpenAboutWithLicense(MockLicenseService? licenseService)
+        {
+            try
+            {
+                if (licenseService != null)
+                    ServiceLocator.Register<ILicenseService>(licenseService);
+                else if (ServiceLocator.IsRegistered<ILicenseService>())
+                    ServiceLocator.Register<ILicenseService>(new MockLicenseService());
+
                 var info = new AboutInfo();
                 var win  = new AboutWindow(info);
                 win.Show();
@@ -276,6 +329,37 @@ namespace BIMPills.UI.Sandbox
             {
                 MessageBox.Show($"Error abriendo AboutWindow:\n{ex.Message}", "Sandbox — Error");
             }
+        }
+    }
+
+    // ── Mock ILicenseService ─────────────────────────────────────────────────────
+
+    internal sealed class MockLicenseService : ILicenseService
+    {
+        public LicenseInfo? MockLicense { get; set; }
+
+        public bool IsValid => MockLicense != null &&
+            (MockLicense.Status == "Activo" || MockLicense.Status == "Grace Period");
+
+        public bool IsActivated => MockLicense != null;
+
+        public bool IsExpired => MockLicense != null &&
+            MockLicense.Status != "Activo" && MockLicense.Status != "Grace Period";
+
+        public bool IsGracePeriod => MockLicense?.Status == "Grace Period";
+
+        public LicenseInfo? GetCachedLicense() => MockLicense;
+
+        public Task<LicenseInfo?> ValidateAsync(string licenseKey)
+            => Task.FromResult(MockLicense);
+
+        public Task<bool> ActivateAsync(string licenseKey, string machineId)
+            => Task.FromResult(false);
+
+        public Task<bool> DeactivateAsync()
+        {
+            MockLicense = null;
+            return Task.FromResult(true);
         }
     }
 

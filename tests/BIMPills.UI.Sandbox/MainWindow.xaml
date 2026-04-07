@@ -76,13 +76,32 @@
 
         <Button Content="&#x1F4CB;  Esquemas Personalizados"
                 Style="{StaticResource SecondaryButton}"
-                HorizontalAlignment="Stretch" Margin="0,0,0,6"
+                HorizontalAlignment="Stretch" Margin="0,0,0,16"
                 Click="OpenCustomSchemes_Click"/>
 
-        <Button Content="&#x2139;&#xFE0F;  Acerca de"
+        <!-- Licencias -->
+        <TextBlock Text="LICENCIAS" FontSize="10" FontWeight="SemiBold"
+                   Foreground="#86868B" FontFamily="Segoe UI" Margin="4,0,0,8"/>
+
+        <Button Content="&#x1F511;  Activar licencia"
+                Style="{StaticResource SecondaryButton}"
+                HorizontalAlignment="Stretch" Margin="0,0,0,6"
+                Click="OpenActivacion_Click"/>
+
+        <Button Content="&#x2139;&#xFE0F;  Acerca de — sin licencia"
+                Style="{StaticResource SecondaryButton}"
+                HorizontalAlignment="Stretch" Margin="0,0,0,6"
+                Click="OpenAboutNoLicense_Click"/>
+
+        <Button Content="&#x2139;&#xFE0F;  Acerca de — activa"
+                Style="{StaticResource SecondaryButton}"
+                HorizontalAlignment="Stretch" Margin="0,0,0,6"
+                Click="OpenAboutActive_Click"/>
+
+        <Button Content="&#x2139;&#xFE0F;  Acerca de — periodo de gracia"
                 Style="{StaticResource SecondaryButton}"
                 HorizontalAlignment="Stretch" Margin="0,0,0,0"
-                Click="OpenAbout_Click"/>
+                Click="OpenAboutGrace_Click"/>
 
     </StackPanel>
 </Window>

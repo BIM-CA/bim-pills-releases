@@ -19,7 +19,21 @@ desktop.ini
 ## Logs
 *.log
 logs/
+
+## Installer — staging DLLs (not committed)
+installer/*.dll
+installer/*.pdb
 installer/output/
+## Installer EXEs at root of installer/ are staging — use releases/ subfolder
+installer/*.exe
+
+## Stray build artifacts in repo root
+/*.dll
+/*.pdb
+/*.deps.json
+/*.exe
+/*.tar.gz
+/*.nsi
 
 ## Secrets & credentials — NEVER commit these
 .env
@@ -42,6 +56,9 @@ launchSettings.json
 *.iml
 .vscode/settings.json
 .vscode/launch.json
+
+## Carpetas ajenas al proyecto
+Games/
 
 ## Temporary / scratch files
 *.tmp

@@ -182,7 +182,9 @@ namespace BIMPills.Revit.Application
         // FileNotFoundException al instanciarse por primera vez.
         private static void RegisterAssemblyResolver()
         {
-#if !REVIT2024          // Solo necesario en .NET 8 (2025/2026); .NET Framework lo resuelve solo
+            // Necesario en todas las versiones: .NET Framework no sondea el directorio del
+            // add-in automáticamente para DLLs NuGet que no están en el GAC
+            // (p.ej. System.Security.Cryptography.ProtectedData en Revit 2024).
             var addinDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? "";
 
             AppDomain.CurrentDomain.AssemblyResolve += (_, args) =>
@@ -200,7 +202,6 @@ namespace BIMPills.Revit.Application
                     return null;
                 }
             };
-#endif
         }
 
         // ── Registro de módulos ─────────────────────────────────────────────────
