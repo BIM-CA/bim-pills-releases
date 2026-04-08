@@ -107,6 +107,27 @@ namespace BIMPills.Revit.Commands.Transfer
 
                         var revitIds = ids.Select(id => new ElementId(id)).ToList();
 
+                        // Collect dependent filter elements — view templates reference
+                        // ParameterFilterElements by ID but CopyElements won't include them
+                        var allIds = new List<ElementId>(revitIds);
+                        foreach (var tid in revitIds)
+                        {
+                            try
+                            {
+                                if (sourceDoc.GetElement(tid) is View tmpl && tmpl.IsTemplate)
+                                {
+                                    var filterIds = tmpl.GetFilters();
+                                    foreach (var fid in filterIds)
+                                    {
+                                        if (!allIds.Contains(fid))
+                                            allIds.Add(fid);
+                                    }
+                                }
+                            }
+                            catch { }
+                        }
+                        logger?.Info($"[Transferir] Plantillas: {revitIds.Count} templates + {allIds.Count - revitIds.Count} filtros dependientes");
+
                         using var tx = new Transaction(targetDoc, "BIM Pills: Transferir plantillas de vista");
                         tx.Start();
 
@@ -123,9 +144,9 @@ namespace BIMPills.Revit.Commands.Transfer
 
                         var opts = new CopyPasteOptions();
                         opts.SetDuplicateTypeNamesHandler(new BIMPillsDuplicateHandler(conflict));
-                        var copied = ElementTransformUtils.CopyElements(sourceDoc, revitIds, targetDoc, Transform.Identity, opts);
+                        var copied = ElementTransformUtils.CopyElements(sourceDoc, allIds, targetDoc, Transform.Identity, opts);
 
-                        result.Transferred = copied?.Count ?? 0;
+                        result.Transferred = revitIds.Count;
                         result.Skipped = Math.Max(0, ids.Count - result.Transferred);
                         tx.Commit();
                         logger?.Info($"[Transferir] Plantillas: {result.Transferred}/{ids.Count} desde '{docTitle}'.");

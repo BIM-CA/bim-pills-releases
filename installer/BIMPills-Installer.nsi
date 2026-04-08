@@ -1,4 +1,4 @@
-; BIMPills v1.0.0-beta.2 Installer
+; BIMPills v1.0.0-beta.2.1 Installer
 ; NSIS Installer Script — Revit 2024, 2025, 2026 y 2027
 ;
 ; Build: cd installer && makensis BIMPills-Installer.nsi
@@ -18,8 +18,8 @@
 
 ;--------------------------------
 ; Attributes
-Name "BIMPills v1.0.0-beta.2"
-OutFile "BIMPills-1.0.0-beta.2-Setup.exe"
+Name "BIMPills v1.0.0-beta.2.1"
+OutFile "BIMPills-1.0.0-beta.2.1-Setup.exe"
 RequestExecutionLevel user
 InstallDir "$APPDATA\Autodesk\Revit\Addins"
 
