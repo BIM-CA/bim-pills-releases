@@ -16,6 +16,7 @@ namespace BIMPills.UI.Licensing
         public LicenseActivationWindow()
         {
             InitializeComponent();
+            BIMPills.UI.Shared.ThemeHelper.Apply(this);
         }
 
         private async void Activate_Click(object sender, RoutedEventArgs e)

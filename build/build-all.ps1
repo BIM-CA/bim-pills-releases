@@ -7,7 +7,7 @@
     .\build\build-all.ps1 -Configuration Release
 #>
 param(
-    [string[]] $Versions       = @("2024", "2025", "2026"),
+    [string[]] $Versions       = @("2024", "2025", "2026", "2027"),
     [string]   $Configuration  = "Release"
 )
 
@@ -30,7 +30,11 @@ foreach ($version in $Versions) {
     }
 
     # Determinar el framework de salida según versión de Revit
-    $tfm = if ($version -eq "2024") { "net48-windows" } else { "net8.0-windows" }
+    $tfm = switch ($version) {
+        "2024" { "net48-windows" }
+        "2027" { "net10.0-windows" }
+        default { "net8.0-windows" }
+    }
     $binDir = Join-Path $solutionDir "src\BIMPills.Revit\bin\$Configuration\$tfm"
     $outDir = Join-Path $solutionDir "dist\Revit$version\BIMPills"
 

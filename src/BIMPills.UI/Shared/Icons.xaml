@@ -85,7 +85,7 @@
         </DrawingImage.Drawing>
     </DrawingImage>
 
-    <!-- Icono de Píldora BIMPills: cápsula half-white half-orange -->
+    <!-- Icono de Píldora BIM Pills: cápsula half-white half-orange -->
     <DrawingImage x:Key="PillIcon">
         <DrawingImage.Drawing>
             <DrawingGroup>

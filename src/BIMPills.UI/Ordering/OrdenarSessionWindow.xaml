@@ -1,7 +1,7 @@
 <Window x:Class="BIMPills.UI.Ordering.OrdenarSessionWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="BIMPills — Ordenar"
+        Title="BIM Pills — Ordenar"
         Width="300" SizeToContent="Height"
         ResizeMode="NoResize"
         WindowStartupLocation="Manual"

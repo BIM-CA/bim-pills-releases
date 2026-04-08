@@ -17,6 +17,7 @@ namespace BIMPills.UI.About
         {
             _info = info;
             InitializeComponent();
+            BIMPills.UI.Shared.ThemeHelper.Apply(this);
             Populate();
             PopulateLicense();
         }
@@ -169,6 +170,9 @@ namespace BIMPills.UI.About
 
         private void SupportEmail_Click(object sender, MouseButtonEventArgs e)
             => ProcessHelper.OpenUrl($"mailto:{_info.SupportEmail}");
+
+        private void Feedback_Click(object sender, MouseButtonEventArgs e)
+            => ProcessHelper.OpenUrl("https://bimca.notion.site/33bd89d548c2802a83d6f01c013c6e41?pvs=105");
 
         private void CloseButton_Click(object sender, RoutedEventArgs e) => Close();
     }

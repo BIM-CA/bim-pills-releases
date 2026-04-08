@@ -1,11 +1,11 @@
 <Window x:Class="BIMPills.UI.Gestion.GestionWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="BIMPills — Estandarizar"
+        Title="BIM Pills — Estandarizar"
         Width="780" Height="620"
         ResizeMode="CanResizeWithGrip"
         WindowStartupLocation="CenterScreen"
-        Background="#F0F0F0"
+        Background="{DynamicResource BackgroundBrush}"
         UseLayoutRounding="True"
         SnapsToDevicePixels="True">
 
@@ -14,15 +14,6 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="/BIMPills.UI;component/Shared/Styles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
-
-            <!-- Discipline group header style -->
-            <Style x:Key="DisciplineHeader" TargetType="Border">
-                <Setter Property="Background" Value="#F2F2F7"/>
-                <Setter Property="CornerRadius" Value="6"/>
-                <Setter Property="Padding" Value="10,7"/>
-                <Setter Property="Margin" Value="0,10,0,4"/>
-                <Setter Property="Cursor" Value="Hand"/>
-            </Style>
         </ResourceDictionary>
     </Window.Resources>
 
@@ -55,15 +46,26 @@
         <Border Style="{StaticResource CardBorder}">
             <DockPanel>
 
-                <!-- Footer — Cerrar left, context actions right -->
+                <!-- Tab bar -->
+                <Border DockPanel.Dock="Top"
+                        BorderBrush="#E5E5EA" BorderThickness="0,0,0,1"
+                        Background="Transparent">
+                    <StackPanel Orientation="Horizontal" Margin="14,0">
+                        <Border Style="{StaticResource TabHeaderActive}">
+                            <TextBlock Style="{StaticResource TabHeaderTextActive}" Text="Subproyectos"/>
+                        </Border>
+                    </StackPanel>
+                </Border>
+
+                <!-- Footer -->
                 <Border DockPanel.Dock="Bottom"
-                        BorderBrush="#E5E5EA" BorderThickness="0,1,0,0">
-                    <DockPanel LastChildFill="False" Margin="14,10,14,10">
+                        BorderBrush="#E5E5EA" BorderThickness="0,1,0,0"
+                        Padding="14,10">
+                    <DockPanel LastChildFill="False">
                         <Button DockPanel.Dock="Left"
                                 Content="Cerrar (ESC)"
                                 Style="{StaticResource PrimaryButton}"
-                                Width="120"
-                                IsCancel="True"
+                                Width="120" IsCancel="True"
                                 Click="CloseButton_Click"/>
                         <TextBlock x:Name="WorksetCountText"
                                    DockPanel.Dock="Left"
@@ -72,202 +74,120 @@
                                    VerticalAlignment="Center"
                                    Margin="12,0,0,0"
                                    FontFamily="Segoe UI"/>
-
-                        <!-- Subproyectos footer buttons -->
-                        <StackPanel x:Name="WorksetFooterButtons" Orientation="Horizontal"
-                                    DockPanel.Dock="Right">
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
                             <Button Content="Importar Excel"
                                     Style="{StaticResource SecondaryButton}"
-                                    Padding="14,0"
-                                    Margin="8,0,0,0"
+                                    Padding="14,0" Margin="0,0,8,0"
                                     Click="ImportExcel_Click"/>
                             <Button Content="Exportar Excel"
                                     Style="{StaticResource SecondaryButton}"
                                     Padding="14,0"
                                     Click="ExportExcel_Click"/>
                         </StackPanel>
-
-                        <!-- Plantillas footer buttons -->
-                        <StackPanel x:Name="TemplateFooterButtons" Orientation="Horizontal"
-                                    DockPanel.Dock="Right" Visibility="Collapsed">
-                            <Button x:Name="BtnCreateSelected"
-                                    Style="{StaticResource SecondaryButton}"
-                                    Padding="14,0"
-                                    Click="CreateSelectedWorksets_Click">
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets"
-                                               FontSize="11" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                    <TextBlock x:Name="CreateBtnLabel" Text="Crear seleccionados"
-                                               VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </Button>
-                        </StackPanel>
                     </DockPanel>
                 </Border>
 
-                <!-- Tab control -->
-                <TabControl x:Name="MainTabs" Style="{StaticResource BIMPillsTabControl}"
-                            SelectionChanged="MainTabs_SelectionChanged">
+                <!-- Worksharing notice -->
+                <Border x:Name="WorksharingNotice" DockPanel.Dock="Top"
+                        Background="#E8F5E9" BorderBrush="#C8E6C9" BorderThickness="0,0,0,1"
+                        Padding="14,7">
+                    <TextBlock FontSize="11" Foreground="#2E7D32" FontFamily="Segoe UI">
+                        <Run Text="&#x2714;"/> Worksharing habilitado — Los cambios se sincronizarán al guardar
+                    </TextBlock>
+                </Border>
 
-                    <!-- ══════ Tab 1: Subproyectos ══════ -->
-                    <TabItem Header="Subproyectos" Style="{StaticResource BIMPillsTabItem}">
-                        <DockPanel>
-                            <!-- Worksharing notice -->
-                            <Border x:Name="WorksharingNotice"
-                                    DockPanel.Dock="Top"
-                                    Background="#E8F5E9" BorderBrush="#C8E6C9" BorderThickness="0,0,0,1"
-                                    Padding="14,7">
-                                <TextBlock FontSize="11" Foreground="#2E7D32" FontFamily="Segoe UI">
-                                    <Run Text="&#x2714;"/> Worksharing habilitado — Los cambios se sincronizarán al guardar
-                                </TextBlock>
-                            </Border>
+                <Border x:Name="NoWorksharingNotice" DockPanel.Dock="Top"
+                        Background="#FFF3E0" BorderBrush="#FFE0B2" BorderThickness="0,0,0,1"
+                        Padding="14,7" Visibility="Collapsed">
+                    <TextBlock FontSize="11" Foreground="#E65100" FontFamily="Segoe UI">
+                        <Run Text="&#x26A0;"/> Este modelo no tiene Worksharing habilitado. Los subproyectos no están disponibles.
+                    </TextBlock>
+                </Border>
 
-                            <!-- No worksharing warning -->
-                            <Border x:Name="NoWorksharingNotice"
-                                    DockPanel.Dock="Top"
-                                    Background="#FFF3E0" BorderBrush="#FFE0B2" BorderThickness="0,0,0,1"
-                                    Padding="14,7"
-                                    Visibility="Collapsed">
-                                <TextBlock FontSize="11" Foreground="#E65100" FontFamily="Segoe UI">
-                                    <Run Text="&#x26A0;"/> Este modelo no tiene Worksharing habilitado. Los subproyectos no están disponibles.
-                                </TextBlock>
-                            </Border>
+                <!-- Toolbar -->
+                <Border DockPanel.Dock="Top"
+                        BorderBrush="#F2F2F7" BorderThickness="0,0,0,1"
+                        Padding="12,8">
+                    <DockPanel LastChildFill="False">
+                        <Button x:Name="BtnNewWorkset"
+                                DockPanel.Dock="Left"
+                                Content="+ Nuevo subproyecto"
+                                Style="{StaticResource PrimaryButton}"
+                                Padding="14,0"
+                                Click="NewWorkset_Click"/>
+                        <Button DockPanel.Dock="Left"
+                                Content="Estándar BIM-CA..."
+                                Style="{StaticResource SecondaryButton}"
+                                Padding="12,0" Margin="8,0,0,0"
+                                Click="BimCa_Click"/>
+                        <Button x:Name="BtnCreateViews3D"
+                                DockPanel.Dock="Left"
+                                Content="Crear Vistas 3D"
+                                Style="{StaticResource TertiaryButton}"
+                                Padding="12,0" Margin="8,0,0,0"
+                                IsEnabled="False"
+                                Click="CreateViews3D_Click"/>
+                        <Button DockPanel.Dock="Right"
+                                Content="Descargar plantilla"
+                                Style="{StaticResource TertiaryButton}"
+                                Padding="14,0"
+                                Click="DownloadTemplate_Click"/>
+                    </DockPanel>
+                </Border>
 
-                            <!-- Toolbar -->
-                            <Border DockPanel.Dock="Top"
-                                    BorderBrush="#F2F2F7" BorderThickness="0,0,0,1"
-                                    Padding="12,8">
-                                <DockPanel LastChildFill="False">
-                                    <Button x:Name="BtnNewWorkset"
-                                            DockPanel.Dock="Left"
-                                            Content="+ Nuevo subproyecto"
-                                            Style="{StaticResource PrimaryButton}"
-                                            Padding="14,0"
-                                            Click="NewWorkset_Click"/>
-                                    <Button DockPanel.Dock="Right"
-                                            Content="Descargar plantilla"
-                                            Style="{StaticResource TertiaryButton}"
-                                            Padding="14,0"
-                                            Click="DownloadTemplate_Click"/>
-                                </DockPanel>
-                            </Border>
-
-                            <!-- DataGrid with scroll hints -->
-                            <Grid>
-                                <DataGrid x:Name="WorksetsGrid"
-                                          Style="{StaticResource BIMPillsDataGrid}"
-                                          AutoGenerateColumns="False"
-                                          IsReadOnly="True"
-                                          SelectionMode="Single"
-                                          MouseDoubleClick="WorksetsGrid_DoubleClick">
-                                    <DataGrid.Columns>
-                                        <DataGridTextColumn Header="NOMBRE" Binding="{Binding Name}" Width="*" />
-                                        <DataGridTextColumn Header="ESTADO" Binding="{Binding StatusLabel}" Width="80" />
-                                        <DataGridTextColumn Header="ELEMENTOS" Binding="{Binding ElementCount}" Width="90">
-                                            <DataGridTextColumn.ElementStyle>
-                                                <Style TargetType="TextBlock">
-                                                    <Setter Property="HorizontalAlignment" Value="Right"/>
-                                                    <Setter Property="Margin" Value="0,0,8,0"/>
-                                                </Style>
-                                            </DataGridTextColumn.ElementStyle>
-                                        </DataGridTextColumn>
-                                        <DataGridTextColumn Header="PROPIETARIO" Binding="{Binding Owner}" Width="100" />
-                                        <DataGridTextColumn Header="EDITABLE" Binding="{Binding EditableLabel}" Width="70">
-                                            <DataGridTextColumn.ElementStyle>
-                                                <Style TargetType="TextBlock">
-                                                    <Setter Property="HorizontalAlignment" Value="Right"/>
-                                                    <Setter Property="Margin" Value="0,0,8,0"/>
-                                                </Style>
-                                            </DataGridTextColumn.ElementStyle>
-                                        </DataGridTextColumn>
-                                    </DataGrid.Columns>
-                                </DataGrid>
-                                <TextBlock x:Name="ScrollUpHint"
-                                           Text="&#x25B2; más elementos arriba"
-                                           HorizontalAlignment="Center" VerticalAlignment="Top"
-                                           FontSize="10" FontFamily="Segoe UI" Foreground="#86868B"
-                                           Background="#EEFFFFFF" Padding="12,3" Margin="0,28,0,0"
-                                           IsHitTestVisible="False" Visibility="Collapsed"/>
-                                <TextBlock x:Name="ScrollDownHint"
-                                           Text="&#x25BC; más elementos abajo"
-                                           HorizontalAlignment="Center" VerticalAlignment="Bottom"
-                                           FontSize="10" FontFamily="Segoe UI" Foreground="#86868B"
-                                           Background="#EEFFFFFF" Padding="12,3"
-                                           IsHitTestVisible="False" Visibility="Collapsed"/>
-                            </Grid>
-                        </DockPanel>
-                    </TabItem>
-
-                    <!-- ══════ Tab 2: Plantillas BIM-CA ══════ -->
-                    <TabItem Header="Subproyectos BIM-CA" Style="{StaticResource BIMPillsTabItem}">
-                        <DockPanel>
-
-                            <!-- Info bar -->
-                            <Border DockPanel.Dock="Top"
-                                    Background="#E3F2FD" CornerRadius="0"
-                                    Padding="14,9"
-                                    BorderBrush="#90CAF9" BorderThickness="0,0,0,1">
-                                <DockPanel>
-                                    <TextBlock DockPanel.Dock="Left" Text="&#xE946;"
-                                               FontFamily="Segoe MDL2 Assets" FontSize="13"
-                                               Foreground="#1565C0" Margin="0,0,10,0"
-                                               VerticalAlignment="Center"/>
-                                    <StackPanel>
-                                        <TextBlock FontSize="12" FontWeight="SemiBold"
-                                                   Foreground="#0D47A1" FontFamily="Segoe UI"
-                                                   Text="Estándar BIM-CA"/>
-                                        <TextBlock FontSize="11" Foreground="#1565C0" FontFamily="Segoe UI"
-                                                   TextWrapping="Wrap"
-                                                   Text="Selecciona las disciplinas y subproyectos que deseas crear en el modelo según el estándar BIM-CA."/>
-                                    </StackPanel>
-                                </DockPanel>
-                            </Border>
-
-                            <!-- Toolbar -->
-                            <Border DockPanel.Dock="Top"
-                                    BorderBrush="#F2F2F7" BorderThickness="0,0,0,1"
-                                    Padding="12,7">
-                                <DockPanel LastChildFill="False">
-                                    <Button x:Name="BtnSelectAllTemplates"
-                                            DockPanel.Dock="Left"
-                                            Content="Seleccionar todo"
-                                            Style="{StaticResource TertiaryButton}"
-                                            Height="28" FontSize="11"
-                                            Padding="12,0"
-                                            Click="SelectAllTemplates_Click"/>
-                                    <Button DockPanel.Dock="Left"
-                                            Content="Deseleccionar todo"
-                                            Style="{StaticResource TertiaryButton}"
-                                            Height="28" FontSize="11"
-                                            Padding="12,0" Margin="6,0,0,0"
-                                            Click="DeselectAllTemplates_Click"/>
-
-                                    <TextBlock x:Name="TemplateSelectionText"
-                                               DockPanel.Dock="Right"
-                                               FontSize="11" Foreground="{StaticResource AccentBrush}"
-                                               FontFamily="Segoe UI" FontWeight="Medium"
-                                               VerticalAlignment="Center"/>
-
-                                    <Button DockPanel.Dock="Left"
-                                            Content="Cargar archivo .txt..."
-                                            Style="{StaticResource TertiaryButton}"
-                                            Height="28" FontSize="11"
-                                            Padding="12,0" Margin="6,0,0,0"
-                                            Click="LoadCustomTemplate_Click"/>
-                                </DockPanel>
-                            </Border>
-
-                            <!-- Scrollable discipline groups with checkboxes -->
-                            <ScrollViewer VerticalScrollBarVisibility="Auto"
-                                          HorizontalScrollBarVisibility="Disabled"
-                                          Padding="14,4,14,10">
-                                <StackPanel x:Name="TemplateGroupsPanel"/>
-                            </ScrollViewer>
-
-                        </DockPanel>
-                    </TabItem>
-
-                </TabControl>
+                <!-- DataGrid with scroll hints -->
+                <Grid>
+                    <DataGrid x:Name="WorksetsGrid"
+                              Style="{StaticResource BIMPillsDataGrid}"
+                              AutoGenerateColumns="False"
+                              IsReadOnly="False"
+                              SelectionMode="Extended"
+                              MouseDoubleClick="WorksetsGrid_DoubleClick">
+                        <DataGrid.Columns>
+                            <!-- Checkbox -->
+                            <DataGridTemplateColumn Width="36" MinWidth="36" CanUserResize="False" CanUserSort="False">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                  HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                  Click="WorksetCheckBox_Click"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTextColumn Header="NOMBRE"     Binding="{Binding Name}"        Width="*"/>
+                            <DataGridTextColumn Header="ESTADO"     Binding="{Binding StatusLabel}" Width="80"/>
+                            <DataGridTextColumn Header="ELEMENTOS"  Binding="{Binding ElementCount}" Width="90">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="HorizontalAlignment" Value="Right"/>
+                                        <Setter Property="Margin" Value="0,0,8,0"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Header="PROPIETARIO" Binding="{Binding Owner}"       Width="100"/>
+                            <DataGridTextColumn Header="EDITABLE"    Binding="{Binding EditableLabel}" Width="70">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="HorizontalAlignment" Value="Right"/>
+                                        <Setter Property="Margin" Value="0,0,8,0"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                    <TextBlock x:Name="ScrollUpHint"
+                               Text="&#x25B2; más elementos arriba"
+                               HorizontalAlignment="Center" VerticalAlignment="Top"
+                               FontSize="10" FontFamily="Segoe UI" Foreground="#86868B"
+                               Background="#EEFFFFFF" Padding="12,3" Margin="0,28,0,0"
+                               IsHitTestVisible="False" Visibility="Collapsed"/>
+                    <TextBlock x:Name="ScrollDownHint"
+                               Text="&#x25BC; más elementos abajo"
+                               HorizontalAlignment="Center" VerticalAlignment="Bottom"
+                               FontSize="10" FontFamily="Segoe UI" Foreground="#86868B"
+                               Background="#EEFFFFFF" Padding="12,3"
+                               IsHitTestVisible="False" Visibility="Collapsed"/>
+                </Grid>
 
             </DockPanel>
         </Border>

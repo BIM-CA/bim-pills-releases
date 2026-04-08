@@ -31,6 +31,7 @@ namespace BIMPills.UI.ModelAudit
             _result = result;
             _purgeCallback = purgeCallback;
             InitializeComponent();
+            BIMPills.UI.Shared.ThemeHelper.Apply(this);
             DataContext = this;
             Populate();
         }

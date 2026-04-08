@@ -270,6 +270,38 @@ namespace BIMPills.Revit.Resources
             });
         }
 
+        public static BitmapSource CreateTransferIcon()
+        {
+            return RenderIcon(ctx =>
+            {
+                var boxPen   = RoundStroke(Navy, 2.0);
+                var arrowPen = RoundStroke(Orange, 2.2);
+
+                // ── Open-top rounded box (x=5..27, y=11..28, r=4) ────────────
+                // Gap in top center: x=13..19
+                var geo = new StreamGeometry();
+                using (var sgc = geo.Open())
+                {
+                    sgc.BeginFigure(new Point(19, 11), false, false);
+                    sgc.LineTo(new Point(23, 11), true, false);
+                    sgc.ArcTo(new Point(27, 15), new Size(4, 4), 0, false, SweepDirection.Clockwise, true, false);
+                    sgc.LineTo(new Point(27, 24), true, false);
+                    sgc.ArcTo(new Point(23, 28), new Size(4, 4), 0, false, SweepDirection.Clockwise, true, false);
+                    sgc.LineTo(new Point(9, 28), true, false);
+                    sgc.ArcTo(new Point(5, 24), new Size(4, 4), 0, false, SweepDirection.Clockwise, true, false);
+                    sgc.LineTo(new Point(5, 15), true, false);
+                    sgc.ArcTo(new Point(9, 11), new Size(4, 4), 0, false, SweepDirection.Clockwise, true, false);
+                    sgc.LineTo(new Point(13, 11), true, false);
+                }
+                ctx.DrawGeometry(Brushes.White, boxPen, geo);
+
+                // ── Arrow up — orange ─────────────────────────────────────────
+                ctx.DrawLine(arrowPen, new Point(16, 3), new Point(16, 22));
+                ctx.DrawLine(arrowPen, new Point(11, 8), new Point(16, 3));
+                ctx.DrawLine(arrowPen, new Point(21, 8), new Point(16, 3));
+            });
+        }
+
         private static FormattedText CreateText(string text, Color color, double size)
         {
             return new FormattedText(

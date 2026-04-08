@@ -69,18 +69,18 @@ namespace BIMPills.Infrastructure.Licensing
             {
                 var license = _cache.Load();
                 if (license == null) return false;
+
+                // Check expiry date — takes precedence over Airtable status
+                // (Airtable doesn't auto-update status when the expiry date passes)
+                if (license.ExpiresAt.HasValue)
+                {
+                    var daysSinceExpiry = (DateTime.UtcNow - ToUtc(license.ExpiresAt.Value)).TotalDays;
+                    if (daysSinceExpiry > GracePeriodDays) return false; // Past grace period
+                    if (daysSinceExpiry > 0) return true;               // Within grace period
+                }
+
                 if (license.Status == "Activo") return true;
                 if (license.Status == "Grace Period") return true;
-
-                // Check grace period for recently expired licenses
-                if (license.Status == "Expirado" || license.Status == "Cancelado")
-                {
-                    if (license.ExpiresAt.HasValue)
-                    {
-                        var daysSinceExpiry = (DateTime.UtcNow - license.ExpiresAt.Value).TotalDays;
-                        return daysSinceExpiry <= GracePeriodDays;
-                    }
-                }
 
                 return false;
             }
@@ -94,12 +94,10 @@ namespace BIMPills.Infrastructure.Licensing
             {
                 var license = _cache.Load();
                 if (license == null) return false;  // nunca activada — no "expirada", solo sin activar
-                if (license.Status == "Activo") return false;
-                if (license.Status == "Grace Period") return false;
 
                 if (license.ExpiresAt.HasValue)
                 {
-                    var daysSinceExpiry = (DateTime.UtcNow - license.ExpiresAt.Value).TotalDays;
+                    var daysSinceExpiry = (DateTime.UtcNow - ToUtc(license.ExpiresAt.Value)).TotalDays;
                     return daysSinceExpiry > GracePeriodDays;
                 }
 
@@ -115,9 +113,9 @@ namespace BIMPills.Infrastructure.Licensing
                 if (license == null) return false;
                 if (license.Status == "Grace Period") return true;
 
-                if ((license.Status == "Expirado" || license.Status == "Cancelado") && license.ExpiresAt.HasValue)
+                if (license.ExpiresAt.HasValue)
                 {
-                    var daysSinceExpiry = (DateTime.UtcNow - license.ExpiresAt.Value).TotalDays;
+                    var daysSinceExpiry = (DateTime.UtcNow - ToUtc(license.ExpiresAt.Value)).TotalDays;
                     return daysSinceExpiry > 0 && daysSinceExpiry <= GracePeriodDays;
                 }
 
@@ -127,10 +125,10 @@ namespace BIMPills.Infrastructure.Licensing
 
         public LicenseInfo? GetCachedLicense() => _cache.Load();
 
-        public async Task<LicenseInfo?> ValidateAsync(string licenseKey)
+        public async Task<LicenseInfo?> ValidateAsync(string licenseKey, bool forceRefresh = false)
         {
-            // Try cache first if fresh
-            if (_cache.IsCacheFresh())
+            // Try cache first if fresh (skip if forceRefresh — e.g. background revalidation)
+            if (!forceRefresh && _cache.IsCacheFresh())
             {
                 var cached = _cache.Load();
                 if (cached != null && cached.LicenseKey == licenseKey)
@@ -368,7 +366,17 @@ namespace BIMPills.Infrastructure.Licensing
         private static DateTime? ParseDate(string? value)
         {
             if (string.IsNullOrWhiteSpace(value)) return null;
-            return DateTime.TryParse(value, out var dt) ? dt : (DateTime?)null;
+            // Use DateTimeOffset to preserve timezone info (Airtable sends ISO 8601 with Z or offset)
+            if (DateTimeOffset.TryParse(value, null,
+                    System.Globalization.DateTimeStyles.RoundtripKind, out var dto))
+                return dto.UtcDateTime;
+            // Fallback for date-only strings like "2026-04-08" — treat as UTC midnight
+            if (DateTime.TryParse(value, out var dt))
+                return DateTime.SpecifyKind(dt, DateTimeKind.Utc);
+            return null;
         }
+
+        private static DateTime ToUtc(DateTime dt)
+            => dt.Kind == DateTimeKind.Utc ? dt : dt.ToUniversalTime();
     }
 }

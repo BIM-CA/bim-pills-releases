@@ -11,6 +11,7 @@ namespace BIMPills.UI.Documentacion
         public DocumentacionWindow()
         {
             InitializeComponent();
+            BIMPills.UI.Shared.ThemeHelper.Apply(this);
         }
 
         /// <summary>

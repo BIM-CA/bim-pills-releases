@@ -15,6 +15,7 @@ namespace BIMPills.UI.Documentacion
         public SchemePickerWindow(string currentSchemeId)
         {
             InitializeComponent();
+            BIMPills.UI.Shared.ThemeHelper.Apply(this);
 
             _cards = new[]
             {

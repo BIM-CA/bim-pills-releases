@@ -14,6 +14,7 @@ namespace BIMPills.UI.MCPIntegration
             _connection = connection;
             _isNew = isNew;
             InitializeComponent();
+            BIMPills.UI.Shared.ThemeHelper.Apply(this);
             LoadConnection();
         }
 

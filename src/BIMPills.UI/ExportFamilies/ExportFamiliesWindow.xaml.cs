@@ -27,6 +27,7 @@ namespace BIMPills.UI.ExportFamilies
             _documentTitle = documentTitle;
             _revitVersion = revitVersion;
             InitializeComponent();
+            BIMPills.UI.Shared.ThemeHelper.Apply(this);
             Populate();
         }
 

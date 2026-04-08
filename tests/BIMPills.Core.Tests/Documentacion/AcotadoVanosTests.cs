@@ -471,6 +471,7 @@ namespace BIMPills.Core.Tests.Documentacion
         public IReadOnlyList<PurgeableItem>      GetPurgeableElements()    => new List<PurgeableItem>();
         public int PurgeElements(IReadOnlyList<long> ids)                  => 0;
         public IReadOnlyList<Core.Models.SheetExportInfo> GetSheets()       => new List<Core.Models.SheetExportInfo>();
+        public IReadOnlyList<Core.Models.ExportableViewInfo> GetExportableViews() => new List<Core.Models.ExportableViewInfo>();
         public string GetProjectName()                                     => "TestProject";
         public IReadOnlyList<Core.Models.ScheduleInfo> GetSchedules()                                          => new List<Core.Models.ScheduleInfo>();
         public Core.Models.ScheduleData GetScheduleData(long scheduleId)                                      => new Core.Models.ScheduleData();

@@ -6,7 +6,7 @@ namespace BIMPills.Commands.ExportFamilies
 {
     public sealed class ExportFamiliesModule : IPluginModule
     {
-        public string TabName   => "BIMPills";
+        public string TabName   => "BIM Pills";
         public string PanelName => "Datos";
 
         public void BuildRibbon(IRibbonBuilder builder)

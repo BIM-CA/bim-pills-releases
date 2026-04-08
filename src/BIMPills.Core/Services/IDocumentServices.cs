@@ -67,10 +67,16 @@ namespace BIMPills.Core.Services
         /// <summary>Cantidad de niveles cuyo tipo empieza con "ARQ".</summary>
         int GetArqLevelCount();
 
-        // ── Exportar Planos ──
+        // ── Exportar Planos y Vistas ──
 
         /// <summary>Obtiene todos los planos (ViewSheets) del modelo.</summary>
         IReadOnlyList<SheetExportInfo> GetSheets();
+
+        /// <summary>
+        /// Obtiene todos los planos y vistas exportables del modelo
+        /// (planos + plantas, alzados, secciones, vistas 3D, leyendas, etc.).
+        /// </summary>
+        IReadOnlyList<ExportableViewInfo> GetExportableViews();
 
         /// <summary>Obtiene el nombre del proyecto desde ProjectInformation.</summary>
         string GetProjectName();

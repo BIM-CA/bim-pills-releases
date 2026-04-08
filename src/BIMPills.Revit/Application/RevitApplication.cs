@@ -2,6 +2,7 @@ using Autodesk.Revit.UI;
 using BIMPills.Commands.About;
 using BIMPills.Commands.CustomDimensionSchemes;
 using BIMPills.Commands.DataManager;
+using BIMPills.Commands.Transfer;
 using BIMPills.Commands.Documentacion;
 using BIMPills.Commands.ExportFamilies;
 using BIMPills.Commands.Gestion;
@@ -48,7 +49,19 @@ namespace BIMPills.Revit.Application
                 logger.Info($"Directorio de logs: {logDir}");
                 logger.Info($"Ensamblado: {Assembly.GetExecutingAssembly().Location}");
 
-                // 2. Version adapter (compiled per-version via #if REVIT20XX)
+                // 2. Theme — detect Revit dark mode and initialize ThemeHelper
+                try
+                {
+#if REVIT2024 || REVIT2025 || REVIT2026 || REVIT2027
+                    // Dark theme disabled until fully polished — always use light
+                    // bool isDark = Autodesk.Revit.UI.UIThemeManager.CurrentTheme == Autodesk.Revit.UI.UITheme.Dark;
+                    BIMPills.UI.Shared.ThemeHelper.Initialize(false);
+                    logger.Info("Tema forzado: Claro (tema oscuro deshabilitado temporalmente)");
+#endif
+                }
+                catch { /* Theme detection is non-critical */ }
+
+                // 3. Version adapter (compiled per-version via #if REVIT20XX)
                 ServiceLocator.Register<IRevitVersionAdapter>(new RevitVersionAdapterImpl());
                 var versionLabel = new RevitVersionAdapterImpl().VersionLabel;
                 logger.Info($"Versión de Revit: {versionLabel}");
@@ -59,7 +72,7 @@ namespace BIMPills.Revit.Application
                 logger.Info("Servicios Sprint 2 registrados: IDimensionSchemeService, IMCPDiscoveryService");
 
                 // 4. License service — validates against Airtable, caches locally (DPAPI)
-                RegisterLicenseService(logger);
+                RegisterLicenseService(logger, app);
 
                 // 5. Global exception handlers — prevent any BIMPills exception from crashing Revit
                 RegisterGlobalExceptionHandlers(logger);
@@ -132,11 +145,15 @@ namespace BIMPills.Revit.Application
             };
         }
 
+        // Last time we revalidated against Airtable — used to throttle DocumentOpened calls
+        private static DateTime _lastRevalidation = DateTime.MinValue;
+        private static readonly TimeSpan _revalidationCooldown = TimeSpan.FromMinutes(30);
+
         /// <summary>
-        /// Registers the license service and triggers an async background validation.
-        /// Commands check the cached result synchronously via ILicenseService.IsValid.
+        /// Registers the license service, triggers an async background validation at startup,
+        /// and subscribes to DocumentOpened for periodic revalidation against Airtable.
         /// </summary>
-        private static void RegisterLicenseService(ILogger logger)
+        private static void RegisterLicenseService(ILogger logger, UIControlledApplication app)
         {
             var cache = new LicenseCache();
             var service = new AirtableLicenseService(cache);
@@ -150,23 +167,41 @@ namespace BIMPills.Revit.Application
             else if (cached != null)
             {
                 logger.Info("Cache de licencia expirado — revalidando en background...");
-                Task.Run(async () =>
-                {
-                    try
-                    {
-                        await service.ValidateAsync(cached.LicenseKey);
-                        logger.Info("Licencia revalidada contra Airtable.");
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.Warning($"No se pudo revalidar licencia: {ex.Message}");
-                    }
-                });
+                RevalidateInBackground(service, cache, logger, "startup");
             }
             else
             {
                 logger.Info("Sin licencia en cache — se requerirá activación al primer uso.");
             }
+
+            // Revalidate against Airtable each time a document is opened (max once per 30 min)
+            app.ControlledApplication.DocumentOpened += (s, e) =>
+            {
+                if (DateTime.UtcNow - _lastRevalidation < _revalidationCooldown) return;
+                var current = cache.Load();
+                if (string.IsNullOrEmpty(current?.LicenseKey)) return;
+                RevalidateInBackground(service, cache, logger, "DocumentOpened");
+            };
+        }
+
+        private static void RevalidateInBackground(
+            AirtableLicenseService service, LicenseCache cache, ILogger logger, string trigger)
+        {
+            _lastRevalidation = DateTime.UtcNow;
+            Task.Run(async () =>
+            {
+                try
+                {
+                    var key = cache.Load()?.LicenseKey;
+                    if (string.IsNullOrEmpty(key)) return;
+                    await service.ValidateAsync(key, forceRefresh: true);
+                    logger.Info($"Licencia revalidada contra Airtable ({trigger}).");
+                }
+                catch (Exception ex)
+                {
+                    logger.Warning($"No se pudo revalidar licencia ({trigger}): {ex.Message}");
+                }
+            });
         }
 
         public Result OnShutdown(UIControlledApplication app)
@@ -216,6 +251,7 @@ namespace BIMPills.Revit.Application
             yield return new MCPIntegrationModule();
             yield return new OrderingModule();
             yield return new DataManagerModule();
+            yield return new TransferModule();
             // Panel: Procesos
             yield return new DocumentacionModule();
             yield return new GestionModule();

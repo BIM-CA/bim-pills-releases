@@ -24,6 +24,7 @@ namespace BIMPills.Revit.Application
                 ["connect"]       = RibbonIconFactory.CreateConnectIcon,
                 ["ordering"]      = RibbonIconFactory.CreateOrderingIcon,
                 ["datamanager"]   = RibbonIconFactory.CreateDataManagerIcon,
+                ["transfer"]      = RibbonIconFactory.CreateTransferIcon,
             };
 
         public RibbonBuilder(UIControlledApplication app)

@@ -3,12 +3,13 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:BIMPills.UI.ExportFamilies"
         xmlns:sheets="clr-namespace:BIMPills.UI.ExportSheets"
-        Title="BIMPills — Exportar"
+        xmlns:model="clr-namespace:BIMPills.UI.ExportModel"
+        Title="BIM Pills — Exportar"
         Width="880" Height="720"
         MinWidth="700" MinHeight="520"
         ResizeMode="CanResizeWithGrip"
         WindowStartupLocation="CenterScreen"
-        Background="#F0F0F0"
+        Background="{DynamicResource BackgroundBrush}"
         UseLayoutRounding="True"
         SnapsToDevicePixels="True">
 
@@ -63,7 +64,12 @@
                         <Border x:Name="TabPlanosBorder" Style="{StaticResource TabHeader}"
                                 MouseLeftButtonDown="TabPlanos_Click">
                             <TextBlock x:Name="TabPlanosText" Style="{StaticResource TabHeaderText}"
-                                       Text="Planos"/>
+                                       Text="Planos y Vistas"/>
+                        </Border>
+                        <Border x:Name="TabModeloBorder" Style="{StaticResource TabHeader}"
+                                MouseLeftButtonDown="TabModelo_Click">
+                            <TextBlock x:Name="TabModeloText" Style="{StaticResource TabHeaderText}"
+                                       Text="Modelo"/>
                         </Border>
                     </StackPanel>
                 </Border>
@@ -111,6 +117,7 @@
                 <Grid>
                     <local:ExportFamiliesPanel x:Name="ExportPanel"/>
                     <sheets:ExportSheetsPanel x:Name="SheetsPanel" Visibility="Collapsed"/>
+                    <model:ExportModelPanel x:Name="ModelPanel" Visibility="Collapsed"/>
                 </Grid>
 
             </DockPanel>

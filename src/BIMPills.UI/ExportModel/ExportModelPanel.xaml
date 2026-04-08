@@ -1,0 +1,452 @@
+<UserControl x:Class="BIMPills.UI.ExportModel.ExportModelPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             UseLayoutRounding="True" SnapsToDevicePixels="True">
+
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/BIMPills.UI;component/Shared/Styles.xaml"/>
+                <ResourceDictionary Source="/BIMPills.UI;component/Shared/Icons.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            <Style x:Key="WizardStepBadge" TargetType="Border">
+                <Setter Property="Width" Value="18"/>
+                <Setter Property="Height" Value="18"/>
+                <Setter Property="CornerRadius" Value="9"/>
+                <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
+            </Style>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <DockPanel>
+
+        <!-- Status bar -->
+        <Border DockPanel.Dock="Bottom"
+                BorderBrush="#E5E5EA" BorderThickness="0,1,0,0"
+                Padding="14,10">
+            <TextBlock x:Name="StatusText"
+                       Text="Listo para exportar"
+                       FontSize="11"
+                       Foreground="{StaticResource TextSecondaryBrush}"
+                       VerticalAlignment="Center"
+                       FontFamily="Segoe UI"/>
+        </Border>
+
+        <!-- Presets bar -->
+        <Border DockPanel.Dock="Top"
+                Background="#F8F9FA" BorderBrush="#E5E5EA" BorderThickness="0,0,0,1"
+                Padding="14,8">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Margin="8,0,0,0">
+                    <Button x:Name="SavePresetBtn" Content="Guardar"
+                            Style="{StaticResource TertiaryButton}"
+                            Padding="10,4" FontSize="11" Margin="0,0,4,0"
+                            Click="SavePreset_Click"/>
+                    <Button x:Name="DeletePresetBtn" Content="Eliminar"
+                            Style="{StaticResource TertiaryButton}"
+                            Padding="10,4" FontSize="11" IsEnabled="False"
+                            Click="DeletePreset_Click"/>
+                </StackPanel>
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Left" Text="Conjunto:"
+                               FontSize="11" FontFamily="Segoe UI"
+                               Foreground="{StaticResource TextSecondaryBrush}"
+                               VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <ComboBox x:Name="PresetCombo"
+                              Style="{StaticResource BIMPillsComboBox}"
+                              SelectionChanged="Preset_Changed"/>
+                </DockPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- Wizard TabControl + progress overlay -->
+        <Grid>
+
+        <TabControl x:Name="WizardTabs"
+                    Style="{StaticResource BIMPillsTabControl}"
+                    Margin="14,10,14,0">
+
+            <!-- ═══════════════ Tab 1: Selección ═══════════════ -->
+            <TabItem Style="{StaticResource BIMPillsTabItem}">
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Border Style="{StaticResource WizardStepBadge}" Margin="0,0,6,0">
+                            <TextBlock Text="1" FontSize="10" FontWeight="Bold" Foreground="White"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                       FontFamily="Segoe UI"/>
+                        </Border>
+                        <TextBlock Text="Selecci&#243;n" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </TabItem.Header>
+
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="0,14,0,0">
+
+                    <!-- Scope card -->
+                    <Border Background="#FAFAFA" CornerRadius="6"
+                            BorderBrush="#E5E5EA" BorderThickness="1"
+                            Padding="16,14" Margin="0,0,0,10">
+                        <StackPanel>
+                            <TextBlock Text="Alcance de exportaci&#243;n"
+                                       FontSize="12" FontWeight="SemiBold"
+                                       Foreground="{StaticResource PrimaryBrush}"
+                                       FontFamily="Segoe UI" Margin="0,0,0,4"/>
+                            <TextBlock Text="&#191;Qu&#233; parte del modelo se incluir&#225; en el NWC?"
+                                       FontSize="11" FontFamily="Segoe UI"
+                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                       Margin="0,0,0,12"/>
+
+                            <RadioButton x:Name="ScopeModel"
+                                         Content=" Modelo completo"
+                                         IsChecked="True"
+                                         GroupName="NwcScope"
+                                         FontSize="12" FontFamily="Segoe UI"
+                                         Margin="0,0,0,8"
+                                         Checked="Scope_Changed"/>
+
+                            <RadioButton x:Name="ScopeSpecificView"
+                                         Content=" Vista 3D espec&#237;fica"
+                                         GroupName="NwcScope"
+                                         FontSize="12" FontFamily="Segoe UI"
+                                         Margin="0,0,0,4"
+                                         Checked="Scope_Changed"/>
+
+                            <!-- 3D view picker (visible when ScopeSpecificView is checked) -->
+                            <Border x:Name="ViewPickerPanel"
+                                    Visibility="Collapsed"
+                                    Background="White" CornerRadius="5"
+                                    BorderBrush="#D1D5DA" BorderThickness="1"
+                                    Margin="20,0,0,8" Padding="8,8">
+                                <StackPanel>
+                                    <!-- Search -->
+                                    <TextBox x:Name="ViewSearchBox"
+                                             Style="{StaticResource BIMPillsTextBox}"
+                                             FontSize="11" Padding="6,5"
+                                             Margin="0,0,0,6"
+                                             TextChanged="ViewSearch_Changed">
+                                        <TextBox.Tag>Filtrar vistas 3D...</TextBox.Tag>
+                                    </TextBox>
+                                    <!-- List -->
+                                    <ListBox x:Name="ViewsListBox"
+                                             MaxHeight="160"
+                                             BorderThickness="0"
+                                             Background="Transparent"
+                                             FontFamily="Segoe UI" FontSize="11"
+                                             SelectionChanged="ViewsListBox_SelectionChanged">
+                                        <ListBox.ItemContainerStyle>
+                                            <Style TargetType="ListBoxItem">
+                                                <Setter Property="Padding" Value="6,5"/>
+                                                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                                <Style.Triggers>
+                                                    <Trigger Property="IsSelected" Value="True">
+                                                        <Setter Property="Background" Value="#E8F0FE"/>
+                                                        <Setter Property="Foreground" Value="#1565C0"/>
+                                                    </Trigger>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Background" Value="#F5F5F5"/>
+                                                    </Trigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </ListBox.ItemContainerStyle>
+                                    </ListBox>
+                                    <!-- Empty state -->
+                                    <TextBlock x:Name="ViewsEmptyState"
+                                               Text="No hay vistas 3D disponibles"
+                                               FontSize="11" FontFamily="Segoe UI"
+                                               Foreground="{StaticResource TextSecondaryBrush}"
+                                               HorizontalAlignment="Center"
+                                               Margin="0,6,0,0"
+                                               Visibility="Collapsed"/>
+                                </StackPanel>
+                            </Border>
+
+                            <RadioButton x:Name="ScopeSelection"
+                                         Content=" Selecci&#243;n actual"
+                                         GroupName="NwcScope"
+                                         FontSize="12" FontFamily="Segoe UI"
+                                         Margin="0,0,0,0"
+                                         Checked="Scope_Changed"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Links card -->
+                    <Border Background="#FAFAFA" CornerRadius="6"
+                            BorderBrush="#E5E5EA" BorderThickness="1"
+                            Padding="16,14" Margin="0,0,0,10">
+                        <StackPanel>
+                            <TextBlock Text="Links del modelo"
+                                       FontSize="12" FontWeight="SemiBold"
+                                       Foreground="{StaticResource PrimaryBrush}"
+                                       FontFamily="Segoe UI" Margin="0,0,0,10"/>
+                            <CheckBox x:Name="ExportLinksCheck"
+                                      Content=" Incluir archivos enlazados (RVT links)"
+                                      IsChecked="True"
+                                      FontSize="12" FontFamily="Segoe UI"/>
+                        </StackPanel>
+                    </Border>
+
+                </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- ═══════════════ Tab 2: Formato ═══════════════ -->
+            <TabItem Style="{StaticResource BIMPillsTabItem}">
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Border Style="{StaticResource WizardStepBadge}" Margin="0,0,6,0">
+                            <TextBlock Text="2" FontSize="10" FontWeight="Bold" Foreground="White"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                       FontFamily="Segoe UI"/>
+                        </Border>
+                        <TextBlock Text="Formato" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </TabItem.Header>
+
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="0,14,0,0">
+
+                    <!-- Format selector -->
+                    <TextBlock Text="Formato de exportaci&#243;n"
+                               FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"
+                               FontFamily="Segoe UI" Margin="0,0,0,6"/>
+                    <ComboBox x:Name="FormatCombo"
+                              Style="{StaticResource BIMPillsComboBox}"
+                              Margin="0,0,0,14"
+                              SelectionChanged="FormatCombo_Changed">
+                        <ComboBoxItem Content="NWC (Navisworks)" Tag="NWC" IsSelected="True"/>
+                        <!-- Future: IFC, FBX, etc. -->
+                    </ComboBox>
+
+                    <!-- NWC options -->
+                    <Border x:Name="NwcOptionsPanel"
+                            Background="#FAFAFA" CornerRadius="6"
+                            BorderBrush="#E5E5EA" BorderThickness="1"
+                            Padding="16,14" Margin="0,0,0,10">
+                        <StackPanel>
+
+                            <TextBlock Text="Opciones NWC (Navisworks)"
+                                       FontSize="12" FontWeight="SemiBold"
+                                       Foreground="{StaticResource PrimaryBrush}"
+                                       FontFamily="Segoe UI" Margin="0,0,0,12"/>
+
+                            <!-- Coordinates -->
+                            <Grid Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="160"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="Coordenadas:" FontSize="11"
+                                           VerticalAlignment="Center" FontFamily="Segoe UI"/>
+                                <ComboBox x:Name="CoordinatesCombo" Grid.Column="1"
+                                          Style="{StaticResource BIMPillsComboBox}">
+                                    <ComboBoxItem Content="Compartidas (Shared)" Tag="Shared" IsSelected="True"/>
+                                    <ComboBoxItem Content="Internas (Internal)" Tag="Internal"/>
+                                </ComboBox>
+                            </Grid>
+
+                            <!-- Parameters -->
+                            <Grid Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="160"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="Par&#225;metros:" FontSize="11"
+                                           VerticalAlignment="Center" FontFamily="Segoe UI"/>
+                                <ComboBox x:Name="ParametersCombo" Grid.Column="1"
+                                          Style="{StaticResource BIMPillsComboBox}">
+                                    <ComboBoxItem Content="Todos" Tag="All" IsSelected="True"/>
+                                    <ComboBoxItem Content="Solo elementos" Tag="Elements"/>
+                                    <ComboBoxItem Content="Ninguno" Tag="None"/>
+                                </ComboBox>
+                            </Grid>
+
+                            <!-- Faceting precision -->
+                            <Grid Margin="0,0,0,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="160"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="Precisi&#243;n facetado:" FontSize="11"
+                                           VerticalAlignment="Center" FontFamily="Segoe UI"/>
+                                <ComboBox x:Name="FacetingCombo" Grid.Column="1"
+                                          Style="{StaticResource BIMPillsComboBox}">
+                                    <ComboBoxItem Content="Baja" Tag="Low"/>
+                                    <ComboBoxItem Content="Media" Tag="Medium" IsSelected="True"/>
+                                    <ComboBoxItem Content="Alta" Tag="High"/>
+                                </ComboBox>
+                            </Grid>
+
+                            <!-- Additional options -->
+                            <TextBlock Text="Opciones adicionales" FontSize="11" FontWeight="SemiBold"
+                                       FontFamily="Segoe UI" Margin="0,0,0,8"/>
+                            <WrapPanel>
+                                <CheckBox x:Name="ConvertPropertiesCheck"
+                                          Content=" Convertir propiedades de elementos"
+                                          IsChecked="True" FontSize="11" FontFamily="Segoe UI"
+                                          Margin="0,0,16,6"/>
+                                <CheckBox x:Name="RoomAttributeCheck"
+                                          Content=" Room como atributo"
+                                          IsChecked="True" FontSize="11" FontFamily="Segoe UI"
+                                          Margin="0,0,16,6"/>
+                                <CheckBox x:Name="RoomGeometryCheck"
+                                          Content=" Exportar geometr&#237;a Room"
+                                          IsChecked="False" FontSize="11" FontFamily="Segoe UI"
+                                          Margin="0,0,16,6"/>
+                                <CheckBox x:Name="DivideByLevelsCheck"
+                                          Content=" Dividir por niveles"
+                                          IsChecked="False" FontSize="11" FontFamily="Segoe UI"
+                                          Margin="0,0,16,6"/>
+                                <CheckBox x:Name="ExportUrlsCheck"
+                                          Content=" Exportar URLs"
+                                          IsChecked="False" FontSize="11" FontFamily="Segoe UI"
+                                          Margin="0,0,16,6"/>
+                                <CheckBox x:Name="FindMaterialsCheck"
+                                          Content=" Buscar materiales faltantes"
+                                          IsChecked="False" FontSize="11" FontFamily="Segoe UI"
+                                          Margin="0,0,16,6"/>
+                            </WrapPanel>
+
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Navisworks not available -->
+                    <Border x:Name="NwcUnavailableOverlay" Visibility="Collapsed"
+                            Background="#FFF8E1" CornerRadius="6"
+                            BorderBrush="#FFE082" BorderThickness="1"
+                            Padding="16,14" Margin="0,0,0,10">
+                        <StackPanel>
+                            <TextBlock FontSize="12" FontWeight="SemiBold" FontFamily="Segoe UI"
+                                       Foreground="#E65100" Margin="0,0,0,6">
+                                Navisworks NWC Export Utility no detectado
+                            </TextBlock>
+                            <TextBlock FontSize="11" FontFamily="Segoe UI"
+                                       Foreground="#5D4037" TextWrapping="Wrap" Margin="0,0,0,4">
+                                Aunque tengas Navisworks instalado, la exportación NWC desde Revit
+                                requiere el complemento adicional "Navisworks NWC Export Utility".
+                            </TextBlock>
+                            <TextBlock FontSize="11" FontFamily="Segoe UI"
+                                       Foreground="#5D4037" TextWrapping="Wrap" Margin="0,0,0,8">
+                                Descárgalo gratis desde Autodesk Account e instálalo para tu versión de Revit.
+                            </TextBlock>
+                            <TextBlock FontSize="11" FontFamily="Segoe UI" Foreground="#1565C0">
+                                <Hyperlink NavigateUri="https://www.autodesk.com/products/navisworks/3d-viewers"
+                                           RequestNavigate="Hyperlink_RequestNavigate">
+                                    Descargar Navisworks NWC Export Utility
+                                </Hyperlink>
+                            </TextBlock>
+                        </StackPanel>
+                    </Border>
+
+                </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- ═══════════════ Tab 3: Exportar ═══════════════ -->
+            <TabItem Style="{StaticResource BIMPillsTabItem}">
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Border Style="{StaticResource WizardStepBadge}" Margin="0,0,6,0">
+                            <TextBlock Text="3" FontSize="10" FontWeight="Bold" Foreground="White"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                       FontFamily="Segoe UI"/>
+                        </Border>
+                        <TextBlock Text="Exportar" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </TabItem.Header>
+
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="0,14,0,0">
+
+                    <!-- Carpeta destino -->
+                    <TextBlock Text="Carpeta destino" FontSize="11"
+                               Foreground="{StaticResource TextSecondaryBrush}"
+                               FontFamily="Segoe UI" Margin="0,0,0,6"/>
+                    <DockPanel Margin="0,0,0,16">
+                        <Button DockPanel.Dock="Right" Content="Explorar..."
+                                Style="{StaticResource TertiaryButton}"
+                                Padding="14,0" Margin="8,0,0,0"
+                                Click="BrowseFolder_Click"/>
+                        <TextBox x:Name="DestinationBox"
+                                 Style="{StaticResource BIMPillsTextBox}"
+                                 TextChanged="DestinationBox_TextChanged"/>
+                    </DockPanel>
+
+                    <!-- Nombramiento -->
+                    <TextBlock Text="Nombramiento" FontSize="11"
+                               Foreground="{StaticResource TextSecondaryBrush}"
+                               FontFamily="Segoe UI" Margin="0,0,0,6"/>
+
+                    <!-- Template TextBox -->
+                    <TextBox x:Name="FileNameBox"
+                             Style="{StaticResource BIMPillsTextBox}"
+                             FontSize="11" Padding="6,5"
+                             FontFamily="Consolas"
+                             Margin="0,0,0,6"
+                             TextChanged="FileName_TextChanged"/>
+
+                    <!-- Quick-insert chips (populated in code-behind) -->
+                    <WrapPanel x:Name="ParamChipsPanel" Margin="0,0,0,8"/>
+
+                    <!-- Custom param selector -->
+                    <DockPanel x:Name="ParamSelectorRow" Margin="0,0,0,0"
+                               Visibility="Collapsed">
+                        <Button DockPanel.Dock="Right" Content="Agregar"
+                                Style="{StaticResource TertiaryButton}"
+                                Padding="14,0" Margin="8,0,0,0"
+                                Click="AddParam_Click"/>
+                        <ComboBox x:Name="ParamSelectorCombo"
+                                  Style="{StaticResource BIMPillsComboBox}"/>
+                    </DockPanel>
+
+                    <!-- Organización de carpetas -->
+                    <TextBlock Text="Organizaci&#243;n de carpetas" FontSize="11"
+                               Foreground="{StaticResource TextSecondaryBrush}"
+                               FontFamily="Segoe UI" Margin="0,14,0,6"/>
+                    <ComboBox x:Name="FolderOrgCombo"
+                              Style="{StaticResource BIMPillsComboBox}"
+                              Margin="0,0,0,10">
+                        <ComboBoxItem Content="Carpeta ra&#237;z (sin subcarpetas)" Tag="Flat" IsSelected="True"/>
+                        <ComboBoxItem Content="Por disciplina (/ARQ, /EST, /MEP)" Tag="ByDiscipline"/>
+                    </ComboBox>
+
+                    <!-- Preview -->
+                    <Border Background="#EBEBED" CornerRadius="5"
+                            Padding="10,7" Margin="0,4,0,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Vista previa:&#x2009;"
+                                       FontSize="11" FontFamily="Segoe UI"
+                                       Foreground="{StaticResource TextSecondaryBrush}"/>
+                            <TextBlock x:Name="FilePreview"
+                                       FontSize="11" FontFamily="Consolas"
+                                       Foreground="{StaticResource PrimaryBrush}"
+                                       FontWeight="SemiBold"/>
+                            <TextBlock Text=".nwc"
+                                       FontSize="11" FontFamily="Consolas"
+                                       Foreground="{StaticResource TextSecondaryBrush}"/>
+                        </StackPanel>
+                    </Border>
+
+                </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+        </TabControl>
+
+        <!-- Progress overlay -->
+        <Grid x:Name="ProgressOverlay" Visibility="Collapsed">
+            <Border Background="#CC000000" CornerRadius="8">
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <TextBlock Text="Exportando modelo..."
+                               FontSize="14" FontWeight="SemiBold"
+                               Foreground="White" FontFamily="Segoe UI"
+                               HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                    <ProgressBar Width="300" Height="8" IsIndeterminate="True"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        </Grid>
+
+    </DockPanel>
+
+</UserControl>

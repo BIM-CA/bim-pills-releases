@@ -6,7 +6,7 @@ namespace BIMPills.Commands.DataManager
 {
     public sealed class DataManagerModule : IPluginModule
     {
-        public string TabName   => "BIMPills";
+        public string TabName   => "BIM Pills";
         public string PanelName => "Datos";
 
         public void BuildRibbon(IRibbonBuilder builder)

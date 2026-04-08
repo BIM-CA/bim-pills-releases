@@ -11,6 +11,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Data;
+using System.Windows.Threading;
 
 namespace BIMPills.UI.DataManager
 {
@@ -37,9 +38,13 @@ namespace BIMPills.UI.DataManager
         /// <summary>Track which columns are read-only by name for styling.</summary>
         private HashSet<string> _readOnlyColumnNames = new();
 
+        private bool _tablasLoaded = false;
+        private int  _activeTab   = 0;
+
         public GestionarWindow(IDocumentServices documentServices, string modelName = "Modelo")
         {
             InitializeComponent();
+            BIMPills.UI.Shared.ThemeHelper.Apply(this);
             _documentServices = documentServices;
             _modelName = Path.GetFileNameWithoutExtension(modelName);
 
@@ -51,23 +56,103 @@ namespace BIMPills.UI.DataManager
                 "BIMPills", "Exports");
             ExportPathBox.Text = defaultFolder;
 
-            LoadSchedules();
+            // Lazy-load tables on first show
+            Loaded += (_, _) => { if (!_tablasLoaded) LoadSchedulesWithOverlay(); };
+        }
+
+        // ── Tab switching ─────────────────────────────────────────────────────
+
+        public void InitializeKeynotes(
+            string? keynoteFilePath = null,
+            Func<string, bool>? reloadInRevitCallback = null)
+        {
+            KeynotesPanel.Initialize(keynoteFilePath, reloadInRevitCallback);
+        }
+
+        private void Tab0_Click(object sender, System.Windows.Input.MouseButtonEventArgs e) => SwitchTab(0);
+        private void Tab1_Click(object sender, System.Windows.Input.MouseButtonEventArgs e) => SwitchTab(1);
+
+        private void SwitchTab(int tab)
+        {
+            _activeTab = tab;
+
+            // Content visibility
+            TablasContent.Visibility  = tab == 0 ? Visibility.Visible : Visibility.Collapsed;
+            KeynotesPanel.Visibility  = tab == 1 ? Visibility.Visible : Visibility.Collapsed;
+
+            // Footer buttons
+            FooterImportButton.Visibility = tab == 0 ? Visibility.Visible : Visibility.Collapsed;
+            FooterExportButton.Visibility = tab == 0 ? Visibility.Visible : Visibility.Collapsed;
+
+            // Tab border styles — use global TabHeader / TabHeaderActive resources
+            var activeStyle   = (System.Windows.Style)FindResource("TabHeaderActive");
+            var inactiveStyle = (System.Windows.Style)FindResource("TabHeader");
+            var activeText    = (System.Windows.Style)FindResource("TabHeaderTextActive");
+            var inactiveText  = (System.Windows.Style)FindResource("TabHeaderText");
+
+            Tab0Border.Style = tab == 0 ? activeStyle   : inactiveStyle;
+            Tab1Border.Style = tab == 1 ? activeStyle   : inactiveStyle;
+            Tab0Text.Style   = tab == 0 ? activeText    : inactiveText;
+            Tab1Text.Style   = tab == 1 ? activeText    : inactiveText;
+
+            // Tool header
+            if (tab == 0)
+            {
+                ToolHeaderIcon.Text       = "\uE9F9";
+                ToolHeaderIcon.Foreground = new System.Windows.Media.SolidColorBrush(
+                    (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#1565C0"));
+                ToolHeaderTitle.Text      = "Tablas de planificaci\u00f3n";
+                ToolHeaderSubtitle.Text   = "Exporta e importa datos de tablas de planificaci\u00f3n al modelo";
+                ToolHeaderIconBorder.Background = new System.Windows.Media.SolidColorBrush(
+                    (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#E3F2FD"));
+            }
+            else
+            {
+                ToolHeaderIcon.Text       = "\uE8D2";
+                ToolHeaderIcon.Foreground = new System.Windows.Media.SolidColorBrush(
+                    (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#2E7D32"));
+                ToolHeaderTitle.Text      = "Notas Clave";
+                ToolHeaderSubtitle.Text   = "Edita, importa y exporta el archivo de notas clave del proyecto";
+                ToolHeaderIconBorder.Background = new System.Windows.Media.SolidColorBrush(
+                    (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#E8F5E9"));
+            }
+
+            // Lazy-load
+            if (tab == 0 && !_tablasLoaded) LoadSchedulesWithOverlay();
+        }
+
+        // ── Lazy loading ──────────────────────────────────────────────────────
+
+        private void LoadSchedulesWithOverlay()
+        {
+            ShowLoading("Cargando tablas de planificaci\u00f3n...");
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                try   { LoadSchedules(); _tablasLoaded = true; }
+                catch (Exception ex)
+                { MessageBox.Show($"Error cargando tablas: {ex.Message}", "BIM Pills \u2014 Error"); }
+                finally { HideLoading(); }
+            }), DispatcherPriority.Background);
+        }
+
+        private void ShowLoading(string message)
+        {
+            LoadingText.Text          = message;
+            LoadingOverlay.Visibility = Visibility.Visible;
+        }
+
+        private void HideLoading()
+        {
+            LoadingOverlay.Visibility = Visibility.Collapsed;
         }
 
         private void LoadSchedules()
         {
-            try
-            {
-                _allSchedules = _documentServices.GetSchedules()?.ToList()
-                                ?? new List<ScheduleInfo>();
-                ScheduleListBox.ItemsSource = _allSchedules;
-                UpdateSelectionCount();
-                StatusLabel.Text = $"{_allSchedules.Count} tablas disponibles";
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error cargando tablas: {ex.Message}", "BIMPills — Error");
-            }
+            _allSchedules = _documentServices.GetSchedules()?.ToList()
+                            ?? new List<ScheduleInfo>();
+            ScheduleListBox.ItemsSource = _allSchedules;
+            UpdateSelectionCount();
+            StatusLabel.Text = $"{_allSchedules.Count} tablas disponibles";
         }
 
         private void ScheduleSearch_Changed(object sender, TextChangedEventArgs e)
@@ -99,7 +184,7 @@ namespace BIMPills.UI.DataManager
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error cargando datos: {ex.Message}", "BIMPills — Error");
+                MessageBox.Show($"Error cargando datos: {ex.Message}", "BIM Pills \u2014 Error");
             }
         }
 
@@ -224,7 +309,7 @@ namespace BIMPills.UI.DataManager
 
             if (selected.Count == 0)
             {
-                MessageBox.Show("Selecciona al menos una tabla para exportar.", "BIMPills — Gestionar");
+                MessageBox.Show("Selecciona al menos una tabla para exportar.", "BIM Pills \u2014 Gestionar");
                 return;
             }
 
@@ -270,7 +355,7 @@ namespace BIMPills.UI.DataManager
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al exportar: {ex.Message}", "BIMPills — Error");
+                MessageBox.Show($"Error al exportar: {ex.Message}", "BIM Pills \u2014 Error");
             }
         }
 
@@ -303,7 +388,7 @@ namespace BIMPills.UI.DataManager
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al exportar: {ex.Message}", "BIMPills — Error");
+                MessageBox.Show($"Error al exportar: {ex.Message}", "BIM Pills \u2014 Error");
             }
         }
 
@@ -339,7 +424,7 @@ namespace BIMPills.UI.DataManager
 
                 if (allData.Count == 0)
                 {
-                    MessageBox.Show("Las tablas seleccionadas no contienen datos.", "BIMPills — Gestionar");
+                    MessageBox.Show("Las tablas seleccionadas no contienen datos.", "BIM Pills \u2014 Gestionar");
                     return;
                 }
 
@@ -349,7 +434,7 @@ namespace BIMPills.UI.DataManager
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al exportar: {ex.Message}", "BIMPills — Error");
+                MessageBox.Show($"Error al exportar: {ex.Message}", "BIM Pills \u2014 Error");
             }
         }
 
@@ -357,7 +442,7 @@ namespace BIMPills.UI.DataManager
         {
             var result = MessageBox.Show(
                 $"Archivo exportado:\n{path}\n\n¿Abrir en Excel?",
-                "BIMPills — Exportar",
+                "BIM Pills \u2014 Exportar",
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Information);
 
@@ -383,7 +468,7 @@ namespace BIMPills.UI.DataManager
                 if (multiUpdates.Count == 0)
                 {
                     MessageBox.Show("No se detectaron datos importables en el archivo.",
-                        "BIMPills — Importar");
+                        "BIM Pills \u2014 Importar");
                     return;
                 }
 
@@ -425,12 +510,12 @@ namespace BIMPills.UI.DataManager
                 }
                 else
                 {
-                    MessageBox.Show("No se detectaron cambios en el archivo.", "BIMPills — Importar");
+                    MessageBox.Show("No se detectaron cambios en el archivo.", "BIM Pills \u2014 Importar");
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al leer el archivo: {ex.Message}", "BIMPills — Error");
+                MessageBox.Show($"Error al leer el archivo: {ex.Message}", "BIM Pills \u2014 Error");
             }
         }
 
@@ -457,8 +542,8 @@ namespace BIMPills.UI.DataManager
             if (_pendingUpdates.Count == 0) return;
 
             var confirm = MessageBox.Show(
-                $"¿Aplicar {_pendingUpdates.Count} cambios al modelo Revit?",
-                "BIMPills — Gestionar",
+                $"\u00bfAplicar {_pendingUpdates.Count} cambios al modelo Revit?",
+                "BIM Pills \u2014 Gestionar",
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Question);
 
@@ -470,11 +555,11 @@ namespace BIMPills.UI.DataManager
 
                 StatusLabel.Text = $"Aplicados: {result.Updated} · Omitidos: {result.Skipped}";
 
-                var msg = $"Operación completada.\n\n• Actualizados: {result.Updated}\n• Omitidos: {result.Skipped}";
+                var msg = $"Operaci\u00f3n completada.\n\n\u2022 Actualizados: {result.Updated}\n\u2022 Omitidos: {result.Skipped}";
                 if (result.Errors.Count > 0)
-                    msg += $"\n• Errores: {result.Errors.Count}\n{string.Join("\n", result.Errors.Take(5))}";
+                    msg += $"\n\u2022 Errores: {result.Errors.Count}\n{string.Join("\n", result.Errors.Take(5))}";
 
-                MessageBox.Show(msg, "BIMPills — Importar", MessageBoxButton.OK,
+                MessageBox.Show(msg, "BIM Pills \u2014 Importar", MessageBoxButton.OK,
                     result.Errors.Count > 0 ? MessageBoxImage.Warning : MessageBoxImage.Information);
 
                 _pendingUpdates.Clear();
@@ -496,7 +581,7 @@ namespace BIMPills.UI.DataManager
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al aplicar cambios: {ex.Message}", "BIMPills — Error");
+                MessageBox.Show($"Error al aplicar cambios: {ex.Message}", "BIM Pills \u2014 Error");
             }
         }
 

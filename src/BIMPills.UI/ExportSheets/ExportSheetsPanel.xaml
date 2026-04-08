@@ -57,11 +57,38 @@
                 BorderBrush="#E5E5EA" BorderThickness="0,1,0,0"
                 Padding="14,10">
             <TextBlock x:Name="StatusText"
-                       Text="0 planos seleccionados"
+                       Text="0 items seleccionados"
                        FontSize="11"
                        Foreground="{StaticResource TextSecondaryBrush}"
                        VerticalAlignment="Center"
                        FontFamily="Segoe UI"/>
+        </Border>
+
+        <!-- Publication set bar (S6-C) -->
+        <Border DockPanel.Dock="Top"
+                Background="#F8F9FA" BorderBrush="#E5E5EA" BorderThickness="0,0,0,1"
+                Padding="14,8">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Margin="8,0,0,0">
+                    <Button x:Name="SaveSetBtn" Content="Guardar" Style="{StaticResource TertiaryButton}"
+                            Padding="10,4" FontSize="11" Margin="0,0,4,0"
+                            Click="SaveSet_Click"/>
+                    <Button x:Name="DeleteSetBtn" Content="Eliminar" Style="{StaticResource TertiaryButton}"
+                            Padding="10,4" FontSize="11" IsEnabled="False"
+                            Click="DeleteSet_Click"/>
+                </StackPanel>
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Left" Text="Conjunto:"
+                               FontSize="11" FontFamily="Segoe UI"
+                               Foreground="{StaticResource TextSecondaryBrush}"
+                               VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <ComboBox x:Name="PublicationSetCombo"
+                              Style="{StaticResource BIMPillsComboBox}"
+                              SelectionChanged="PublicationSet_Changed">
+                        <ComboBox.Tag>Seleccionar conjunto de publicación...</ComboBox.Tag>
+                    </ComboBox>
+                </DockPanel>
+            </DockPanel>
         </Border>
 
         <!-- Tabbed wizard content + progress overlay wrapper -->
@@ -91,6 +118,19 @@
                     <!-- Search + actions bar -->
                     <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
                         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Margin="8,0,0,0">
+                            <ComboBox x:Name="TypeFilterCombo"
+                                      Style="{StaticResource BIMPillsComboBox}"
+                                      Width="130" Margin="0,0,8,0"
+                                      SelectionChanged="TypeFilter_Changed">
+                                <ComboBoxItem Content="Todos" Tag="All" IsSelected="True"/>
+                                <ComboBoxItem Content="Planos" Tag="Sheet"/>
+                                <ComboBoxItem Content="Plantas" Tag="FloorPlan"/>
+                                <ComboBoxItem Content="Alzados" Tag="Elevation"/>
+                                <ComboBoxItem Content="Secciones" Tag="Section"/>
+                                <ComboBoxItem Content="Vistas 3D" Tag="ThreeDView"/>
+                                <ComboBoxItem Content="Leyendas" Tag="Legend"/>
+                                <ComboBoxItem Content="Diseño" Tag="DraftingView"/>
+                            </ComboBox>
                             <Button Content="Seleccionar todo" Style="{StaticResource TertiaryButton}"
                                     Padding="10,4" FontSize="11" Margin="0,0,4,0"
                                     Click="SelectAll_Click"/>
@@ -103,7 +143,7 @@
                                  Padding="8,6"
                                  FontSize="12"
                                  TextChanged="SearchBox_TextChanged">
-                            <TextBox.Tag>Buscar por número o nombre de plano...</TextBox.Tag>
+                            <TextBox.Tag>Buscar por número o nombre...</TextBox.Tag>
                         </TextBox>
                     </DockPanel>
 
@@ -112,12 +152,12 @@
                             Background="#F8F9FA" CornerRadius="6"
                             Padding="12,6" Margin="0,0,0,8">
                         <TextBlock x:Name="SelectionSummary"
-                                   Text="0 de 0 planos seleccionados"
+                                   Text="0 de 0 items seleccionados"
                                    FontSize="11" FontFamily="Segoe UI"
                                    Foreground="{StaticResource TextSecondaryBrush}"/>
                     </Border>
 
-                    <!-- Sheets DataGrid -->
+                    <!-- Sheets/Views DataGrid -->
                     <DataGrid x:Name="SheetsGrid"
                               AutoGenerateColumns="False"
                               CanUserAddRows="False"
@@ -137,10 +177,25 @@
                         <DataGrid.Columns>
                             <DataGridCheckBoxColumn Binding="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}"
                                                     Header="☑" Width="36"/>
-                            <DataGridTextColumn Binding="{Binding SheetNumber}" Header="N° Plano"
-                                                Width="80" IsReadOnly="True"/>
-                            <DataGridTextColumn Binding="{Binding SheetName}" Header="Nombre del Plano"
-                                                Width="150" IsReadOnly="True"/>
+                            <DataGridTemplateColumn Header="Tipo" Width="90" IsReadOnly="True"
+                                                       SortMemberPath="TypeLabel">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Border Background="#F0F4F8" CornerRadius="4"
+                                                Padding="6,2" Margin="2,0"
+                                                HorizontalAlignment="Left" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding TypeLabel}"
+                                                       FontSize="10" FontWeight="SemiBold"
+                                                       Foreground="#455A64"
+                                                       FontFamily="Segoe UI"/>
+                                        </Border>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTextColumn Binding="{Binding SheetNumber}" Header="N°"
+                                                Width="70" IsReadOnly="True"/>
+                            <DataGridTextColumn Binding="{Binding DisplayName}" Header="Nombre"
+                                                Width="170" IsReadOnly="True"/>
                             <DataGridTextColumn Binding="{Binding Revision}" Header="Rev."
                                                 Width="50" IsReadOnly="True"/>
                             <DataGridTemplateColumn Header="Disciplina" Width="100" IsReadOnly="True"

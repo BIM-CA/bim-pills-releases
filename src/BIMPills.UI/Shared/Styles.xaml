@@ -70,7 +70,7 @@
         <Setter Property="FontSize" Value="13"/>
         <Setter Property="FontFamily" Value="Segoe UI"/>
         <Setter Property="Padding" Value="8,6"/>
-        <Setter Property="Background" Value="White"/>
+        <Setter Property="Background" Value="{DynamicResource WhiteBrush}"/>
         <Setter Property="BorderBrush" Value="#D1D1D6"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
@@ -188,7 +188,7 @@
 
     <!-- Boton terciario — borde azul fino, acciones menores -->
     <Style x:Key="TertiaryButton" TargetType="Button">
-        <Setter Property="Background" Value="White"/>
+        <Setter Property="Background" Value="{DynamicResource WhiteBrush}"/>
         <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
         <Setter Property="FontSize" Value="12.5"/>
         <Setter Property="FontWeight" Value="Normal"/>
@@ -249,8 +249,8 @@
     <Style x:Key="BIMPillsDataGrid" TargetType="DataGrid">
         <Setter Property="AutoGenerateColumns" Value="False"/>
         <Setter Property="IsReadOnly" Value="True"/>
-        <Setter Property="RowBackground" Value="White"/>
-        <Setter Property="AlternatingRowBackground" Value="{StaticResource AlternateRowBrush}"/>
+        <Setter Property="RowBackground" Value="{DynamicResource WhiteBrush}"/>
+        <Setter Property="AlternatingRowBackground" Value="{DynamicResource AlternateRowBrush}"/>
         <Setter Property="GridLinesVisibility" Value="Horizontal"/>
         <Setter Property="HorizontalGridLinesBrush" Value="{StaticResource SeparatorBrush}"/>
         <Setter Property="BorderBrush" Value="{StaticResource SeparatorBrush}"/>
@@ -260,7 +260,7 @@
         <Setter Property="FontFamily" Value="Segoe UI"/>
         <Setter Property="FontSize" Value="12"/>
         <Setter Property="FontWeight" Value="Normal"/>
-        <Setter Property="Background" Value="White"/>
+        <Setter Property="Background" Value="{DynamicResource WhiteBrush}"/>
         <Setter Property="CanUserResizeRows" Value="False"/>
         <Setter Property="RowHeight" Value="34"/>
         <Setter Property="ColumnHeaderStyle" Value="{StaticResource BIMPillsColumnHeader}"/>
@@ -355,8 +355,8 @@
         <Setter Property="FontFamily" Value="Segoe UI"/>
         <Setter Property="FontSize" Value="12"/>
         <Setter Property="Height" Value="34"/>
-        <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
-        <Setter Property="Background" Value="White"/>
+        <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource WhiteBrush}"/>
         <Setter Property="BorderBrush" Value="#D1D1D6"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Padding" Value="10,0"/>
@@ -444,8 +444,8 @@
     <Style x:Key="BIMPillsComboBox" TargetType="ComboBox">
         <Setter Property="FontFamily" Value="Segoe UI"/>
         <Setter Property="FontSize" Value="12.5"/>
-        <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
-        <Setter Property="Background" Value="White"/>
+        <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource WhiteBrush}"/>
         <Setter Property="BorderBrush" Value="#D1D1D6"/>
         <Setter Property="Height" Value="34"/>
         <Setter Property="Padding" Value="12,0,0,0"/>
@@ -594,7 +594,7 @@
 
     <!-- Tarjeta con sombra suave — macOS card style -->
     <Style x:Key="CardBorder" TargetType="Border">
-        <Setter Property="Background" Value="White"/>
+        <Setter Property="Background" Value="{DynamicResource WhiteBrush}"/>
         <Setter Property="CornerRadius" Value="10"/>
         <Setter Property="Padding" Value="16"/>
         <Setter Property="BorderBrush" Value="#E5E5EA"/>

@@ -59,7 +59,7 @@ namespace BIMPills.Revit.Commands
                         dlg.ShowDialog();
                         if (!dlg.LicenseActivated)
                         {
-                            message = "Se requiere una licencia activa para usar BIMPills.";
+                            message = "Se requiere una licencia activa para usar BIM Pills.";
                             return Result.Cancelled;
                         }
                         // Re-read license after activation
@@ -70,10 +70,10 @@ namespace BIMPills.Revit.Commands
                         var daysLeft = cached?.ExpiresAt.HasValue == true
                             ? Math.Max(0, 7 - (int)(DateTime.UtcNow - cached.ExpiresAt.Value).TotalDays)
                             : 0;
-                        TaskDialog.Show("BIMPills — Licencia por vencer",
+                        TaskDialog.Show("BIM Pills — Licencia por vencer",
                             $"Tu licencia est\u00E1 en periodo de gracia.\n" +
                             $"Quedan {daysLeft} d\u00EDa(s) para el bloqueo.\n\n" +
-                            "Renueva desde BIMPills \u2192 Acerca de.");
+                            "Renueva desde BIM Pills \u2192 Acerca de.");
                     }
                     else if (license.IsExpired)
                     {
@@ -108,7 +108,7 @@ namespace BIMPills.Revit.Commands
                 catch (Exception uiEx)
                 {
                     logger?.Error($"Error al mostrar la ventana de {GetType().Name}", uiEx);
-                    TaskDialog.Show("BIMPills — Error de interfaz",
+                    TaskDialog.Show("BIM Pills — Error de interfaz",
                         $"El comando se ejecutó correctamente, pero ocurrió un error al mostrar la ventana.\n\n" +
                         $"Detalle: {uiEx.Message}\n\n" +
                         $"Revisa el log para más información.");

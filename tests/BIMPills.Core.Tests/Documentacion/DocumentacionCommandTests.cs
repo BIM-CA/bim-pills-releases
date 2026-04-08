@@ -60,6 +60,7 @@ namespace BIMPills.Core.Tests.Documentacion
         public int GetWallCountInActiveView() => 10;
         public int GetArqLevelCount() => 3;
         public IReadOnlyList<Models.SheetExportInfo> GetSheets() => new List<Models.SheetExportInfo>();
+        public IReadOnlyList<Models.ExportableViewInfo> GetExportableViews() => new List<Models.ExportableViewInfo>();
         public string GetProjectName() => "TestProject";
         public IReadOnlyList<Models.ScheduleInfo> GetSchedules() => new List<Models.ScheduleInfo>();
         public Models.ScheduleData GetScheduleData(long scheduleId) => new Models.ScheduleData();

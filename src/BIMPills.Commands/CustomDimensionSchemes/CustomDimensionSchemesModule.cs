@@ -6,7 +6,7 @@ namespace BIMPills.Commands.CustomDimensionSchemes
 {
     public sealed class CustomDimensionSchemesModule : IPluginModule
     {
-        public string TabName   => "BIMPills";
+        public string TabName   => "BIM Pills";
         public string PanelName => "Datos";
 
         public void BuildRibbon(IRibbonBuilder builder)

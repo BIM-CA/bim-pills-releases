@@ -27,6 +27,7 @@ namespace BIMPills.UI.MCPIntegration
         public MCPConnectionWindow()
         {
             InitializeComponent();
+            BIMPills.UI.Shared.ThemeHelper.Apply(this);
             LoadSavedClaudeConfig();
             _ = LoadMcpConnectionsAsync();
         }
@@ -159,7 +160,7 @@ namespace BIMPills.UI.MCPIntegration
             if (string.IsNullOrEmpty(apiKey))
             {
                 MessageBox.Show("Ingresa una API Key antes de guardar.",
-                    "BIMPills", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    "BIM Pills", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
@@ -177,7 +178,7 @@ namespace BIMPills.UI.MCPIntegration
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al guardar: {ex.Message}", "BIMPills",
+                MessageBox.Show($"Error al guardar: {ex.Message}", "BIM Pills",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -251,13 +252,13 @@ namespace BIMPills.UI.MCPIntegration
             if (string.IsNullOrEmpty(name))
             {
                 MessageBox.Show("Ingresa un nombre para la conexión.",
-                    "BIMPills", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    "BIM Pills", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
             if (string.IsNullOrEmpty(endpoint))
             {
                 MessageBox.Show("Ingresa el endpoint (URL o ruta local) de la conexión.",
-                    "BIMPills", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    "BIM Pills", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
@@ -282,7 +283,7 @@ namespace BIMPills.UI.MCPIntegration
             catch (Exception ex)
             {
                 MessageBox.Show($"Error al agregar la conexión:\n{ex.Message}",
-                    "BIMPills", MessageBoxButton.OK, MessageBoxImage.Error);
+                    "BIM Pills", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -352,7 +353,7 @@ namespace BIMPills.UI.MCPIntegration
             catch (Exception ex)
             {
                 MessageBox.Show($"Error al eliminar:\n{ex.Message}",
-                    "BIMPills", MessageBoxButton.OK, MessageBoxImage.Error);
+                    "BIM Pills", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
     }

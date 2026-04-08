@@ -22,6 +22,7 @@ namespace BIMPills.UI.Ordering
             Func<string, IReadOnlyList<string>>? getParametersForCategory = null)
         {
             InitializeComponent();
+            BIMPills.UI.Shared.ThemeHelper.Apply(this);
             _getCategoriesByType = getCategoriesByType;
             _getParameters       = getParametersForCategory;
 

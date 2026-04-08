@@ -68,6 +68,7 @@ namespace BIMPills.Core.Tests.CustomDimensionSchemes
         public int GetWallCountInActiveView() => 0;
         public int GetArqLevelCount() => 0;
         public IReadOnlyList<Models.SheetExportInfo> GetSheets() => new List<Models.SheetExportInfo>();
+        public IReadOnlyList<Models.ExportableViewInfo> GetExportableViews() => new List<Models.ExportableViewInfo>();
         public string GetProjectName() => "TestProject";
         public IReadOnlyList<Models.ScheduleInfo> GetSchedules() => new List<Models.ScheduleInfo>();
         public Models.ScheduleData GetScheduleData(long scheduleId) => new Models.ScheduleData();

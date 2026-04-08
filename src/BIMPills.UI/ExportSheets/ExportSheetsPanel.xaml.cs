@@ -12,8 +12,9 @@ namespace BIMPills.UI.ExportSheets
 {
     public partial class ExportSheetsPanel : UserControl
     {
-        private IReadOnlyList<SheetExportInfo> _sheets = Array.Empty<SheetExportInfo>();
-        private List<SheetExportRow> _rows = new List<SheetExportRow>();
+        private IReadOnlyList<ExportableViewInfo> _allItems = Array.Empty<ExportableViewInfo>();
+        private List<ExportableViewRow> _rows = new List<ExportableViewRow>();
+        private List<ExportableViewRow> _filteredRows = new List<ExportableViewRow>();
         private Func<long, string, string, PdfExportSettings, bool>? _pdfExportCallback;
         private Func<long, string, string, DwgExportConfig?, bool>? _dwgExportCallback;
         private string _projectName = "";
@@ -21,7 +22,11 @@ namespace BIMPills.UI.ExportSheets
         private ILogger? _logger;
         private List<string> _availableParameters = new List<string>();
 
-        private string _exportLabel = "Exportar planos";
+        // Publication sets (S6-C)
+        private JsonPublicationSetRepository? _publicationSetRepo;
+        private List<PublicationSet> _publicationSets = new List<PublicationSet>();
+
+        private string _exportLabel = "Exportar";
 
         /// <summary>Raised when export availability changes. Arg = canExport.</summary>
         public event EventHandler<bool>? ExportEnabledChanged;
@@ -38,10 +43,10 @@ namespace BIMPills.UI.ExportSheets
         public string ExportLabel => _exportLabel;
 
         /// <summary>
-        /// Initializes the panel with sheet data and export callbacks.
+        /// Initializes the panel with unified exportable views (sheets + views).
         /// </summary>
-        public void Initialize(
-            IReadOnlyList<SheetExportInfo> sheets,
+        public void InitializeViews(
+            IReadOnlyList<ExportableViewInfo> items,
             Func<long, string, string, PdfExportSettings, bool>? pdfExportCallback = null,
             Func<long, string, string, DwgExportConfig?, bool>? dwgExportCallback = null,
             string projectName = "",
@@ -49,7 +54,7 @@ namespace BIMPills.UI.ExportSheets
             IReadOnlyList<string>? availableParameters = null,
             IReadOnlyList<string>? dwgPresetNames = null)
         {
-            _sheets = sheets;
+            _allItems = items;
             _pdfExportCallback = pdfExportCallback;
             _dwgExportCallback = dwgExportCallback;
             _projectName = projectName;
@@ -86,13 +91,58 @@ namespace BIMPills.UI.ExportSheets
             Populate();
             UpdateAllFileNames();
             UpdateNamingPreview();
+            LoadPublicationSets();
+        }
+
+        /// <summary>
+        /// Backward-compatible initializer using SheetExportInfo (converts to ExportableViewInfo).
+        /// </summary>
+        public void Initialize(
+            IReadOnlyList<SheetExportInfo> sheets,
+            Func<long, string, string, PdfExportSettings, bool>? pdfExportCallback = null,
+            Func<long, string, string, DwgExportConfig?, bool>? dwgExportCallback = null,
+            string projectName = "",
+            ILogger? logger = null,
+            IReadOnlyList<string>? availableParameters = null,
+            IReadOnlyList<string>? dwgPresetNames = null)
+        {
+            var items = sheets.Select(s => new ExportableViewInfo(
+                s.Id, "", s.SheetName, ExportableItemType.Sheet,
+                s.SheetNumber, s.Revision, s.Discipline, s.ParameterValues
+            )).ToList();
+
+            InitializeViews(items, pdfExportCallback, dwgExportCallback, projectName, logger, availableParameters, dwgPresetNames);
         }
 
         private void Populate()
         {
-            _rows = _sheets.Select(s => new SheetExportRow(s)).ToList();
-            SheetsGrid.ItemsSource = _rows;
-            UpdateAllFileNames();
+            _rows = _allItems.Select(v => new ExportableViewRow(v)).ToList();
+            ApplyFilters();
+        }
+
+        private void ApplyFilters()
+        {
+            var typeTag = (TypeFilterCombo?.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "All";
+            var query = SearchBox?.Text?.Trim().ToLowerInvariant() ?? "";
+
+            _filteredRows = _rows.Where(r =>
+            {
+                // Type filter
+                if (typeTag != "All" && r.Item.ItemType.ToString() != typeTag)
+                    return false;
+
+                // Search filter
+                if (!string.IsNullOrEmpty(query))
+                {
+                    return (r.DisplayName?.ToLowerInvariant().Contains(query) ?? false)
+                        || (r.SheetNumber?.ToLowerInvariant().Contains(query) ?? false)
+                        || (r.TypeLabel?.ToLowerInvariant().Contains(query) ?? false)
+                        || (r.Discipline?.ToLowerInvariant().Contains(query) ?? false);
+                }
+                return true;
+            }).ToList();
+
+            SheetsGrid.ItemsSource = _filteredRows;
             UpdateSelection();
         }
 
@@ -105,30 +155,51 @@ namespace BIMPills.UI.ExportSheets
 
         private void UpdateSelection()
         {
-            var selected = _rows.Count(r => r.IsSelected);
-            SelectionSummary.Text = $"{selected} de {_rows.Count} planos seleccionados";
-            StatusText.Text = $"{selected} planos seleccionados";
+            var totalSelected = _rows.Count(r => r.IsSelected);
+            var sheetCount = _rows.Count(r => r.IsSelected && r.Item.ItemType == ExportableItemType.Sheet);
+            var viewCount = totalSelected - sheetCount;
 
-            bool canExport = selected > 0
+            string label;
+            if (sheetCount > 0 && viewCount > 0)
+                label = $"{sheetCount} planos + {viewCount} vistas";
+            else if (sheetCount > 0)
+                label = $"{sheetCount} planos";
+            else if (viewCount > 0)
+                label = $"{viewCount} vistas";
+            else
+                label = "0 items";
+
+            SelectionSummary.Text = $"{totalSelected} de {_rows.Count} seleccionados ({label})";
+            StatusText.Text = $"{totalSelected} items seleccionados";
+
+            bool canExport = totalSelected > 0
                 && !string.IsNullOrEmpty(_selectedFolder)
                 && (PdfCheck.IsChecked == true || DwgCheck.IsChecked == true);
             ExportEnabledChanged?.Invoke(this, canExport);
-            _exportLabel = $"Exportar {selected} planos";
+            _exportLabel = $"Exportar {totalSelected} items";
         }
 
         private void UpdateNamingPreview()
         {
             var convention = new SheetNamingConvention { Pattern = NamingPatternBox.Text };
-            var firstSheet = _rows.FirstOrDefault(r => r.IsSelected)?.Sheet ?? _rows.FirstOrDefault()?.Sheet;
-            if (firstSheet != null)
+            var firstItem = _rows.FirstOrDefault(r => r.IsSelected) ?? _rows.FirstOrDefault();
+            if (firstItem != null)
             {
-                var name = convention.GenerateFileName(firstSheet, _projectName, DateTime.Now, firstSheet.ParameterValues);
+                // Build a SheetExportInfo for naming compatibility
+                var sheetProxy = new SheetExportInfo(
+                    firstItem.Item.Id,
+                    firstItem.Item.SheetNumber,
+                    firstItem.Item.Name,
+                    firstItem.Item.Revision,
+                    firstItem.Item.Discipline);
+
+                var name = convention.GenerateFileName(sheetProxy, _projectName, DateTime.Now, firstItem.Item.ParameterValues);
                 var ext = PdfCheck.IsChecked == true ? ".pdf" : ".dwg";
                 NamingPreview.Text = name + ext;
             }
             else
             {
-                NamingPreview.Text = "(sin planos)";
+                NamingPreview.Text = "(sin items)";
             }
         }
 
@@ -142,7 +213,7 @@ namespace BIMPills.UI.ExportSheets
 
             var convention = new SheetNamingConvention { Pattern = NamingPatternBox.Text };
             var folderOrg = GetSelectedFolderOrganization();
-            var selected = _rows.Where(r => r.IsSelected).Take(4).Select(r => r.Sheet).ToList();
+            var selected = _rows.Where(r => r.IsSelected).Take(4).ToList();
             var lines = new List<string>();
 
             var baseName = Path.GetFileName(_selectedFolder);
@@ -151,14 +222,16 @@ namespace BIMPills.UI.ExportSheets
             bool exportPdf = PdfCheck.IsChecked == true;
             bool exportDwg = DwgCheck.IsChecked == true;
 
-            foreach (var sheet in selected)
+            foreach (var row in selected)
             {
-                var name = convention.GenerateFileName(sheet, _projectName, DateTime.Now, sheet.ParameterValues);
-                var subPath = GetSubFolder(folderOrg, "PDF", sheet.Discipline);
+                var sheetProxy = new SheetExportInfo(
+                    row.Item.Id, row.Item.SheetNumber, row.Item.Name,
+                    row.Item.Revision, row.Item.Discipline);
+                var name = convention.GenerateFileName(sheetProxy, _projectName, DateTime.Now, row.Item.ParameterValues);
 
                 if (exportPdf)
                 {
-                    var pdfPath = string.IsNullOrEmpty(subPath) ? "" : $"  \U0001F4C1 {subPath}/\n";
+                    var subPath = GetSubFolder(folderOrg, "PDF", row.Discipline);
                     if (!string.IsNullOrEmpty(subPath) && !lines.Any(l => l.Contains(subPath)))
                         lines.Add($"  \U0001F4C1 {subPath}/");
                     var indent = string.IsNullOrEmpty(subPath) ? "  " : "    ";
@@ -167,7 +240,7 @@ namespace BIMPills.UI.ExportSheets
 
                 if (exportDwg)
                 {
-                    var dwgSub = GetSubFolder(folderOrg, "DWG", sheet.Discipline);
+                    var dwgSub = GetSubFolder(folderOrg, "DWG", row.Discipline);
                     if (!string.IsNullOrEmpty(dwgSub) && !lines.Any(l => l.Contains(dwgSub)))
                         lines.Add($"  \U0001F4C1 {dwgSub}/");
                     var indent = string.IsNullOrEmpty(dwgSub) ? "  " : "    ";
@@ -176,7 +249,7 @@ namespace BIMPills.UI.ExportSheets
             }
 
             if (_rows.Count(r => r.IsSelected) > 4)
-                lines.Add($"  \u2026 y {_rows.Count(r => r.IsSelected) - 4} archivos más");
+                lines.Add($"  \u2026 y {_rows.Count(r => r.IsSelected) - 4} archivos m\u00e1s");
 
             FolderPreview.Text = string.Join("\n", lines);
         }
@@ -210,11 +283,238 @@ namespace BIMPills.UI.ExportSheets
             }
         }
 
+        // ── Publication Sets (S6-C) ──
+
+        private void LoadPublicationSets()
+        {
+            try
+            {
+                _publicationSetRepo = new JsonPublicationSetRepository();
+                _publicationSets = _publicationSetRepo.GetAllAsync().GetAwaiter().GetResult();
+
+                PublicationSetCombo.Items.Clear();
+                PublicationSetCombo.Items.Add(new ComboBoxItem { Content = "(ninguno)", Tag = "" });
+                foreach (var set in _publicationSets)
+                    PublicationSetCombo.Items.Add(new ComboBoxItem { Content = $"{set.Name} ({set.Items.Count} items)", Tag = set.Id });
+
+                PublicationSetCombo.SelectedIndex = 0;
+            }
+            catch (Exception ex)
+            {
+                _logger?.Error("Error loading publication sets", ex);
+            }
+        }
+
+        private void PublicationSet_Changed(object sender, SelectionChangedEventArgs e)
+        {
+            try
+            {
+                var selectedItem = PublicationSetCombo.SelectedItem as ComboBoxItem;
+                var setId = selectedItem?.Tag?.ToString() ?? "";
+                DeleteSetBtn.IsEnabled = !string.IsNullOrEmpty(setId);
+
+                if (string.IsNullOrEmpty(setId)) return;
+
+                var set = _publicationSets.FirstOrDefault(s => s.Id == setId);
+                if (set == null) return;
+
+                // Deselect all first
+                foreach (var row in _rows)
+                    row.IsSelected = false;
+
+                // Select items by UniqueId
+                int found = 0;
+                foreach (var item in set.Items)
+                {
+                    var row = _rows.FirstOrDefault(r => r.Item.UniqueId == item.UniqueId);
+                    if (row != null)
+                    {
+                        row.IsSelected = true;
+                        found++;
+                    }
+                }
+
+                SheetsGrid.Items.Refresh();
+                UpdateSelection();
+
+                int notFound = set.Items.Count - found;
+                if (notFound > 0)
+                {
+                    MessageBox.Show(
+                        $"Se seleccionaron {found} de {set.Items.Count} items.\n{notFound} no se encontraron en el modelo actual.",
+                        "BIM Pills \u2014 Conjunto de publicaci\u00f3n",
+                        MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+            }
+            catch (Exception ex) { _logger?.Error("Error en PublicationSet_Changed", ex); }
+        }
+
+        private void SaveSet_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var selectedItems = _rows.Where(r => r.IsSelected).ToList();
+                if (selectedItems.Count == 0)
+                {
+                    MessageBox.Show("Selecciona al menos un item para guardar el conjunto.",
+                        "BIM Pills \u2014 Conjunto de publicaci\u00f3n", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                var name = PromptForSetName();
+                if (string.IsNullOrWhiteSpace(name)) return;
+
+                var set = new PublicationSet
+                {
+                    Name = name.Trim(),
+                    Items = selectedItems.Select(r => new PublicationSetItem
+                    {
+                        UniqueId = r.Item.UniqueId,
+                        DisplayName = r.DisplayName,
+                        ItemType = r.Item.ItemType
+                    }).ToList()
+                };
+
+                _publicationSetRepo?.CreateAsync(set).GetAwaiter().GetResult();
+                LoadPublicationSets();
+
+                // Select the newly created set
+                for (int i = 0; i < PublicationSetCombo.Items.Count; i++)
+                {
+                    if (PublicationSetCombo.Items[i] is ComboBoxItem ci && ci.Tag?.ToString() == set.Id)
+                    {
+                        PublicationSetCombo.SelectedIndex = i;
+                        break;
+                    }
+                }
+
+                MessageBox.Show($"Conjunto \u00ab{set.Name}\u00bb guardado con {set.Items.Count} items.",
+                    "BIM Pills \u2014 Conjunto de publicaci\u00f3n", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                _logger?.Error("Error en SaveSet_Click", ex);
+                MessageBox.Show($"Error al guardar: {ex.Message}",
+                    "BIM Pills \u2014 Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void DeleteSet_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var selectedItem = PublicationSetCombo.SelectedItem as ComboBoxItem;
+                var setId = selectedItem?.Tag?.ToString() ?? "";
+                if (string.IsNullOrEmpty(setId)) return;
+
+                var set = _publicationSets.FirstOrDefault(s => s.Id == setId);
+                if (set == null) return;
+
+                var confirm = MessageBox.Show(
+                    $"\u00bfEliminar el conjunto \u00ab{set.Name}\u00bb?",
+                    "BIM Pills \u2014 Confirmar",
+                    MessageBoxButton.YesNo, MessageBoxImage.Question);
+                if (confirm != MessageBoxResult.Yes) return;
+
+                _publicationSetRepo?.DeleteAsync(setId).GetAwaiter().GetResult();
+                LoadPublicationSets();
+            }
+            catch (Exception ex)
+            {
+                _logger?.Error("Error en DeleteSet_Click", ex);
+                MessageBox.Show($"Error al eliminar: {ex.Message}",
+                    "BIM Pills \u2014 Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private static string? PromptForSetName()
+        {
+            var dlg = new Window
+            {
+                Title               = "BIM Pills \u2014 Guardar conjunto",
+                Width               = 380,
+                Height              = 150,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                ResizeMode          = ResizeMode.NoResize,
+                Background          = System.Windows.Media.Brushes.White,
+                WindowStyle         = WindowStyle.ToolWindow
+            };
+
+            var grid = new Grid { Margin = new Thickness(18) };
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(8) });
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+            var lbl = new TextBlock
+            {
+                Text       = "Nombre del conjunto:",
+                FontSize   = 12,
+                FontFamily = new System.Windows.Media.FontFamily("Segoe UI"),
+                Margin     = new Thickness(0, 0, 0, 6)
+            };
+            Grid.SetRow(lbl, 0);
+
+            var tb = new TextBox
+            {
+                Height       = 30,
+                FontSize     = 12,
+                FontFamily   = new System.Windows.Media.FontFamily("Segoe UI"),
+                Padding      = new Thickness(6, 4, 6, 4),
+                BorderBrush  = System.Windows.Media.Brushes.LightGray,
+                BorderThickness = new Thickness(1),
+                Text         = $"Conjunto {DateTime.Now:yyyy-MM-dd}"
+            };
+            Grid.SetRow(tb, 1);
+
+            var btns = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
+            Grid.SetRow(btns, 3);
+
+            string? result = null;
+            var ok = new Button
+            {
+                Content     = "Guardar",
+                Width       = 80,
+                Height      = 28,
+                Margin      = new Thickness(0, 0, 8, 0),
+                IsDefault   = true,
+                FontFamily  = new System.Windows.Media.FontFamily("Segoe UI"),
+                Background  = System.Windows.Media.Brushes.White
+            };
+            ok.Click += (_, __) => { result = tb.Text; dlg.DialogResult = true; };
+
+            var cancel = new Button
+            {
+                Content    = "Cancelar",
+                Width      = 80,
+                Height     = 28,
+                IsCancel   = true,
+                FontFamily = new System.Windows.Media.FontFamily("Segoe UI")
+            };
+
+            btns.Children.Add(ok);
+            btns.Children.Add(cancel);
+            grid.Children.Add(lbl);
+            grid.Children.Add(tb);
+            grid.Children.Add(btns);
+            dlg.Content = grid;
+
+            tb.Loaded += (_, __) => { tb.SelectAll(); tb.Focus(); };
+
+            dlg.ShowDialog();
+            return result;
+        }
+
         // ── Event handlers ──
+
+        private void TypeFilter_Changed(object sender, SelectionChangedEventArgs e)
+        {
+            try { ApplyFilters(); }
+            catch (Exception ex) { _logger?.Error("Error en TypeFilter_Changed", ex); }
+        }
 
         private void WizardTabs_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            // Refresh scroll hint when switching to Format tab
             UpdateFormatScrollHint();
         }
 
@@ -232,33 +532,15 @@ namespace BIMPills.UI.ExportSheets
 
         private void SearchBox_TextChanged(object sender, TextChangedEventArgs e)
         {
-            try
-            {
-                var query = SearchBox.Text?.Trim().ToLowerInvariant() ?? "";
-                if (string.IsNullOrEmpty(query))
-                {
-                    SheetsGrid.ItemsSource = _rows;
-                }
-                else
-                {
-                    SheetsGrid.ItemsSource = _rows.Where(r =>
-                        (r.SheetNumber?.ToLowerInvariant().Contains(query) ?? false)
-                        || (r.SheetName?.ToLowerInvariant().Contains(query) ?? false)
-                        || (r.Discipline?.ToLowerInvariant().Contains(query) ?? false))
-                        .ToList();
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger?.Error("Error en SearchBox_TextChanged", ex);
-            }
+            try { ApplyFilters(); }
+            catch (Exception ex) { _logger?.Error("Error en SearchBox_TextChanged", ex); }
         }
 
         private void SelectAll_Click(object sender, RoutedEventArgs e)
         {
             try
             {
-                foreach (var row in _rows)
+                foreach (var row in _filteredRows)
                     row.IsSelected = true;
                 SheetsGrid.Items.Refresh();
                 UpdateSelection();
@@ -270,7 +552,7 @@ namespace BIMPills.UI.ExportSheets
         {
             try
             {
-                foreach (var row in _rows)
+                foreach (var row in _filteredRows)
                     row.IsSelected = false;
                 SheetsGrid.Items.Refresh();
                 UpdateSelection();
@@ -388,7 +670,6 @@ namespace BIMPills.UI.ExportSheets
 
                 var token = $"{{Param:{paramName}}}";
 
-                // Create dynamic token button
                 var btn = new Button
                 {
                     Content = paramName,
@@ -399,13 +680,11 @@ namespace BIMPills.UI.ExportSheets
                 btn.Click += InsertToken_Click;
                 DynamicTokensPanel.Children.Add(btn);
 
-                // Insert into pattern
                 var caret = NamingPatternBox.CaretIndex;
                 NamingPatternBox.Text = NamingPatternBox.Text.Insert(caret, token);
                 NamingPatternBox.CaretIndex = caret + token.Length;
                 NamingPatternBox.Focus();
 
-                // Remove from ComboBox to prevent duplicates
                 RevitParamsCombo.Items.Remove(selected);
                 RevitParamsCombo.SelectedIndex = -1;
             }
@@ -418,7 +697,7 @@ namespace BIMPills.UI.ExportSheets
             {
                 var dialog = new System.Windows.Forms.FolderBrowserDialog
                 {
-                    Description = "Seleccionar carpeta de destino para planos",
+                    Description = "Seleccionar carpeta de destino",
                     ShowNewFolderButton = true
                 };
 
@@ -434,7 +713,7 @@ namespace BIMPills.UI.ExportSheets
             {
                 _logger?.Error("Error en BrowseFolder_Click", ex);
                 MessageBox.Show($"Error inesperado:\n{ex.Message}",
-                    "BIMPills \u2014 Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    "BIM Pills \u2014 Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -451,10 +730,7 @@ namespace BIMPills.UI.ExportSheets
 
         private void FolderOrg_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            try
-            {
-                UpdateFolderPreview();
-            }
+            try { UpdateFolderPreview(); }
             catch (Exception ex) { _logger?.Error("Error en FolderOrg_SelectionChanged", ex); }
         }
 
@@ -477,14 +753,14 @@ namespace BIMPills.UI.ExportSheets
                 var repo = new JsonSheetExportProfileRepository();
                 repo.CreateAsync(profile).GetAwaiter().GetResult();
 
-                MessageBox.Show($"Perfil «{profile.Name}» guardado correctamente.",
-                    "BIMPills — Exportar planos",
+                MessageBox.Show($"Perfil \u00ab{profile.Name}\u00bb guardado correctamente.",
+                    "BIM Pills \u2014 Exportar",
                     MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Error al guardar el perfil: {ex.Message}",
-                    "BIMPills — Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    "BIM Pills \u2014 Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -497,12 +773,11 @@ namespace BIMPills.UI.ExportSheets
             return SheetExportFormat.PDF;
         }
 
-        /// <summary>Shows a small inline dialog to enter a profile name. Returns null if cancelled.</summary>
         private static string? PromptForProfileName()
         {
             var dlg = new Window
             {
-                Title               = "BIMPills — Guardar perfil",
+                Title               = "BIM Pills \u2014 Guardar perfil",
                 Width               = 380,
                 Height              = 150,
                 WindowStartupLocation = WindowStartupLocation.CenterOwner,
@@ -576,7 +851,7 @@ namespace BIMPills.UI.ExportSheets
             return result;
         }
 
-        // ── DWG Config (resolved from DwgSetupCombo tag + extra checkboxes) ──
+        // ── DWG Config ──
 
         private DwgExportConfig? GetSelectedDwgConfig()
         {
@@ -586,7 +861,6 @@ namespace BIMPills.UI.ExportSheets
 
             if (cfg == null) return null;
 
-            // Overlay the extra checkbox options (non-destructive clone)
             return new DwgExportConfig
             {
                 Id                = cfg.Id,
@@ -611,33 +885,31 @@ namespace BIMPills.UI.ExportSheets
                 bool exportDwg = DwgCheck.IsChecked == true && _dwgExportCallback != null;
                 if (!exportPdf && !exportDwg) return;
 
-                var selected = _rows.Where(r => r.IsSelected).Select(r => r.Sheet).ToList();
+                var selected = _rows.Where(r => r.IsSelected).ToList();
                 if (selected.Count == 0) return;
 
                 var convention = new SheetNamingConvention { Pattern = NamingPatternBox.Text };
                 var folderOrg = GetSelectedFolderOrganization();
                 var now = DateTime.Now;
 
-                // Resolve selected DWG config from native preset
                 var selectedDwgConfig = GetSelectedDwgConfig();
 
                 int totalOps = selected.Count * ((exportPdf ? 1 : 0) + (exportDwg ? 1 : 0));
                 var pdfSettings = exportPdf ? GetPdfSettings() : new PdfExportSettings();
 
                 var confirm = MessageBox.Show(
-                    $"Se exportarán {selected.Count} planos" +
+                    $"Se exportar\u00e1n {selected.Count} items" +
                     (exportPdf && exportDwg ? " a PDF y DWG" : exportPdf ? " a PDF" : " a DWG") +
                     $" en:\n\n\U0001F4C1 {_selectedFolder}\n\n" +
                     $"Total de archivos: {totalOps}\n\n" +
                     "Este proceso puede tomar varios minutos. \u00bfDesea continuar?",
-                    "BIMPills \u2014 Confirmar exportaci\u00f3n",
+                    "BIM Pills \u2014 Confirmar exportaci\u00f3n",
                     MessageBoxButton.YesNo,
                     MessageBoxImage.Question,
                     MessageBoxResult.Yes);
 
                 if (confirm != MessageBoxResult.Yes) return;
 
-                // Show progress
                 ProgressOverlay.Visibility = Visibility.Visible;
                 ProgressBar.Maximum = totalOps;
                 ProgressBar.Value = 0;
@@ -649,41 +921,43 @@ namespace BIMPills.UI.ExportSheets
 
                 try
                 {
-                    foreach (var sheet in selected)
+                    foreach (var row in selected)
                     {
-                        // Sanitize filename - remove chars invalid for filesystem
-                        var fileName = SanitizeFileName(convention.GenerateFileName(sheet, _projectName, now, sheet.ParameterValues));
+                        var sheetProxy = new SheetExportInfo(
+                            row.Item.Id, row.Item.SheetNumber, row.Item.Name,
+                            row.Item.Revision, row.Item.Discipline);
+                        var fileName = SanitizeFileName(convention.GenerateFileName(sheetProxy, _projectName, now, row.Item.ParameterValues));
 
                         if (exportPdf)
                         {
                             step++;
                             ProgressText.Text = $"PDF: {step} de {totalOps}...";
-                            ProgressDetail.Text = $"{sheet.SheetNumber} - {sheet.SheetName}";
+                            ProgressDetail.Text = row.DisplayName;
                             ProgressBar.Value = step;
                             PumpDispatcher();
 
-                            var folder = GetExportFolder(_selectedFolder, folderOrg, "PDF", sheet.Discipline);
+                            var folder = GetExportFolder(_selectedFolder, folderOrg, "PDF", row.Discipline);
                             Directory.CreateDirectory(folder);
 
-                            bool ok = _pdfExportCallback!(sheet.Id, folder, fileName, pdfSettings);
+                            bool ok = _pdfExportCallback!(row.Item.Id, folder, fileName, pdfSettings);
                             if (ok) exported++;
-                            else { failed++; errors.Add($"[PDF] {sheet.SheetNumber}"); }
+                            else { failed++; errors.Add($"[PDF] {row.DisplayName}"); }
                         }
 
                         if (exportDwg)
                         {
                             step++;
                             ProgressText.Text = $"DWG: {step} de {totalOps}...";
-                            ProgressDetail.Text = $"{sheet.SheetNumber} - {sheet.SheetName}";
+                            ProgressDetail.Text = row.DisplayName;
                             ProgressBar.Value = step;
                             PumpDispatcher();
 
-                            var folder = GetExportFolder(_selectedFolder, folderOrg, "DWG", sheet.Discipline);
+                            var folder = GetExportFolder(_selectedFolder, folderOrg, "DWG", row.Discipline);
                             Directory.CreateDirectory(folder);
 
-                            bool ok = _dwgExportCallback!(sheet.Id, folder, fileName, selectedDwgConfig);
+                            bool ok = _dwgExportCallback!(row.Item.Id, folder, fileName, selectedDwgConfig);
                             if (ok) exported++;
-                            else { failed++; errors.Add($"[DWG] {sheet.SheetNumber}"); }
+                            else { failed++; errors.Add($"[DWG] {row.DisplayName}"); }
                         }
                     }
 
@@ -705,7 +979,7 @@ namespace BIMPills.UI.ExportSheets
                 }
 
                 MessageBox.Show(summary,
-                    "BIMPills \u2014 Exportaci\u00f3n completada",
+                    "BIM Pills \u2014 Exportaci\u00f3n completada",
                     MessageBoxButton.OK,
                     failed > 0 ? MessageBoxImage.Warning : MessageBoxImage.Information);
 
@@ -722,7 +996,7 @@ namespace BIMPills.UI.ExportSheets
                 ProgressOverlay.Visibility = Visibility.Collapsed;
                 MessageBox.Show(
                     $"Error inesperado durante la exportaci\u00f3n:\n{ex.Message}\n\nRevisa el log para m\u00e1s detalles.",
-                    "BIMPills \u2014 Error",
+                    "BIM Pills \u2014 Error",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
             }
@@ -761,30 +1035,31 @@ namespace BIMPills.UI.ExportSheets
     }
 
     /// <summary>
-    /// UI wrapper for SheetExportInfo that adds a live-computed DisplayFileName.
+    /// UI wrapper for ExportableViewInfo with live-computed DisplayFileName.
     /// </summary>
-    internal class SheetExportRow : System.ComponentModel.INotifyPropertyChanged
+    internal class ExportableViewRow : System.ComponentModel.INotifyPropertyChanged
     {
         public event System.ComponentModel.PropertyChangedEventHandler? PropertyChanged;
 
-        public SheetExportInfo Sheet { get; }
+        public ExportableViewInfo Item { get; }
 
         public bool IsSelected
         {
-            get => Sheet.IsSelected;
-            set { Sheet.IsSelected = value; PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(IsSelected))); }
+            get => Item.IsSelected;
+            set { Item.IsSelected = value; PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(IsSelected))); }
         }
-        public string SheetNumber   => Sheet.SheetNumber;
-        public string SheetName     => Sheet.SheetName;
-        public string Revision      => Sheet.Revision;
-        public string Discipline    => Sheet.Discipline;
 
-        /// <summary>Normalized category for chip coloring: "Arquitectura", "Estructura", "MEP", or "Other"</summary>
+        public string SheetNumber  => Item.SheetNumber;
+        public string DisplayName  => Item.DisplayName;
+        public string TypeLabel    => Item.TypeLabel;
+        public string Revision     => Item.Revision;
+        public string Discipline   => Item.Discipline;
+
         public string DisciplineCategory
         {
             get
             {
-                var d = (Sheet.Discipline ?? "").ToLowerInvariant();
+                var d = (Item.Discipline ?? "").ToLowerInvariant();
                 if (d.Contains("arq") || d.Contains("arch")) return "Arquitectura";
                 if (d.Contains("est") || d.Contains("str"))  return "Estructura";
                 if (d.Contains("mep") || d.Contains("mec") || d.Contains("ele") || d.Contains("plu") || d.Contains("san")) return "MEP";
@@ -800,11 +1075,12 @@ namespace BIMPills.UI.ExportSheets
             set { _displayFileName = value; PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(DisplayFileName))); }
         }
 
-        public SheetExportRow(SheetExportInfo sheet) => Sheet = sheet;
+        public ExportableViewRow(ExportableViewInfo item) => Item = item;
 
         public void UpdateFileName(SheetNamingConvention convention, string projectName)
         {
-            DisplayFileName = convention.GenerateFileName(Sheet, projectName, DateTime.Now, Sheet.ParameterValues);
+            var sheetProxy = new SheetExportInfo(Item.Id, Item.SheetNumber, Item.Name, Item.Revision, Item.Discipline);
+            DisplayFileName = convention.GenerateFileName(sheetProxy, projectName, DateTime.Now, Item.ParameterValues);
         }
     }
 }

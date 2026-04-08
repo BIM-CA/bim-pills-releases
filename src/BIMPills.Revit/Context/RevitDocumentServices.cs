@@ -269,20 +269,23 @@ namespace BIMPills.Revit.Context
 
             var defaultWorksetId = _doc.GetWorksetTable().GetActiveWorksetId();
 
+            // Single pass: iterate all non-type elements and group by workset
+            // Avoids running one FilteredElementCollector per workset (N full scans → 1 scan)
+            var countsByWorkset = new Dictionary<int, int>();
+            try
+            {
+                foreach (Element el in new FilteredElementCollector(_doc).WhereElementIsNotElementType())
+                {
+                    var wsId = el.WorksetId.IntegerValue;
+                    countsByWorkset[wsId] = countsByWorkset.TryGetValue(wsId, out var c) ? c + 1 : 1;
+                }
+            }
+            catch { /* Non-critical */ }
+
             var results = new List<WorksetInfo>();
             foreach (var ws in worksets)
             {
-                // Count elements in this workset
-                int elementCount = 0;
-                try
-                {
-                    elementCount = new FilteredElementCollector(_doc)
-                        .WhereElementIsNotElementType()
-                        .WherePasses(new ElementWorksetFilter(ws.Id))
-                        .GetElementCount();
-                }
-                catch { /* Some filters may fail */ }
-
+                countsByWorkset.TryGetValue(ws.Id.IntegerValue, out var elementCount);
                 results.Add(new WorksetInfo
                 {
                     Id = ws.Id.IntegerValue,
@@ -427,6 +430,95 @@ namespace BIMPills.Revit.Context
             }
             catch { return new List<SheetExportInfo>(); }
         }
+
+        public IReadOnlyList<ExportableViewInfo> GetExportableViews()
+        {
+            try
+            {
+                var systemViewTypes = new HashSet<ViewType>
+                {
+                    ViewType.ProjectBrowser,
+                    ViewType.SystemBrowser,
+                    ViewType.Internal,
+                    ViewType.Undefined
+                };
+
+                // Sheets
+                var sheets = new FilteredElementCollector(_doc)
+                    .OfClass(typeof(ViewSheet))
+                    .Cast<ViewSheet>()
+                    .Where(s => !s.IsPlaceholder)
+                    .Select(s => new ExportableViewInfo(
+                        GetElementIdValue(s.Id),
+                        s.UniqueId,
+                        s.Name,
+                        ExportableItemType.Sheet,
+                        s.SheetNumber,
+                        s.get_Parameter(BuiltInParameter.SHEET_CURRENT_REVISION)?.AsString() ?? "",
+                        s.LookupParameter("Discipline")?.AsString() ?? "",
+                        GetAllParameterValues(s)))
+                    .OrderBy(s => s.SheetNumber)
+                    .ToList();
+
+                // Individual views (not templates, not sheets, not system views)
+                var views = new FilteredElementCollector(_doc)
+                    .OfClass(typeof(View))
+                    .Cast<View>()
+                    .Where(v => !v.IsTemplate
+                        && !systemViewTypes.Contains(v.ViewType)
+                        && v.ViewType != ViewType.DrawingSheet)
+                    .Select(v => new ExportableViewInfo(
+                        GetElementIdValue(v.Id),
+                        v.UniqueId,
+                        v.Name,
+                        MapViewType(v.ViewType),
+                        "",
+                        "",
+                        "",
+                        GetAllParameterValues(v)))
+                    .OrderBy(v => v.Name)
+                    .ToList();
+
+                var result = new List<ExportableViewInfo>(sheets.Count + views.Count);
+                result.AddRange(sheets);
+                result.AddRange(views);
+                return result;
+            }
+            catch { return new List<ExportableViewInfo>(); }
+        }
+
+        /// <summary>Returns all non-template 3D views — used as NWC export scope targets.</summary>
+        public IReadOnlyList<NwcViewInfo> GetNwcViews()
+        {
+            try
+            {
+                return new FilteredElementCollector(_doc)
+                    .OfClass(typeof(View))
+                    .Cast<View>()
+                    .Where(v => !v.IsTemplate && v.ViewType == ViewType.ThreeD)
+                    .Select(v => new NwcViewInfo
+                    {
+                        ElementId = GetElementIdValue(v.Id),
+                        Name      = v.Name
+                    })
+                    .OrderBy(v => v.Name)
+                    .ToList();
+            }
+            catch { return new List<NwcViewInfo>(); }
+        }
+
+        private static ExportableItemType MapViewType(ViewType vt) => vt switch
+        {
+            ViewType.FloorPlan    => ExportableItemType.FloorPlan,
+            ViewType.CeilingPlan  => ExportableItemType.CeilingPlan,
+            ViewType.Elevation    => ExportableItemType.Elevation,
+            ViewType.Section      => ExportableItemType.Section,
+            ViewType.ThreeD       => ExportableItemType.ThreeDView,
+            ViewType.Legend       => ExportableItemType.Legend,
+            ViewType.DraftingView => ExportableItemType.DraftingView,
+            ViewType.AreaPlan     => ExportableItemType.AreaPlan,
+            _                     => ExportableItemType.Other
+        };
 
         public IReadOnlyList<string> GetSheetParameterNames()
         {

@@ -5,7 +5,7 @@
         Width="460" SizeToContent="Height"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterOwner"
-        Background="#F0F0F0"
+        Background="{DynamicResource BackgroundBrush}"
         FontFamily="Segoe UI"
         UseLayoutRounding="True"
         SnapsToDevicePixels="True">

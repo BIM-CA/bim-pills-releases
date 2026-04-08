@@ -17,6 +17,7 @@ namespace BIMPills.UI.CustomDimensionSchemes
             _scheme = scheme;
             _isNew = isNew;
             InitializeComponent();
+            BIMPills.UI.Shared.ThemeHelper.Apply(this);
             LoadScheme();
         }
 

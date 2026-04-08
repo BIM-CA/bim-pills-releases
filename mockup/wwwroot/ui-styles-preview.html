@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>BIMPills — Propuesta de Estilos UI</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+:root {
+  --navy:   #212B37;
+  --orange: #EF6337;
+  --blue:   #1565C0;
+  --blue-bg:#E3F2FD;
+  --bg:     #F0F0F0;
+  --card:   #FFFFFF;
+  --sep:    #E5E5EA;
+  --gray:   #86868B;
+  --gray2:  #AEAEB2;
+  --text:   #1D1D1F;
+}
+
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--navy);
+  padding: 24px;
+  min-height: 100vh;
+}
+
+h1 { font-size: 20px; font-weight: 600; margin-bottom: 6px; }
+.page-subtitle { font-size: 13px; color: var(--gray); margin-bottom: 28px; }
+
+/* ── Section titles ── */
+.section { margin-bottom: 32px; }
+.section-title {
+  font-size: 11px; font-weight: 600; letter-spacing: .8px;
+  text-transform: uppercase; color: var(--gray);
+  margin-bottom: 12px; padding-bottom: 6px;
+  border-bottom: 1px solid var(--sep);
+}
+.row { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
+.label {
+  font-size: 10px; font-weight: 600; color: var(--gray);
+  text-transform: uppercase; letter-spacing: .5px;
+  margin-bottom: 8px;
+}
+.badge-proposed {
+  display: inline-block; font-size: 9px; font-weight: 700;
+  background: #E8F5E9; color: #2E7D32; border: 1px solid #A5D6A7;
+  border-radius: 4px; padding: 2px 6px; margin-left: 6px;
+  vertical-align: middle; letter-spacing: .3px; text-transform: uppercase;
+}
+.badge-current {
+  display: inline-block; font-size: 9px; font-weight: 700;
+  background: #FFF3E0; color: #E65100; border: 1px solid #FFCC80;
+  border-radius: 4px; padding: 2px 6px; margin-left: 6px;
+  vertical-align: middle; letter-spacing: .3px; text-transform: uppercase;
+}
+
+/* ── Cards ── */
+.card {
+  background: var(--card);
+  border-radius: 10px;
+  border: 0.5px solid var(--sep);
+  box-shadow: 0 1px 8px rgba(0,0,0,.06);
+  overflow: hidden;
+}
+
+/* ══════════════════════════════════════════════
+   TABS — Comparación ACTUAL vs PROPUESTO
+   ══════════════════════════════════════════════ */
+
+/* ACTUAL */
+.tabs-current { display: flex; border-bottom: 1px solid var(--sep); background: #fff; }
+.tab-cur {
+  padding: 12px 18px; font-size: 13px; cursor: pointer;
+  color: var(--gray2); border-bottom: 3px solid transparent;
+  margin-bottom: -1px; border-radius: 8px 8px 0 0;
+  display: flex; align-items: center; gap: 7px;
+}
+.tab-cur.active {
+  color: #1D1D1F; border-bottom-color: var(--orange);
+  background: rgba(239,99,55,.09);
+  font-weight: 700; /* ← El problema */
+}
+.tab-cur:hover:not(.active) { background: rgba(0,0,0,.04); }
+
+/* PROPUESTO — opción A: azul sin bold */
+.tabs-prop-a { display: flex; border-bottom: 1px solid var(--sep); background: #fff; }
+.tab-a {
+  padding: 11px 18px; font-size: 13px; cursor: pointer;
+  color: var(--gray2); border-bottom: 2.5px solid transparent;
+  margin-bottom: -1px; border-radius: 8px 8px 0 0;
+  display: flex; align-items: center; gap: 7px;
+  transition: color .12s, background .12s;
+}
+.tab-a.active {
+  color: var(--blue); border-bottom-color: var(--blue);
+  background: var(--blue-bg);
+  font-weight: 500; /* SemiBold suave */
+}
+.tab-a:hover:not(.active) { background: rgba(0,0,0,.03); color: var(--navy); }
+.tab-a-icon {
+  width: 20px; height: 20px; border-radius: 5px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; flex-shrink: 0;
+  background: #F2F2F7; color: var(--gray);
+  transition: background .12s, color .12s;
+}
+.tab-a.active .tab-a-icon { background: var(--blue-bg); color: var(--blue); }
+
+/* PROPUESTO — opción B: pill style */
+.tabs-prop-b {
+  display: flex; padding: 8px 12px;
+  background: #F5F5F7; border-bottom: 1px solid var(--sep); gap: 4px;
+}
+.tab-b {
+  padding: 6px 14px; font-size: 12px; cursor: pointer;
+  color: var(--gray); border-radius: 6px;
+  display: flex; align-items: center; gap: 6px;
+  transition: background .12s, color .12s;
+}
+.tab-b.active {
+  background: white; color: var(--navy); font-weight: 500;
+  box-shadow: 0 1px 4px rgba(0,0,0,.10);
+}
+.tab-b:hover:not(.active) { background: rgba(0,0,0,.05); color: var(--navy); }
+
+/* PROPUESTO — opción C: naranja pero SemiBold (no Bold) */
+.tabs-prop-c { display: flex; border-bottom: 1px solid var(--sep); background: #fff; }
+.tab-c {
+  padding: 11px 18px; font-size: 13px; cursor: pointer;
+  color: var(--gray2); border-bottom: 2.5px solid transparent;
+  margin-bottom: -1px; border-radius: 8px 8px 0 0;
+  display: flex; align-items: center; gap: 7px;
+  transition: color .12s, background .12s;
+}
+.tab-c.active {
+  color: var(--orange); border-bottom-color: var(--orange);
+  background: rgba(239,99,55,.06);
+  font-weight: 600; /* SemiBold en lugar de Bold */
+}
+.tab-c:hover:not(.active) { background: rgba(0,0,0,.03); color: var(--navy); }
+
+/* ── SVG Icon helper ── */
+.ico { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; flex-shrink: 0; }
+
+/* ══════════════════════════════════════════════
+   CONTRASTE DE VENTANA — Actual vs Propuesto
+   ══════════════════════════════════════════════ */
+.window-demo { width: 380px; }
+
+/* Content card tool-header */
+.tool-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--sep);
+  display: flex; align-items: center; gap: 10px;
+}
+.tool-icon {
+  width: 30px; height: 30px; border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; flex-shrink: 0;
+}
+.tool-title { font-size: 14px; font-weight: 600; }
+.tool-desc { font-size: 11px; color: var(--gray); margin-top: 1px; }
+
+/* Metric cards — ACTUAL */
+.metrics-cur { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 12px; }
+.metric-card-cur {
+  background: #FAFAFA; border-radius: 8px; padding: 10px 12px;
+  border: 0.5px solid var(--sep);
+}
+.metric-val-cur { font-size: 22px; font-weight: 700; color: var(--navy); }
+.metric-lbl-cur { font-size: 11px; color: var(--gray2); margin-top: 2px; }
+
+/* Metric cards — PROPUESTO */
+.metrics-prop { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 12px; }
+.metric-card-prop {
+  background: white; border-radius: 8px; padding: 10px 12px;
+  border: 1px solid var(--sep);
+  box-shadow: 0 1px 3px rgba(0,0,0,.05);
+}
+.metric-val-prop { font-size: 24px; font-weight: 700; color: var(--navy); }
+.metric-lbl-prop { font-size: 11px; color: var(--gray); margin-top: 2px; }
+.metric-icon-prop {
+  font-size: 11px; margin-bottom: 6px;
+  width: 24px; height: 24px; border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--blue-bg); color: var(--blue);
+}
+.metric-orange { background: rgba(239,99,55,.1); color: var(--orange); }
+.metric-green  { background: #E8F5E9; color: #2E7D32; }
+.metric-red    { background: #FFEBEE; color: #C62828; }
+
+/* ── DataGrid contrast ── */
+.datagrid { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
+.datagrid thead tr { background: #F5F5F7; }
+.datagrid th {
+  padding: 8px 12px; text-align: left; font-size: 11px;
+  font-weight: 600; color: var(--gray); letter-spacing: .3px;
+  border-bottom: 1px solid var(--sep);
+}
+.datagrid-cur td {
+  padding: 8px 12px; border-bottom: 1px solid #F0F0F0;
+  color: #3C3C43;
+}
+.datagrid-cur tr:nth-child(even) td { background: #FAFAFA; }
+
+.datagrid-prop td {
+  padding: 8px 12px; border-bottom: 1px solid var(--sep);
+  color: var(--navy);
+}
+.datagrid-prop tr:hover td { background: #F9F9FB; }
+.datagrid-prop tr:nth-child(even) td { background: #FAFAFA; }
+.status-chip {
+  display: inline-block; font-size: 10px; font-weight: 600;
+  padding: 2px 7px; border-radius: 4px;
+}
+.status-ok { background: #E8F5E9; color: #2E7D32; }
+.status-warn { background: #FFF3E0; color: #E65100; }
+
+/* ── Input contrast ── */
+.input-demo { padding: 12px 16px; }
+.field-group { margin-bottom: 10px; }
+.field-label-cur { font-size: 11px; color: var(--gray2); margin-bottom: 4px; } /* bajo contraste */
+.field-label-prop { font-size: 11px; color: #555; font-weight: 500; margin-bottom: 4px; } /* mejor */
+.input-cur {
+  width: 100%; padding: 7px 10px; border: 1px solid #D1D1D6;
+  border-radius: 6px; font-size: 12px; color: #3C3C43; /* bajo contraste */
+  background: white; font-family: 'Segoe UI', sans-serif;
+}
+.input-prop {
+  width: 100%; padding: 7px 10px; border: 1px solid #C7C7CC;
+  border-radius: 6px; font-size: 12px; color: var(--navy); /* mejor contraste */
+  background: white; font-family: 'Segoe UI', sans-serif;
+}
+.input-prop:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(21,101,192,.12); }
+
+/* ── Section separators inside cards ── */
+.section-sep-cur {
+  padding: 8px 16px; font-size: 12px; font-weight: 600;
+  color: var(--navy); margin-top: 4px;
+}
+.section-sep-prop {
+  padding: 8px 16px 4px; font-size: 11px; font-weight: 600;
+  color: var(--gray); letter-spacing: .4px; text-transform: uppercase;
+  display: flex; align-items: center; gap: 8px;
+}
+.section-sep-prop::after {
+  content: ''; flex: 1; height: 1px; background: var(--sep);
+}
+
+/* ── Footer ── */
+.card-footer {
+  padding: 10px 16px; border-top: 1px solid var(--sep);
+  display: flex; align-items: center; justify-content: space-between;
+  background: #FAFAFA;
+}
+.footer-note { font-size: 11px; color: var(--gray); }
+.btn-primary {
+  padding: 7px 18px; background: var(--orange); color: white;
+  border: none; border-radius: 6px; font-size: 13px; font-weight: 500;
+  cursor: pointer; font-family: 'Segoe UI', sans-serif;
+}
+.btn-secondary {
+  padding: 7px 14px; background: white; color: var(--navy);
+  border: 1px solid #D1D1D6; border-radius: 6px; font-size: 12px;
+  cursor: pointer; font-family: 'Segoe UI', sans-serif;
+}
+
+</style>
+</head>
+<body>
+
+<h1>BIMPills — Propuesta de Estilos UI</h1>
+<p class="page-subtitle">Revisión de contraste, pestañas y ventanas. Aprueba el estilo antes de implementar en XAML.</p>
+
+<!-- ══════════════════════════════════════════════
+     SECCIÓN 1: PESTAÑAS
+     ══════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">1. Estilos de Pestaña</div>
+  <div class="row">
+
+    <!-- ACTUAL -->
+    <div style="flex:1; min-width:300px;">
+      <div class="label">Actual <span class="badge-current">Actual</span></div>
+      <div class="card">
+        <div class="tabs-current">
+          <div class="tab-cur active">
+            <svg class="ico" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><polyline points="9 9 15 9"/><polyline points="9 13 15 13"/></svg>
+            Familias
+          </div>
+          <div class="tab-cur">
+            <svg class="ico" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><polyline points="3 9 21 9"/><polyline points="9 21 9 9"/></svg>
+            Planos
+          </div>
+          <div class="tab-cur">
+            <svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            Auditoría
+          </div>
+        </div>
+        <div style="padding:16px; color:var(--gray); font-size:12px;">
+          Pestaña activa: <strong>naranja + bold (700)</strong><br>
+          Inactiva: gris claro #AEAEB2 — bajo contraste<br>
+          Hover: fondo casi invisible
+        </div>
+      </div>
+    </div>
+
+    <!-- OPCIÓN A: Azul + icon box -->
+    <div style="flex:1; min-width:300px;">
+      <div class="label">Opción A — Azul + icono <span class="badge-proposed">Propuesto</span></div>
+      <div class="card">
+        <div class="tabs-prop-a">
+          <div class="tab-a active">
+            <div class="tab-a-icon">
+              <svg class="ico" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><polyline points="9 9 15 9"/><polyline points="9 13 15 13"/></svg>
+            </div>
+            Familias
+          </div>
+          <div class="tab-a">
+            <div class="tab-a-icon">
+              <svg class="ico" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><polyline points="3 9 21 9"/><polyline points="9 21 9 9"/></svg>
+            </div>
+            Planos
+          </div>
+          <div class="tab-a">
+            <div class="tab-a-icon">
+              <svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            </div>
+            Auditoría
+          </div>
+        </div>
+        <div style="padding:16px; color:var(--gray); font-size:12px;">
+          Activa: <strong style="color:var(--blue)">azul #1565C0 + fondo #E3F2FD</strong> (mismo que iconos de herramienta)<br>
+          Peso: Medium (500) — sin negrita<br>
+          Inactiva: gris con icono badge redondeado<br>
+          <em>Coherente con los icon-boxes del header</em>
+        </div>
+      </div>
+    </div>
+
+    <!-- OPCIÓN B: Pill / segmented -->
+    <div style="flex:1; min-width:300px;">
+      <div class="label">Opción B — Pill segmented</div>
+      <div class="card">
+        <div class="tabs-prop-b">
+          <div class="tab-b active">
+            <svg class="ico" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><polyline points="9 9 15 9"/><polyline points="9 13 15 13"/></svg>
+            Familias
+          </div>
+          <div class="tab-b">
+            <svg class="ico" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><polyline points="3 9 21 9"/><polyline points="9 21 9 9"/></svg>
+            Planos
+          </div>
+          <div class="tab-b">
+            <svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            Auditoría
+          </div>
+        </div>
+        <div style="padding:16px; color:var(--gray); font-size:12px;">
+          Activa: blanco + sombra sutil (macOS segmented control)<br>
+          Sin línea de borde inferior<br>
+          Más compacto, estilo iOS/macOS<br>
+          <em>Ideal para ventanas pequeñas</em>
+        </div>
+      </div>
+    </div>
+
+    <!-- OPCIÓN C: Naranja SemiBold (fix mínimo) -->
+    <div style="flex:1; min-width:300px;">
+      <div class="label">Opción C — Naranja SemiBold (fix mínimo)</div>
+      <div class="card">
+        <div class="tabs-prop-c">
+          <div class="tab-c active">
+            <svg class="ico" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><polyline points="9 9 15 9"/><polyline points="9 13 15 13"/></svg>
+            Familias
+          </div>
+          <div class="tab-c">
+            <svg class="ico" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><polyline points="3 9 21 9"/><polyline points="9 21 9 9"/></svg>
+            Planos
+          </div>
+          <div class="tab-c">
+            <svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            Auditoría
+          </div>
+        </div>
+        <div style="padding:16px; color:var(--gray); font-size:12px;">
+          Mantiene naranja (identidad BIM-CA)<br>
+          Solo elimina negrita → SemiBold (600)<br>
+          Cambio mínimo, bajo riesgo<br>
+          <em>No resuelve el contraste de inactivas</em>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SECCIÓN 2: CONTRASTE DE VENTANA
+     ══════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">2. Contraste dentro de Ventanas</div>
+  <div class="row">
+
+    <!-- Metric cards ACTUAL -->
+    <div class="window-demo">
+      <div class="label">Tarjetas de métricas — Actual <span class="badge-current">Actual</span></div>
+      <div class="card">
+        <div class="tool-header">
+          <div class="tool-icon" style="background:#E3F2FD; color:var(--blue); font-size:14px;">⊞</div>
+          <div>
+            <div class="tool-title">Auditoría</div>
+            <div class="tool-desc">Análisis del modelo activo</div>
+          </div>
+        </div>
+        <div class="metrics-cur">
+          <div class="metric-card-cur">
+            <div class="metric-val-cur">1,842</div>
+            <div class="metric-lbl-cur">Elementos totales</div>
+          </div>
+          <div class="metric-card-cur">
+            <div class="metric-val-cur" style="color:#C62828">14</div>
+            <div class="metric-lbl-cur">Advertencias</div>
+          </div>
+          <div class="metric-card-cur">
+            <div class="metric-val-cur">87</div>
+            <div class="metric-lbl-cur">Familias cargadas</div>
+          </div>
+          <div class="metric-card-cur">
+            <div class="metric-val-cur">23</div>
+            <div class="metric-lbl-cur">Vistas sin plano</div>
+          </div>
+        </div>
+        <div class="card-footer">
+          <span class="footer-note">Última auditoría: hace 2 min</span>
+          <button class="btn-primary">Exportar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Metric cards PROPUESTO -->
+    <div class="window-demo">
+      <div class="label">Tarjetas de métricas — Propuesto <span class="badge-proposed">Propuesto</span></div>
+      <div class="card">
+        <div class="tool-header">
+          <div class="tool-icon" style="background:#E3F2FD; color:var(--blue); font-size:14px;">⊞</div>
+          <div>
+            <div class="tool-title">Auditoría</div>
+            <div class="tool-desc">Análisis del modelo activo</div>
+          </div>
+        </div>
+        <div class="metrics-prop">
+          <div class="metric-card-prop">
+            <div class="metric-icon-prop">⊕</div>
+            <div class="metric-val-prop">1,842</div>
+            <div class="metric-lbl-prop">Elementos totales</div>
+          </div>
+          <div class="metric-card-prop">
+            <div class="metric-icon-prop metric-red">⚠</div>
+            <div class="metric-val-prop" style="color:#C62828">14</div>
+            <div class="metric-lbl-prop">Advertencias</div>
+          </div>
+          <div class="metric-card-prop">
+            <div class="metric-icon-prop metric-orange">⬡</div>
+            <div class="metric-val-prop">87</div>
+            <div class="metric-lbl-prop">Familias cargadas</div>
+          </div>
+          <div class="metric-card-prop">
+            <div class="metric-icon-prop metric-green">✓</div>
+            <div class="metric-val-prop">23</div>
+            <div class="metric-lbl-prop">Vistas sin plano</div>
+          </div>
+        </div>
+        <div class="card-footer">
+          <span class="footer-note">Última auditoría: hace 2 min</span>
+          <button class="btn-primary">Exportar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Input/form contrast -->
+    <div class="window-demo">
+      <div class="label">Labels e inputs — Actual <span class="badge-current">Actual</span></div>
+      <div class="card">
+        <div class="input-demo">
+          <div class="field-group">
+            <div class="field-label-cur">Nombre de subproyecto</div>
+            <input class="input-cur" value="Arquitectura" readonly/>
+          </div>
+          <div class="field-group">
+            <div class="field-label-cur">Carpeta destino</div>
+            <input class="input-cur" value="C:\Proyectos\Export" readonly/>
+          </div>
+          <div class="section-sep-cur">Opciones avanzadas</div>
+          <div class="field-group">
+            <div class="field-label-cur">Formato de exportación</div>
+            <input class="input-cur" value="PDF + DWG" readonly/>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="window-demo">
+      <div class="label">Labels e inputs — Propuesto <span class="badge-proposed">Propuesto</span></div>
+      <div class="card">
+        <div class="input-demo">
+          <div class="field-group">
+            <div class="field-label-prop">Nombre de subproyecto</div>
+            <input class="input-prop" value="Arquitectura" readonly/>
+          </div>
+          <div class="field-group">
+            <div class="field-label-prop">Carpeta destino</div>
+            <input class="input-prop" value="C:\Proyectos\Export" readonly/>
+          </div>
+          <div class="section-sep-prop">Opciones avanzadas</div>
+          <div class="field-group" style="margin-top:8px;">
+            <div class="field-label-prop">Formato de exportación</div>
+            <input class="input-prop" value="PDF + DWG" readonly/>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SECCIÓN 3: DATAGRID CONTRASTE
+     ══════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">3. DataGrid — Contraste de filas</div>
+  <div class="row">
+
+    <div style="flex:1; min-width:340px;">
+      <div class="label">Actual <span class="badge-current">Actual</span></div>
+      <div class="card" style="padding:12px;">
+        <table class="datagrid datagrid-cur" style="width:100%;">
+          <thead><tr>
+            <th>☑</th><th>Familia</th><th>Categoría</th><th>Instancias</th>
+          </tr></thead>
+          <tbody>
+            <tr><td>☑</td><td>Puerta Simple</td><td>Puertas</td><td>24</td></tr>
+            <tr><td>☑</td><td>Ventana Corredera</td><td>Ventanas</td><td>18</td></tr>
+            <tr><td>☐</td><td>Escalera Recta</td><td>Escaleras</td><td>3</td></tr>
+            <tr><td>☑</td><td>Columna HEB</td><td>Estructura</td><td>46</td></tr>
+          </tbody>
+        </table>
+        <div style="font-size:11px; color:var(--gray2); margin-top:8px;">
+          Filas alternas: #FAFAFA vs blanco — diferencia casi imperceptible<br>
+          Texto: #3C3C43 — algo apagado
+        </div>
+      </div>
+    </div>
+
+    <div style="flex:1; min-width:340px;">
+      <div class="label">Propuesto <span class="badge-proposed">Propuesto</span></div>
+      <div class="card" style="padding:12px;">
+        <table class="datagrid datagrid-prop" style="width:100%;">
+          <thead><tr>
+            <th>☑</th><th>Familia</th><th>Categoría</th><th>Estado</th>
+          </tr></thead>
+          <tbody>
+            <tr>
+              <td>☑</td><td><strong style="font-weight:500;">Puerta Simple</strong></td>
+              <td>Puertas</td>
+              <td><span class="status-chip status-ok">24 inst.</span></td>
+            </tr>
+            <tr>
+              <td>☑</td><td><strong style="font-weight:500;">Ventana Corredera</strong></td>
+              <td>Ventanas</td>
+              <td><span class="status-chip status-ok">18 inst.</span></td>
+            </tr>
+            <tr>
+              <td>☐</td><td style="color:var(--gray);">Escalera Recta</td>
+              <td style="color:var(--gray);">Escaleras</td>
+              <td><span class="status-chip status-warn">3 inst.</span></td>
+            </tr>
+            <tr>
+              <td>☑</td><td><strong style="font-weight:500;">Columna HEB</strong></td>
+              <td>Estructura</td>
+              <td><span class="status-chip status-ok">46 inst.</span></td>
+            </tr>
+          </tbody>
+        </table>
+        <div style="font-size:11px; color:var(--gray); margin-top:8px;">
+          Separadores #E5E5EA — mayor contraste de fila<br>
+          Texto primario var(--navy) #212B37 — más legible
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     RESUMEN DE CAMBIOS
+     ══════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">4. Resumen de cambios propuestos</div>
+  <div class="card" style="padding:16px;">
+    <table style="width:100%; font-size:12px; border-collapse:collapse;">
+      <thead>
+        <tr style="background:#F5F5F7;">
+          <th style="padding:8px 12px; text-align:left; font-size:11px; color:var(--gray); border-bottom:1px solid var(--sep);">Elemento</th>
+          <th style="padding:8px 12px; text-align:left; font-size:11px; color:var(--gray); border-bottom:1px solid var(--sep);">Actual</th>
+          <th style="padding:8px 12px; text-align:left; font-size:11px; color:var(--gray); border-bottom:1px solid var(--sep);">Propuesto</th>
+          <th style="padding:8px 12px; text-align:left; font-size:11px; color:var(--gray); border-bottom:1px solid var(--sep);">Impacto</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid #F0F0F0;">
+          <td style="padding:8px 12px;">Tab activa — color</td>
+          <td style="padding:8px 12px; color:var(--orange);">Naranja #EF6337</td>
+          <td style="padding:8px 12px; color:var(--blue);">Azul #1565C0</td>
+          <td style="padding:8px 12px;">Cohesión con iconos del header</td>
+        </tr>
+        <tr style="border-bottom:1px solid #F0F0F0; background:#FAFAFA;">
+          <td style="padding:8px 12px;">Tab activa — peso</td>
+          <td style="padding:8px 12px;"><strong>Bold 700</strong></td>
+          <td style="padding:8px 12px;">Medium 500</td>
+          <td style="padding:8px 12px;">Elimina sensación pesada</td>
+        </tr>
+        <tr style="border-bottom:1px solid #F0F0F0;">
+          <td style="padding:8px 12px;">Tab inactiva</td>
+          <td style="padding:8px 12px; color:var(--gray2);">#AEAEB2 — bajo contraste</td>
+          <td style="padding:8px 12px; color:#6E6E73;">#6E6E73 — legible</td>
+          <td style="padding:8px 12px;">Mejor accesibilidad</td>
+        </tr>
+        <tr style="border-bottom:1px solid #F0F0F0; background:#FAFAFA;">
+          <td style="padding:8px 12px;">Field labels</td>
+          <td style="padding:8px 12px; color:var(--gray2);">#AEAEB2</td>
+          <td style="padding:8px 12px; color:#555;">#555 + Medium</td>
+          <td style="padding:8px 12px;">Labels claramente visibles</td>
+        </tr>
+        <tr style="border-bottom:1px solid #F0F0F0;">
+          <td style="padding:8px 12px;">DataGrid separadores</td>
+          <td style="padding:8px 12px;">#F0F0F0 (imperceptible)</td>
+          <td style="padding:8px 12px;">#E5E5EA</td>
+          <td style="padding:8px 12px;">Filas claramente delimitadas</td>
+        </tr>
+        <tr style="background:#FAFAFA;">
+          <td style="padding:8px 12px;">Metric cards</td>
+          <td style="padding:8px 12px;">Fondo #FAFAFA plano</td>
+          <td style="padding:8px 12px;">Blanco + micro icono coloreado</td>
+          <td style="padding:8px 12px;">Jerarquía visual</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+</body>
+</html>

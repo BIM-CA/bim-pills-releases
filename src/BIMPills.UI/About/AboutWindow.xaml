@@ -1,13 +1,13 @@
 <Window x:Class="BIMPills.UI.About.AboutWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="BIMPills — Acerca de"
+        Title="BIM Pills — Acerca de"
         Width="440"
         SizeToContent="Height"
         MaxHeight="720"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterScreen"
-        Background="#F0F0F0"
+        Background="{DynamicResource BackgroundBrush}"
         UseLayoutRounding="True"
         SnapsToDevicePixels="True">
 
@@ -29,7 +29,7 @@
                RenderOptions.BitmapScalingMode="HighQuality"/>
 
         <!-- Nombre del plugin -->
-        <TextBlock Text="BIMPills"
+        <TextBlock Text="BIM Pills"
                    FontSize="22" FontWeight="SemiBold"
                    Foreground="{StaticResource PrimaryBrush}"
                    HorizontalAlignment="Center"
@@ -231,6 +231,25 @@
 
             </StackPanel>
         </Border>
+
+        <!-- Feedback link -->
+        <StackPanel Orientation="Horizontal"
+                    HorizontalAlignment="Center"
+                    Margin="0,0,0,10"
+                    Cursor="Hand"
+                    MouseLeftButtonUp="Feedback_Click">
+            <TextBlock Text="&#xED15;"
+                       FontFamily="Segoe MDL2 Assets"
+                       FontSize="13"
+                       Foreground="{StaticResource TextSecondaryBrush}"
+                       VerticalAlignment="Center"
+                       Margin="0,0,6,0"/>
+            <TextBlock Text="Reportar bug, sugerencia o comentario"
+                       FontSize="12"
+                       Foreground="{StaticResource TextSecondaryBrush}"
+                       FontFamily="Segoe UI"
+                       VerticalAlignment="Center"/>
+        </StackPanel>
 
         <!-- Copyright -->
         <TextBlock x:Name="CopyrightText"

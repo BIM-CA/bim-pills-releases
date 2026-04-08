@@ -23,6 +23,7 @@ namespace BIMPills.UI.Documentacion
             _executeCallback = executeCallback;
 
             InitializeComponent();
+            BIMPills.UI.Shared.ThemeHelper.Apply(this);
             Populate();
         }
 
@@ -202,7 +203,7 @@ namespace BIMPills.UI.Documentacion
             {
                 MessageBox.Show(
                     "La función de acotado solo está disponible dentro de Revit.",
-                    "BIMPills", MessageBoxButton.OK, MessageBoxImage.Information);
+                    "BIM Pills", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
 
@@ -211,7 +212,7 @@ namespace BIMPills.UI.Documentacion
             {
                 MessageBox.Show(
                     "Selecciona un tipo de cota antes de ejecutar.",
-                    "BIMPills", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    "BIM Pills", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 

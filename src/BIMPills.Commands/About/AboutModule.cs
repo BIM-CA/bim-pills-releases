@@ -6,7 +6,7 @@ namespace BIMPills.Commands.About
 {
     public sealed class AboutModule : IPluginModule
     {
-        public string TabName   => "BIMPills";
+        public string TabName   => "BIM Pills";
         public string PanelName => "Información";
 
         public void BuildRibbon(IRibbonBuilder builder)

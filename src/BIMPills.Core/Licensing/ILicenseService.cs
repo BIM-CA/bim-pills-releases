@@ -4,7 +4,7 @@ namespace BIMPills.Core.Licensing
 {
     public interface ILicenseService
     {
-        Task<LicenseInfo?> ValidateAsync(string licenseKey);
+        Task<LicenseInfo?> ValidateAsync(string licenseKey, bool forceRefresh = false);
         Task<bool> ActivateAsync(string licenseKey, string machineId);
         Task<bool> DeactivateAsync();
         LicenseInfo? GetCachedLicense();

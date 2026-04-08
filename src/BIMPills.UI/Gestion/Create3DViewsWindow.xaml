@@ -1,0 +1,193 @@
+<Window x:Class="BIMPills.UI.Gestion.Create3DViewsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="BIM Pills — Crear Vistas 3D"
+        Width="500" Height="600"
+        MinWidth="440" MinHeight="480"
+        ResizeMode="CanResizeWithGrip"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource BackgroundBrush}"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/BIMPills.UI;component/Shared/Styles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <DockPanel Margin="20,16,20,14">
+
+        <!-- Header -->
+        <Border DockPanel.Dock="Top" Style="{StaticResource CardBorder}" Margin="0,0,0,10">
+            <DockPanel Margin="4,0">
+                <Border DockPanel.Dock="Left" Width="32" Height="32" CornerRadius="8"
+                        Background="#FFF3E0" VerticalAlignment="Center" Margin="0,0,10,0">
+                    <TextBlock Text="&#xE8F1;" FontFamily="Segoe MDL2 Assets" FontSize="16"
+                               Foreground="#E65100"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="Estandarizar" FontSize="12" FontWeight="Medium"
+                               Foreground="{StaticResource AccentBrush}" FontFamily="Segoe UI"/>
+                    <TextBlock Text="Crear Vistas 3D por Subproyecto" FontSize="15" FontWeight="SemiBold"
+                               Foreground="{StaticResource PrimaryBrush}" FontFamily="Segoe UI"/>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- Main card -->
+        <Border Style="{StaticResource CardBorder}">
+            <DockPanel>
+
+                <!-- Footer -->
+                <Border DockPanel.Dock="Bottom"
+                        BorderBrush="#E5E5EA" BorderThickness="0,1,0,0"
+                        Padding="14,10">
+                    <DockPanel LastChildFill="False">
+                        <Button DockPanel.Dock="Left"
+                                Content="Cancelar"
+                                Style="{StaticResource PrimaryButton}"
+                                Width="100" IsCancel="True"
+                                Click="Cancel_Click"/>
+                        <Button x:Name="BtnCreate"
+                                DockPanel.Dock="Right"
+                                Style="{StaticResource SecondaryButton}"
+                                Padding="18,0" IsEnabled="False"
+                                Click="Create_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE8F1;" FontFamily="Segoe MDL2 Assets"
+                                           FontSize="11" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                <TextBlock x:Name="CreateBtnLabel" Text="Crear vistas"
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                    </DockPanel>
+                </Border>
+
+                <!-- Scrollable content -->
+                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Margin="16,12,16,12">
+
+                        <!-- ── Configuración ── -->
+                        <TextBlock Text="CONFIGURACIÓN" FontSize="10" FontWeight="SemiBold"
+                                   Foreground="#86868B" FontFamily="Segoe UI" Margin="0,0,0,10"/>
+
+                        <!-- Name template -->
+                        <TextBlock Text="Nombre de vista:" FontSize="11" FontFamily="Segoe UI"
+                                   Foreground="{StaticResource PrimaryBrush}" Margin="0,0,0,4"/>
+                        <TextBox x:Name="ViewNameBox"
+                                 Text="{}{nombre}"
+                                 Style="{StaticResource BIMPillsTextBox}"
+                                 Height="30" FontSize="12"
+                                 Margin="0,0,0,4"/>
+                        <TextBlock Text="Usa {nombre} como marcador para el nombre del subproyecto"
+                                   FontSize="10" Foreground="#86868B" FontFamily="Segoe UI"
+                                   Margin="0,0,0,14" FontStyle="Italic"/>
+
+                        <!-- Conflict resolution -->
+                        <TextBlock Text="Si la vista ya existe:" FontSize="11" FontFamily="Segoe UI"
+                                   Foreground="{StaticResource PrimaryBrush}" Margin="0,0,0,4"/>
+                        <ComboBox x:Name="ConflictCombo"
+                                  Style="{StaticResource BIMPillsComboBox}"
+                                  Margin="0,0,0,14">
+                            <ComboBoxItem Content="Omitir (no sobrescribir)" Tag="Skip" IsSelected="True"/>
+                            <ComboBoxItem Content="Sobrescribir la vista existente" Tag="Overwrite"/>
+                        </ComboBox>
+
+                        <!-- Detail level -->
+                        <TextBlock Text="Nivel de detalle:" FontSize="11" FontFamily="Segoe UI"
+                                   Foreground="{StaticResource PrimaryBrush}" Margin="0,0,0,4"/>
+                        <ComboBox x:Name="DetailLevelCombo"
+                                  Style="{StaticResource BIMPillsComboBox}"
+                                  Margin="0,0,0,20">
+                            <ComboBoxItem Content="Grueso" Tag="Coarse"/>
+                            <ComboBoxItem Content="Medio" Tag="Medium" IsSelected="True"/>
+                            <ComboBoxItem Content="Fino" Tag="Fine"/>
+                        </ComboBox>
+
+                        <!-- Opciones adicionales -->
+                        <CheckBox x:Name="ChkHideAnnotations"
+                                  Content="Apagar categorías de anotación"
+                                  FontSize="12" FontFamily="Segoe UI"
+                                  Foreground="{StaticResource PrimaryBrush}"
+                                  Margin="0,0,0,10"/>
+                        <CheckBox x:Name="ChkCoordination"
+                                  Content="Disciplina: Coordinación"
+                                  FontSize="12" FontFamily="Segoe UI"
+                                  Foreground="{StaticResource PrimaryBrush}"
+                                  Margin="0,0,0,20"/>
+
+                        <!-- Divider -->
+                        <Rectangle Height="1" Fill="#E5E5EA" Margin="0,0,0,16"/>
+
+                        <!-- ── Subproyectos ── -->
+                        <DockPanel Margin="0,0,0,8">
+                            <TextBlock DockPanel.Dock="Left"
+                                       Text="SUBPROYECTOS" FontSize="10" FontWeight="SemiBold"
+                                       Foreground="#86868B" FontFamily="Segoe UI"
+                                       VerticalAlignment="Center"/>
+                            <Button DockPanel.Dock="Right"
+                                    Content="Todos" Style="{StaticResource TertiaryButton}"
+                                    Height="24" Padding="10,0" FontSize="11"
+                                    Click="SelectAll_Click"/>
+                            <TextBlock x:Name="SelectionText"
+                                       DockPanel.Dock="Right"
+                                       FontSize="11" Foreground="{StaticResource AccentBrush}"
+                                       FontFamily="Segoe UI" VerticalAlignment="Center"
+                                       Margin="0,0,10,0" HorizontalAlignment="Right"/>
+                        </DockPanel>
+
+                        <!-- Workset list -->
+                        <Border BorderBrush="#E5E5EA" BorderThickness="1" CornerRadius="6">
+                            <ListBox x:Name="WorksetsList"
+                                     Style="{StaticResource BIMPillsListBox}"
+                                     MaxHeight="200"
+                                     ScrollViewer.VerticalScrollBarVisibility="Auto">
+                                <ListBox.ItemContainerStyle>
+                                    <Style TargetType="ListBoxItem">
+                                        <Setter Property="Padding" Value="0"/>
+                                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="ListBoxItem">
+                                                    <Border x:Name="Bd" Background="Transparent"
+                                                            BorderBrush="#F2F2F7" BorderThickness="0,0,0,1"
+                                                            Padding="10,8">
+                                                        <ContentPresenter/>
+                                                    </Border>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter TargetName="Bd" Property="Background" Value="#F5F5F7"/>
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </ListBox.ItemContainerStyle>
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <CheckBox IsChecked="{Binding IsChecked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                  Click="WorksetCheck_Click">
+                                            <CheckBox.Content>
+                                                <TextBlock Text="{Binding Name}"
+                                                           FontSize="12" FontFamily="Segoe UI"
+                                                           Foreground="{StaticResource PrimaryBrush}"/>
+                                            </CheckBox.Content>
+                                        </CheckBox>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </Border>
+
+                    </StackPanel>
+                </ScrollViewer>
+
+            </DockPanel>
+        </Border>
+    </DockPanel>
+</Window>

@@ -5,7 +5,7 @@ namespace BIMPills.Core.About
 {
     public sealed class AboutInfo
     {
-        public string PluginName => "BIMPills";
+        public string PluginName => "BIM Pills";
         public string Version
         {
             get

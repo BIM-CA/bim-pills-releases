@@ -26,7 +26,7 @@ namespace BIMPills.Core.Tests.About
             command.Execute(context);
 
             Assert.NotNull(AboutCommand.LastResult);
-            Assert.Equal("BIMPills", AboutCommand.LastResult!.PluginName);
+            Assert.Equal("BIM Pills", AboutCommand.LastResult!.PluginName);
             Assert.NotEmpty(AboutCommand.LastResult.Version);
             Assert.NotEqual("0.0.0", AboutCommand.LastResult.Version);
             Assert.Equal("Rodrigo Flores + BIM-CA Team", AboutCommand.LastResult.Developer);
@@ -41,7 +41,7 @@ namespace BIMPills.Core.Tests.About
             var command = new AboutCommand();
             var result  = command.Execute(context);
 
-            Assert.Contains("BIMPills", result.Message);
+            Assert.Contains("BIM Pills", result.Message);
             Assert.Contains("1.0.0", result.Message);
             Assert.Contains("BIM-CA", result.Message);
         }
@@ -91,6 +91,8 @@ namespace BIMPills.Core.Tests.About
         public int GetArqLevelCount() => 0;
         public System.Collections.Generic.IReadOnlyList<Models.SheetExportInfo> GetSheets()
             => new System.Collections.Generic.List<Models.SheetExportInfo>();
+        public System.Collections.Generic.IReadOnlyList<Models.ExportableViewInfo> GetExportableViews()
+            => new System.Collections.Generic.List<Models.ExportableViewInfo>();
         public string GetProjectName() => "TestProject";
         public System.Collections.Generic.IReadOnlyList<Models.ScheduleInfo> GetSchedules()                             => new System.Collections.Generic.List<Models.ScheduleInfo>();
         public Models.ScheduleData GetScheduleData(long scheduleId)                                                     => new Models.ScheduleData();

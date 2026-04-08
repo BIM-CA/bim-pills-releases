@@ -6,7 +6,7 @@
     <Deterministic>false</Deterministic>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>
-    <InformationalVersion>1.0.0-beta.1</InformationalVersion>
+    <InformationalVersion>1.0.0-beta.2</InformationalVersion>
     <Company>BIM-CA</Company>
     <Copyright>Copyright © BIM-CA 2026</Copyright>
   </PropertyGroup>
@@ -23,6 +23,9 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(RevitVersion)' == '2025' Or '$(RevitVersion)' == '2026'">
     <RevitTargetFramework>net8.0-windows</RevitTargetFramework>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(RevitVersion)' == '2027'">
+    <RevitTargetFramework>net10.0-windows</RevitTargetFramework>
   </PropertyGroup>
 
   <!-- Compilation symbol: REVIT2024, REVIT2025, or REVIT2026 -->

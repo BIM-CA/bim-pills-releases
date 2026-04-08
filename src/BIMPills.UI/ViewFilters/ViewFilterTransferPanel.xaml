@@ -1,0 +1,296 @@
+<UserControl x:Class="BIMPills.UI.ViewFilters.ViewFilterTransferPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             UseLayoutRounding="True" SnapsToDevicePixels="True">
+
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/BIMPills.UI;component/Shared/Styles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <DockPanel>
+
+        <!-- Source document selector -->
+        <Border DockPanel.Dock="Top"
+                Background="#F8F9FA" Padding="14,10"
+                BorderBrush="#E5E5EA" BorderThickness="0,0,0,1">
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Left" Text="Documento fuente:"
+                           FontSize="11" FontFamily="Segoe UI"
+                           Foreground="{StaticResource TextSecondaryBrush}"
+                           VerticalAlignment="Center" Margin="0,0,10,0"/>
+                <ComboBox x:Name="SourceDocCombo"
+                          Style="{StaticResource BIMPillsComboBox}"
+                          SelectionChanged="SourceDoc_Changed"/>
+            </DockPanel>
+        </Border>
+
+        <!-- Bottom bar -->
+        <Border DockPanel.Dock="Bottom"
+                BorderBrush="#E5E5EA" BorderThickness="0,1,0,0"
+                Padding="14,10">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                    <TextBlock Text="Conflictos:" FontSize="11" FontFamily="Segoe UI"
+                               Foreground="{StaticResource TextSecondaryBrush}"
+                               VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <ComboBox x:Name="ConflictCombo"
+                              Style="{StaticResource BIMPillsComboBox}"
+                              Width="175">
+                        <ComboBoxItem Content="Reemplazar todo" Tag="Replace" IsSelected="True"/>
+                        <ComboBoxItem Content="Omitir todo" Tag="Skip"/>
+                        <ComboBoxItem Content="Elegir individualmente..." Tag="Individual"/>
+                    </ComboBox>
+                </StackPanel>
+                <TextBlock x:Name="StatusText"
+                           Text="Selecciona un documento fuente"
+                           FontSize="11" FontFamily="Segoe UI"
+                           Foreground="{StaticResource TextSecondaryBrush}"
+                           VerticalAlignment="Center"/>
+            </DockPanel>
+        </Border>
+
+        <!-- Main 2-column layout -->
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="300" MinWidth="240"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Left: filter list -->
+            <DockPanel Grid.Column="0" Margin="12,10,10,10">
+
+                <!-- Search + Todos button -->
+                <DockPanel DockPanel.Dock="Top" Margin="0,0,0,6">
+                    <Button DockPanel.Dock="Right" Content="Todos"
+                            Style="{StaticResource TertiaryButton}"
+                            Padding="8,4" FontSize="11" Margin="6,0,0,0"
+                            Click="SelectAll_Click"/>
+                    <TextBox x:Name="SearchBox"
+                             Style="{StaticResource BIMPillsTextBox}"
+                             Height="28" FontSize="11"
+                             Tag="Buscar filtro..."
+                             TextChanged="Search_TextChanged"/>
+                </DockPanel>
+
+                <!-- Summary bar -->
+                <Border DockPanel.Dock="Top" Background="#F8F9FA" CornerRadius="4"
+                        Padding="10,5" Margin="0,0,0,6">
+                    <TextBlock x:Name="SelectionSummary"
+                               Text="0 de 0 seleccionados"
+                               FontSize="10" FontFamily="Segoe UI"
+                               Foreground="{StaticResource TextSecondaryBrush}"/>
+                </Border>
+
+                <!-- Filter list -->
+                <ListBox x:Name="FilterListBox"
+                         Style="{StaticResource BIMPillsListBox}"
+                         SelectionChanged="FilterList_SelectionChanged">
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="ListBoxItem">
+                            <Setter Property="Padding" Value="0"/>
+                            <Setter Property="Margin" Value="0"/>
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="ListBoxItem">
+                                        <Border x:Name="ItemBorder"
+                                                Background="Transparent"
+                                                BorderBrush="#E5E5EA"
+                                                BorderThickness="0,0,0,1"
+                                                Padding="8,7">
+                                            <ContentPresenter/>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="ItemBorder" Property="Background" Value="#F5F5F7"/>
+                                            </Trigger>
+                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter TargetName="ItemBorder" Property="Background" Value="#EFF3FF"/>
+                                                <Setter TargetName="ItemBorder" Property="BorderBrush" Value="#C5CAE9"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </ListBox.ItemContainerStyle>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <CheckBox Grid.Column="0"
+                                          IsChecked="{Binding IsSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                          VerticalAlignment="Center" Margin="0,0,6,0"
+                                          Click="FilterCheckBox_Click"/>
+                                <StackPanel Grid.Column="1" Margin="0,0,4,0">
+                                    <TextBlock Text="{Binding Name}"
+                                               FontSize="12" FontWeight="Medium"
+                                               Foreground="{StaticResource PrimaryBrush}"
+                                               FontFamily="Segoe UI"
+                                               TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock Text="{Binding FilterType}"
+                                               FontSize="10" Foreground="#86868B"
+                                               FontFamily="Segoe UI" Margin="0,1,0,0"/>
+                                </StackPanel>
+                                <!-- Badges -->
+                                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Border Background="#E3F2FD" CornerRadius="8"
+                                            Padding="5,2" Margin="0,0,3,0">
+                                        <TextBlock Text="{Binding CategoryCount, StringFormat={}{0} cat.}"
+                                                   FontSize="9" FontWeight="SemiBold"
+                                                   Foreground="#1565C0" FontFamily="Segoe UI"/>
+                                    </Border>
+                                    <Border Background="#F3E5F5" CornerRadius="8" Padding="5,2">
+                                        <TextBlock Text="{Binding RuleCount, StringFormat={}{0} reg.}"
+                                                   FontSize="9" FontWeight="SemiBold"
+                                                   Foreground="#6A1B9A" FontFamily="Segoe UI"/>
+                                    </Border>
+                                </StackPanel>
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
+
+            <GridSplitter Grid.Column="1" Width="1"
+                          Background="#E5E5EA"
+                          HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+
+            <!-- Right: detail panel -->
+            <Grid Grid.Column="2">
+
+                <!-- Empty state -->
+                <Border x:Name="DetailEmptyState"
+                        VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <StackPanel HorizontalAlignment="Center">
+                        <Border Width="48" Height="48" CornerRadius="12"
+                                Background="#F3E5F5" HorizontalAlignment="Center"
+                                Margin="0,0,0,12">
+                            <TextBlock Text="&#xE74C;" FontFamily="Segoe MDL2 Assets"
+                                       FontSize="22" Foreground="#6A1B9A"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <TextBlock Text="Selecciona un filtro"
+                                   FontSize="14" FontWeight="SemiBold"
+                                   Foreground="{StaticResource PrimaryBrush}"
+                                   FontFamily="Segoe UI" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Elige un filtro para ver sus categor&#237;as y reglas."
+                                   FontSize="11" Foreground="#86868B" FontFamily="Segoe UI"
+                                   HorizontalAlignment="Center" TextAlignment="Center"
+                                   TextWrapping="Wrap" Margin="0,6,0,0" MaxWidth="220"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Single doc state -->
+                <Border x:Name="SingleDocState" Visibility="Collapsed"
+                        VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <StackPanel HorizontalAlignment="Center">
+                        <Border Width="48" Height="48" CornerRadius="12"
+                                Background="#FFF3E0" HorizontalAlignment="Center"
+                                Margin="0,0,0,12">
+                            <TextBlock Text="&#xE8F1;" FontFamily="Segoe MDL2 Assets"
+                                       FontSize="22" Foreground="#E65100"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <TextBlock Text="Solo hay un proyecto abierto"
+                                   FontSize="14" FontWeight="SemiBold"
+                                   Foreground="{StaticResource PrimaryBrush}"
+                                   FontFamily="Segoe UI" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Abre otro proyecto en Revit para transferir filtros entre documentos."
+                                   FontSize="11" Foreground="#86868B" FontFamily="Segoe UI"
+                                   HorizontalAlignment="Center" TextAlignment="Center"
+                                   TextWrapping="Wrap" Margin="0,6,0,0" MaxWidth="260"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Detail -->
+                <DockPanel x:Name="DetailPanel" Visibility="Collapsed" Margin="12,10">
+
+                    <!-- Header -->
+                    <Border DockPanel.Dock="Top"
+                            Padding="0,0,0,10"
+                            BorderBrush="#E5E5EA" BorderThickness="0,0,0,1"
+                            Margin="0,0,0,10">
+                        <StackPanel>
+                            <TextBlock x:Name="DetailName"
+                                       FontSize="14" FontWeight="SemiBold"
+                                       Foreground="{StaticResource PrimaryBrush}"
+                                       FontFamily="Segoe UI"
+                                       TextTrimming="CharacterEllipsis"/>
+                            <Border Background="#F3E5F5" CornerRadius="4"
+                                    Padding="8,3" Margin="0,6,0,0"
+                                    HorizontalAlignment="Left">
+                                <TextBlock x:Name="DetailType"
+                                           FontSize="10" FontWeight="SemiBold"
+                                           Foreground="#6A1B9A" FontFamily="Segoe UI"/>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Categories section -->
+                    <Border DockPanel.Dock="Top" Margin="0,0,0,12">
+                        <StackPanel>
+                            <TextBlock Text="CATEGOR&#205;AS" FontSize="10" FontWeight="SemiBold"
+                                       Foreground="#86868B" FontFamily="Segoe UI"
+                                       Margin="0,0,0,6"/>
+                            <ItemsControl x:Name="CategoriesList">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="#E3F2FD" CornerRadius="10"
+                                                Padding="8,3" Margin="0,0,4,4">
+                                            <TextBlock Text="{Binding}"
+                                                       FontSize="10" FontFamily="Segoe UI"
+                                                       Foreground="#1565C0"/>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Rules section -->
+                    <StackPanel>
+                        <TextBlock Text="REGLAS" FontSize="10" FontWeight="SemiBold"
+                                   Foreground="#86868B" FontFamily="Segoe UI"
+                                   Margin="0,0,0,6"/>
+                        <ItemsControl x:Name="RulesList">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="#F8F9FA" CornerRadius="4"
+                                            Padding="10,6" Margin="0,0,0,4"
+                                            BorderBrush="#E5E5EA" BorderThickness="1">
+                                        <TextBlock Text="{Binding}"
+                                                   FontSize="11" FontFamily="Segoe UI"
+                                                   Foreground="{StaticResource PrimaryBrush}"
+                                                   TextWrapping="Wrap"/>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <TextBlock x:Name="NoRulesText"
+                                   Text="Sin reglas de filtrado (filtro de selecci&#243;n)"
+                                   FontSize="11" FontFamily="Segoe UI"
+                                   Foreground="#86868B" FontStyle="Italic"
+                                   Visibility="Collapsed"/>
+                    </StackPanel>
+
+                </DockPanel>
+
+            </Grid>
+        </Grid>
+    </DockPanel>
+</UserControl>

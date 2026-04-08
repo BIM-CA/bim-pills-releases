@@ -9,6 +9,8 @@ using BIMPills.Revit.Context;
 using BIMPills.UI.ExportFamilies;
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 
 namespace BIMPills.Revit.Commands.ExportFamilies
 {
@@ -97,32 +99,29 @@ namespace BIMPills.Revit.Commands.ExportFamilies
                 revitVersion,
                 logger);
 
-            // Initialize Sheets tab — gather sheets and build PDF/DWG callbacks
+            // Initialize Sheets/Views tab — gather exportable views and build PDF/DWG callbacks
             if (doc != null)
             {
                 try
                 {
-                    // Gather sheet data directly from RevitDocumentServices
                     var docServices = new RevitDocumentServices(doc);
-                    var sheets = docServices.GetSheets();
+                    var exportableViews = docServices.GetExportableViews();
                     var projectName = docServices.GetProjectName();
 
-                    if (sheets.Count > 0)
+                    if (exportableViews.Count > 0)
                     {
-                        // Gather available parameter names from sheets
                         var paramNames = docServices.GetSheetParameterNames();
 
-                        // PDF export callback
-                        Func<long, string, string, PdfExportSettings, bool> pdfCallback = (sheetId, folder, fileName, settings) =>
+                        // PDF export callback — works for sheets and individual views alike
+                        Func<long, string, string, PdfExportSettings, bool> pdfCallback = (viewId, folder, fileName, settings) =>
                         {
                             try
                             {
-                                logger?.Info($"[ExportSheets] PDF: {fileName} → {folder}");
-                                var viewIds = new List<ElementId> { new ElementId(sheetId) };
+                                logger?.Info($"[ExportViews] PDF: {fileName} → {folder}");
+                                var viewIds = new List<ElementId> { new ElementId(viewId) };
                                 var opts = new PDFExportOptions();
                                 opts.FileName = fileName;
 
-                                // Paper placement
                                 opts.PaperPlacement = settings.PaperPlacement == PdfPaperPlacement.OffsetFromCorner
                                     ? Autodesk.Revit.DB.PaperPlacementType.LowerLeft
                                     : Autodesk.Revit.DB.PaperPlacementType.Center;
@@ -132,7 +131,6 @@ namespace BIMPills.Revit.Commands.ExportFamilies
                                     opts.OriginOffsetY = settings.OffsetY;
                                 }
 
-                                // Zoom
                                 if (settings.ZoomType == PdfZoomType.Custom)
                                 {
                                     opts.ZoomType = Autodesk.Revit.DB.ZoomType.Zoom;
@@ -143,7 +141,6 @@ namespace BIMPills.Revit.Commands.ExportFamilies
                                     opts.ZoomType = Autodesk.Revit.DB.ZoomType.FitToPage;
                                 }
 
-                                // Color
                                 opts.ColorDepth = settings.ColorDepth switch
                                 {
                                     PdfColorDepth.Grayscale  => Autodesk.Revit.DB.ColorDepthType.GrayScale,
@@ -151,7 +148,6 @@ namespace BIMPills.Revit.Commands.ExportFamilies
                                     _                        => Autodesk.Revit.DB.ColorDepthType.Color
                                 };
 
-                                // Raster quality
                                 opts.RasterQuality = settings.RasterQuality switch
                                 {
                                     PdfRasterQuality.Low          => Autodesk.Revit.DB.RasterQualityType.Low,
@@ -160,26 +156,23 @@ namespace BIMPills.Revit.Commands.ExportFamilies
                                     _                             => Autodesk.Revit.DB.RasterQualityType.Medium
                                 };
 
-                                // Visibility options
                                 opts.HideScopeBoxes           = settings.HideScopeBoxes;
                                 opts.HideCropBoundaries       = settings.HideCropBoundaries;
                                 opts.HideReferencePlane       = settings.HideRefWorkPlanes;
                                 opts.HideUnreferencedViewTags = settings.HideUnreferencedViewTags;
                                 opts.ViewLinksInBlue          = settings.ViewLinksInBlue;
-
-                                // Always stop on error for batch
-                                opts.StopOnError = false;
+                                opts.StopOnError              = false;
 
                                 return doc.Export(folder, viewIds, opts);
                             }
                             catch (Exception ex)
                             {
-                                logger?.Error($"[ExportSheets] Error PDF sheetId={sheetId}", ex);
+                                logger?.Error($"[ExportViews] Error PDF viewId={viewId}", ex);
                                 return false;
                             }
                         };
 
-                        // Get Revit's native DWG export preset names
+                        // DWG export preset names
                         var dwgPresetNames = new List<string>();
                         try
                         {
@@ -188,32 +181,26 @@ namespace BIMPills.Revit.Commands.ExportFamilies
                                 dwgPresetNames.AddRange(presets);
                         }
                         catch { }
-                        // If no presets found, add sensible defaults
                         if (dwgPresetNames.Count == 0)
                             dwgPresetNames.AddRange(new[] { "AEC Extended", "AEC Standard", "ISO Standard" });
 
                         // DWG export callback
-                        Func<long, string, string, DwgExportConfig?, bool> dwgCallback = (sheetId, folder, fileName, dwgConfig) =>
+                        Func<long, string, string, DwgExportConfig?, bool> dwgCallback = (viewId, folder, fileName, dwgConfig) =>
                         {
                             try
                             {
-                                logger?.Info($"[ExportSheets] DWG: {fileName} → {folder}");
-                                var viewIds = new List<ElementId> { new ElementId(sheetId) };
+                                logger?.Info($"[ExportViews] DWG: {fileName} → {folder}");
+                                var viewIds = new List<ElementId> { new ElementId(viewId) };
                                 DWGExportOptions opts;
 
                                 if (dwgConfig?.IsRevitPreset == true && !string.IsNullOrEmpty(dwgConfig.RevitPresetName))
                                 {
-                                    // Use Revit's native export setup
                                     try
                                     {
                                         opts = DWGExportOptions.GetPredefinedOptions(doc, dwgConfig.RevitPresetName)
                                                ?? new DWGExportOptions();
-                                        logger?.Info($"[ExportSheets] DWG preset '{dwgConfig.RevitPresetName}' cargado.");
                                     }
-                                    catch
-                                    {
-                                        opts = new DWGExportOptions();
-                                    }
+                                    catch { opts = new DWGExportOptions(); }
                                 }
                                 else if (dwgConfig != null)
                                 {
@@ -228,31 +215,29 @@ namespace BIMPills.Revit.Commands.ExportFamilies
                                     opts = new DWGExportOptions();
                                 }
 
-                                bool result = doc.Export(folder, fileName, viewIds, opts);
+                                bool exported = doc.Export(folder, fileName, viewIds, opts);
 
-                                // Clean .pcp files if requested
-                                if (result && dwgConfig?.CleanPcpFiles == true)
+                                if (exported && dwgConfig?.CleanPcpFiles == true)
                                 {
                                     try
                                     {
-                                        var pcpPath = System.IO.Path.Combine(folder, fileName + ".pcp");
-                                        if (System.IO.File.Exists(pcpPath))
-                                            System.IO.File.Delete(pcpPath);
+                                        var pcpPath = Path.Combine(folder, fileName + ".pcp");
+                                        if (File.Exists(pcpPath)) File.Delete(pcpPath);
                                     }
-                                    catch { /* non-critical */ }
+                                    catch { }
                                 }
 
-                                return result;
+                                return exported;
                             }
                             catch (Exception ex)
                             {
-                                logger?.Error($"[ExportSheets] Error DWG sheetId={sheetId}", ex);
+                                logger?.Error($"[ExportViews] Error DWG viewId={viewId}", ex);
                                 return false;
                             }
                         };
 
-                        window.InitializeExportSheets(
-                            sheets,
+                        window.InitializeExportViews(
+                            exportableViews,
                             pdfCallback,
                             dwgCallback,
                             projectName,
@@ -263,7 +248,137 @@ namespace BIMPills.Revit.Commands.ExportFamilies
                 }
                 catch (Exception ex)
                 {
-                    logger?.Warning($"[ExportSheets] No se pudieron cargar los planos: {ex.Message}");
+                    logger?.Warning($"[ExportViews] No se pudieron cargar las vistas: {ex.Message}");
+                }
+            }
+
+            // Initialize Model tab (NWC export)
+            if (doc != null)
+            {
+                try
+                {
+                    var docServices = new RevitDocumentServices(doc);
+                    var activeViewName = doc.ActiveView?.Name;
+                    var availableViews = docServices.GetNwcViews();
+
+                    // Detect whether Navisworks NWC Export Utility is loaded in this Revit process.
+                    // NavisworksExportOptions lives in RevitAPI.dll and always instantiates,
+                    // so we must check if NavisworksConverter is actually loaded instead.
+                    bool nwcAvailable = false;
+                    try
+                    {
+                        nwcAvailable = System.AppDomain.CurrentDomain.GetAssemblies()
+                            .Any(a => a.GetName().Name
+                                .IndexOf("NavisworksConverter", StringComparison.OrdinalIgnoreCase) >= 0);
+                    }
+                    catch { }
+
+                    // Gather model-level parameter values for filename tokens
+                    var paramValues = new Dictionary<string, string>
+                    {
+                        ["Proyecto"]  = doc.ProjectInformation?.Name ?? doc.Title,
+                        ["Disciplina"] = doc.ProjectInformation?.LookupParameter("Discipline")?.AsString() ?? "",
+                        ["Número"]    = doc.ProjectInformation?.Number ?? "",
+                        ["Fecha"]     = DateTime.Now.ToString("yyyy-MM-dd")
+                    };
+                    // Merge project information parameters
+                    try
+                    {
+                        foreach (Parameter p in doc.ProjectInformation.Parameters)
+                        {
+                            if (p.Definition?.Name == null || !p.HasValue) continue;
+                            var val = p.AsValueString() ?? p.AsString() ?? "";
+                            if (!string.IsNullOrEmpty(val) && !paramValues.ContainsKey(p.Definition.Name))
+                                paramValues[p.Definition.Name] = val;
+                        }
+                    }
+                    catch { }
+
+                    // NWC export callback
+                    Func<NwcExportConfig, bool> nwcCallback = null!;
+                    if (nwcAvailable)
+                    {
+                        nwcCallback = cfg =>
+                        {
+                            try
+                            {
+                                logger?.Info($"[ExportModel] NWC: {cfg.FileName} → {cfg.DestinationFolder}");
+
+                                Directory.CreateDirectory(cfg.DestinationFolder);
+
+                                var opts = new NavisworksExportOptions();
+
+                                // Scope (NavisworksExportScope.View = specific view; default = full model)
+                                opts.ExportScope = cfg.Scope == NwcExportScope.SpecificView
+                                    ? NavisworksExportScope.View
+                                    : NavisworksExportScope.Model;
+                                if (cfg.Scope == NwcExportScope.SpecificView && cfg.ViewId.HasValue)
+                                    opts.ViewId = new ElementId(cfg.ViewId.Value);
+
+                                // Links
+                                opts.ExportLinks = cfg.ExportLinks;
+
+                                // Coordinates
+                                opts.Coordinates = cfg.Coordinates == NwcCoordinates.Shared
+                                    ? NavisworksCoordinates.Shared
+                                    : NavisworksCoordinates.Internal;
+
+                                // Parameters
+                                opts.Parameters = cfg.Parameters switch
+                                {
+                                    NwcParameters.Elements => NavisworksParameters.Elements,
+                                    NwcParameters.None     => NavisworksParameters.None,
+                                    _                      => NavisworksParameters.All
+                                };
+
+                                // Faceting precision (Low=0.3, Medium=0.5, High=1.0)
+                                opts.FacetingFactor = cfg.FacetingPrecision switch
+                                {
+                                    NwcFacetingPrecision.Low  => 0.3,
+                                    NwcFacetingPrecision.High => 1.0,
+                                    _                         => 0.5
+                                };
+
+                                // Additional options
+                                opts.ConvertElementProperties = cfg.ConvertElementProperties;
+                                opts.ExportRoomAsAttribute    = cfg.ExportRoomAsAttribute;
+                                opts.ExportRoomGeometry       = cfg.ExportRoomGeometry;
+                                opts.DivideFileIntoLevels     = cfg.DivideFileIntoLevels;
+                                opts.ExportUrls               = cfg.ExportUrls;
+                                opts.FindMissingMaterials     = cfg.FindMissingMaterials;
+
+                                // Resolve filename (strip .nwc if already included)
+                                var fileName = cfg.FileName.EndsWith(".nwc", StringComparison.OrdinalIgnoreCase)
+                                    ? cfg.FileName.Substring(0, cfg.FileName.Length - 4) : cfg.FileName;
+
+                                        doc.Export(cfg.DestinationFolder, fileName, opts);
+                                logger?.Info("[ExportModel] NWC exportado correctamente.");
+                                return true;
+                            }
+                            catch (Exception ex)
+                            {
+                                logger?.Error("[ExportModel] Error NWC", ex);
+                                // Re-throw with clear message so the UI can display it to the user
+                                throw new InvalidOperationException(
+                                    $"Revit no pudo completar la exportación NWC.\n\n{ex.Message}", ex);
+                            }
+                        };
+                    }
+
+                    window.InitializeExportModel(
+                        doc.Title,
+                        activeViewName,
+                        nwcAvailable,
+                        nwcCallback,
+                        logger,
+                        paramValues.Keys.ToList(),
+                        paramValues,
+                        presets: null,        // presets are persisted by UI layer (JSON)
+                        availableViews: availableViews);
+                }
+                catch (Exception ex)
+                {
+                    logger?.Warning($"[ExportModel] No se pudo inicializar la pestaña Modelo: {ex.Message}");
                 }
             }
 

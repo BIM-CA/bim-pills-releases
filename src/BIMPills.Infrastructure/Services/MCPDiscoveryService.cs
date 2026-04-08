@@ -125,7 +125,7 @@ namespace BIMPills.Infrastructure.Services
                     {
                         protocolVersion = "2024-11-05",
                         capabilities    = new { },
-                        clientInfo      = new { name = "BIMPills", version = "1.0.0-beta.1" }
+                        clientInfo      = new { name = "BIM Pills", version = "1.0.0-beta.1" }
                     }
                 };
 

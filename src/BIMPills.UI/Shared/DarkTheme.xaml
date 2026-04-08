@@ -1,0 +1,36 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ══════════════════════════════════════════════
+         BIMPills — Dark Theme Overrides
+         Aplica sobre Styles.xaml cuando Revit usa tema oscuro
+         ══════════════════════════════════════════════ -->
+
+    <!-- Window / panel background -->
+    <Color x:Key="BackgroundColor">#1C1C1E</Color>
+
+    <!-- Card / control surface (was White / #FBFAF8) -->
+    <Color x:Key="WhiteColor">#2C2C2E</Color>
+
+    <!-- Primary text (was #212B37 dark navy) -->
+    <Color x:Key="PrimaryColor">#E8E8EA</Color>
+
+    <!-- Secondary text (was #86868B) -->
+    <Color x:Key="TextSecondaryColor">#8E8E93</Color>
+
+    <!-- Separators / borders -->
+    <Color x:Key="SeparatorColor">#3A3A3C</Color>
+
+    <!-- Alternate row background -->
+    <Color x:Key="AlternateRowColor">#252528</Color>
+
+    <!-- Update brushes to pick up new colors -->
+    <SolidColorBrush x:Key="BackgroundBrush"    Color="{StaticResource BackgroundColor}"/>
+    <SolidColorBrush x:Key="WhiteBrush"         Color="{StaticResource WhiteColor}"/>
+    <SolidColorBrush x:Key="PrimaryBrush"       Color="{StaticResource PrimaryColor}"/>
+    <SolidColorBrush x:Key="TextPrimaryBrush"   Color="{StaticResource PrimaryColor}"/>
+    <SolidColorBrush x:Key="TextSecondaryBrush" Color="{StaticResource TextSecondaryColor}"/>
+    <SolidColorBrush x:Key="SeparatorBrush"     Color="{StaticResource SeparatorColor}"/>
+    <SolidColorBrush x:Key="AlternateRowBrush"  Color="{StaticResource AlternateRowColor}"/>
+
+</ResourceDictionary>

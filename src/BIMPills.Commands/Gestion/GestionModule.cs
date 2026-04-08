@@ -6,7 +6,7 @@ namespace BIMPills.Commands.Gestion
 {
     public sealed class GestionModule : IPluginModule
     {
-        public string TabName   => "BIMPills";
+        public string TabName   => "BIM Pills";
         public string PanelName => "Procesos";
 
         public void BuildRibbon(IRibbonBuilder builder)

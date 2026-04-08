@@ -108,24 +108,69 @@ namespace BIMPills.UI.Sandbox
                     new FamilyExportInfo(1005, "Columna_Redonda_D30",      "Columnas"),
                 };
 
-                var sheets = new List<SheetExportInfo>
+                // Unified exportable views: sheets + individual views (S6-B)
+                var views = new List<ExportableViewInfo>
                 {
-                    new SheetExportInfo(2001, "A-001", "Planta General Nivel 1",    "Rev 2", "Arquitectura"),
-                    new SheetExportInfo(2002, "A-002", "Planta General Nivel 2",    "Rev 2", "Arquitectura"),
-                    new SheetExportInfo(2003, "A-101", "Corte Longitudinal A-A",    "Rev 1", "Arquitectura"),
-                    new SheetExportInfo(2004, "E-001", "Planta Estructural Nivel 1","Rev 1", "Estructura"),
-                    new SheetExportInfo(2005, "M-001", "Planta Mecánica Nivel 1",   "Rev 0", "MEP"),
+                    // Sheets
+                    new ExportableViewInfo(2001, "uid-001", "Planta General Nivel 1",    ExportableItemType.Sheet,    "A-001", "Rev 2", "Arquitectura"),
+                    new ExportableViewInfo(2002, "uid-002", "Planta General Nivel 2",    ExportableItemType.Sheet,    "A-002", "Rev 2", "Arquitectura"),
+                    new ExportableViewInfo(2003, "uid-003", "Corte Longitudinal A-A",    ExportableItemType.Sheet,    "A-101", "Rev 1", "Arquitectura"),
+                    new ExportableViewInfo(2004, "uid-004", "Planta Estructural Nivel 1",ExportableItemType.Sheet,    "E-001", "Rev 1", "Estructura"),
+                    new ExportableViewInfo(2005, "uid-005", "Planta Mec\u00e1nica Nivel 1",   ExportableItemType.Sheet,    "M-001", "Rev 0", "MEP"),
+                    // Individual views
+                    new ExportableViewInfo(3001, "uid-101", "Nivel 1",                   ExportableItemType.FloorPlan, "", "", "Arquitectura"),
+                    new ExportableViewInfo(3002, "uid-102", "Nivel 2",                   ExportableItemType.FloorPlan, "", "", "Arquitectura"),
+                    new ExportableViewInfo(3003, "uid-103", "Techo Nivel 1",             ExportableItemType.CeilingPlan, "", "", "Arquitectura"),
+                    new ExportableViewInfo(3004, "uid-104", "Alzado Norte",              ExportableItemType.Elevation, "", "", "Arquitectura"),
+                    new ExportableViewInfo(3005, "uid-105", "Alzado Sur",                ExportableItemType.Elevation, "", "", "Arquitectura"),
+                    new ExportableViewInfo(3006, "uid-106", "Secci\u00f3n A-A",                ExportableItemType.Section,   "", "", "Arquitectura"),
+                    new ExportableViewInfo(3007, "uid-107", "Vista 3D General",          ExportableItemType.ThreeDView, "", "", ""),
+                    new ExportableViewInfo(3008, "uid-108", "Leyenda de Materiales",     ExportableItemType.Legend,    "", "", ""),
+                    new ExportableViewInfo(3009, "uid-109", "Detalle Tipo Muro",         ExportableItemType.DraftingView, "", "", ""),
                 };
 
                 var win = new ExportarWindow();
                 win.SetDocumentName("Proyecto_Sandbox_Demo.rvt");
                 win.InitializeExportFamilies(families, documentTitle: "Proyecto_Sandbox_Demo");
-                win.InitializeExportSheets(sheets, projectName: "Proyecto Sandbox Demo");
+                win.InitializeExportViews(views, projectName: "Proyecto Sandbox Demo");
+                win.InitializeExportModel(
+                    "Proyecto_Sandbox_Demo.rvt",
+                    activeViewName: "Planta Nivel 1",
+                    availableParameters: new List<string> { "N\u00famero de proyecto", "Nombre del proyecto", "Cliente", "Fase" },
+                    parameterValues: new Dictionary<string, string>
+                    {
+                        ["N\u00famero de proyecto"] = "2024-001",
+                        ["Nombre del proyecto"]    = "Torre_Habitacional",
+                        ["Cliente"]                = "Constructora_XYZ",
+                        ["Fase"]                   = "SD"
+                    },
+                    availableViews: new List<BIMPills.Core.Models.NwcViewInfo>
+                    {
+                        new BIMPills.Core.Models.NwcViewInfo { ElementId = 101, Name = "{3D} - Vista general" },
+                        new BIMPills.Core.Models.NwcViewInfo { ElementId = 102, Name = "{3D} - Coordinaci\u00f3n MEP" },
+                        new BIMPills.Core.Models.NwcViewInfo { ElementId = 103, Name = "{3D} - Estructura" },
+                        new BIMPills.Core.Models.NwcViewInfo { ElementId = 104, Name = "{3D} - S\u00f3tano" },
+                        new BIMPills.Core.Models.NwcViewInfo { ElementId = 105, Name = "{3D} - Fachada Norte" },
+                        new BIMPills.Core.Models.NwcViewInfo { ElementId = 106, Name = "{3D} - Revisi\u00f3n cliente" },
+                    },
+                    presets: new List<BIMPills.Core.Models.NwcExportPreset>
+                    {
+                        new BIMPills.Core.Models.NwcExportPreset
+                        {
+                            Name = "Config NWC est\u00e1ndar",
+                            Config = new BIMPills.Core.Models.NwcExportConfig
+                            {
+                                Scope = BIMPills.Core.Models.NwcExportScope.Model,
+                                ExportLinks = true,
+                                FileNameTemplate = "{N\u00famero de proyecto}_{Nombre del proyecto}"
+                            }
+                        }
+                    });
                 win.Show();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error abriendo ExportarWindow:\n{ex.Message}", "Sandbox — Error");
+                MessageBox.Show($"Error abriendo ExportarWindow:\n\n{ex.GetType().Name}:\n{ex.Message}\n\n{ex.InnerException?.Message}", "Sandbox — Error");
             }
         }
 
@@ -182,11 +227,94 @@ namespace BIMPills.UI.Sandbox
             {
                 var mockServices = new MockDocumentServices();
                 var win = new GestionarWindow(mockServices, "Proyecto_Sandbox_Demo.rvt");
+                // Keynotes: no real file in sandbox — panel loads mock data automatically
+                win.InitializeKeynotes();
                 win.Show();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error abriendo GestionarWindow:\n{ex.Message}", "Sandbox — Error");
+                MessageBox.Show($"Error abriendo GestionarWindow:\n{ex.Message}", "Sandbox \u2014 Error");
+            }
+        }
+
+        // ── Transferir ───────────────────────────────────────────────────────────
+
+        private void OpenTransferir_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var openDocs = new List<OpenDocumentInfo>
+                {
+                    new OpenDocumentInfo { Title = "Proyecto_Sandbox_Demo.rvt", PathName = @"C:\Projects\Demo.rvt", IsCurrent = true },
+                    new OpenDocumentInfo { Title = "Plantilla_Corporativa.rvt", PathName = @"C:\Templates\Corp.rvt", IsCurrent = false },
+                    new OpenDocumentInfo { Title = "Proyecto_Referencia.rvt",   PathName = @"C:\Projects\Ref.rvt",   IsCurrent = false },
+                };
+
+                var mockTemplates = new Dictionary<string, List<ViewTemplateInfo>>
+                {
+                    ["Plantilla_Corporativa.rvt"] = new List<ViewTemplateInfo>
+                    {
+                        new ViewTemplateInfo { Id = 5001, Name = "ARQ - Planta Presentaci\u00f3n",  ViewType = "FloorPlan",   FilterCount = 3 },
+                        new ViewTemplateInfo { Id = 5002, Name = "ARQ - Planta Trabajo",       ViewType = "FloorPlan",   FilterCount = 2 },
+                        new ViewTemplateInfo { Id = 5003, Name = "ARQ - Alzado Presentaci\u00f3n",  ViewType = "Elevation",   FilterCount = 4 },
+                        new ViewTemplateInfo { Id = 5004, Name = "ARQ - Secci\u00f3n Detalle",      ViewType = "Section",     FilterCount = 1 },
+                        new ViewTemplateInfo { Id = 5005, Name = "EST - Planta Estructura",    ViewType = "FloorPlan",   FilterCount = 5 },
+                        new ViewTemplateInfo { Id = 5006, Name = "MEP - Planta Mec\u00e1nica",      ViewType = "FloorPlan",   FilterCount = 6 },
+                        new ViewTemplateInfo { Id = 5007, Name = "3D - Vista Isom\u00e9trica",      ViewType = "ThreeDView",  FilterCount = 0 },
+                    },
+                    ["Proyecto_Referencia.rvt"] = new List<ViewTemplateInfo>
+                    {
+                        new ViewTemplateInfo { Id = 6001, Name = "Planta B\u00e1sica",   ViewType = "FloorPlan",  FilterCount = 1 },
+                        new ViewTemplateInfo { Id = 6002, Name = "Corte Simple",    ViewType = "Section",    FilterCount = 0 },
+                    }
+                };
+
+                var mockDetails = new Dictionary<long, ViewTemplateDetail>
+                {
+                    [5001] = new ViewTemplateDetail
+                    {
+                        Name = "ARQ - Planta Presentaci\u00f3n", ViewType = "FloorPlan", AssignedViewCount = 4,
+                        Parameters = new List<ViewTemplateParameter>
+                        {
+                            new ViewTemplateParameter { Name = "Escala de vista",          Value = "1 : 100",          IsComplex = false, Include = false },
+                            new ViewTemplateParameter { Name = "Nivel de detalle",          Value = "Fino",             IsComplex = false, Include = true  },
+                            new ViewTemplateParameter { Name = "Modelo (V/G)",              Value = "",                 IsComplex = true,  Include = true  },
+                            new ViewTemplateParameter { Name = "Anotaci\u00f3n (V/G)",      Value = "",                 IsComplex = true,  Include = true  },
+                            new ViewTemplateParameter { Name = "Filtros (V/G)",             Value = "",                 IsComplex = true,  Include = false },
+                            new ViewTemplateParameter { Name = "Orientaci\u00f3n",          Value = "Norte de proyecto",IsComplex = false, Include = true  },
+                            new ViewTemplateParameter { Name = "Disciplina",                Value = "Arquitectura",     IsComplex = false, Include = true  },
+                        }
+                    },
+                    [5005] = new ViewTemplateDetail
+                    {
+                        Name = "EST - Planta Estructura", ViewType = "FloorPlan", AssignedViewCount = 7,
+                        Parameters = new List<ViewTemplateParameter>
+                        {
+                            new ViewTemplateParameter { Name = "Escala de vista",           Value = "1 : 50",           IsComplex = false, Include = false },
+                            new ViewTemplateParameter { Name = "Nivel de detalle",           Value = "Medio",            IsComplex = false, Include = true  },
+                            new ViewTemplateParameter { Name = "Modelo (V/G)",               Value = "",                 IsComplex = true,  Include = true  },
+                            new ViewTemplateParameter { Name = "Filtros (V/G)",              Value = "",                 IsComplex = true,  Include = true  },
+                            new ViewTemplateParameter { Name = "Disciplina",                 Value = "Estructura",       IsComplex = false, Include = true  },
+                        }
+                    }
+                };
+
+                var win = new BIMPills.UI.Transfer.TransferWindow();
+                win.SetModelName("Proyecto_Sandbox_Demo.rvt");
+                win.InitializeViewTemplates(
+                    openDocs,
+                    getTemplatesCallback: docTitle =>
+                        mockTemplates.TryGetValue(docTitle, out var list) ? list : new List<ViewTemplateInfo>(),
+                    getDetailCallback: (docTitle, templateId) =>
+                        mockDetails.TryGetValue(templateId, out var detail) ? detail : null);
+                // Filters and Standards use built-in mock data when no callbacks are passed
+                win.InitializeViewFilters(openDocs);
+                win.InitializeProjectStandards(openDocs);
+                win.Show();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error abriendo TransferWindow:\n{ex.Message}", "Sandbox \u2014 Error");
             }
         }
 
@@ -350,7 +478,7 @@ namespace BIMPills.UI.Sandbox
 
         public LicenseInfo? GetCachedLicense() => MockLicense;
 
-        public Task<LicenseInfo?> ValidateAsync(string licenseKey)
+        public Task<LicenseInfo?> ValidateAsync(string licenseKey, bool forceRefresh = false)
             => Task.FromResult(MockLicense);
 
         public Task<bool> ActivateAsync(string licenseKey, string machineId)
@@ -410,6 +538,14 @@ namespace BIMPills.UI.Sandbox
         {
             new SheetExportInfo(2001, "A-001", "Planta General Nivel 1", "Rev 2", "Arquitectura"),
             new SheetExportInfo(2002, "A-002", "Planta General Nivel 2", "Rev 2", "Arquitectura"),
+        };
+
+        public IReadOnlyList<ExportableViewInfo> GetExportableViews() => new List<ExportableViewInfo>
+        {
+            new ExportableViewInfo(2001, "uid-2001", "Planta General Nivel 1", ExportableItemType.Sheet, "A-001", "Rev 2", "Arquitectura"),
+            new ExportableViewInfo(2002, "uid-2002", "Planta General Nivel 2", ExportableItemType.Sheet, "A-002", "Rev 2", "Arquitectura"),
+            new ExportableViewInfo(3001, "uid-3001", "Planta Nivel 1", ExportableItemType.FloorPlan),
+            new ExportableViewInfo(3002, "uid-3002", "Vista 3D Coordinación", ExportableItemType.ThreeDView),
         };
 
         public IReadOnlyList<ScheduleInfo> GetSchedules() => new List<ScheduleInfo>

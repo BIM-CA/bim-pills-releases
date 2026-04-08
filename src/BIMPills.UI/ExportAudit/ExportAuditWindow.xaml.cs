@@ -15,6 +15,7 @@ namespace BIMPills.UI.ExportAudit
         {
             _auditResult = auditResult;
             InitializeComponent();
+            BIMPills.UI.Shared.ThemeHelper.Apply(this);
             OutputPathBox.Text = _outputPath;
 
             // Default values for header fields
@@ -52,7 +53,7 @@ namespace BIMPills.UI.ExportAudit
         {
             if (_auditResult == null)
             {
-                MessageBox.Show("No hay datos de auditor\u00EDa. Ejecuta Auditar primero.", "BIMPills");
+                MessageBox.Show("No hay datos de auditor\u00EDa. Ejecuta Auditar primero.", "BIM Pills");
                 return;
             }
 

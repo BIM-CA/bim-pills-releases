@@ -7,6 +7,7 @@ namespace BIMPills.UI.CustomDimensionSchemes
         public CustomDimensionSchemesWindow()
         {
             InitializeComponent();
+            BIMPills.UI.Shared.ThemeHelper.Apply(this);
         }
 
         private void Close_Click(object sender, RoutedEventArgs e)
