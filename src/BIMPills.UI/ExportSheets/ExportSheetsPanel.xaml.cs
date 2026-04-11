@@ -870,8 +870,14 @@ namespace BIMPills.UI.ExportSheets
         {
             try
             {
+                var pdfChecked = PdfCheck.IsChecked == true;
                 if (PdfSection != null)
-                    PdfSection.Visibility = PdfCheck.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+                    PdfSection.Visibility = pdfChecked ? Visibility.Visible : Visibility.Collapsed;
+                // PDF engine card only makes sense when PDF is an active format —
+                // hide it (including its printer row and PDF24 hint) when only
+                // DWG is selected.
+                if (PdfEngineSection != null)
+                    PdfEngineSection.Visibility = pdfChecked ? Visibility.Visible : Visibility.Collapsed;
                 if (DwgSection != null)
                     DwgSection.Visibility = DwgCheck.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
                 UpdateSelection();
