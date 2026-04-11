@@ -1,4 +1,5 @@
 using Autodesk.Revit.DB;
+using Autodesk.Revit.DB.Events;
 using Autodesk.Revit.UI;
 using Autodesk.Revit.UI.Events;
 using BIMPills.Commands.ExportFamilies;
@@ -204,7 +205,7 @@ namespace BIMPills.Revit.Commands.ExportFamilies
                                 }
                                 catch { }
 
-                                return doc.Export(folder, viewIds, opts);
+                                return ExportWithWarningsSuppressed(doc, () => doc.Export(folder, viewIds, opts));
                             }
                             catch (Exception ex)
                             {
@@ -289,7 +290,7 @@ namespace BIMPills.Revit.Commands.ExportFamilies
                                 }
                                 catch { /* file locked — Revit will show its own dialog */ }
 
-                                bool exported = doc.Export(folder, fileName, viewIds, opts);
+                                bool exported = ExportWithWarningsSuppressed(doc, () => doc.Export(folder, fileName, viewIds, opts));
 
                                 if (exported && dwgConfig?.CleanPcpFiles == true)
                                 {
@@ -791,6 +792,30 @@ namespace BIMPills.Revit.Commands.ExportFamilies
             catch { /* fall through */ }
 
             return new DWGExportOptions();
+        }
+
+        /// <summary>
+        /// Executes a Revit export action while silently dismissing any Revit warning dialogs
+        /// (e.g. "crop region too large", "view boundary exceeds limits").
+        /// Uses Application.FailuresProcessing because doc.Export() runs outside a transaction
+        /// and therefore cannot use IFailuresPreprocessor via TransactionSettings.
+        /// </summary>
+        private static bool ExportWithWarningsSuppressed(Document doc, Func<bool> exportAction)
+        {
+            EventHandler<FailuresProcessingEventArgs> handler = (_, e) =>
+            {
+                var accessor = e.GetFailuresAccessor();
+                foreach (var msg in accessor.GetFailureMessages())
+                {
+                    if (msg.GetSeverity() == FailureSeverity.Warning)
+                        accessor.DeleteWarning(msg);
+                }
+                e.SetProcessingResult(FailureProcessingResult.Continue);
+            };
+
+            doc.Application.FailuresProcessing += handler;
+            try   { return exportAction(); }
+            finally { doc.Application.FailuresProcessing -= handler; }
         }
     }
 }

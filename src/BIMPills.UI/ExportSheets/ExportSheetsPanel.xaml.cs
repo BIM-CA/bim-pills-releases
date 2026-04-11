@@ -222,7 +222,7 @@ namespace BIMPills.UI.ExportSheets
                     firstItem.Item.Revision,
                     firstItem.Item.Discipline);
 
-                var name = convention.GenerateFileName(sheetProxy, _projectName, DateTime.Now, firstItem.Item.ParameterValues);
+                var name = SanitizeFileName(convention.GenerateFileName(sheetProxy, _projectName, DateTime.Now, firstItem.Item.ParameterValues));
                 var ext = PdfCheck.IsChecked == true ? ".pdf" : ".dwg";
                 NamingPreview.Text = name + ext;
             }
