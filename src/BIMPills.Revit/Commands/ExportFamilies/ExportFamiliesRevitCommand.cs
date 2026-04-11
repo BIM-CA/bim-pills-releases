@@ -194,8 +194,12 @@ namespace BIMPills.Revit.Commands.ExportFamilies
                                 try { opts.PaperFormat      = ExportPaperFormat.Default; } catch { }
                                 try { opts.PaperOrientation = PageOrientationType.Auto;  } catch { }
 
-                                // One file per view — we combine later if the user asked.
-                                opts.Combine = false;
+                                // Combine = true is required for Revit to honor opts.FileName.
+                                // When Combine = false, Revit ignores FileName and uses the
+                                // sheet's internal title as the output filename.
+                                // Since the queue calls this method once per view, Combine = true
+                                // still produces one file per view — just with our custom name.
+                                opts.Combine = true;
 
                                 // Delete existing file to avoid "file in use" conflicts
                                 try
