@@ -11,6 +11,12 @@
 !define BUILD_NET8  "..\src\BIMPills.Revit\bin\Release\net8.0-windows"
 !define BUILD_NET48 "..\src\BIMPills.Revit\bin\Release\net48-windows"
 
+; Addin manifest files (one per Revit version — goes in Addins\20XX\, not BIMPills\)
+!define MANIFEST_2027 "..\manifests\Revit2027\BIMPills.addin"
+!define MANIFEST_2026 "..\manifests\Revit2026\BIMPills.addin"
+!define MANIFEST_2025 "..\manifests\Revit2025\BIMPills.addin"
+!define MANIFEST_2024 "..\manifests\Revit2024\BIMPills.addin"
+
 ;--------------------------------
 ; Optional bundled PDF24 installer (for the PDF engine "Impresora del sistema").
 ; If vendor\pdf24-creator.msi exists at compile time, PDF24 is bundled and
@@ -33,10 +39,25 @@
 
 ;--------------------------------
 ; Attributes
-Name "BIMPills v1.0.0-beta.3"
-OutFile "BIMPills-1.0.0-beta.3-Setup.exe"
+Name "BIM Pills"
+OutFile "BIM Pills 1.0.0-beta.3 Setup.exe"
 RequestExecutionLevel user
 InstallDir "$APPDATA\Autodesk\Revit\Addins"
+
+;--------------------------------
+; Branding assets
+!define MUI_ICON "assets\bimpills.ico"
+!define MUI_UNICON "assets\bimpills.ico"
+
+; Header shown on every inner page (components, instfiles, finish header, uninstall confirm/progress)
+!define MUI_HEADERIMAGE
+!define MUI_HEADERIMAGE_BITMAP   "assets\header.bmp"
+!define MUI_HEADERIMAGE_UNBITMAP "assets\header.bmp"
+!define MUI_HEADERIMAGE_RIGHT
+
+; Left-panel image on Welcome + Finish pages (installer and uninstaller)
+!define MUI_WELCOMEFINISHPAGE_BITMAP   "assets\welcome.bmp"
+!define MUI_UNWELCOMEFINISHPAGE_BITMAP "assets\welcome.bmp"
 
 ;--------------------------------
 ; UI Settings
@@ -44,6 +65,11 @@ InstallDir "$APPDATA\Autodesk\Revit\Addins"
 !insertmacro MUI_PAGE_COMPONENTS
 !insertmacro MUI_PAGE_INSTFILES
 !insertmacro MUI_PAGE_FINISH
+
+!insertmacro MUI_UNPAGE_WELCOME
+!insertmacro MUI_UNPAGE_CONFIRM
+!insertmacro MUI_UNPAGE_INSTFILES
+!insertmacro MUI_UNPAGE_FINISH
 
 !insertmacro MUI_LANGUAGE "Spanish"
 
@@ -117,22 +143,45 @@ InstallDir "$APPDATA\Autodesk\Revit\Addins"
 ;--------------------------------
 ; Sections
 
+Section "-WriteUninstaller" SEC_UNINSTALL_REG
+  WriteUninstaller "$APPDATA\Autodesk\Revit\Addins\BIMPills-Uninstall.exe"
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\BIMPills" \
+    "DisplayName" "BIM Pills"
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\BIMPills" \
+    "DisplayVersion" "1.0.0-beta.3"
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\BIMPills" \
+    "Publisher" "BIM-CA"
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\BIMPills" \
+    "UninstallString" "$APPDATA\Autodesk\Revit\Addins\BIMPills-Uninstall.exe"
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\BIMPills" \
+    "URLInfoAbout" "https://bim-ca.com"
+SectionEnd
+
 Section "Revit 2027" SEC_2027
+  ; Copy the addin manifest first (Revit scans the parent Addins\20XX\ folder)
+  SetOutPath "$APPDATA\Autodesk\Revit\Addins\2027"
+  File "/oname=BIMPills.addin" "${MANIFEST_2027}"
   !insertmacro InstallNet10 "$APPDATA\Autodesk\Revit\Addins\2027\BIMPills"
   DetailPrint "Instalado en Revit 2027"
 SectionEnd
 
 Section "Revit 2026 (recomendado)" SEC_2026
+  SetOutPath "$APPDATA\Autodesk\Revit\Addins\2026"
+  File "/oname=BIMPills.addin" "${MANIFEST_2026}"
   !insertmacro InstallNet8 "$APPDATA\Autodesk\Revit\Addins\2026\BIMPills"
   DetailPrint "Instalado en Revit 2026"
 SectionEnd
 
 Section "Revit 2025" SEC_2025
+  SetOutPath "$APPDATA\Autodesk\Revit\Addins\2025"
+  File "/oname=BIMPills.addin" "${MANIFEST_2025}"
   !insertmacro InstallNet8 "$APPDATA\Autodesk\Revit\Addins\2025\BIMPills"
   DetailPrint "Instalado en Revit 2025"
 SectionEnd
 
 Section "Revit 2024" SEC_2024
+  SetOutPath "$APPDATA\Autodesk\Revit\Addins\2024"
+  File "/oname=BIMPills.addin" "${MANIFEST_2024}"
   !insertmacro InstallNet48 "$APPDATA\Autodesk\Revit\Addins\2024\BIMPills"
   DetailPrint "Instalado en Revit 2024"
 SectionEnd
@@ -162,11 +211,18 @@ SectionEnd
 ; Uninstaller
 Section "Uninstall"
   RMDir /r "$APPDATA\Autodesk\Revit\Addins\2027\BIMPills"
+  Delete "$APPDATA\Autodesk\Revit\Addins\2027\BIMPills.addin"
   RMDir /r "$APPDATA\Autodesk\Revit\Addins\2026\BIMPills"
+  Delete "$APPDATA\Autodesk\Revit\Addins\2026\BIMPills.addin"
   RMDir /r "$APPDATA\Autodesk\Revit\Addins\2025\BIMPills"
+  Delete "$APPDATA\Autodesk\Revit\Addins\2025\BIMPills.addin"
   RMDir /r "$APPDATA\Autodesk\Revit\Addins\2024\BIMPills"
-  MessageBox MB_OK "BIMPills ha sido desinstalado."
+  Delete "$APPDATA\Autodesk\Revit\Addins\2024\BIMPills.addin"
+  Delete "$APPDATA\Autodesk\Revit\Addins\BIMPills-Uninstall.exe"
+  DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\BIMPills"
+  MessageBox MB_OK "BIM Pills ha sido desinstalado."
 SectionEnd
+
 
 ;--------------------------------
 ; Descriptions
