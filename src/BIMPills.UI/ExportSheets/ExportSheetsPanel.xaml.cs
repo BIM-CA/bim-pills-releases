@@ -714,7 +714,7 @@ namespace BIMPills.UI.ExportSheets
             {
                 Title               = "BIM Pills \u2014 Guardar conjunto",
                 Width               = 380,
-                Height              = 150,
+                SizeToContent       = SizeToContent.Height,
                 Owner               = Window.GetWindow(this),
                 WindowStartupLocation = WindowStartupLocation.CenterOwner,
                 ResizeMode          = ResizeMode.NoResize,

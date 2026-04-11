@@ -475,6 +475,23 @@ namespace BIMPills.UI.Sandbox
                 }
             });
 
+        // ── Licencia vencida ─────────────────────────────────────────────────────
+
+        private void OpenLicenseExpired_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var win = new BIMPills.UI.Licensing.LicenseExpiredWindow { Owner = this, HolderName = "Rodrigo Flores" };
+                var result = win.ShowDialog();
+                if (result == true)
+                    MessageBox.Show("El usuario eligió renovar → se abriría LicenseActivationWindow.", "Sandbox — Info");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error abriendo LicenseExpiredWindow:\n{ex.Message}", "Sandbox — Error");
+            }
+        }
+
         private void OpenAboutWithLicense(MockLicenseService? licenseService)
         {
             try

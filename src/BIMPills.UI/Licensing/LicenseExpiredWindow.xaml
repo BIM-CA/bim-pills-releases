@@ -1,0 +1,126 @@
+<Window x:Class="BIMPills.UI.Licensing.LicenseExpiredWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="BIM Pills — Licencia vencida"
+        Width="420"
+        SizeToContent="Height"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource BackgroundBrush}"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/BIMPills.UI;component/Shared/Styles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <StackPanel Margin="28,24,28,24">
+
+        <!-- Logo header: píldora grande + carita en esquina inferior derecha -->
+        <Grid Width="90" Height="90" HorizontalAlignment="Center" Margin="0,0,0,16">
+            <!-- Píldora centrada -->
+            <Image Source="/BIMPills.UI;component/Resources/pill-icon.png"
+                   Width="60" Height="90"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center"
+                   RenderOptions.BitmapScalingMode="HighQuality"/>
+            <!-- Carita triste: esquina inferior derecha, superpuesta sobre la píldora -->
+            <TextBlock Text="😢"
+                       FontSize="30"
+                       HorizontalAlignment="Right"
+                       VerticalAlignment="Bottom"
+                       Margin="0,0,-6,0"/>
+        </Grid>
+
+        <!-- Título centrado -->
+        <TextBlock Text="Tu licencia ha vencido"
+                   FontSize="20" FontWeight="SemiBold"
+                   Foreground="{StaticResource PrimaryBrush}"
+                   HorizontalAlignment="Center"
+                   TextAlignment="Center"
+                   FontFamily="Segoe UI"
+                   Margin="0,0,0,6"/>
+
+        <!-- Nombre del titular (visible solo si se pasó un nombre) -->
+        <TextBlock x:Name="HolderNameText"
+                   FontSize="13" FontWeight="SemiBold"
+                   Foreground="{StaticResource PrimaryBrush}"
+                   HorizontalAlignment="Center"
+                   TextAlignment="Center"
+                   FontFamily="Segoe UI"
+                   Visibility="Collapsed"
+                   Margin="0,0,0,8"/>
+
+        <!-- Texto centrado -->
+        <TextBlock FontSize="12"
+                   Foreground="{StaticResource TextSecondaryBrush}"
+                   FontFamily="Segoe UI"
+                   TextWrapping="Wrap"
+                   TextAlignment="Center"
+                   HorizontalAlignment="Center"
+                   LineHeight="20"
+                   Margin="0,0,0,16">
+            <Run Text="El período de gracia también ha expirado."/>
+            <LineBreak/>
+            <Run Text="Renueva tu plan e ingresa tu nueva License Key"/>
+            <LineBreak/>
+            <Run Text="para continuar usando BIM Pills."/>
+        </TextBlock>
+
+        <!-- Banner de aviso -->
+        <Border CornerRadius="7"
+                Padding="12,10"
+                Margin="0,0,0,20"
+                Background="#FFF3E0"
+                BorderBrush="#FFCC80"
+                BorderThickness="1">
+            <TextBlock Text="⚠️  El acceso a todas las funciones está bloqueado hasta renovar."
+                       FontSize="12"
+                       Foreground="#E65100"
+                       FontFamily="Segoe UI"
+                       TextWrapping="Wrap"/>
+        </Border>
+
+        <!-- Botones -->
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="10"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <Button Grid.Column="0"
+                    Content="Cancelar"
+                    Style="{StaticResource TertiaryButton}"
+                    IsCancel="True"
+                    MinWidth="90"
+                    Click="Cancel_Click"/>
+
+            <Button Grid.Column="3"
+                    Content="Renovar licencia →"
+                    Style="{StaticResource PrimaryButton}"
+                    MinWidth="140"
+                    Click="Renew_Click"/>
+        </Grid>
+
+        <!-- Link ayuda -->
+        <TextBlock HorizontalAlignment="Center" Margin="0,14,0,0">
+            <Run Text="¿Necesitas ayuda? "
+                 FontSize="11"
+                 Foreground="{StaticResource TextSecondaryBrush}"
+                 FontFamily="Segoe UI"/>
+            <Hyperlink Click="Contact_Click" TextDecorations="None"
+                       Foreground="{StaticResource AccentBrush}">
+                <Run Text="Contáctanos en bim-ca.com"
+                     FontSize="11"
+                     FontFamily="Segoe UI"/>
+            </Hyperlink>
+        </TextBlock>
+
+    </StackPanel>
+</Window>

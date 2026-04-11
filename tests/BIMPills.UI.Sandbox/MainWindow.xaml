@@ -110,8 +110,13 @@
 
         <Button Content="&#x2139;&#xFE0F;  Acerca de — periodo de gracia"
                 Style="{StaticResource SecondaryButton}"
-                HorizontalAlignment="Stretch" Margin="0,0,0,0"
+                HorizontalAlignment="Stretch" Margin="0,0,0,6"
                 Click="OpenAboutGrace_Click"/>
+
+        <Button Content="&#x1F622;  Licencia vencida (aviso)"
+                Style="{StaticResource SecondaryButton}"
+                HorizontalAlignment="Stretch" Margin="0,0,0,0"
+                Click="OpenLicenseExpired_Click"/>
 
     </StackPanel>
 </Window>
