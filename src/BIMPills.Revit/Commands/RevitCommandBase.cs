@@ -84,11 +84,14 @@ namespace BIMPills.Revit.Commands
                     }
                     else if (license.IsExpired)
                     {
+                        TaskDialog.Show("BIM Pills \u2014 Licencia vencida",
+                            "Tu licencia ha vencido y ya pas\u00F3 el per\u00EDodo de gracia.\n\n" +
+                            "Renueva tu plan e ingresa tu nueva License Key para continuar.");
                         var dlg = new BIMPills.UI.Licensing.LicenseActivationWindow();
                         dlg.ShowDialogOverRevit();
                         if (!dlg.LicenseActivated)
                         {
-                            message = "Licencia expirada. Activa una licencia v\u00E1lida para continuar.";
+                            message = "Licencia vencida. Renueva tu plan para continuar usando BIM Pills.";
                             return Result.Cancelled;
                         }
                     }

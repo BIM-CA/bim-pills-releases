@@ -1,4 +1,4 @@
-; BIMPills v1.0.0-beta.3 Installer
+; BIMPills v1.0.0-beta.3.1 Installer
 ; NSIS Installer Script — Revit 2024, 2025, 2026 y 2027
 ;
 ; Build: cd installer && makensis BIMPills-Installer.nsi
@@ -40,7 +40,7 @@
 ;--------------------------------
 ; Attributes
 Name "BIM Pills"
-OutFile "BIM Pills 1.0.0-beta.3 Setup.exe"
+OutFile "BIM Pills 1.0.0-beta.3.1 Setup.exe"
 RequestExecutionLevel user
 InstallDir "$APPDATA\Autodesk\Revit\Addins"
 
@@ -148,7 +148,7 @@ Section "-WriteUninstaller" SEC_UNINSTALL_REG
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\BIMPills" \
     "DisplayName" "BIM Pills"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\BIMPills" \
-    "DisplayVersion" "1.0.0-beta.3"
+    "DisplayVersion" "1.0.0-beta.3.1"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\BIMPills" \
     "Publisher" "BIM-CA"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\BIMPills" \

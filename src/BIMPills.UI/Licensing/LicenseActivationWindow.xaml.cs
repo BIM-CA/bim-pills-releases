@@ -67,8 +67,8 @@ namespace BIMPills.UI.Licensing
                 else
                 {
                     ShowStatus(
-                        "No se pudo activar la licencia. Verifica que la License Key sea correcta " +
-                        "y que no esté asignada a otra máquina.",
+                        "No se pudo activar la licencia. Verifica que la License Key sea correcta, " +
+                        "que no esté vencida y que no esté asignada a otra máquina.",
                         isError: true);
                     BtnActivate.IsEnabled = true;
                     BtnActivate.Content = "Activar licencia";

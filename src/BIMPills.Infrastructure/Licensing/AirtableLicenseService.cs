@@ -239,6 +239,16 @@ namespace BIMPills.Infrastructure.Licensing
                 if (status != "Activo" && status != "Grace Period")
                     return false;
 
+                // Validate expiry date locally — Airtable may not update Status immediately
+                // when the subscription date passes, so we enforce it here too.
+                var expiresAt = ParseDate(fields["Fecha Vencimiento"]?.ToString());
+                if (expiresAt.HasValue)
+                {
+                    var daysSinceExpiry = (DateTime.UtcNow - ToUtc(expiresAt.Value)).TotalDays;
+                    if (daysSinceExpiry > GracePeriodDays)
+                        return false; // Key exists but is past grace period — reject activation
+                }
+
                 // Write Machine ID + Ultima Validacion to Airtable
                 var patchUrl = $"https://api.airtable.com/v0/{BaseId}/{TableId}/{recordId}";
                 var patchBody = new JObject
