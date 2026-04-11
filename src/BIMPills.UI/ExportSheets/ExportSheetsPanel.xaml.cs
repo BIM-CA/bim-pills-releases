@@ -1373,6 +1373,21 @@ namespace BIMPills.UI.ExportSheets
                     });
                 }
 
+                // Auto-upgrade: if saved engine is Native BUT a PDF printer is available,
+                // switch to SystemPrinter so the user sees the printer immediately.
+                // This covers fresh installs and cases where the setting got reset.
+                // We only do this once — once the user explicitly chooses Native and
+                // saves, the Engine field stays Native.
+                if (_pdfEngine.Engine == BIMPills.Core.Models.PdfEngineKind.Native &&
+                    printers.Count > 0)
+                {
+                    _pdfEngine.Engine = BIMPills.Core.Models.PdfEngineKind.SystemPrinter;
+                    // Pre-select the best available printer (rank 0 = PDF24 if installed)
+                    if (string.IsNullOrWhiteSpace(_pdfEngine.PrinterName))
+                        _pdfEngine.PrinterName = printers[0].SystemName;
+                    _pdfEngineRepo?.Save(_pdfEngine);
+                }
+
                 // Engine combo initial value
                 foreach (ComboBoxItem item in PdfEngineCombo.Items)
                 {
