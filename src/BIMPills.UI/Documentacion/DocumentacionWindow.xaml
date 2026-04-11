@@ -6,7 +6,7 @@
         Width="540" Height="780"
         MinWidth="480" MinHeight="600"
         ResizeMode="CanResizeWithGrip"
-        WindowStartupLocation="CenterScreen"
+        WindowStartupLocation="CenterOwner"
         Background="{DynamicResource BackgroundBrush}"
         UseLayoutRounding="True"
         SnapsToDevicePixels="True">

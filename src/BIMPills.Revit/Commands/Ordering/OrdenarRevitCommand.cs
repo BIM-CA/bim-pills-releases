@@ -5,6 +5,7 @@ using BIMPills.Core.Commands;
 using BIMPills.Core.Models;
 using BIMPills.Revit.Commands;
 using BIMPills.UI.Ordering;
+using BIMPills.UI.Shared;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -118,7 +119,7 @@ namespace BIMPills.Revit.Commands.Ordering
 
             // Ventana de configuración (wizard de 4 pasos)
             var configWindow = new OrdenarWindow(getCategoriesByType, getParams);
-            if (configWindow.ShowDialog() != true) return;
+            if (configWindow.ShowDialogOverRevit() != true) return;
 
             var config  = configWindow.Config;
             var session = new OrderingSessionState
@@ -141,7 +142,7 @@ namespace BIMPills.Revit.Commands.Ordering
                 onUndoDone:      cb => { undoHandler.OnUndone         = cb; },
                 onPickCancelled: cb => { pickHandler.OnPickCancelled  = cb; });
 
-            sessionWindow.Show();
+            sessionWindow.ShowOverRevit();
         }
 
         private static List<string> CollectParameters(Element elem)

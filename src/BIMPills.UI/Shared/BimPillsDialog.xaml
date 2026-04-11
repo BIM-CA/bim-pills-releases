@@ -1,0 +1,190 @@
+<Window x:Class="BIMPills.UI.Shared.BimPillsDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="BIM Pills"
+        SizeToContent="Height"
+        Width="440"
+        MinWidth="380" MaxWidth="560"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/BIMPills.UI;component/Shared/Styles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <!-- Drop shadow wrapper -->
+    <Border Background="{DynamicResource BackgroundBrush}"
+            CornerRadius="12"
+            BorderBrush="#E5E5EA"
+            BorderThickness="1"
+            Margin="16">
+        <Border.Effect>
+            <DropShadowEffect Color="#000000"
+                              Opacity="0.18"
+                              BlurRadius="22"
+                              ShadowDepth="3"
+                              Direction="270"/>
+        </Border.Effect>
+
+        <DockPanel>
+
+            <!-- Title bar (drag area) -->
+            <Border x:Name="TitleBar"
+                    DockPanel.Dock="Top"
+                    Background="Transparent"
+                    CornerRadius="12,12,0,0"
+                    Height="40"
+                    MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Left"
+                               x:Name="WindowTitleText"
+                               Text="BIM Pills"
+                               FontFamily="Segoe UI"
+                               FontSize="12"
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource TextSecondaryBrush}"
+                               VerticalAlignment="Center"
+                               Margin="18,0,0,0"/>
+
+                    <!-- Close button -->
+                    <Button DockPanel.Dock="Right"
+                            x:Name="CloseButton"
+                            Content="&#xE711;"
+                            FontFamily="Segoe MDL2 Assets"
+                            FontSize="10"
+                            Width="36" Height="32"
+                            Background="Transparent"
+                            Foreground="{StaticResource TextSecondaryBrush}"
+                            BorderThickness="0"
+                            Cursor="Hand"
+                            Click="CloseButton_Click">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border x:Name="Bd"
+                                                    Background="{TemplateBinding Background}"
+                                                    CornerRadius="0,12,0,0">
+                                                <ContentPresenter HorizontalAlignment="Center"
+                                                                  VerticalAlignment="Center"/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="Bd" Property="Background" Value="#FFE5E5"/>
+                                                    <Setter Property="Foreground" Value="#D32F2F"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                </DockPanel>
+            </Border>
+
+            <!-- Footer with buttons -->
+            <Border DockPanel.Dock="Bottom"
+                    Background="#FAFAFA"
+                    CornerRadius="0,0,12,12"
+                    BorderBrush="#EEEEEE"
+                    BorderThickness="0,1,0,0"
+                    Padding="20,14">
+                <StackPanel x:Name="ButtonsPanel"
+                            Orientation="Horizontal"
+                            HorizontalAlignment="Right"/>
+            </Border>
+
+            <!-- Content area -->
+            <Grid Margin="28,4,28,22">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Icon container: pill logo + status badge overlay -->
+                <Grid Grid.Column="0"
+                      Width="56" Height="72"
+                      VerticalAlignment="Top"
+                      Margin="0,4,18,0">
+                    <Image Source="/BIMPills.UI;component/Resources/pill-icon.png"
+                           Width="44" Height="70"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Top"
+                           RenderOptions.BitmapScalingMode="HighQuality"/>
+
+                    <!-- Status badge (info/success/warning/error) -->
+                    <Border x:Name="StatusBadge"
+                            Width="24" Height="24"
+                            CornerRadius="12"
+                            Background="#1565C0"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Bottom"
+                            Margin="0,0,-4,-2"
+                            Visibility="Collapsed">
+                        <Border.Effect>
+                            <DropShadowEffect Color="Black"
+                                              Opacity="0.25"
+                                              BlurRadius="6"
+                                              ShadowDepth="1"/>
+                        </Border.Effect>
+                        <TextBlock x:Name="StatusBadgeIcon"
+                                   Text="&#xE946;"
+                                   FontFamily="Segoe MDL2 Assets"
+                                   FontSize="13"
+                                   Foreground="White"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"/>
+                    </Border>
+                </Grid>
+
+                <!-- Text content -->
+                <StackPanel Grid.Column="1" VerticalAlignment="Top">
+                    <TextBlock x:Name="HeaderText"
+                               FontSize="17"
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource PrimaryBrush}"
+                               FontFamily="Segoe UI"
+                               TextWrapping="Wrap"
+                               Margin="0,6,0,8"/>
+
+                    <TextBlock x:Name="MessageText"
+                               FontSize="13"
+                               Foreground="{StaticResource PrimaryBrush}"
+                               FontFamily="Segoe UI"
+                               TextWrapping="Wrap"
+                               LineHeight="19"/>
+
+                    <!-- Optional detail section -->
+                    <Border x:Name="DetailBorder"
+                            Background="#F5F5F7"
+                            BorderBrush="#E5E5EA"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            Padding="12,10"
+                            Margin="0,12,0,0"
+                            Visibility="Collapsed">
+                        <TextBlock x:Name="DetailText"
+                                   FontSize="12"
+                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                   FontFamily="Segoe UI"
+                                   TextWrapping="Wrap"
+                                   LineHeight="17"/>
+                    </Border>
+                </StackPanel>
+            </Grid>
+
+        </DockPanel>
+    </Border>
+</Window>

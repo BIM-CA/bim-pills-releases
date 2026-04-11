@@ -2,6 +2,20 @@ using System.Collections.Generic;
 
 namespace BIMPills.Core.Models
 {
+    public enum ExportFormat { Pdf, Dwg }
+
+    /// <summary>Single export operation in the non-blocking queue.</summary>
+    public sealed class ExportQueueItem
+    {
+        public long ViewId { get; set; }
+        public string Folder { get; set; } = "";
+        public string FileName { get; set; } = "";
+        public string DisplayName { get; set; } = "";
+        public ExportFormat Format { get; set; }
+        public PdfExportSettings? PdfSettings { get; set; }
+        public DwgExportConfig? DwgConfig { get; set; }
+    }
+
     /// <summary>Type of exportable item (sheet or specific view type).</summary>
     public enum ExportableItemType
     {

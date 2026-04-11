@@ -5,6 +5,7 @@ using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Windows;
@@ -349,9 +350,11 @@ namespace BIMPills.UI.DataManager
                 var fileName = Path.GetFileName(dlg.FileName);
                 ExportPathBox.Text = folder;
 
+                var sw = Stopwatch.StartNew();
                 var path = _exporter.Export(_currentData, folder, fileName);
+                sw.Stop();
                 StatusLabel.Text = $"Exportado: {Path.GetFileName(path)}";
-                AskOpenFile(path);
+                AskOpenFile(path, sw.Elapsed);
             }
             catch (Exception ex)
             {
@@ -382,9 +385,11 @@ namespace BIMPills.UI.DataManager
                 var fileName = Path.GetFileName(dlg.FileName);
                 ExportPathBox.Text = folder;
 
+                var sw = Stopwatch.StartNew();
                 var path = _exporter.Export(data, folder, fileName);
+                sw.Stop();
                 StatusLabel.Text = $"Exportado: {Path.GetFileName(path)}";
-                AskOpenFile(path);
+                AskOpenFile(path, sw.Elapsed);
             }
             catch (Exception ex)
             {
@@ -428,9 +433,11 @@ namespace BIMPills.UI.DataManager
                     return;
                 }
 
+                var sw = Stopwatch.StartNew();
                 var path = _exporter.ExportMultiple(allData, folder, fileName);
+                sw.Stop();
                 StatusLabel.Text = $"Exportadas {allData.Count} tablas → {Path.GetFileName(path)}";
-                AskOpenFile(path);
+                AskOpenFile(path, sw.Elapsed);
             }
             catch (Exception ex)
             {
@@ -438,10 +445,18 @@ namespace BIMPills.UI.DataManager
             }
         }
 
-        private void AskOpenFile(string path)
+        private void AskOpenFile(string path, TimeSpan? elapsed = null)
         {
+            var elapsedStr = "";
+            if (elapsed.HasValue)
+            {
+                elapsedStr = elapsed.Value.TotalMinutes >= 1
+                    ? $"\nTiempo: {(int)elapsed.Value.TotalMinutes} min {elapsed.Value.Seconds} seg"
+                    : $"\nTiempo: {elapsed.Value.TotalSeconds:F1} seg";
+            }
+
             var result = MessageBox.Show(
-                $"Archivo exportado:\n{path}\n\n¿Abrir en Excel?",
+                $"Archivo exportado:\n{path}{elapsedStr}\n\n¿Abrir en Excel?",
                 "BIM Pills \u2014 Exportar",
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Information);

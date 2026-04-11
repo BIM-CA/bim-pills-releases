@@ -8,7 +8,7 @@
         Width="880" Height="720"
         MinWidth="700" MinHeight="520"
         ResizeMode="CanResizeWithGrip"
-        WindowStartupLocation="CenterScreen"
+        WindowStartupLocation="CenterOwner"
         Background="{DynamicResource BackgroundBrush}"
         UseLayoutRounding="True"
         SnapsToDevicePixels="True">
@@ -56,20 +56,20 @@
                         BorderBrush="#E5E5EA" BorderThickness="0,0,0,1"
                         Background="Transparent">
                     <StackPanel Orientation="Horizontal" Margin="14,0">
-                        <Border x:Name="TabFamiliasBorder" Style="{StaticResource TabHeaderActive}"
-                                MouseLeftButtonDown="TabFamilias_Click">
-                            <TextBlock x:Name="TabFamiliasText" Style="{StaticResource TabHeaderTextActive}"
-                                       Text="Familias"/>
-                        </Border>
-                        <Border x:Name="TabPlanosBorder" Style="{StaticResource TabHeader}"
+                        <Border x:Name="TabPlanosBorder" Style="{StaticResource TabHeaderActive}"
                                 MouseLeftButtonDown="TabPlanos_Click">
-                            <TextBlock x:Name="TabPlanosText" Style="{StaticResource TabHeaderText}"
+                            <TextBlock x:Name="TabPlanosText" Style="{StaticResource TabHeaderTextActive}"
                                        Text="Planos y Vistas"/>
                         </Border>
                         <Border x:Name="TabModeloBorder" Style="{StaticResource TabHeader}"
                                 MouseLeftButtonDown="TabModelo_Click">
                             <TextBlock x:Name="TabModeloText" Style="{StaticResource TabHeaderText}"
                                        Text="Modelo"/>
+                        </Border>
+                        <Border x:Name="TabFamiliasBorder" Style="{StaticResource TabHeader}"
+                                MouseLeftButtonDown="TabFamilias_Click">
+                            <TextBlock x:Name="TabFamiliasText" Style="{StaticResource TabHeaderText}"
+                                       Text="Familias"/>
                         </Border>
                     </StackPanel>
                 </Border>
@@ -84,10 +84,10 @@
                                        HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <StackPanel VerticalAlignment="Center">
-                            <TextBlock x:Name="ToolHeaderTitle" Text="Exportar Familias" FontSize="14"
+                            <TextBlock x:Name="ToolHeaderTitle" Text="Exportar Planos y Vistas" FontSize="14"
                                        FontWeight="SemiBold" Foreground="{StaticResource PrimaryBrush}"
                                        FontFamily="Segoe UI"/>
-                            <TextBlock x:Name="ToolHeaderSubtitle" Text="Exporta familias del modelo a carpeta local"
+                            <TextBlock x:Name="ToolHeaderSubtitle" Text="Exporta planos y vistas a PDF y DWG en lote"
                                        FontSize="11" Foreground="#86868B" FontFamily="Segoe UI"/>
                         </StackPanel>
                     </StackPanel>
@@ -115,9 +115,9 @@
 
                 <!-- Content panels -->
                 <Grid>
-                    <local:ExportFamiliesPanel x:Name="ExportPanel"/>
-                    <sheets:ExportSheetsPanel x:Name="SheetsPanel" Visibility="Collapsed"/>
+                    <sheets:ExportSheetsPanel x:Name="SheetsPanel"/>
                     <model:ExportModelPanel x:Name="ModelPanel" Visibility="Collapsed"/>
+                    <local:ExportFamiliesPanel x:Name="ExportPanel" Visibility="Collapsed"/>
                 </Grid>
 
             </DockPanel>

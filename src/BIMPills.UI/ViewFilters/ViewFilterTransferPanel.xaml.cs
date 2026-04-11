@@ -16,7 +16,7 @@ namespace BIMPills.UI.ViewFilters
         private Func<string, IReadOnlyList<long>, ConflictResolution, TransferResult>? _transferCallback;
 
         private bool   _canTransfer;
-        private string _transferLabel = "Trasladar";
+        private string _transferLabel = "Importar";
 
         public event EventHandler<bool>? TransferEnabledChanged;
         public string TransferLabel => _transferLabel;
@@ -110,11 +110,11 @@ namespace BIMPills.UI.ViewFilters
             int total = _filters.Count;
             SelectionSummary.Text = $"{sel} de {total} seleccionados";
             StatusText.Text = sel > 0
-                ? $"{sel} filtros listos para transferir"
-                : "Selecciona filtros para transferir";
+                ? $"{sel} filtros listos para importar"
+                : "Selecciona filtros para importar";
 
             _canTransfer   = sel > 0;
-            _transferLabel = sel > 0 ? $"Trasladar ({sel} filtros)" : "Trasladar";
+            _transferLabel = sel > 0 ? $"Importar ({sel} filtros)" : "Importar";
             TransferEnabledChanged?.Invoke(this, _canTransfer);
         }
 
@@ -160,8 +160,10 @@ namespace BIMPills.UI.ViewFilters
                 var selected = _filters.Where(f => f.IsSelected).ToList();
                 if (selected.Count == 0)
                 {
-                    MessageBox.Show("Selecciona al menos un filtro para transferir.",
-                        "BIM Pills \u2014 Filtros", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    BIMPills.UI.Shared.BimPillsDialog.Warning(
+                        header: "Nada seleccionado",
+                        message: "Selecciona al menos un filtro para importar.",
+                        owner: Window.GetWindow(this));
                     return;
                 }
 
@@ -186,16 +188,22 @@ namespace BIMPills.UI.ViewFilters
                         if (skipIds.Count > 0)    MergeResult(total, _transferCallback(docTitle, skipIds,    ConflictResolution.Skip));
                     }
                     else { total.Transferred = replaceIds.Count; total.Skipped = skipIds.Count; }
-                    ShowResult(total);
+                    ShowResult(total, Window.GetWindow(this));
                     return;
                 }
 
                 var conflict = conflictTag == "Skip" ? ConflictResolution.Skip : ConflictResolution.Replace;
-                var confirm  = MessageBox.Show(
-                    $"\u00bfTransferir {selected.Count} filtros desde \u00ab{docTitle}\u00bb?",
-                    "BIM Pills \u2014 Confirmar", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.Yes);
+                var confirmed = BIMPills.UI.Shared.BimPillsDialog.Confirm(
+                    header: "\u00bfImportar filtros?",
+                    message: $"Se importar\u00e1n {selected.Count} filtros desde \u00ab{docTitle}\u00bb.",
+                    detail: conflict == ConflictResolution.Replace
+                        ? "Los filtros con el mismo nombre ser\u00e1n reemplazados."
+                        : "Los filtros con el mismo nombre se omitir\u00e1n.",
+                    owner: Window.GetWindow(this),
+                    yesText: "Importar",
+                    noText: "Cancelar");
 
-                if (confirm != MessageBoxResult.Yes) return;
+                if (!confirmed) return;
 
                 TransferResult result;
                 if (_transferCallback != null)
@@ -203,12 +211,15 @@ namespace BIMPills.UI.ViewFilters
                 else
                     result = new TransferResult { Transferred = selected.Count };
 
-                ShowResult(result);
+                ShowResult(result, Window.GetWindow(this));
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error en transferencia: {ex.Message}",
-                    "BIM Pills \u2014 Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                BIMPills.UI.Shared.BimPillsDialog.Error(
+                    header: "Error al importar",
+                    message: "Ocurri\u00f3 un error al importar los filtros.",
+                    detail: ex.Message,
+                    owner: Window.GetWindow(this));
             }
         }
 
@@ -220,12 +231,21 @@ namespace BIMPills.UI.ViewFilters
             dest.Errors.AddRange(src.Errors);
         }
 
-        private static void ShowResult(TransferResult r)
+        private static void ShowResult(TransferResult r, Window? owner = null)
         {
-            var msg = $"Transferencia completada.\n\n\u2022 Transferidos: {r.Transferred}\n\u2022 Omitidos: {r.Skipped}";
-            if (r.Errors.Count > 0) msg += $"\n\nErrores:\n{string.Join("\n", r.Errors.Take(5))}";
-            MessageBox.Show(msg, "BIM Pills \u2014 Filtros",
-                MessageBoxButton.OK, r.Errors.Count > 0 ? MessageBoxImage.Warning : MessageBoxImage.Information);
+            var message = $"Importados: {r.Transferred} \u00b7 Omitidos: {r.Skipped}";
+            var detail = r.Errors.Count > 0
+                ? $"Errores:\n{string.Join("\n", r.Errors.Take(5))}"
+                : null;
+
+            if (r.Errors.Count > 0)
+                BIMPills.UI.Shared.BimPillsDialog.Warning(
+                    header: "Importaci\u00f3n con avisos",
+                    message: message, detail: detail, owner: owner);
+            else
+                BIMPills.UI.Shared.BimPillsDialog.Success(
+                    header: "Importaci\u00f3n completada",
+                    message: message, owner: owner);
         }
 
         // ── Helpers ───────────────────────────────────────────────────────

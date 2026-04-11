@@ -2,6 +2,7 @@ using BIMPills.Commands.About;
 using BIMPills.Core.Commands;
 using BIMPills.Revit.Commands;
 using BIMPills.UI.About;
+using BIMPills.UI.Shared;
 
 namespace BIMPills.Revit.Commands.About
 {
@@ -17,7 +18,7 @@ namespace BIMPills.Revit.Commands.About
         protected override void OnSuccess(IPluginCommand command)
         {
             if (AboutCommand.LastResult != null)
-                new AboutWindow(AboutCommand.LastResult).ShowDialog();
+                new AboutWindow(AboutCommand.LastResult).ShowDialogOverRevit();
         }
     }
 }

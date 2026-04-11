@@ -7,6 +7,7 @@ using BIMPills.Infrastructure.DI;
 using BIMPills.Revit.Commands;
 using BIMPills.Revit.Documentacion;
 using BIMPills.UI.Documentacion;
+using BIMPills.UI.Shared;
 using System;
 
 namespace BIMPills.Revit.Commands.Documentacion
@@ -61,7 +62,7 @@ namespace BIMPills.Revit.Commands.Documentacion
 
             var logger = ServiceLocator.IsRegistered<ILogger>() ? ServiceLocator.Get<ILogger>() : null;
             window.InitializeAcotado(data, executeCallback, logger);
-            window.ShowDialog();
+            window.ShowDialogOverRevit();
         }
     }
 }

@@ -1,12 +1,14 @@
 using BIMPills.Core.Models;
 using BIMPills.Core.Services;
 using BIMPills.Infrastructure.Persistence;
+using BIMPills.UI.Shared;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 
 namespace BIMPills.UI.ExportSheets
 {
@@ -22,11 +24,27 @@ namespace BIMPills.UI.ExportSheets
         private ILogger? _logger;
         private List<string> _availableParameters = new List<string>();
 
-        // Publication sets (S6-C)
+        // Publication sets
         private JsonPublicationSetRepository? _publicationSetRepo;
         private List<PublicationSet> _publicationSets = new List<PublicationSet>();
 
+        // PDF engine (global printer selector, persisted)
+        private JsonPdfEngineSettingsRepository? _pdfEngineRepo;
+        private PdfEngineSettings _pdfEngine = new PdfEngineSettings();
+        // Cached at load time to avoid re-enumerating Windows printers on every
+        // UpdatePdfEngineUi() call (SelectionChanged fires it repeatedly and
+        // PrinterSettings.InstalledPrinters is slow on machines with network printers).
+        private bool _pdf24Installed;
+        // IMPORTANT: starts true so early SelectionChanged events fired during
+        // XAML parsing (because <ComboBoxItem IsSelected="True"/>) don't touch
+        // fields that InitializeComponent() has not yet assigned. Cleared by
+        // LoadPdfEngineSettings() once the UI is fully ready.
+        private bool _suppressPdfEngineEvents = true;
+
         private string _exportLabel = "Exportar";
+
+        /// <summary>Export queue built by Export_Click for non-blocking processing.</summary>
+        public List<ExportQueueItem>? PendingExportQueue { get; private set; }
 
         /// <summary>Raised when export availability changes. Arg = canExport.</summary>
         public event EventHandler<bool>? ExportEnabledChanged;
@@ -92,6 +110,7 @@ namespace BIMPills.UI.ExportSheets
             UpdateAllFileNames();
             UpdateNamingPreview();
             LoadPublicationSets();
+            LoadPdfEngineSettings();
         }
 
         /// <summary>
@@ -155,9 +174,15 @@ namespace BIMPills.UI.ExportSheets
 
         private void UpdateSelection()
         {
+            // Count based on visible (filtered) rows for summary
+            var visibleSelected = _filteredRows.Count(r => r.IsSelected);
+            var visibleTotal = _filteredRows.Count;
+
+            // Total across all rows for export
             var totalSelected = _rows.Count(r => r.IsSelected);
-            var sheetCount = _rows.Count(r => r.IsSelected && r.Item.ItemType == ExportableItemType.Sheet);
-            var viewCount = totalSelected - sheetCount;
+
+            var sheetCount = _filteredRows.Count(r => r.IsSelected && r.Item.ItemType == ExportableItemType.Sheet);
+            var viewCount = visibleSelected - sheetCount;
 
             string label;
             if (sheetCount > 0 && viewCount > 0)
@@ -169,8 +194,12 @@ namespace BIMPills.UI.ExportSheets
             else
                 label = "0 items";
 
-            SelectionSummary.Text = $"{totalSelected} de {_rows.Count} seleccionados ({label})";
-            StatusText.Text = $"{totalSelected} items seleccionados";
+            SelectionSummary.Text = $"{visibleSelected} de {visibleTotal} seleccionados ({label})";
+
+            if (totalSelected != visibleSelected)
+                StatusText.Text = $"{visibleSelected} visibles + {totalSelected - visibleSelected} ocultos seleccionados";
+            else
+                StatusText.Text = $"{totalSelected} items seleccionados";
 
             bool canExport = totalSelected > 0
                 && !string.IsNullOrEmpty(_selectedFolder)
@@ -213,16 +242,29 @@ namespace BIMPills.UI.ExportSheets
 
             var convention = new SheetNamingConvention { Pattern = NamingPatternBox.Text };
             var folderOrg = GetSelectedFolderOrganization();
-            var selected = _rows.Where(r => r.IsSelected).Take(4).ToList();
-            var lines = new List<string>();
-
-            var baseName = Path.GetFileName(_selectedFolder);
-            lines.Add($"\U0001F4C1 {baseName}/");
+            var allSelected = _rows.Where(r => r.IsSelected).ToList();
+            var sample = allSelected.Take(4).ToList();
 
             bool exportPdf = PdfCheck.IsChecked == true;
             bool exportDwg = DwgCheck.IsChecked == true;
 
-            foreach (var row in selected)
+            // Group files by their sub-folder path so the tree renders each file
+            // nested under the folder it actually belongs to. Uses an ordered list
+            // so sub-folders appear in their first-seen order (Dictionary insertion
+            // order is implementation-defined on .NET Framework 4.8).
+            var tree = new List<KeyValuePair<string, List<string>>>();
+            void AddFile(string subPath, string fileName)
+            {
+                var bucket = tree.FirstOrDefault(kv => kv.Key == subPath);
+                if (bucket.Value == null)
+                {
+                    bucket = new KeyValuePair<string, List<string>>(subPath, new List<string>());
+                    tree.Add(bucket);
+                }
+                bucket.Value.Add(fileName);
+            }
+
+            foreach (var row in sample)
             {
                 var sheetProxy = new SheetExportInfo(
                     row.Item.Id, row.Item.SheetNumber, row.Item.Name,
@@ -232,24 +274,50 @@ namespace BIMPills.UI.ExportSheets
                 if (exportPdf)
                 {
                     var subPath = GetSubFolder(folderOrg, "PDF", row.Discipline);
-                    if (!string.IsNullOrEmpty(subPath) && !lines.Any(l => l.Contains(subPath)))
-                        lines.Add($"  \U0001F4C1 {subPath}/");
-                    var indent = string.IsNullOrEmpty(subPath) ? "  " : "    ";
-                    lines.Add($"{indent}\U0001F4C4 {name}.pdf");
+                    AddFile(subPath, $"{name}.pdf");
                 }
 
                 if (exportDwg)
                 {
-                    var dwgSub = GetSubFolder(folderOrg, "DWG", row.Discipline);
-                    if (!string.IsNullOrEmpty(dwgSub) && !lines.Any(l => l.Contains(dwgSub)))
-                        lines.Add($"  \U0001F4C1 {dwgSub}/");
-                    var indent = string.IsNullOrEmpty(dwgSub) ? "  " : "    ";
-                    lines.Add($"{indent}\U0001F4C4 {name}.dwg");
+                    var subPath = GetSubFolder(folderOrg, "DWG", row.Discipline);
+                    AddFile(subPath, $"{name}.dwg");
                 }
             }
 
-            if (_rows.Count(r => r.IsSelected) > 4)
-                lines.Add($"  \u2026 y {_rows.Count(r => r.IsSelected) - 4} archivos m\u00e1s");
+            // Render the tree — base folder first, then each sub-folder with its files.
+            var lines = new List<string>();
+            var baseName = Path.GetFileName(_selectedFolder.TrimEnd('\\', '/'));
+            if (string.IsNullOrEmpty(baseName)) baseName = _selectedFolder;
+            lines.Add($"\U0001F4C1 {baseName}/");
+
+            foreach (var kv in tree)
+            {
+                var subPath = kv.Key;
+                var files = kv.Value;
+
+                if (string.IsNullOrEmpty(subPath))
+                {
+                    // Flat: files hang directly off the base folder.
+                    foreach (var file in files)
+                        lines.Add($"  \U0001F4C4 {file}");
+                }
+                else
+                {
+                    // Sub-path may contain nested segments (e.g. "PDF/Arquitectura").
+                    var segments = subPath.Split('/', '\\');
+                    for (int i = 0; i < segments.Length; i++)
+                    {
+                        var indent = new string(' ', (i + 1) * 2);
+                        lines.Add($"{indent}\U0001F4C1 {segments[i]}/");
+                    }
+                    var fileIndent = new string(' ', (segments.Length + 1) * 2);
+                    foreach (var file in files)
+                        lines.Add($"{fileIndent}\U0001F4C4 {file}");
+                }
+            }
+
+            if (allSelected.Count > sample.Count)
+                lines.Add($"  \u2026 y {allSelected.Count - sample.Count} items m\u00e1s");
 
             FolderPreview.Text = string.Join("\n", lines);
         }
@@ -283,14 +351,112 @@ namespace BIMPills.UI.ExportSheets
             }
         }
 
-        // ── Publication Sets (S6-C) ──
+        // ── Publication Sets ──
+
+        /// <summary>Captures current export settings from UI controls into a PublicationSet.</summary>
+        private void CaptureExportSettings(PublicationSet set)
+        {
+            set.ExportPdf = PdfCheck.IsChecked == true;
+            set.ExportDwg = DwgCheck.IsChecked == true;
+            set.NamingPattern = NamingPatternBox?.Text ?? "{SheetNumber}-{SheetName}";
+            set.FolderOrganization = GetSelectedFolderOrganization();
+            set.PdfSettings = GetPdfSettings();
+            set.DwgPresetName = (DwgSetupCombo.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "";
+            set.DwgExportLinkedAsXrefs = DwgExportLinkedCheck?.IsChecked == true;
+            set.DwgCleanPcpFiles = DwgCleanPcpCheck?.IsChecked == true;
+        }
+
+        /// <summary>Restores export settings from a PublicationSet into UI controls.</summary>
+        private void RestoreExportSettings(PublicationSet set)
+        {
+            // Format checkboxes
+            PdfCheck.IsChecked = set.ExportPdf;
+            DwgCheck.IsChecked = set.ExportDwg;
+
+            // Naming pattern
+            if (!string.IsNullOrEmpty(set.NamingPattern) && NamingPatternBox != null)
+                NamingPatternBox.Text = set.NamingPattern;
+
+            // Folder organization
+            foreach (ComboBoxItem item in FolderOrgCombo.Items)
+            {
+                if (item.Tag?.ToString() == set.FolderOrganization.ToString())
+                {
+                    FolderOrgCombo.SelectedItem = item;
+                    break;
+                }
+            }
+
+            // PDF settings
+            if (set.PdfSettings != null)
+                ApplyPdfSettings(set.PdfSettings);
+
+            // DWG preset
+            if (!string.IsNullOrEmpty(set.DwgPresetName))
+            {
+                foreach (ComboBoxItem item in DwgSetupCombo.Items)
+                {
+                    if (item.Content?.ToString() == set.DwgPresetName)
+                    {
+                        DwgSetupCombo.SelectedItem = item;
+                        break;
+                    }
+                }
+            }
+            DwgExportLinkedCheck.IsChecked = set.DwgExportLinkedAsXrefs;
+            DwgCleanPcpCheck.IsChecked = set.DwgCleanPcpFiles;
+
+            // Trigger visibility updates for PDF/DWG sections
+            FormatCheck_Changed(this, new RoutedEventArgs());
+        }
+
+        private void ApplyPdfSettings(PdfExportSettings s)
+        {
+            // Paper placement
+            foreach (ComboBoxItem item in PdfPaperPlacementCombo.Items)
+                if (item.Tag?.ToString() == s.PaperPlacement.ToString()) { PdfPaperPlacementCombo.SelectedItem = item; break; }
+            PdfOffsetXBox.Text = s.OffsetX.ToString();
+            PdfOffsetYBox.Text = s.OffsetY.ToString();
+
+            // Zoom
+            foreach (ComboBoxItem item in PdfZoomTypeCombo.Items)
+                if (item.Tag?.ToString() == s.ZoomType.ToString()) { PdfZoomTypeCombo.SelectedItem = item; break; }
+            PdfZoomFactorBox.Text = s.ZoomPercent.ToString();
+
+            // Hidden view processing
+            foreach (ComboBoxItem item in PdfHiddenViewsCombo.Items)
+                if (item.Tag?.ToString() == s.HiddenViewProcessing.ToString()) { PdfHiddenViewsCombo.SelectedItem = item; break; }
+
+            // Color
+            foreach (ComboBoxItem item in PdfColorCombo.Items)
+                if (item.Tag?.ToString() == s.ColorDepth.ToString()) { PdfColorCombo.SelectedItem = item; break; }
+
+            // Raster quality
+            foreach (ComboBoxItem item in PdfDpiCombo.Items)
+                if (item.Tag?.ToString() == s.RasterQuality.ToString()) { PdfDpiCombo.SelectedItem = item; break; }
+
+            // Checkboxes
+            PdfHideScopeBoxes.IsChecked = s.HideScopeBoxes;
+            PdfHideCropBoundaries.IsChecked = s.HideCropBoundaries;
+            PdfHideRefPlanes.IsChecked = s.HideRefWorkPlanes;
+            PdfHideUnrefTags.IsChecked = s.HideUnreferencedViewTags;
+            PdfViewLinksBlue.IsChecked = s.ViewLinksInBlue;
+            PdfMaskCoincidentLines.IsChecked = s.MaskCoincidentLines;
+            PdfReplaceHalftones.IsChecked = s.ReplaceHalftoneWithThinLines;
+            PdfAlwaysUseRaster.IsChecked = s.AlwaysUseRaster;
+            PdfCombineCheck.IsChecked = s.CombineIntoPdf;
+            PdfCombinedNameBox.Text = s.CombinedFileName ?? "Planos_Combinados";
+        }
 
         private void LoadPublicationSets()
         {
             try
             {
-                _publicationSetRepo = new JsonPublicationSetRepository();
-                _publicationSets = _publicationSetRepo.GetAllAsync().GetAwaiter().GetResult();
+                var repoPath = string.IsNullOrEmpty(_projectName)
+                    ? null
+                    : JsonPublicationSetRepository.GetDirectoryForModel(_projectName);
+                _publicationSetRepo = new JsonPublicationSetRepository(repoPath);
+                _publicationSets = _publicationSetRepo.GetAll();
 
                 PublicationSetCombo.Items.Clear();
                 PublicationSetCombo.Items.Add(new ComboBoxItem { Content = "(ninguno)", Tag = "" });
@@ -311,7 +477,9 @@ namespace BIMPills.UI.ExportSheets
             {
                 var selectedItem = PublicationSetCombo.SelectedItem as ComboBoxItem;
                 var setId = selectedItem?.Tag?.ToString() ?? "";
-                DeleteSetBtn.IsEnabled = !string.IsNullOrEmpty(setId);
+                bool hasActiveSet = !string.IsNullOrEmpty(setId);
+                DeleteSetBtn.IsEnabled = hasActiveSet;
+                RenameSetBtn.IsEnabled = hasActiveSet;
 
                 if (string.IsNullOrEmpty(setId)) return;
 
@@ -337,13 +505,17 @@ namespace BIMPills.UI.ExportSheets
                 SheetsGrid.Items.Refresh();
                 UpdateSelection();
 
+                // Restore export settings saved with the set
+                RestoreExportSettings(set);
+
                 int notFound = set.Items.Count - found;
                 if (notFound > 0)
                 {
-                    MessageBox.Show(
-                        $"Se seleccionaron {found} de {set.Items.Count} items.\n{notFound} no se encontraron en el modelo actual.",
-                        "BIM Pills \u2014 Conjunto de publicaci\u00f3n",
-                        MessageBoxButton.OK, MessageBoxImage.Information);
+                    BimPillsDialog.Info(
+                        header: "Conjunto de publicaci\u00f3n cargado",
+                        message: $"Se seleccionaron {found} de {set.Items.Count} items.",
+                        detail: $"{notFound} items no se encontraron en el modelo actual. Es posible que hayan sido eliminados o que el conjunto provenga de otra versi\u00f3n del proyecto.",
+                        owner: Window.GetWindow(this));
                 }
             }
             catch (Exception ex) { _logger?.Error("Error en PublicationSet_Changed", ex); }
@@ -356,46 +528,118 @@ namespace BIMPills.UI.ExportSheets
                 var selectedItems = _rows.Where(r => r.IsSelected).ToList();
                 if (selectedItems.Count == 0)
                 {
-                    MessageBox.Show("Selecciona al menos un item para guardar el conjunto.",
-                        "BIM Pills \u2014 Conjunto de publicaci\u00f3n", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    BimPillsDialog.Warning(
+                        header: "Nada para guardar",
+                        message: "Selecciona al menos un item para guardar el conjunto.",
+                        owner: Window.GetWindow(this));
                     return;
                 }
 
-                var name = PromptForSetName();
-                if (string.IsNullOrWhiteSpace(name)) return;
+                var activeSetId = (PublicationSetCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "";
+                var activeSet = string.IsNullOrEmpty(activeSetId) ? null : _publicationSets.FirstOrDefault(s => s.Id == activeSetId);
 
-                var set = new PublicationSet
+                var items = selectedItems.Select(r => new PublicationSetItem
                 {
-                    Name = name.Trim(),
-                    Items = selectedItems.Select(r => new PublicationSetItem
-                    {
-                        UniqueId = r.Item.UniqueId,
-                        DisplayName = r.DisplayName,
-                        ItemType = r.Item.ItemType
-                    }).ToList()
-                };
+                    UniqueId = r.Item.UniqueId,
+                    DisplayName = r.DisplayName,
+                    ItemType = r.Item.ItemType
+                }).ToList();
 
-                _publicationSetRepo?.CreateAsync(set).GetAwaiter().GetResult();
-                LoadPublicationSets();
-
-                // Select the newly created set
-                for (int i = 0; i < PublicationSetCombo.Items.Count; i++)
+                if (activeSet != null)
                 {
-                    if (PublicationSetCombo.Items[i] is ComboBoxItem ci && ci.Tag?.ToString() == set.Id)
-                    {
-                        PublicationSetCombo.SelectedIndex = i;
-                        break;
-                    }
+                    // Overwrite active set (items + export settings)
+                    activeSet.Items = items;
+                    CaptureExportSettings(activeSet);
+                    _publicationSetRepo?.Update(activeSet);
+                    LoadPublicationSets();
+                    SelectSetInCombo(activeSet.Id);
+                    BimPillsDialog.Success(
+                        header: "Conjunto actualizado",
+                        message: $"\u00ab{activeSet.Name}\u00bb actualizado con {items.Count} items.",
+                        owner: Window.GetWindow(this));
                 }
-
-                MessageBox.Show($"Conjunto \u00ab{set.Name}\u00bb guardado con {set.Items.Count} items.",
-                    "BIM Pills \u2014 Conjunto de publicaci\u00f3n", MessageBoxButton.OK, MessageBoxImage.Information);
+                else
+                {
+                    // No active set — create new
+                    SaveNewSet(items);
+                }
             }
             catch (Exception ex)
             {
                 _logger?.Error("Error en SaveSet_Click", ex);
-                MessageBox.Show($"Error al guardar: {ex.Message}",
-                    "BIM Pills \u2014 Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                BimPillsDialog.Error(
+                    header: "No se pudo guardar",
+                    message: "Ocurri\u00f3 un error al guardar el conjunto de publicaci\u00f3n.",
+                    detail: ex.Message,
+                    owner: Window.GetWindow(this));
+            }
+        }
+
+        private void SaveAsSet_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var selectedItems = _rows.Where(r => r.IsSelected).ToList();
+                if (selectedItems.Count == 0)
+                {
+                    BimPillsDialog.Warning(
+                        header: "Nada para guardar",
+                        message: "Selecciona al menos un item para guardar el conjunto.",
+                        owner: Window.GetWindow(this));
+                    return;
+                }
+
+                var items = selectedItems.Select(r => new PublicationSetItem
+                {
+                    UniqueId = r.Item.UniqueId,
+                    DisplayName = r.DisplayName,
+                    ItemType = r.Item.ItemType
+                }).ToList();
+
+                SaveNewSet(items);
+            }
+            catch (Exception ex)
+            {
+                _logger?.Error("Error en SaveAsSet_Click", ex);
+                BimPillsDialog.Error(
+                    header: "No se pudo guardar",
+                    message: "Ocurri\u00f3 un error al guardar el conjunto de publicaci\u00f3n.",
+                    detail: ex.Message,
+                    owner: Window.GetWindow(this));
+            }
+        }
+
+        private void SaveNewSet(List<PublicationSetItem> items)
+        {
+            var name = PromptForSetName();
+            if (string.IsNullOrWhiteSpace(name)) return;
+
+            var set = new PublicationSet
+            {
+                Name = name.Trim(),
+                Items = items
+            };
+            CaptureExportSettings(set);
+
+            _publicationSetRepo?.Create(set);
+            LoadPublicationSets();
+            SelectSetInCombo(set.Id);
+
+            BimPillsDialog.Success(
+                header: "Conjunto creado",
+                message: $"\u00ab{set.Name}\u00bb guardado con {items.Count} items.",
+                owner: Window.GetWindow(this));
+        }
+
+        private void SelectSetInCombo(string setId)
+        {
+            for (int i = 0; i < PublicationSetCombo.Items.Count; i++)
+            {
+                if (PublicationSetCombo.Items[i] is ComboBoxItem ci && ci.Tag?.ToString() == setId)
+                {
+                    PublicationSetCombo.SelectedIndex = i;
+                    break;
+                }
             }
         }
 
@@ -410,30 +654,68 @@ namespace BIMPills.UI.ExportSheets
                 var set = _publicationSets.FirstOrDefault(s => s.Id == setId);
                 if (set == null) return;
 
-                var confirm = MessageBox.Show(
-                    $"\u00bfEliminar el conjunto \u00ab{set.Name}\u00bb?",
-                    "BIM Pills \u2014 Confirmar",
-                    MessageBoxButton.YesNo, MessageBoxImage.Question);
-                if (confirm != MessageBoxResult.Yes) return;
+                var confirm = BimPillsDialog.Confirm(
+                    header: "\u00bfEliminar conjunto?",
+                    message: $"El conjunto \u00ab{set.Name}\u00bb se eliminar\u00e1 permanentemente.",
+                    detail: "Esta acci\u00f3n no se puede deshacer.",
+                    owner: Window.GetWindow(this),
+                    yesText: "Eliminar",
+                    noText: "Cancelar",
+                    kind: BimPillsDialog.DialogKind.Warning);
+                if (!confirm) return;
 
-                _publicationSetRepo?.DeleteAsync(setId).GetAwaiter().GetResult();
+                _publicationSetRepo?.Delete(setId);
                 LoadPublicationSets();
             }
             catch (Exception ex)
             {
                 _logger?.Error("Error en DeleteSet_Click", ex);
-                MessageBox.Show($"Error al eliminar: {ex.Message}",
-                    "BIM Pills \u2014 Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                BimPillsDialog.Error(
+                    header: "No se pudo eliminar",
+                    message: "Ocurri\u00f3 un error al eliminar el conjunto.",
+                    detail: ex.Message,
+                    owner: Window.GetWindow(this));
             }
         }
 
-        private static string? PromptForSetName()
+        private void RenameSet_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var selectedItem = PublicationSetCombo.SelectedItem as ComboBoxItem;
+                var setId = selectedItem?.Tag?.ToString() ?? "";
+                if (string.IsNullOrEmpty(setId)) return;
+
+                var set = _publicationSets.FirstOrDefault(s => s.Id == setId);
+                if (set == null) return;
+
+                var newName = PromptForSetName(set.Name);
+                if (string.IsNullOrWhiteSpace(newName)) return;
+
+                set.Name = newName.Trim();
+                _publicationSetRepo?.Update(set);
+                LoadPublicationSets();
+                SelectSetInCombo(set.Id);
+            }
+            catch (Exception ex)
+            {
+                _logger?.Error("Error en RenameSet_Click", ex);
+                BimPillsDialog.Error(
+                    header: "No se pudo renombrar",
+                    message: "Ocurri\u00f3 un error al renombrar el conjunto.",
+                    detail: ex.Message,
+                    owner: Window.GetWindow(this));
+            }
+        }
+
+        private string? PromptForSetName(string currentName = "")
         {
             var dlg = new Window
             {
                 Title               = "BIM Pills \u2014 Guardar conjunto",
                 Width               = 380,
                 Height              = 150,
+                Owner               = Window.GetWindow(this),
                 WindowStartupLocation = WindowStartupLocation.CenterOwner,
                 ResizeMode          = ResizeMode.NoResize,
                 Background          = System.Windows.Media.Brushes.White,
@@ -463,7 +745,7 @@ namespace BIMPills.UI.ExportSheets
                 Padding      = new Thickness(6, 4, 6, 4),
                 BorderBrush  = System.Windows.Media.Brushes.LightGray,
                 BorderThickness = new Thickness(1),
-                Text         = $"Conjunto {DateTime.Now:yyyy-MM-dd}"
+                Text         = string.IsNullOrEmpty(currentName) ? $"Conjunto {DateTime.Now:yyyy-MM-dd}" : currentName
             };
             Grid.SetRow(tb, 1);
 
@@ -560,6 +842,30 @@ namespace BIMPills.UI.ExportSheets
             catch (Exception ex) { _logger?.Error("Error en DeselectAll_Click", ex); }
         }
 
+        private void RowCheckBox_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var cb = sender as CheckBox;
+                var row = cb?.DataContext as ExportableViewRow;
+                if (row == null) return;
+
+                bool state = cb.IsChecked == true;
+
+                // Apply to all highlighted (DataGrid-selected) rows
+                var highlighted = SheetsGrid.SelectedItems.Cast<ExportableViewRow>().ToList();
+                if (highlighted.Count > 1 && highlighted.Contains(row))
+                {
+                    foreach (var r in highlighted)
+                        r.IsSelected = state;
+                    SheetsGrid.Items.Refresh();
+                }
+
+                UpdateSelection();
+            }
+            catch (Exception ex) { _logger?.Error("Error en RowCheckBox_Click", ex); }
+        }
+
         private void FormatCheck_Changed(object sender, RoutedEventArgs e)
         {
             try
@@ -622,13 +928,16 @@ namespace BIMPills.UI.ExportSheets
                     "Presentation" => PdfRasterQuality.Presentation,
                     _              => PdfRasterQuality.Medium
                 },
-                HideScopeBoxes           = PdfHideScopeBoxes.IsChecked == true,
-                HideCropBoundaries       = PdfHideCropBoundaries.IsChecked == true,
-                HideRefWorkPlanes        = PdfHideRefPlanes.IsChecked == true,
-                HideUnreferencedViewTags = PdfHideUnrefTags.IsChecked == true,
-                ViewLinksInBlue          = PdfViewLinksBlue.IsChecked == true,
-                CombineIntoPdf           = PdfCombineCheck.IsChecked == true,
-                CombinedFileName         = PdfCombinedNameBox.Text?.Trim() ?? "Planos_Combinados"
+                HideScopeBoxes              = PdfHideScopeBoxes.IsChecked == true,
+                HideCropBoundaries          = PdfHideCropBoundaries.IsChecked == true,
+                HideRefWorkPlanes           = PdfHideRefPlanes.IsChecked == true,
+                HideUnreferencedViewTags    = PdfHideUnrefTags.IsChecked == true,
+                ViewLinksInBlue             = PdfViewLinksBlue.IsChecked == true,
+                MaskCoincidentLines         = PdfMaskCoincidentLines.IsChecked == true,
+                ReplaceHalftoneWithThinLines = PdfReplaceHalftones.IsChecked == true,
+                AlwaysUseRaster             = PdfAlwaysUseRaster.IsChecked == true,
+                CombineIntoPdf              = PdfCombineCheck.IsChecked == true,
+                CombinedFileName            = PdfCombinedNameBox.Text?.Trim() ?? "Planos_Combinados"
             };
         }
 
@@ -712,8 +1021,11 @@ namespace BIMPills.UI.ExportSheets
             catch (Exception ex)
             {
                 _logger?.Error("Error en BrowseFolder_Click", ex);
-                MessageBox.Show($"Error inesperado:\n{ex.Message}",
-                    "BIM Pills \u2014 Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                BimPillsDialog.Error(
+                    header: "Error inesperado",
+                    message: "No se pudo abrir el selector de carpeta.",
+                    detail: ex.Message,
+                    owner: Window.GetWindow(this));
             }
         }
 
@@ -751,16 +1063,20 @@ namespace BIMPills.UI.ExportSheets
                 };
 
                 var repo = new JsonSheetExportProfileRepository();
-                repo.CreateAsync(profile).GetAwaiter().GetResult();
+                repo.Create(profile);
 
-                MessageBox.Show($"Perfil \u00ab{profile.Name}\u00bb guardado correctamente.",
-                    "BIM Pills \u2014 Exportar",
-                    MessageBoxButton.OK, MessageBoxImage.Information);
+                BimPillsDialog.Success(
+                    header: "Perfil guardado",
+                    message: $"\u00ab{profile.Name}\u00bb guardado correctamente.",
+                    owner: Window.GetWindow(this));
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al guardar el perfil: {ex.Message}",
-                    "BIM Pills \u2014 Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                BimPillsDialog.Error(
+                    header: "No se pudo guardar el perfil",
+                    message: "Ocurri\u00f3 un error al persistir el perfil de exportaci\u00f3n.",
+                    detail: ex.Message,
+                    owner: Window.GetWindow(this));
             }
         }
 
@@ -773,13 +1089,14 @@ namespace BIMPills.UI.ExportSheets
             return SheetExportFormat.PDF;
         }
 
-        private static string? PromptForProfileName()
+        private string? PromptForProfileName()
         {
             var dlg = new Window
             {
                 Title               = "BIM Pills \u2014 Guardar perfil",
                 Width               = 380,
                 Height              = 150,
+                Owner               = Window.GetWindow(this),
                 WindowStartupLocation = WindowStartupLocation.CenterOwner,
                 ResizeMode          = ResizeMode.NoResize,
                 Background          = System.Windows.Media.Brushes.White,
@@ -881,8 +1198,8 @@ namespace BIMPills.UI.ExportSheets
             {
                 if (string.IsNullOrEmpty(_selectedFolder)) return;
 
-                bool exportPdf = PdfCheck.IsChecked == true && _pdfExportCallback != null;
-                bool exportDwg = DwgCheck.IsChecked == true && _dwgExportCallback != null;
+                bool exportPdf = PdfCheck.IsChecked == true;
+                bool exportDwg = DwgCheck.IsChecked == true;
                 if (!exportPdf && !exportDwg) return;
 
                 var selected = _rows.Where(r => r.IsSelected).ToList();
@@ -891,114 +1208,83 @@ namespace BIMPills.UI.ExportSheets
                 var convention = new SheetNamingConvention { Pattern = NamingPatternBox.Text };
                 var folderOrg = GetSelectedFolderOrganization();
                 var now = DateTime.Now;
+                var pdfSettings = exportPdf ? GetPdfSettings() : null;
+                var dwgConfig = exportDwg ? GetSelectedDwgConfig() : null;
 
-                var selectedDwgConfig = GetSelectedDwgConfig();
-
-                int totalOps = selected.Count * ((exportPdf ? 1 : 0) + (exportDwg ? 1 : 0));
-                var pdfSettings = exportPdf ? GetPdfSettings() : new PdfExportSettings();
-
-                var confirm = MessageBox.Show(
-                    $"Se exportar\u00e1n {selected.Count} items" +
-                    (exportPdf && exportDwg ? " a PDF y DWG" : exportPdf ? " a PDF" : " a DWG") +
-                    $" en:\n\n\U0001F4C1 {_selectedFolder}\n\n" +
-                    $"Total de archivos: {totalOps}\n\n" +
-                    "Este proceso puede tomar varios minutos. \u00bfDesea continuar?",
-                    "BIM Pills \u2014 Confirmar exportaci\u00f3n",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Question,
-                    MessageBoxResult.Yes);
-
-                if (confirm != MessageBoxResult.Yes) return;
-
-                ProgressOverlay.Visibility = Visibility.Visible;
-                ProgressBar.Maximum = totalOps;
-                ProgressBar.Value = 0;
-
-                int exported = 0;
-                int failed = 0;
-                var errors = new List<string>();
-                int step = 0;
-
-                try
+                // Build export queue
+                var queue = new List<ExportQueueItem>();
+                foreach (var row in selected)
                 {
-                    foreach (var row in selected)
+                    var sheetProxy = new SheetExportInfo(
+                        row.Item.Id, row.Item.SheetNumber, row.Item.Name,
+                        row.Item.Revision, row.Item.Discipline);
+                    var fileName = SanitizeFileName(convention.GenerateFileName(sheetProxy, _projectName, now, row.Item.ParameterValues));
+
+                    if (exportPdf)
                     {
-                        var sheetProxy = new SheetExportInfo(
-                            row.Item.Id, row.Item.SheetNumber, row.Item.Name,
-                            row.Item.Revision, row.Item.Discipline);
-                        var fileName = SanitizeFileName(convention.GenerateFileName(sheetProxy, _projectName, now, row.Item.ParameterValues));
-
-                        if (exportPdf)
+                        var folder = GetExportFolder(_selectedFolder, folderOrg, "PDF", row.Discipline);
+                        Directory.CreateDirectory(folder);
+                        queue.Add(new ExportQueueItem
                         {
-                            step++;
-                            ProgressText.Text = $"PDF: {step} de {totalOps}...";
-                            ProgressDetail.Text = row.DisplayName;
-                            ProgressBar.Value = step;
-                            PumpDispatcher();
-
-                            var folder = GetExportFolder(_selectedFolder, folderOrg, "PDF", row.Discipline);
-                            Directory.CreateDirectory(folder);
-
-                            bool ok = _pdfExportCallback!(row.Item.Id, folder, fileName, pdfSettings);
-                            if (ok) exported++;
-                            else { failed++; errors.Add($"[PDF] {row.DisplayName}"); }
-                        }
-
-                        if (exportDwg)
-                        {
-                            step++;
-                            ProgressText.Text = $"DWG: {step} de {totalOps}...";
-                            ProgressDetail.Text = row.DisplayName;
-                            ProgressBar.Value = step;
-                            PumpDispatcher();
-
-                            var folder = GetExportFolder(_selectedFolder, folderOrg, "DWG", row.Discipline);
-                            Directory.CreateDirectory(folder);
-
-                            bool ok = _dwgExportCallback!(row.Item.Id, folder, fileName, selectedDwgConfig);
-                            if (ok) exported++;
-                            else { failed++; errors.Add($"[DWG] {row.DisplayName}"); }
-                        }
+                            ViewId = row.Item.Id,
+                            Folder = folder,
+                            FileName = fileName,
+                            DisplayName = row.DisplayName,
+                            Format = ExportFormat.Pdf,
+                            PdfSettings = pdfSettings
+                        });
                     }
 
-                    ProgressBar.Value = totalOps;
-                }
-                finally
-                {
-                    ProgressOverlay.Visibility = Visibility.Collapsed;
+                    if (exportDwg)
+                    {
+                        var folder = GetExportFolder(_selectedFolder, folderOrg, "DWG", row.Discipline);
+                        Directory.CreateDirectory(folder);
+                        queue.Add(new ExportQueueItem
+                        {
+                            ViewId = row.Item.Id,
+                            Folder = folder,
+                            FileName = fileName,
+                            DisplayName = row.DisplayName,
+                            Format = ExportFormat.Dwg,
+                            DwgConfig = dwgConfig
+                        });
+                    }
                 }
 
-                string summary = $"Exportados {exported} de {totalOps} archivos.";
-                if (failed > 0)
-                {
-                    summary += $"\n\n{failed} archivos no pudieron exportarse:";
-                    foreach (var name in errors.Take(10))
-                        summary += $"\n  - {name}";
-                    if (errors.Count > 10)
-                        summary += $"\n  ... y {errors.Count - 10} m\u00e1s";
-                }
+                var formatLabel = exportPdf && exportDwg ? "PDF y DWG" : exportPdf ? "PDF" : "DWG";
+                var confirmMessage =
+                    $"Se exportar\u00e1n {selected.Count} items a {formatLabel} " +
+                    $"(total: {queue.Count} archivos).";
+                var confirmDetail =
+                    $"Destino: {_selectedFolder}\n\n" +
+                    "Durante la exportaci\u00f3n Revit quedar\u00e1 ocupado y no podr\u00e1s usarlo. " +
+                    "Mantendremos abierta una ventana de progreso que podr\u00e1s cancelar en cualquier momento.";
 
-                MessageBox.Show(summary,
-                    "BIM Pills \u2014 Exportaci\u00f3n completada",
-                    MessageBoxButton.OK,
-                    failed > 0 ? MessageBoxImage.Warning : MessageBoxImage.Information);
+                var confirmed = BimPillsDialog.Confirm(
+                    header: "\u00bfIniciar exportaci\u00f3n?",
+                    message: confirmMessage,
+                    detail: confirmDetail,
+                    owner: Window.GetWindow(this),
+                    yesText: "Exportar",
+                    noText: "Cancelar");
 
-                if (exported > 0 && failed == 0)
-                {
-                    var win = Window.GetWindow(this);
-                    if (win != null) try { win.DialogResult = true; } catch (InvalidOperationException) { }
-                    win?.Close();
-                }
+                if (!confirmed) return;
+
+                PendingExportQueue = queue;
+
+                // Close the parent window — export will be processed by the command via Idling
+                var win = Window.GetWindow(this);
+                if (win != null) try { win.DialogResult = true; } catch (InvalidOperationException) { }
+                win?.Close();
             }
             catch (Exception ex)
             {
                 _logger?.Error("Error no controlado en Export_Click", ex);
-                ProgressOverlay.Visibility = Visibility.Collapsed;
-                MessageBox.Show(
-                    $"Error inesperado durante la exportaci\u00f3n:\n{ex.Message}\n\nRevisa el log para m\u00e1s detalles.",
-                    "BIM Pills \u2014 Error",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                BimPillsDialog.Error(
+                    header: "Error inesperado",
+                    message: "Ocurri\u00f3 un error al iniciar la exportaci\u00f3n.",
+                    detail: ex.Message,
+                    owner: Window.GetWindow(this));
             }
         }
 
@@ -1032,6 +1318,180 @@ namespace BIMPills.UI.ExportSheets
                 sb.Append(invalid.Contains(c) ? '_' : c);
             return sb.ToString().Trim().TrimEnd('.');
         }
+
+        // ── PDF Engine ─────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Loads the persisted PDF engine settings, populates the ComboBoxes
+        /// with installed PDF printers, and applies the saved selection.
+        /// Safe to call multiple times (idempotent).
+        /// </summary>
+        private void LoadPdfEngineSettings()
+        {
+            try
+            {
+                _pdfEngineRepo = new JsonPdfEngineSettingsRepository();
+                _pdfEngine = _pdfEngineRepo.Load();
+            }
+            catch (Exception ex)
+            {
+                _logger?.Warning($"[PdfEngine] No se pudieron cargar settings: {ex.Message}");
+                _pdfEngine = new PdfEngineSettings();
+            }
+
+            // Guard against event feedback while we're populating.
+            _suppressPdfEngineEvents = true;
+            try
+            {
+                // Populate installed PDF printers and cache the PDF24 detection
+                // derived from the same enumeration — avoids a second full sweep
+                // of PrinterSettings.InstalledPrinters later.
+                PdfPrinterCombo.Items.Clear();
+                var printers = BIMPills.Infrastructure.Services.PdfPrinterService.GetInstalledPdfPrinters();
+                _pdf24Installed = false;
+                foreach (var p in printers)
+                {
+                    if (!_pdf24Installed &&
+                        p.SystemName.IndexOf("pdf24", StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        _pdf24Installed = true;
+                    }
+                    var label = p.SupportsSilent
+                        ? $"{p.DisplayName} (silencioso)"
+                        : $"{p.DisplayName}";
+                    PdfPrinterCombo.Items.Add(new ComboBoxItem
+                    {
+                        Content = label,
+                        Tag     = p.SystemName,
+                        ToolTip = $"Impresora: {p.SystemName}"
+                    });
+                }
+
+                // Engine combo initial value
+                foreach (ComboBoxItem item in PdfEngineCombo.Items)
+                {
+                    if (item.Tag?.ToString() == _pdfEngine.Engine.ToString())
+                    {
+                        PdfEngineCombo.SelectedItem = item;
+                        break;
+                    }
+                }
+
+                // Printer combo initial value — prefer saved printer, else the first.
+                if (PdfPrinterCombo.Items.Count > 0)
+                {
+                    int matchIdx = -1;
+                    if (!string.IsNullOrWhiteSpace(_pdfEngine.PrinterName))
+                    {
+                        for (int i = 0; i < PdfPrinterCombo.Items.Count; i++)
+                        {
+                            if (PdfPrinterCombo.Items[i] is ComboBoxItem ci &&
+                                string.Equals(ci.Tag?.ToString(), _pdfEngine.PrinterName, StringComparison.OrdinalIgnoreCase))
+                            {
+                                matchIdx = i;
+                                break;
+                            }
+                        }
+                    }
+                    PdfPrinterCombo.SelectedIndex = matchIdx >= 0 ? matchIdx : 0;
+                }
+            }
+            finally
+            {
+                _suppressPdfEngineEvents = false;
+            }
+
+            UpdatePdfEngineUi();
+        }
+
+        /// <summary>
+        /// Shows/hides the printer row based on engine choice, and warns if
+        /// SystemPrinter is selected but no PDF printer is installed. When
+        /// PDF24 isn't detected, it also exposes a "Download PDF24" hyperlink
+        /// so users on a fresh machine can get it in one click.
+        /// </summary>
+        private void UpdatePdfEngineUi()
+        {
+            bool systemPrinter = _pdfEngine.Engine == PdfEngineKind.SystemPrinter;
+            PdfPrinterRow.Visibility = systemPrinter ? Visibility.Visible : Visibility.Collapsed;
+
+            if (systemPrinter && PdfPrinterCombo.Items.Count == 0)
+            {
+                PdfEngineWarning.Text = "⚠ No se detectó ninguna impresora PDF instalada. " +
+                                        "Instalá PDF24 (recomendado) o cambiá el motor a «Revit nativo».";
+                PdfEngineWarning.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                PdfEngineWarning.Visibility = Visibility.Collapsed;
+            }
+
+            // Download hint: visible whenever SystemPrinter is selected AND PDF24
+            // isn't installed. Uses the cached _pdf24Installed flag populated by
+            // LoadPdfEngineSettings() instead of re-enumerating Windows printers.
+            Pdf24DownloadHint.Visibility = (systemPrinter && !_pdf24Installed)
+                ? Visibility.Visible
+                : Visibility.Collapsed;
+        }
+
+        /// <summary>
+        /// Opens the PDF24 download page in the user's default browser.
+        /// </summary>
+        private void Pdf24DownloadLink_RequestNavigate(object sender, System.Windows.Navigation.RequestNavigateEventArgs e)
+        {
+            try
+            {
+                var psi = new System.Diagnostics.ProcessStartInfo(e.Uri.AbsoluteUri)
+                {
+                    UseShellExecute = true
+                };
+                System.Diagnostics.Process.Start(psi);
+                e.Handled = true;
+            }
+            catch (Exception ex)
+            {
+                _logger?.Warning($"[PdfEngine] No se pudo abrir el navegador: {ex.Message}");
+                try
+                {
+                    System.Windows.MessageBox.Show(
+                        "No se pudo abrir el navegador. Copiá y pegá esta dirección:\n\n" + e.Uri.AbsoluteUri,
+                        "BIM Pills — Descargar PDF24",
+                        System.Windows.MessageBoxButton.OK,
+                        System.Windows.MessageBoxImage.Information);
+                }
+                catch { }
+            }
+        }
+
+        private void PdfEngine_Changed(object sender, SelectionChangedEventArgs e)
+        {
+            if (_suppressPdfEngineEvents) return;
+            var tag = (PdfEngineCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString();
+            _pdfEngine.Engine = tag == "SystemPrinter" ? PdfEngineKind.SystemPrinter : PdfEngineKind.Native;
+            UpdatePdfEngineUi();
+            SavePdfEngineSettings();
+        }
+
+        private void PdfPrinter_Changed(object sender, SelectionChangedEventArgs e)
+        {
+            if (_suppressPdfEngineEvents) return;
+            var tag = (PdfPrinterCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString();
+            _pdfEngine.PrinterName = tag ?? "";
+            SavePdfEngineSettings();
+        }
+
+        private void SavePdfEngineSettings()
+        {
+            try { _pdfEngineRepo?.Save(_pdfEngine); }
+            catch (Exception ex) { _logger?.Warning($"[PdfEngine] No se pudo guardar: {ex.Message}"); }
+        }
+
+        /// <summary>
+        /// Exposed for the host (Revit command) so it can route the export
+        /// through the native engine or a system printer. Field initializer
+        /// guarantees a non-null default (Native) if the panel was never loaded.
+        /// </summary>
+        public PdfEngineSettings GetPdfEngineSettings() => _pdfEngine;
     }
 
     /// <summary>

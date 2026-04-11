@@ -10,14 +10,29 @@ namespace BIMPills.UI.ExportFamilies
 {
     public partial class ExportarWindow : Window
     {
+        // Tab indexes (new order): 0 = Planos y Vistas, 1 = Modelo, 2 = Familias
+        private const int TabPlanos = 0;
+        private const int TabModelo = 1;
+        private const int TabFamilias = 2;
+
         private string _familiesSubtitle = "";
         private string _sheetsSubtitle = "";
         private string _modelSubtitle = "";
-        private int _activeTab = 0;
+        private int _activeTab = TabPlanos;
 
         private bool _familiesCanExport;
         private bool _sheetsCanExport;
         private bool _modelCanExport;
+
+        /// <summary>Export queue built by SheetsPanel for non-blocking processing by the command.</summary>
+        public List<ExportQueueItem>? PendingExportQueue => SheetsPanel.PendingExportQueue;
+
+        /// <summary>
+        /// Global PDF engine settings (Native vs SystemPrinter) chosen by the user.
+        /// Read by the Revit command right after the dialog closes so the export queue
+        /// can route each item to the right pipeline.
+        /// </summary>
+        public PdfEngineSettings GetPdfEngineSettings() => SheetsPanel.GetPdfEngineSettings();
 
         public ExportarWindow()
         {
@@ -28,17 +43,17 @@ namespace BIMPills.UI.ExportFamilies
             ExportPanel.ExportEnabledChanged += (_, canExport) =>
             {
                 _familiesCanExport = canExport;
-                if (_activeTab == 0) UpdateActionButton();
+                if (_activeTab == TabFamilias) UpdateActionButton();
             };
             SheetsPanel.ExportEnabledChanged += (_, canExport) =>
             {
                 _sheetsCanExport = canExport;
-                if (_activeTab == 1) UpdateActionButton();
+                if (_activeTab == TabPlanos) UpdateActionButton();
             };
             ModelPanel.ExportEnabledChanged += (_, canExport) =>
             {
                 _modelCanExport = canExport;
-                if (_activeTab == 2) UpdateActionButton();
+                if (_activeTab == TabModelo) UpdateActionButton();
             };
         }
 
@@ -46,17 +61,17 @@ namespace BIMPills.UI.ExportFamilies
         {
             switch (_activeTab)
             {
-                case 0:
-                    ActionButton.IsEnabled = _familiesCanExport;
-                    ActionButton.Content = ExportPanel.ExportLabel;
-                    break;
-                case 1:
+                case TabPlanos:
                     ActionButton.IsEnabled = _sheetsCanExport;
                     ActionButton.Content = SheetsPanel.ExportLabel;
                     break;
-                case 2:
+                case TabModelo:
                     ActionButton.IsEnabled = _modelCanExport;
                     ActionButton.Content = ModelPanel.ExportLabel;
+                    break;
+                case TabFamilias:
+                    ActionButton.IsEnabled = _familiesCanExport;
+                    ActionButton.Content = ExportPanel.ExportLabel;
                     break;
             }
         }
@@ -65,9 +80,9 @@ namespace BIMPills.UI.ExportFamilies
         {
             switch (_activeTab)
             {
-                case 0: ExportPanel.TriggerExport(); break;
-                case 1: SheetsPanel.TriggerExport(); break;
-                case 2: ModelPanel.TriggerExport(); break;
+                case TabPlanos:   SheetsPanel.TriggerExport(); break;
+                case TabModelo:   ModelPanel.TriggerExport(); break;
+                case TabFamilias: ExportPanel.TriggerExport(); break;
             }
         }
 
@@ -89,7 +104,7 @@ namespace BIMPills.UI.ExportFamilies
                 if (seen.Add(f.Category)) categoryCount++;
             _familiesSubtitle = $"{families.Count} familias en {categoryCount} categor\u00edas";
 
-            if (_activeTab == 0)
+            if (_activeTab == TabFamilias)
                 SubtitleText.Text = _familiesSubtitle;
         }
 
@@ -125,6 +140,9 @@ namespace BIMPills.UI.ExportFamilies
             var sheetCount = items.Count(i => i.ItemType == ExportableItemType.Sheet);
             var viewCount = items.Count - sheetCount;
             _sheetsSubtitle = $"{sheetCount} planos + {viewCount} vistas disponibles";
+
+            if (_activeTab == TabPlanos)
+                SubtitleText.Text = _sheetsSubtitle;
         }
 
         /// <summary>
@@ -146,24 +164,24 @@ namespace BIMPills.UI.ExportFamilies
             _modelSubtitle = "Exportar modelo a formato NWC";
         }
 
-        private void TabFamilias_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
-        {
-            if (_activeTab == 0) return;
-            _activeTab = 0;
-            UpdateTabVisualState();
-        }
-
         private void TabPlanos_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
-            if (_activeTab == 1) return;
-            _activeTab = 1;
+            if (_activeTab == TabPlanos) return;
+            _activeTab = TabPlanos;
             UpdateTabVisualState();
         }
 
         private void TabModelo_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
-            if (_activeTab == 2) return;
-            _activeTab = 2;
+            if (_activeTab == TabModelo) return;
+            _activeTab = TabModelo;
+            UpdateTabVisualState();
+        }
+
+        private void TabFamilias_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            if (_activeTab == TabFamilias) return;
+            _activeTab = TabFamilias;
             UpdateTabVisualState();
         }
 
@@ -188,15 +206,7 @@ namespace BIMPills.UI.ExportFamilies
 
             switch (_activeTab)
             {
-                case 0:
-                    TabFamiliasBorder.Style = activeTabStyle;
-                    TabFamiliasText.Style   = activeTextStyle;
-                    ExportPanel.Visibility  = Visibility.Visible;
-                    ToolHeaderTitle.Text    = "Exportar Familias";
-                    ToolHeaderSubtitle.Text = "Exporta familias del modelo a carpeta local";
-                    SubtitleText.Text       = _familiesSubtitle;
-                    break;
-                case 1:
+                case TabPlanos:
                     TabPlanosBorder.Style   = activeTabStyle;
                     TabPlanosText.Style     = activeTextStyle;
                     SheetsPanel.Visibility  = Visibility.Visible;
@@ -204,13 +214,21 @@ namespace BIMPills.UI.ExportFamilies
                     ToolHeaderSubtitle.Text = "Exporta planos y vistas a PDF y DWG en lote";
                     SubtitleText.Text       = _sheetsSubtitle;
                     break;
-                case 2:
+                case TabModelo:
                     TabModeloBorder.Style   = activeTabStyle;
                     TabModeloText.Style     = activeTextStyle;
                     ModelPanel.Visibility   = Visibility.Visible;
                     ToolHeaderTitle.Text    = "Exportar Modelo";
                     ToolHeaderSubtitle.Text = "Exporta el modelo completo a NWC u otros formatos";
                     SubtitleText.Text       = _modelSubtitle;
+                    break;
+                case TabFamilias:
+                    TabFamiliasBorder.Style = activeTabStyle;
+                    TabFamiliasText.Style   = activeTextStyle;
+                    ExportPanel.Visibility  = Visibility.Visible;
+                    ToolHeaderTitle.Text    = "Exportar Familias";
+                    ToolHeaderSubtitle.Text = "Exporta familias del modelo a carpeta local";
+                    SubtitleText.Text       = _familiesSubtitle;
                     break;
             }
 

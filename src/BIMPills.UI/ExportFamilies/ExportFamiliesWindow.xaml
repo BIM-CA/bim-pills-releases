@@ -4,7 +4,7 @@
         Title="BIM Pills — Exportar Familias"
         Width="820" Height="640"
         MinWidth="640" MinHeight="480"
-        WindowStartupLocation="CenterScreen"
+        WindowStartupLocation="CenterOwner"
         Background="{DynamicResource BackgroundBrush}"
         WindowStyle="SingleBorderWindow"
         UseLayoutRounding="True"

@@ -28,54 +28,54 @@ namespace BIMPills.Infrastructure.Persistence
             Formatting       = Formatting.Indented
         };
 
-        public async Task<List<PublicationSet>> GetAllAsync()
+        public List<PublicationSet> GetAll()
         {
             var filePath = Path.Combine(_directory, FileName);
             if (!File.Exists(filePath))
                 return new List<PublicationSet>();
 
-            var json = await Task.Run(() => File.ReadAllText(filePath, System.Text.Encoding.UTF8));
+            var json = File.ReadAllText(filePath, System.Text.Encoding.UTF8);
             return JsonConvert.DeserializeObject<List<PublicationSet>>(json, _jsonSettings)
                    ?? new List<PublicationSet>();
         }
 
-        public async Task<string> CreateAsync(PublicationSet set)
+        public string Create(PublicationSet set)
         {
             set.Id = Guid.NewGuid().ToString();
             set.CreatedAt = DateTime.UtcNow;
             set.ModifiedAt = DateTime.UtcNow;
 
-            var sets = await GetAllAsync();
+            var sets = GetAll();
             sets.Add(set);
-            await SaveAsync(sets);
+            Save(sets);
 
             return set.Id;
         }
 
-        public async Task UpdateAsync(PublicationSet set)
+        public void Update(PublicationSet set)
         {
             set.ModifiedAt = DateTime.UtcNow;
-            var sets = await GetAllAsync();
+            var sets = GetAll();
             var index = sets.FindIndex(s => s.Id == set.Id);
             if (index >= 0)
             {
                 sets[index] = set;
-                await SaveAsync(sets);
+                Save(sets);
             }
         }
 
-        public async Task DeleteAsync(string setId)
+        public void Delete(string setId)
         {
-            var sets = await GetAllAsync();
+            var sets = GetAll();
             sets.RemoveAll(s => s.Id == setId);
-            await SaveAsync(sets);
+            Save(sets);
         }
 
-        private async Task SaveAsync(List<PublicationSet> sets)
+        private void Save(List<PublicationSet> sets)
         {
             var filePath = Path.Combine(_directory, FileName);
             var json = JsonConvert.SerializeObject(sets, _jsonSettings);
-            await Task.Run(() => File.WriteAllText(filePath, json, System.Text.Encoding.UTF8));
+            File.WriteAllText(filePath, json, System.Text.Encoding.UTF8);
         }
 
         private void EnsureDirectoryExists()
@@ -88,6 +88,18 @@ namespace BIMPills.Infrastructure.Persistence
         {
             var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
             return Path.Combine(appDataPath, "Autodesk", "Revit", "Addins", "BIMPills", "PublicationSets");
+        }
+
+        /// <summary>
+        /// Returns a directory scoped to a specific model name.
+        /// Sanitizes the model name for use as a folder name.
+        /// </summary>
+        public static string GetDirectoryForModel(string modelName)
+        {
+            var safeName = string.Join("_", modelName.Split(Path.GetInvalidFileNameChars()));
+            if (string.IsNullOrWhiteSpace(safeName)) safeName = "_default";
+            var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            return Path.Combine(appDataPath, "Autodesk", "Revit", "Addins", "BIMPills", "PublicationSets", safeName);
         }
     }
 }

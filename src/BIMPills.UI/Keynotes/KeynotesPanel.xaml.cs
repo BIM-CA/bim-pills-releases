@@ -89,9 +89,7 @@ namespace BIMPills.UI.Keynotes
             { Interval = TimeSpan.FromMilliseconds(40) };
         private double _scrollDirection = 0; // -1 = up, +1 = down
 
-        // Auto-save debounce (1.5s after last change)
-        private readonly System.Windows.Threading.DispatcherTimer _autoSaveTimer = new()
-            { Interval = TimeSpan.FromMilliseconds(1500) };
+        // Auto-save disabled — only manual save via "Guardar .txt" button
 
         // ── Constructor ──────────────────────────────────────────────────────
         public KeynotesPanel()
@@ -103,11 +101,7 @@ namespace BIMPills.UI.Keynotes
                 if (sv != null && _scrollDirection != 0)
                     sv.ScrollToVerticalOffset(sv.VerticalOffset + _scrollDirection * 24);
             };
-            _autoSaveTimer.Tick += (_, _) =>
-            {
-                _autoSaveTimer.Stop();
-                AutoSave();
-            };
+            // Auto-save removed — user saves manually
         }
 
         // ── Public API ───────────────────────────────────────────────────────
@@ -279,34 +273,6 @@ namespace BIMPills.UI.Keynotes
         {
             _hasChanges = true;
             SaveTxtButton.IsEnabled = _currentFile != null;
-            // Restart debounce timer for auto-save
-            if (_currentFile != null)
-            {
-                _autoSaveTimer.Stop();
-                _autoSaveTimer.Start();
-            }
-        }
-
-        private void AutoSave()
-        {
-            if (_currentFile == null || !_hasChanges) return;
-            try
-            {
-                var ordered = SortedTreeOrder(_allEntries).ToList();
-                File.WriteAllLines(_currentFile,
-                    ordered.Where(en => !string.IsNullOrEmpty(en.Key))
-                           .Select(en => $"{en.Key}\t{en.Description}\t{en.ParentKey}"));
-
-                foreach (var entry in _allEntries)
-                {
-                    entry.IsModified = false;
-                    entry.IsNew = false;
-                }
-                _hasChanges = false;
-                SaveTxtButton.IsEnabled = false;
-                StatusText.Text += " · Guardado";
-            }
-            catch { /* Auto-save silently fails — user can still manual-save */ }
         }
 
         // ── Drag-drop ─────────────────────────────────────────────────────────

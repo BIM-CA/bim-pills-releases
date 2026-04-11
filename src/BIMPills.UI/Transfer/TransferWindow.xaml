@@ -4,10 +4,10 @@
         xmlns:vt="clr-namespace:BIMPills.UI.ViewTemplates"
         xmlns:vf="clr-namespace:BIMPills.UI.ViewFilters"
         xmlns:ps="clr-namespace:BIMPills.UI.ProjectStandards"
-        Title="BIM Pills — Trasladar"
+        Title="BIM Pills — Importar"
         Width="960" Height="700"
         MinWidth="800" MinHeight="560"
-        WindowStartupLocation="CenterScreen"
+        WindowStartupLocation="CenterOwner"
         Background="{DynamicResource BackgroundBrush}"
         WindowStyle="SingleBorderWindow"
         ResizeMode="CanResizeWithGrip"
@@ -31,7 +31,7 @@
                 <Image Source="/BIMPills.UI;component/Resources/pill-icon.png"
                        Width="20" Height="32" RenderOptions.BitmapScalingMode="HighQuality"/>
                 <StackPanel Margin="10,0,0,0">
-                    <TextBlock Text="Trasladar" FontSize="12" FontWeight="Medium"
+                    <TextBlock Text="Importar" FontSize="12" FontWeight="Medium"
                                Foreground="{StaticResource AccentBrush}" FontFamily="Segoe UI"/>
                     <TextBlock x:Name="ModelNameLabel" Text="Modelo" FontSize="15" FontWeight="SemiBold"
                                Foreground="{StaticResource PrimaryBrush}" FontFamily="Segoe UI"/>
@@ -65,7 +65,7 @@
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="&#xE8AB;" FontFamily="Segoe MDL2 Assets"
                                            FontSize="13" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                <TextBlock x:Name="TransferButtonLabel" Text="Trasladar" VerticalAlignment="Center"/>
+                                <TextBlock x:Name="TransferButtonLabel" Text="Importar" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
                     </DockPanel>
@@ -111,7 +111,7 @@
                                        FontSize="14" FontWeight="SemiBold"
                                        Foreground="{StaticResource PrimaryBrush}" FontFamily="Segoe UI"/>
                             <TextBlock x:Name="ToolHeaderSubtitle"
-                                       Text="Transfiere plantillas de vista desde otros proyectos abiertos"
+                                       Text="Importa plantillas de vista desde otros proyectos abiertos"
                                        FontSize="11" Foreground="#86868B" FontFamily="Segoe UI"/>
                         </StackPanel>
                     </StackPanel>

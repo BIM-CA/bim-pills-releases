@@ -8,6 +8,7 @@ using BIMPills.Infrastructure.DI;
 using BIMPills.Revit.Commands;
 using BIMPills.Revit.Context;
 using BIMPills.Revit.Commands.DataManager;
+using BIMPills.UI.Shared;
 using BIMPills.UI.Transfer;
 using System;
 using System.Collections.Generic;
@@ -128,11 +129,12 @@ namespace BIMPills.Revit.Commands.Transfer
                         }
                         logger?.Info($"[Transferir] Plantillas: {revitIds.Count} templates + {allIds.Count - revitIds.Count} filtros dependientes");
 
-                        using var tx = new Transaction(targetDoc, "BIM Pills: Transferir plantillas de vista");
+                        using var tx = new Transaction(targetDoc, "BIM Pills: Importar plantillas de vista");
                         tx.Start();
 
                         if (conflict == ConflictResolution.Replace)
                         {
+                            // Delete existing templates with matching names
                             var sourceNames = revitIds.Select(id => sourceDoc.GetElement(id)).OfType<View>()
                                 .Select(v => v.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
                             var toDelete = new FilteredElementCollector(targetDoc).OfClass(typeof(View)).Cast<View>()
@@ -142,9 +144,110 @@ namespace BIMPills.Revit.Commands.Transfer
                             { try { targetDoc.Delete(delId); result.Conflicts++; } catch { } }
                         }
 
+                        // Snapshot existing filter names → IDs before copy
+                        var existingFilters = new FilteredElementCollector(targetDoc)
+                            .OfClass(typeof(ParameterFilterElement))
+                            .Cast<ParameterFilterElement>()
+                            .ToDictionary(f => f.Name, f => f.Id, StringComparer.OrdinalIgnoreCase);
+
                         var opts = new CopyPasteOptions();
                         opts.SetDuplicateTypeNamesHandler(new BIMPillsDuplicateHandler(conflict));
                         var copied = ElementTransformUtils.CopyElements(sourceDoc, allIds, targetDoc, Transform.Identity, opts);
+
+                        // Overwrite existing filters with source definitions (like Revit's
+                        // native "Transfer Project Standards" overwrite behavior).
+                        // CopyElements renames duplicates with "(N)" suffix — we detect them,
+                        // overwrite the original filter's rules/categories, remap templates
+                        // to the original, and delete the "(N)" copies.
+                        if (copied != null)
+                        {
+                            var copiedList = copied.ToList();
+                            var newFilterIds = new List<ElementId>();
+                            foreach (var cid in copiedList)
+                            {
+                                if (targetDoc.GetElement(cid) is ParameterFilterElement)
+                                    newFilterIds.Add(cid);
+                            }
+
+                            if (newFilterIds.Count > 0)
+                            {
+                                // Build mapping: "(N)" duplicate → original existing filter
+                                var remapFilter = new Dictionary<ElementId, ElementId>();
+                                foreach (var nfId in newFilterIds)
+                                {
+                                    var newFilter = targetDoc.GetElement(nfId) as ParameterFilterElement;
+                                    if (newFilter == null) continue;
+
+                                    // Try exact name match first
+                                    if (existingFilters.TryGetValue(newFilter.Name, out var origId) && origId != nfId)
+                                    {
+                                        remapFilter[nfId] = origId;
+                                        continue;
+                                    }
+
+                                    // Strip "(N)" suffix that CopyElements appends to duplicates
+                                    var suffixMatch = System.Text.RegularExpressions.Regex.Match(
+                                        newFilter.Name, @"\s*\(\d+\)$");
+                                    if (suffixMatch.Success)
+                                    {
+                                        string baseName = newFilter.Name.Substring(0, suffixMatch.Index);
+                                        if (existingFilters.TryGetValue(baseName, out origId) && origId != nfId)
+                                            remapFilter[nfId] = origId;
+                                    }
+                                }
+
+                                if (remapFilter.Count > 0)
+                                {
+                                    // Overwrite original filters with source definitions
+                                    foreach (var kvp in remapFilter)
+                                    {
+                                        try
+                                        {
+                                            var dupFilter  = targetDoc.GetElement(kvp.Key)   as ParameterFilterElement;
+                                            var origFilter = targetDoc.GetElement(kvp.Value) as ParameterFilterElement;
+                                            if (dupFilter != null && origFilter != null)
+                                            {
+                                                origFilter.SetCategories(dupFilter.GetCategories());
+                                                var ef = dupFilter.GetElementFilter();
+                                                if (ef != null)
+                                                    origFilter.SetElementFilter(ef);
+                                            }
+                                        }
+                                        catch (Exception ex) { logger?.Warning($"[Transferir] Overwrite filtro: {ex.Message}"); }
+                                    }
+
+                                    // Remap new templates to use original filters instead of "(N)" copies
+                                    foreach (var cid in copiedList)
+                                    {
+                                        if (targetDoc.GetElement(cid) is View newTmpl && newTmpl.IsTemplate)
+                                        {
+                                            try
+                                            {
+                                                var tmplFilters = newTmpl.GetFilters();
+                                                foreach (var fid in tmplFilters)
+                                                {
+                                                    if (remapFilter.TryGetValue(fid, out var origFid))
+                                                    {
+                                                        var overrides = newTmpl.GetFilterOverrides(fid);
+                                                        var visible   = newTmpl.GetFilterVisibility(fid);
+                                                        newTmpl.RemoveFilter(fid);
+                                                        newTmpl.AddFilter(origFid);
+                                                        newTmpl.SetFilterOverrides(origFid, overrides);
+                                                        newTmpl.SetFilterVisibility(origFid, visible);
+                                                    }
+                                                }
+                                            }
+                                            catch { }
+                                        }
+                                    }
+
+                                    // Delete "(N)" copies — safe, no longer referenced
+                                    foreach (var dupId in remapFilter.Keys)
+                                    { try { targetDoc.Delete(dupId); } catch { } }
+                                    logger?.Info($"[Transferir] Sobrescritos {remapFilter.Count} filtros existentes con definiciones de origen");
+                                }
+                            }
+                        }
 
                         result.Transferred = revitIds.Count;
                         result.Skipped = Math.Max(0, ids.Count - result.Transferred);
@@ -228,7 +331,7 @@ namespace BIMPills.Revit.Commands.Transfer
 
                         var revitIds = ids.Select(id => new ElementId(id)).ToList();
 
-                        using var tx = new Transaction(targetDoc, "BIM Pills: Transferir filtros de vista");
+                        using var tx = new Transaction(targetDoc, "BIM Pills: Importar filtros de vista");
                         tx.Start();
 
                         if (conflict == ConflictResolution.Replace)
@@ -279,7 +382,7 @@ namespace BIMPills.Revit.Commands.Transfer
 
                         var revitIds = ids.Select(id => new ElementId(id)).ToList();
 
-                        using var tx = new Transaction(targetDoc, "BIM Pills: Transferir normas de proyecto");
+                        using var tx = new Transaction(targetDoc, "BIM Pills: Importar normas de proyecto");
 
                         var failOpts = tx.GetFailureHandlingOptions();
                         failOpts.SetFailuresPreprocessor(new SilentWarningsPreprocessor());
@@ -365,7 +468,7 @@ namespace BIMPills.Revit.Commands.Transfer
             }
             catch (Exception ex) { logger?.Warning($"[Transferir] InitializeProjectStandards: {ex.Message}"); }
 
-            window.ShowDialog();
+            window.ShowDialogOverRevit();
         }
 
         // ── Helpers ───────────────────────────────────────────────────────────

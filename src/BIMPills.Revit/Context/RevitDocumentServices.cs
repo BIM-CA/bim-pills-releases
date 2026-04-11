@@ -524,21 +524,39 @@ namespace BIMPills.Revit.Context
         {
             try
             {
+                var names = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                // Collect from first sheet
                 var firstSheet = new FilteredElementCollector(_doc)
                     .OfClass(typeof(ViewSheet))
                     .FirstElement();
+                if (firstSheet != null)
+                    CollectParameterNames(firstSheet, names);
 
-                if (firstSheet == null) return new List<string>();
+                // Collect from first non-template view (may have different project parameters)
+                var firstView = new FilteredElementCollector(_doc)
+                    .OfClass(typeof(View))
+                    .Cast<View>()
+                    .FirstOrDefault(v => !v.IsTemplate && !(v is ViewSheet)
+                        && v.ViewType != ViewType.ProjectBrowser
+                        && v.ViewType != ViewType.SystemBrowser
+                        && v.ViewType != ViewType.Internal);
+                if (firstView != null)
+                    CollectParameterNames(firstView, names);
 
-                var names = new SortedSet<string>();
-                foreach (Parameter p in firstSheet.Parameters)
-                {
-                    if (p.Definition?.Name != null && p.HasValue && p.StorageType != StorageType.None)
-                        names.Add(p.Definition.Name);
-                }
                 return names.ToList();
             }
             catch { return new List<string>(); }
+        }
+
+        private static void CollectParameterNames(Element element, SortedSet<string> names)
+        {
+            foreach (Parameter p in element.Parameters)
+            {
+                if (p.Definition?.Name == null || p.StorageType == StorageType.None) continue;
+                if (p.IsReadOnly && p.StorageType == StorageType.ElementId) continue;
+                names.Add(p.Definition.Name);
+            }
         }
 
         private static Dictionary<string, string> GetAllParameterValues(Element element)

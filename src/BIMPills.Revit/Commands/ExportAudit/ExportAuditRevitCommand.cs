@@ -2,6 +2,7 @@ using BIMPills.Commands.ModelAudit;
 using BIMPills.Core.Services;
 using BIMPills.Infrastructure.DI;
 using BIMPills.UI.ExportAudit;
+using BIMPills.UI.Shared;
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
@@ -21,9 +22,10 @@ namespace BIMPills.Revit.Commands.ExportAudit
 
             try
             {
+                try { RevitOwnerHelper.SetCurrentRevitHandle(commandData.Application.MainWindowHandle); } catch { }
                 var auditResult = ModelAuditCommand.LastResult;
                 var window = new ExportAuditWindow(auditResult);
-                window.ShowDialog();
+                window.ShowDialogOverRevit();
                 return Result.Succeeded;
             }
             catch (System.Exception ex)

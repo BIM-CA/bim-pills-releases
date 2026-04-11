@@ -2,6 +2,7 @@ using BIMPills.Core.Audit;
 using BIMPills.Core.Services;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -236,6 +237,7 @@ namespace BIMPills.UI.ExportFamilies
             ProgressBar.Maximum = selectedFamilies.Count;
             ProgressBar.Value = 0;
 
+            var sw = Stopwatch.StartNew();
             int exported = 0;
             int failed = 0;
             var errors = new List<string>();
@@ -279,7 +281,12 @@ namespace BIMPills.UI.ExportFamilies
                 ProgressOverlay.Visibility = Visibility.Collapsed;
             }
 
-            string summary = $"Exportadas {exported} de {selectedFamilies.Count} familias.";
+            sw.Stop();
+            var elapsedStr = sw.Elapsed.TotalMinutes >= 1
+                ? $"{(int)sw.Elapsed.TotalMinutes} min {sw.Elapsed.Seconds} seg"
+                : $"{sw.Elapsed.TotalSeconds:F1} seg";
+
+            string summary = $"Exportadas {exported} de {selectedFamilies.Count} familias.\nTiempo: {elapsedStr}";
             if (failed > 0)
             {
                 summary += $"\n\n{failed} familias no pudieron exportarse:";

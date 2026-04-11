@@ -5,7 +5,7 @@
         Title="BIM Pills — Integración AI"
         Width="500" Height="660"
         MinWidth="440" MinHeight="580"
-        WindowStartupLocation="CenterScreen"
+        WindowStartupLocation="CenterOwner"
         Background="{DynamicResource BackgroundBrush}"
         WindowStyle="SingleBorderWindow"
         UseLayoutRounding="True" SnapsToDevicePixels="True">

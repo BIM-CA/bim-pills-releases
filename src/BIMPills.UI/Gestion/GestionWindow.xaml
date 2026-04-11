@@ -4,7 +4,7 @@
         Title="BIM Pills — Estandarizar"
         Width="780" Height="620"
         ResizeMode="CanResizeWithGrip"
-        WindowStartupLocation="CenterScreen"
+        WindowStartupLocation="CenterOwner"
         Background="{DynamicResource BackgroundBrush}"
         UseLayoutRounding="True"
         SnapsToDevicePixels="True">

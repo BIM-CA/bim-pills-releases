@@ -471,14 +471,21 @@ namespace BIMPills.UI.ExportModel
                     ProgressOverlay.Visibility = Visibility.Visible;
                     try
                     {
+                        var sw = Stopwatch.StartNew();
                         bool ok = _nwcExportCallback(config);
+                        sw.Stop();
                         ProgressOverlay.Visibility = Visibility.Collapsed;
+
+                        var elapsedStr = sw.Elapsed.TotalMinutes >= 1
+                            ? $"{(int)sw.Elapsed.TotalMinutes} min {sw.Elapsed.Seconds} seg"
+                            : $"{sw.Elapsed.TotalSeconds:F1} seg";
+
                         if (ok)
-                            MessageBox.Show("Modelo exportado correctamente a NWC.",
+                            MessageBox.Show($"Modelo exportado correctamente a NWC.\nTiempo: {elapsedStr}",
                                 "BIM Pills \u2014 Exportaci\u00f3n completada",
                                 MessageBoxButton.OK, MessageBoxImage.Information);
                         else
-                            MessageBox.Show("La exportaci\u00f3n NWC fall\u00f3.",
+                            MessageBox.Show($"La exportaci\u00f3n NWC fall\u00f3.\nTiempo: {elapsedStr}",
                                 "BIM Pills \u2014 Error", MessageBoxButton.OK, MessageBoxImage.Warning);
                     }
                     catch { ProgressOverlay.Visibility = Visibility.Collapsed; throw; }

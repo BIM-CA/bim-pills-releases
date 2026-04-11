@@ -170,7 +170,27 @@ namespace BIMPills.UI.Sandbox
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error abriendo ExportarWindow:\n\n{ex.GetType().Name}:\n{ex.Message}\n\n{ex.InnerException?.Message}", "Sandbox — Error");
+                var sb = new System.Text.StringBuilder();
+                sb.AppendLine("Error abriendo ExportarWindow:");
+                sb.AppendLine();
+                var cur = ex;
+                int level = 0;
+                while (cur != null)
+                {
+                    sb.AppendLine($"[{level}] {cur.GetType().FullName}");
+                    sb.AppendLine($"    Message: {cur.Message}");
+                    if (!string.IsNullOrEmpty(cur.StackTrace))
+                    {
+                        var firstLines = cur.StackTrace.Split('\n');
+                        for (int i = 0; i < firstLines.Length && i < 6; i++)
+                            sb.AppendLine("    " + firstLines[i].Trim());
+                    }
+                    sb.AppendLine();
+                    cur = cur.InnerException;
+                    level++;
+                }
+                try { System.IO.File.WriteAllText(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "bimpills-sandbox-exportar-error.log"), sb.ToString()); } catch { }
+                MessageBox.Show(sb.ToString(), "Sandbox — Error");
             }
         }
 
@@ -391,6 +411,21 @@ namespace BIMPills.UI.Sandbox
             catch (Exception ex)
             {
                 MessageBox.Show($"Error abriendo CustomDimensionSchemesWindow:\n{ex.Message}", "Sandbox — Error");
+            }
+        }
+
+        // ── BimPillsDialog showcase ──────────────────────────────────────────────
+
+        private void OpenBimPillsDialogs_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var win = new BimPillsDialogShowcase { Owner = this };
+                win.Show();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error abriendo BimPillsDialogShowcase:\n{ex.Message}", "Sandbox \u2014 Error");
             }
         }
 

@@ -6,6 +6,7 @@ using BIMPills.Core.Services;
 using BIMPills.Infrastructure.DI;
 using BIMPills.Revit.Commands;
 using BIMPills.UI.Gestion;
+using BIMPills.UI.Shared;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -84,7 +85,7 @@ namespace BIMPills.Revit.Commands.Gestion
                 createCallback,
                 renameCallback,
                 createViewsCallback
-            ).ShowDialog();
+            ).ShowDialogOverRevit();
         }
 
         // ── 3D View creation ──────────────────────────────────────────────────

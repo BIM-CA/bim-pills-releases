@@ -10,6 +10,7 @@ using BIMPills.Infrastructure.DI;
 using BIMPills.Revit.Commands;
 using BIMPills.Revit.Context;
 using BIMPills.UI.DataManager;
+using BIMPills.UI.Shared;
 
 namespace BIMPills.Revit.Commands.DataManager
 {
@@ -148,7 +149,7 @@ namespace BIMPills.Revit.Commands.DataManager
                     catch { return false; }
                 });
 
-            window.ShowDialog();
+            window.ShowDialogOverRevit();
         }
 
         /// <summary>

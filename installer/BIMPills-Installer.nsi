@@ -1,4 +1,4 @@
-; BIMPills v1.0.0-beta.2.1 Installer
+; BIMPills v1.0.0-beta.3 Installer
 ; NSIS Installer Script — Revit 2024, 2025, 2026 y 2027
 ;
 ; Build: cd installer && makensis BIMPills-Installer.nsi
@@ -12,14 +12,29 @@
 !define BUILD_NET48 "..\src\BIMPills.Revit\bin\Release\net48-windows"
 
 ;--------------------------------
+; Optional bundled PDF24 installer (for the PDF engine "Impresora del sistema").
+; If vendor\pdf24-creator.msi exists at compile time, PDF24 is bundled and
+; offered as an optional component. If not, the section is skipped and users
+; will have to install PDF24 themselves (the feature still works with other
+; PDF printers like Microsoft Print to PDF).
+;
+; To fetch the MSI automatically before building, run:
+;   powershell -File installer\download-pdf24.ps1
+!define PDF24_MSI_PATH "vendor\pdf24-creator.msi"
+!if /FileExists "${PDF24_MSI_PATH}"
+  !define INCLUDE_PDF24
+!endif
+
+;--------------------------------
 ; Includes
 !include "MUI2.nsh"
 !include "Sections.nsh"
+!include "LogicLib.nsh"
 
 ;--------------------------------
 ; Attributes
-Name "BIMPills v1.0.0-beta.2.1"
-OutFile "BIMPills-1.0.0-beta.2.1-Setup.exe"
+Name "BIMPills v1.0.0-beta.3"
+OutFile "BIMPills-1.0.0-beta.3-Setup.exe"
 RequestExecutionLevel user
 InstallDir "$APPDATA\Autodesk\Revit\Addins"
 
@@ -123,6 +138,27 @@ Section "Revit 2024" SEC_2024
 SectionEnd
 
 ;--------------------------------
+; Optional: PDF24 Creator (silent-printing PDF driver for "Impresora del sistema")
+!ifdef INCLUDE_PDF24
+Section /o "PDF24 Creator (recomendado para exportar PDF)" SEC_PDF24
+  DetailPrint "Instalando PDF24 Creator (puede tardar 1-2 minutos)..."
+  SetOutPath "$TEMP"
+  File "/oname=bimpills-pdf24-creator.msi" "${PDF24_MSI_PATH}"
+  ; /qb = basic UI (progress only, no wizard) — keeps the install minimally
+  ;        interactive so the user knows something is happening.
+  ; /norestart = never trigger a reboot.
+  ; ADDLOCAL=ALL = install all features (driver + creator tray app).
+  ExecWait 'msiexec.exe /i "$TEMP\bimpills-pdf24-creator.msi" /qb /norestart ADDLOCAL=ALL' $0
+  Delete "$TEMP\bimpills-pdf24-creator.msi"
+  ${If} $0 = 0
+    DetailPrint "PDF24 Creator instalado correctamente."
+  ${Else}
+    DetailPrint "PDF24 Creator: msiexec retornó $0 (ignorado)."
+  ${EndIf}
+SectionEnd
+!endif
+
+;--------------------------------
 ; Uninstaller
 Section "Uninstall"
   RMDir /r "$APPDATA\Autodesk\Revit\Addins\2027\BIMPills"
@@ -139,4 +175,7 @@ SectionEnd
   !insertmacro MUI_DESCRIPTION_TEXT ${SEC_2026} "Instala BIMPills para Autodesk Revit 2026 (.NET 8)"
   !insertmacro MUI_DESCRIPTION_TEXT ${SEC_2025} "Instala BIMPills para Autodesk Revit 2025 (.NET 8)"
   !insertmacro MUI_DESCRIPTION_TEXT ${SEC_2024} "Instala BIMPills para Autodesk Revit 2024 (.NET Framework 4.8)"
+!ifdef INCLUDE_PDF24
+  !insertmacro MUI_DESCRIPTION_TEXT ${SEC_PDF24} "Instala PDF24 Creator, una impresora PDF gratuita. BIM Pills la usa como motor alternativo para exportar planos cuando el motor nativo de Revit pierde líneas o textos."
+!endif
 !insertmacro MUI_FUNCTION_DESCRIPTION_END

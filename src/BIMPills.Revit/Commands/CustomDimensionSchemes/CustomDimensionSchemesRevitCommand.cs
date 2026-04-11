@@ -4,6 +4,7 @@ using BIMPills.Core.Services;
 using BIMPills.Infrastructure.DI;
 using BIMPills.Revit.Commands;
 using BIMPills.UI.CustomDimensionSchemes;
+using BIMPills.UI.Shared;
 
 namespace BIMPills.Revit.Commands.CustomDimensionSchemes
 {
@@ -20,7 +21,7 @@ namespace BIMPills.Revit.Commands.CustomDimensionSchemes
             try
             {
                 var window = new CustomDimensionSchemesWindow();
-                window.ShowDialog();
+                window.ShowDialogOverRevit();
             }
             catch (System.Exception ex)
             {

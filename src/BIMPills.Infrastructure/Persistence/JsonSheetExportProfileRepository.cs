@@ -28,60 +28,60 @@ namespace BIMPills.Infrastructure.Persistence
             Formatting       = Formatting.Indented
         };
 
-        public async Task<List<SheetExportProfile>> GetAllAsync()
+        public List<SheetExportProfile> GetAll()
         {
             var filePath = Path.Combine(_profileDirectory, FileName);
             if (!File.Exists(filePath))
                 return new List<SheetExportProfile>();
 
-            var json = await Task.Run(() => File.ReadAllText(filePath, System.Text.Encoding.UTF8));
+            var json = File.ReadAllText(filePath, System.Text.Encoding.UTF8);
             return JsonConvert.DeserializeObject<List<SheetExportProfile>>(json, _jsonSettings)
                    ?? new List<SheetExportProfile>();
         }
 
-        public async Task<SheetExportProfile?> GetByIdAsync(string profileId)
+        public SheetExportProfile? GetById(string profileId)
         {
-            var profiles = await GetAllAsync();
+            var profiles = GetAll();
             return profiles.Find(p => p.Id == profileId);
         }
 
-        public async Task<string> CreateAsync(SheetExportProfile profile)
+        public string Create(SheetExportProfile profile)
         {
             profile.Id = Guid.NewGuid().ToString();
             profile.CreatedAt = DateTime.UtcNow;
             profile.ModifiedAt = DateTime.UtcNow;
 
-            var profiles = await GetAllAsync();
+            var profiles = GetAll();
             profiles.Add(profile);
-            await SaveAsync(profiles);
+            Save(profiles);
 
             return profile.Id;
         }
 
-        public async Task UpdateAsync(SheetExportProfile profile)
+        public void Update(SheetExportProfile profile)
         {
             profile.ModifiedAt = DateTime.UtcNow;
-            var profiles = await GetAllAsync();
+            var profiles = GetAll();
             var index = profiles.FindIndex(p => p.Id == profile.Id);
             if (index >= 0)
             {
                 profiles[index] = profile;
-                await SaveAsync(profiles);
+                Save(profiles);
             }
         }
 
-        public async Task DeleteAsync(string profileId)
+        public void Delete(string profileId)
         {
-            var profiles = await GetAllAsync();
+            var profiles = GetAll();
             profiles.RemoveAll(p => p.Id == profileId);
-            await SaveAsync(profiles);
+            Save(profiles);
         }
 
-        private async Task SaveAsync(List<SheetExportProfile> profiles)
+        private void Save(List<SheetExportProfile> profiles)
         {
             var filePath = Path.Combine(_profileDirectory, FileName);
             var json = JsonConvert.SerializeObject(profiles, _jsonSettings);
-            await Task.Run(() => File.WriteAllText(filePath, json, System.Text.Encoding.UTF8));
+            File.WriteAllText(filePath, json, System.Text.Encoding.UTF8);
         }
 
         private void EnsureDirectoryExists()

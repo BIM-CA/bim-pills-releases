@@ -28,7 +28,7 @@ namespace BIMPills.UI.ProjectStandards
         private string? _currentCategoryKey;
 
         private bool   _canTransfer;
-        private string _transferLabel = "Trasladar";
+        private string _transferLabel = "Importar";
 
         public event EventHandler<bool>? TransferEnabledChanged;
         public string TransferLabel => _transferLabel;
@@ -114,8 +114,10 @@ namespace BIMPills.UI.ProjectStandards
                 var allSelected = GetAllSelectedIds();
                 if (allSelected.Count == 0)
                 {
-                    MessageBox.Show("Selecciona al menos un elemento para transferir.",
-                        "BIM Pills \u2014 Transferir", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    BIMPills.UI.Shared.BimPillsDialog.Warning(
+                        header: "Nada seleccionado",
+                        message: "Selecciona al menos un elemento para importar.",
+                        owner: Window.GetWindow(this));
                     return;
                 }
 
@@ -134,19 +136,27 @@ namespace BIMPills.UI.ProjectStandards
                 int catCount = _selectedByCategory.Count(kv => kv.Value.Count > 0);
                 string catLabel = catCount == 1 ? "1 categor\u00eda" : $"{catCount} categor\u00edas";
 
-                var confirm = MessageBox.Show(
-                    $"\u00bfTransferir {total} elementos ({catLabel}) desde \u00ab{docTitle}\u00bb?",
-                    "BIM Pills \u2014 Confirmar transferencia",
-                    MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.Yes);
+                var confirmed = BIMPills.UI.Shared.BimPillsDialog.Confirm(
+                    header: "\u00bfImportar est\u00e1ndares?",
+                    message: $"Se importar\u00e1n {total} elementos ({catLabel}) desde \u00ab{docTitle}\u00bb.",
+                    detail: conflict == ConflictResolution.Replace
+                        ? "Los elementos con el mismo nombre ser\u00e1n reemplazados."
+                        : "Los elementos con el mismo nombre se omitir\u00e1n.",
+                    owner: Window.GetWindow(this),
+                    yesText: "Importar",
+                    noText: "Cancelar");
 
-                if (confirm != MessageBoxResult.Yes) return;
+                if (!confirmed) return;
 
                 ExecuteBulkTransfer(allSelected, docTitle, conflict);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error en transferencia: {ex.Message}",
-                    "BIM Pills \u2014 Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                BIMPills.UI.Shared.BimPillsDialog.Error(
+                    header: "Error al importar",
+                    message: "Ocurri\u00f3 un error al importar los est\u00e1ndares.",
+                    detail: ex.Message,
+                    owner: Window.GetWindow(this));
             }
         }
 
@@ -385,13 +395,13 @@ namespace BIMPills.UI.ProjectStandards
 
             if (total == 0)
             {
-                _transferLabel = "Trasladar";
-                StatusText.Text = "Selecciona elementos para transferir";
+                _transferLabel = "Importar";
+                StatusText.Text = "Selecciona elementos para importar";
             }
             else
             {
                 string catLabel = cats == 1 ? "1 categor\u00eda" : $"{cats} categor\u00edas";
-                _transferLabel = $"Trasladar ({total} de {catLabel})";
+                _transferLabel = $"Importar ({total} de {catLabel})";
                 StatusText.Text = $"{total} elementos seleccionados en {catLabel}";
             }
 
@@ -403,7 +413,7 @@ namespace BIMPills.UI.ProjectStandards
         private void ShowProgress(int current, int total, string itemName)
         {
             ProgressOverlay.Visibility = Visibility.Visible;
-            ProgressTitle.Text = "Transfiriendo...";
+            ProgressTitle.Text = "Importando\u2026";
             ProgressDetail.Text = itemName;
             ProgressBar.Maximum = total;
             ProgressBar.Value = current;
@@ -421,7 +431,7 @@ namespace BIMPills.UI.ProjectStandards
         {
             ProgressOverlay.Visibility = Visibility.Visible;
             ProgressBar.Value = 0;
-            ProgressTitle.Text = "Preparando transferencia...";
+            ProgressTitle.Text = "Preparando importaci\u00f3n\u2026";
             ProgressDetail.Text = "";
             ProgressCount.Text = "";
             Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Render, new Action(() => { }));
@@ -493,7 +503,7 @@ namespace BIMPills.UI.ProjectStandards
                 totalResult.Skipped     = skipIds.Count;
             }
 
-            ShowResult(totalResult);
+            ShowResult(totalResult, Window.GetWindow(this));
         }
 
         private void ExecuteBulkTransfer(List<long> ids, string docTitle, ConflictResolution conflict)
@@ -509,23 +519,29 @@ namespace BIMPills.UI.ProjectStandards
             {
                 result = new ProjectStandardTransferResult { Transferred = ids.Count };
             }
-            ShowResult(result);
+            ShowResult(result, Window.GetWindow(this));
         }
 
-        private static void ShowResult(ProjectStandardTransferResult r)
+        private static void ShowResult(ProjectStandardTransferResult r, Window? owner = null)
         {
-            var msg = $"Transferencia completada.\n\n" +
-                      $"\u2022 Transferidos: {r.Transferred}\n" +
-                      $"\u2022 Omitidos: {r.Skipped}\n" +
-                      $"\u2022 Conflictos resueltos: {r.Conflicts}";
-            if (r.SkippedNames.Count > 0)
-                msg += $"\n\nOmitidos (ya exist\u00edan):\n{string.Join("\n", r.SkippedNames.Select(n => $"\u2022 {n}"))}";
-            if (r.Errors.Count > 0)
-                msg += $"\n\nErrores:\n{string.Join("\n", r.Errors.Take(5))}";
+            var message = $"Importados: {r.Transferred} \u00b7 Omitidos: {r.Skipped} \u00b7 Conflictos: {r.Conflicts}";
 
-            MessageBox.Show(msg, "BIM Pills \u2014 Transferir",
-                MessageBoxButton.OK,
-                r.Errors.Count > 0 ? MessageBoxImage.Warning : MessageBoxImage.Information);
+            var detailLines = new List<string>();
+            if (r.SkippedNames.Count > 0)
+                detailLines.Add($"Omitidos (ya exist\u00edan):\n{string.Join("\n", r.SkippedNames.Select(n => $"\u2022 {n}"))}");
+            if (r.Errors.Count > 0)
+                detailLines.Add($"Errores:\n{string.Join("\n", r.Errors.Take(5))}");
+
+            var detail = detailLines.Count > 0 ? string.Join("\n\n", detailLines) : null;
+
+            if (r.Errors.Count > 0)
+                BIMPills.UI.Shared.BimPillsDialog.Warning(
+                    header: "Importaci\u00f3n con avisos",
+                    message: message, detail: detail, owner: owner);
+            else
+                BIMPills.UI.Shared.BimPillsDialog.Success(
+                    header: "Importaci\u00f3n completada",
+                    message: message, detail: detail, owner: owner);
         }
 
         // ── UI helpers ───────────────────────────────────────────────────────

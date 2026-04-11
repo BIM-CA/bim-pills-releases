@@ -98,21 +98,21 @@ namespace BIMPills.UI.Transfer
                     ToolHeaderIcon.Text             = "\uE8A1";
                     ToolHeaderIcon.Foreground       = HexBrush("#1565C0");
                     ToolHeaderTitle.Text            = "Plantillas de Vista";
-                    ToolHeaderSubtitle.Text         = "Transfiere plantillas de vista desde otros proyectos abiertos";
+                    ToolHeaderSubtitle.Text         = "Importa plantillas de vista desde otros proyectos abiertos";
                     break;
                 case 1:
                     ToolHeaderIconBorder.Background = HexBrush("#F3E5F5");
                     ToolHeaderIcon.Text             = "\uE74C";
                     ToolHeaderIcon.Foreground       = HexBrush("#6A1B9A");
                     ToolHeaderTitle.Text            = "Filtros de Vista";
-                    ToolHeaderSubtitle.Text         = "Transfiere filtros de vista desde otros proyectos abiertos";
+                    ToolHeaderSubtitle.Text         = "Importa filtros de vista desde otros proyectos abiertos";
                     break;
                 case 2:
                     ToolHeaderIconBorder.Background = HexBrush("#E8F5E9");
                     ToolHeaderIcon.Text             = "\uE8AB";
                     ToolHeaderIcon.Foreground       = HexBrush("#2E7D32");
                     ToolHeaderTitle.Text            = "Otros Est\u00e1ndares";
-                    ToolHeaderSubtitle.Text         = "Transfiere tipos, estilos y configuraciones desde otro proyecto abierto";
+                    ToolHeaderSubtitle.Text         = "Importa tipos, estilos y configuraciones desde otro proyecto abierto";
                     break;
             }
 
@@ -134,7 +134,7 @@ namespace BIMPills.UI.Transfer
                       : StandardsPanel.TransferLabel;
 
             TransferButtonLabel.Text       = label;
-            FooterTransferButton.IsEnabled = label != "Trasladar";
+            FooterTransferButton.IsEnabled = label != "Importar";
         }
 
         private void Transfer_Click(object sender, RoutedEventArgs e)

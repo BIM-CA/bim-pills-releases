@@ -5,7 +5,7 @@
         Width="420"
         SizeToContent="Height"
         ResizeMode="NoResize"
-        WindowStartupLocation="CenterScreen"
+        WindowStartupLocation="CenterOwner"
         Background="{DynamicResource BackgroundBrush}"
         UseLayoutRounding="True"
         SnapsToDevicePixels="True">

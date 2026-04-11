@@ -4,7 +4,7 @@
         Title="BIM Pills — Exportar Informe"
         Width="540" Height="700"
         MinWidth="460" MinHeight="560"
-        WindowStartupLocation="CenterScreen"
+        WindowStartupLocation="CenterOwner"
         Background="{DynamicResource BackgroundBrush}"
         WindowStyle="SingleBorderWindow"
         UseLayoutRounding="True"

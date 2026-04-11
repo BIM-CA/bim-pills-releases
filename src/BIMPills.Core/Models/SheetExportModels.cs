@@ -198,8 +198,48 @@ namespace BIMPills.Core.Models
         public bool HideUnreferencedViewTags  { get; set; } = false;
         public bool ViewLinksInBlue           { get; set; } = false;
 
+        // Advanced rendering options (content preservation — fix content loss)
+        /// <summary>
+        /// When true, Revit hides lines it considers coincident. Known cause of content
+        /// loss (missing text/annotations/fine lines). Default false = preserve everything.
+        /// </summary>
+        public bool MaskCoincidentLines        { get; set; } = false;
+        /// <summary>
+        /// When true, halftones are replaced with thin lines. Can hide hatches/shaded areas.
+        /// Default false = preserve halftones.
+        /// </summary>
+        public bool ReplaceHalftoneWithThinLines { get; set; } = false;
+        /// <summary>
+        /// When true, the entire view is rasterized (larger file, but guarantees visual fidelity
+        /// for shadows/transparencies/complex materials). Default false = vector where possible.
+        /// </summary>
+        public bool AlwaysUseRaster            { get; set; } = false;
+
         // Output
         public bool CombineIntoPdf            { get; set; } = false;
         public string CombinedFileName        { get; set; } = "Planos_Combinados";
+    }
+
+    // ── PDF Engine (native vs printer) ──
+
+    /// <summary>
+    /// Which PDF rendering engine to use for sheet export.
+    /// Native = Revit built-in PDFExportOptions (fast, single call).
+    /// SystemPrinter = Revit prints to a selected PDF printer driver (PDF24, Adobe PDF, etc.).
+    /// </summary>
+    public enum PdfEngineKind
+    {
+        Native,
+        SystemPrinter
+    }
+
+    /// <summary>
+    /// Global PDF engine configuration — persisted between sessions.
+    /// </summary>
+    public class PdfEngineSettings
+    {
+        public PdfEngineKind Engine { get; set; } = PdfEngineKind.Native;
+        /// <summary>Windows printer name (e.g. "PDF24", "Microsoft Print to PDF"). Used when Engine = SystemPrinter.</summary>
+        public string PrinterName { get; set; } = "";
     }
 }

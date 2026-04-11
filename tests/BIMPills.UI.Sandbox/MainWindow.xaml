@@ -56,7 +56,7 @@
                 HorizontalAlignment="Stretch" Margin="0,0,0,6"
                 Click="OpenGestionar_Click"/>
 
-        <Button Content="&#x21C4;  Trasladar (Plantillas + Filtros + Est&#225;ndares)"
+        <Button Content="&#x21C4;  Importar (Plantillas + Filtros + Est&#225;ndares)"
                 Style="{StaticResource SecondaryButton}"
                 HorizontalAlignment="Stretch" Margin="0,0,0,16"
                 Click="OpenTransferir_Click"/>
@@ -81,8 +81,13 @@
 
         <Button Content="&#x1F4CB;  Esquemas Personalizados"
                 Style="{StaticResource SecondaryButton}"
-                HorizontalAlignment="Stretch" Margin="0,0,0,16"
+                HorizontalAlignment="Stretch" Margin="0,0,0,6"
                 Click="OpenCustomSchemes_Click"/>
+
+        <Button Content="&#x1F48A;  Di&#225;logos BIM Pills (showcase)"
+                Style="{StaticResource PrimaryButton}"
+                HorizontalAlignment="Stretch" Margin="0,0,0,16"
+                Click="OpenBimPillsDialogs_Click"/>
 
         <!-- Licencias -->
         <TextBlock Text="LICENCIAS" FontSize="10" FontWeight="SemiBold"

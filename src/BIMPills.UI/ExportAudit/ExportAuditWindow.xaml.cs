@@ -85,11 +85,17 @@ namespace BIMPills.UI.ExportAudit
                     SignatureRole = TxtSignatureRole.Text.Trim()
                 };
 
+                var sw = Stopwatch.StartNew();
                 var exporter = new HtmlReportExporter();
                 exporter.Export(_auditResult, options, outputPath);
+                sw.Stop();
+
+                var elapsedStr = sw.Elapsed.TotalMinutes >= 1
+                    ? $"{(int)sw.Elapsed.TotalMinutes} min {sw.Elapsed.Seconds} seg"
+                    : $"{sw.Elapsed.TotalSeconds:F1} seg";
 
                 var result = MessageBox.Show(
-                    $"Informe exportado en:\n\n{outputPath}\n\n\u00BFDeseas abrirlo?",
+                    $"Informe exportado en:\n\n{outputPath}\n\nTiempo: {elapsedStr}\n\n\u00BFDeseas abrirlo?",
                     "BIMPills \u2014 Exportaci\u00F3n exitosa",
                     MessageBoxButton.YesNo,
                     MessageBoxImage.Information);

@@ -5,6 +5,7 @@ using BIMPills.Core.Licensing;
 using BIMPills.Infrastructure.DI;
 using BIMPills.Core.Services;
 using BIMPills.Revit.Context;
+using BIMPills.UI.Shared;
 using System;
 
 namespace BIMPills.Revit.Commands
@@ -38,6 +39,12 @@ namespace BIMPills.Revit.Commands
             ElementSet elements)
         {
             CommandData = commandData;
+
+            // Anchor all BIM Pills WPF windows to the current Revit main window
+            // so popups appear centered over Revit (important on multi-monitor setups).
+            try { RevitOwnerHelper.SetCurrentRevitHandle(commandData.Application.MainWindowHandle); }
+            catch { /* non-fatal — popups will fall back to center-screen */ }
+
             ILogger? logger = null;
             try
             {
@@ -56,7 +63,7 @@ namespace BIMPills.Revit.Commands
                     {
                         // Never activated — show activation window
                         var dlg = new BIMPills.UI.Licensing.LicenseActivationWindow();
-                        dlg.ShowDialog();
+                        dlg.ShowDialogOverRevit();
                         if (!dlg.LicenseActivated)
                         {
                             message = "Se requiere una licencia activa para usar BIM Pills.";
@@ -78,7 +85,7 @@ namespace BIMPills.Revit.Commands
                     else if (license.IsExpired)
                     {
                         var dlg = new BIMPills.UI.Licensing.LicenseActivationWindow();
-                        dlg.ShowDialog();
+                        dlg.ShowDialogOverRevit();
                         if (!dlg.LicenseActivated)
                         {
                             message = "Licencia expirada. Activa una licencia v\u00E1lida para continuar.";

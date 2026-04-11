@@ -5,6 +5,7 @@ using BIMPills.Core.Services;
 using BIMPills.Infrastructure.DI;
 using BIMPills.Revit.Commands;
 using BIMPills.UI.ModelAudit;
+using BIMPills.UI.Shared;
 using System;
 using System.Collections.Generic;
 
@@ -62,7 +63,7 @@ namespace BIMPills.Revit.Commands.ModelAudit
                 };
             }
 
-            new ModelAuditWindow(ModelAuditCommand.LastResult, purgeCallback).ShowDialog();
+            new ModelAuditWindow(ModelAuditCommand.LastResult, purgeCallback).ShowDialogOverRevit();
         }
     }
 }

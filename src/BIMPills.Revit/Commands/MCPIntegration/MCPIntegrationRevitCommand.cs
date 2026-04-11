@@ -4,6 +4,7 @@ using BIMPills.Core.Services;
 using BIMPills.Infrastructure.DI;
 using BIMPills.Revit.Commands;
 using BIMPills.UI.MCPIntegration;
+using BIMPills.UI.Shared;
 
 namespace BIMPills.Revit.Commands.MCPIntegration
 {
@@ -20,7 +21,7 @@ namespace BIMPills.Revit.Commands.MCPIntegration
             try
             {
                 var window = new MCPConnectionWindow();
-                window.ShowDialog();
+                window.ShowDialogOverRevit();
             }
             catch (System.Exception ex)
             {

@@ -15,7 +15,7 @@ namespace BIMPills.UI.ViewTemplates
         private Func<string, long, ViewTemplateDetail?>? _getDetailCallback;
         private Func<string, IReadOnlyList<long>, ConflictResolution, TransferResult>? _transferCallback;
 
-        private string _transferLabel = "Trasladar";
+        private string _transferLabel = "Importar";
         private bool _canTransfer;
 
         /// <summary>Raised when transfer availability changes.</summary>
@@ -128,11 +128,11 @@ namespace BIMPills.UI.ViewTemplates
             int selected = _templates.Count(t => t.IsSelected);
             SelectionSummary.Text = $"{selected} de {_templates.Count} seleccionadas";
             StatusText.Text = selected > 0
-                ? $"{selected} plantillas listas para transferir"
-                : "Selecciona plantillas para transferir";
+                ? $"{selected} plantillas listas para importar"
+                : "Selecciona plantillas para importar";
 
             _canTransfer = selected > 0;
-            _transferLabel = selected > 0 ? $"Trasladar {selected} plantillas" : "Trasladar";
+            _transferLabel = selected > 0 ? $"Importar {selected} plantillas" : "Importar";
             TransferEnabledChanged?.Invoke(this, _canTransfer);
         }
 
@@ -221,8 +221,10 @@ namespace BIMPills.UI.ViewTemplates
                 var selected = _templates.Where(t => t.IsSelected).ToList();
                 if (selected.Count == 0)
                 {
-                    MessageBox.Show("Selecciona al menos una plantilla para transferir.",
-                        "BIM Pills \u2014 Plantillas", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    BIMPills.UI.Shared.BimPillsDialog.Warning(
+                        header: "Nada seleccionado",
+                        message: "Selecciona al menos una plantilla para importar.",
+                        owner: Window.GetWindow(this));
                     return;
                 }
 
@@ -239,19 +241,27 @@ namespace BIMPills.UI.ViewTemplates
                 // ── Bulk mode ────────────────────────────────────────────────
                 var conflict = conflictTag == "Skip" ? ConflictResolution.Skip : ConflictResolution.Replace;
 
-                var confirm = MessageBox.Show(
-                    $"\u00bfTransferir {selected.Count} plantillas desde \u00ab{docTitle}\u00bb?",
-                    "BIM Pills \u2014 Confirmar transferencia",
-                    MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.Yes);
+                var confirmed = BIMPills.UI.Shared.BimPillsDialog.Confirm(
+                    header: "\u00bfImportar plantillas?",
+                    message: $"Se importar\u00e1n {selected.Count} plantillas desde \u00ab{docTitle}\u00bb.",
+                    detail: conflict == ConflictResolution.Replace
+                        ? "Las plantillas con el mismo nombre que ya existan en el proyecto actual ser\u00e1n reemplazadas."
+                        : "Las plantillas con el mismo nombre que ya existan se omitir\u00e1n.",
+                    owner: Window.GetWindow(this),
+                    yesText: "Importar",
+                    noText: "Cancelar");
 
-                if (confirm != MessageBoxResult.Yes) return;
+                if (!confirmed) return;
 
                 ExecuteBulkTransfer(selected.Select(t => t.Id).ToList(), docTitle, conflict);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error en transferencia: {ex.Message}",
-                    "BIM Pills \u2014 Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                BIMPills.UI.Shared.BimPillsDialog.Error(
+                    header: "Error al importar",
+                    message: "Ocurri\u00f3 un error al importar las plantillas.",
+                    detail: ex.Message,
+                    owner: Window.GetWindow(this));
             }
         }
 

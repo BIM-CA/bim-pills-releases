@@ -6,7 +6,7 @@ namespace BIMPills.Commands.Transfer
     {
         public CommandResult Execute(ICommandContext context)
         {
-            return CommandResult.Ok("Transferir");
+            return CommandResult.Ok("Importar");
         }
     }
 }

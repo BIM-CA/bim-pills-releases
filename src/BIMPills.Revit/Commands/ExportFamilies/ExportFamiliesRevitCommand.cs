@@ -1,4 +1,6 @@
 using Autodesk.Revit.DB;
+using Autodesk.Revit.UI;
+using Autodesk.Revit.UI.Events;
 using BIMPills.Commands.ExportFamilies;
 using BIMPills.Core.Commands;
 using BIMPills.Core.Models;
@@ -7,6 +9,7 @@ using BIMPills.Infrastructure.DI;
 using BIMPills.Revit.Commands;
 using BIMPills.Revit.Context;
 using BIMPills.UI.ExportFamilies;
+using BIMPills.UI.Shared;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -100,6 +103,8 @@ namespace BIMPills.Revit.Commands.ExportFamilies
                 logger);
 
             // Initialize Sheets/Views tab — gather exportable views and build PDF/DWG callbacks
+            Func<long, string, string, PdfExportSettings, bool>? pdfCallback = null;
+            Func<long, string, string, DwgExportConfig?, bool>? dwgCallback = null;
             if (doc != null)
             {
                 try
@@ -112,12 +117,24 @@ namespace BIMPills.Revit.Commands.ExportFamilies
                     {
                         var paramNames = docServices.GetSheetParameterNames();
 
-                        // PDF export callback — works for sheets and individual views alike
-                        Func<long, string, string, PdfExportSettings, bool> pdfCallback = (viewId, folder, fileName, settings) =>
+                        // PDF export callback — works for sheets and individual views alike.
+                        // Routes through either the native Revit PDF engine OR a system
+                        // printer (PDF24 recommended), depending on the user's global
+                        // engine choice persisted via JsonPdfEngineSettingsRepository.
+                        pdfCallback = (viewId, folder, fileName, settings) =>
                         {
                             try
                             {
-                                logger?.Info($"[ExportViews] PDF: {fileName} → {folder}");
+                                // ── Route to printer engine if the user selected one ──
+                                if (_pdfEngineSnapshot?.Engine == PdfEngineKind.SystemPrinter
+                                    && !string.IsNullOrWhiteSpace(_pdfEngineSnapshot.PrinterName))
+                                {
+                                    return PrintViewViaSystemPrinter(
+                                        doc, viewId, folder, fileName,
+                                        _pdfEngineSnapshot.PrinterName, logger);
+                                }
+
+                                logger?.Info($"[ExportViews] PDF (native): {fileName} → {folder}");
                                 var viewIds = new List<ElementId> { new ElementId(viewId) };
                                 var opts = new PDFExportOptions();
                                 opts.FileName = fileName;
@@ -163,6 +180,30 @@ namespace BIMPills.Revit.Commands.ExportFamilies
                                 opts.ViewLinksInBlue          = settings.ViewLinksInBlue;
                                 opts.StopOnError              = false;
 
+                                // ── Content-preservation options (fix missing lines/text) ──
+                                // These defaults to `true` in some Revit builds, which causes
+                                // content loss (coincident lines/text dropped, halftones replaced).
+                                // We force them to the user-chosen values (default false = preserve).
+                                opts.MaskCoincidentLines          = settings.MaskCoincidentLines;
+                                opts.ReplaceHalftoneWithThinLines = settings.ReplaceHalftoneWithThinLines;
+                                opts.AlwaysUseRaster              = settings.AlwaysUseRaster;
+
+                                // Paper format/orientation: Auto lets Revit pick the best fit
+                                // based on the view's titleblock, preventing clipping.
+                                try { opts.PaperFormat      = ExportPaperFormat.Default; } catch { }
+                                try { opts.PaperOrientation = PageOrientationType.Auto;  } catch { }
+
+                                // One file per view — we combine later if the user asked.
+                                opts.Combine = false;
+
+                                // Delete existing file to avoid "file in use" conflicts
+                                try
+                                {
+                                    var existingPdf = Path.Combine(folder, fileName + ".pdf");
+                                    if (File.Exists(existingPdf)) File.Delete(existingPdf);
+                                }
+                                catch { }
+
                                 return doc.Export(folder, viewIds, opts);
                             }
                             catch (Exception ex)
@@ -185,13 +226,14 @@ namespace BIMPills.Revit.Commands.ExportFamilies
                             dwgPresetNames.AddRange(new[] { "AEC Extended", "AEC Standard", "ISO Standard" });
 
                         // DWG export callback
-                        Func<long, string, string, DwgExportConfig?, bool> dwgCallback = (viewId, folder, fileName, dwgConfig) =>
+                        dwgCallback = (viewId, folder, fileName, dwgConfig) =>
                         {
                             try
                             {
                                 logger?.Info($"[ExportViews] DWG: {fileName} → {folder}");
                                 var viewIds = new List<ElementId> { new ElementId(viewId) };
                                 DWGExportOptions opts;
+                                bool fromPreset = false;
 
                                 if (dwgConfig?.IsRevitPreset == true && !string.IsNullOrEmpty(dwgConfig.RevitPresetName))
                                 {
@@ -199,12 +241,17 @@ namespace BIMPills.Revit.Commands.ExportFamilies
                                     {
                                         opts = DWGExportOptions.GetPredefinedOptions(doc, dwgConfig.RevitPresetName)
                                                ?? new DWGExportOptions();
+                                        fromPreset = true;
                                     }
                                     catch { opts = new DWGExportOptions(); }
                                 }
                                 else if (dwgConfig != null)
                                 {
-                                    opts = new DWGExportOptions();
+                                    // Start from a stable baseline: load the "default" predefined setup
+                                    // if available, otherwise fall back to blank options. Starting from
+                                    // a blank DWGExportOptions() leaves layer/linework settings in an
+                                    // undefined state which is a known cause of missing lines in DWG.
+                                    opts = TryLoadDefaultDwgOptions(doc);
                                     opts.FileVersion    = MapFileVersion(dwgConfig.FileVersion);
                                     opts.ExportOfSolids = dwgConfig.ExportOfSolids == DwgSolidsExport.ACIS
                                         ? SolidGeometry.ACIS : SolidGeometry.Polymesh;
@@ -212,8 +259,35 @@ namespace BIMPills.Revit.Commands.ExportFamilies
                                 }
                                 else
                                 {
-                                    opts = new DWGExportOptions();
+                                    opts = TryLoadDefaultDwgOptions(doc);
                                 }
+
+                                // ── Content-preservation base options (fix missing lines) ──
+                                // DWGExportOptions only exposes HideReferencePlane from the
+                                // visibility filters (the rest are PDF-specific). The heavy
+                                // lifting for preserving lines/layers comes from starting
+                                // from a predefined preset in TryLoadDefaultDwgOptions above.
+                                try { opts.HideReferencePlane = true; } catch { }
+
+                                // MergedViews controlled by "Export as xrefs" checkbox:
+                                //   checked  → false → proper paper space + xref files per viewport
+                                //   unchecked → true  → single file, everything in model space
+                                if (dwgConfig != null)
+                                    opts.MergedViews = !dwgConfig.ExportLinkedAsXrefs;
+
+                                // Guard rail: if the user picked a Revit preset we don't override
+                                // any of its layer/linework settings (the preset is the user's
+                                // source of truth). We only set HideScopeBoxes/etc which are
+                                // visibility filters, not layer mappings.
+                                _ = fromPreset;
+
+                                // Delete existing file to avoid Revit "file in use" dialog
+                                try
+                                {
+                                    var existingDwg = Path.Combine(folder, fileName + ".dwg");
+                                    if (File.Exists(existingDwg)) File.Delete(existingDwg);
+                                }
+                                catch { /* file locked — Revit will show its own dialog */ }
 
                                 bool exported = doc.Export(folder, fileName, viewIds, opts);
 
@@ -382,7 +456,192 @@ namespace BIMPills.Revit.Commands.ExportFamilies
                 }
             }
 
-            window.ShowDialog();
+            window.ShowDialogOverRevit();
+
+            // Snapshot the user's PDF engine choice right after the dialog closes.
+            // The callback closures above capture `_pdfEngineSnapshot` by reference.
+            try { _pdfEngineSnapshot = window.GetPdfEngineSettings(); }
+            catch { _pdfEngineSnapshot = new PdfEngineSettings(); }
+
+            // Non-blocking export: process queue via Idling event
+            var exportQueue = window.PendingExportQueue;
+            if (exportQueue != null && exportQueue.Count > 0)
+            {
+                var uiApp = CommandData!.Application;
+                StartIdlingExport(uiApp, doc!, exportQueue, pdfCallback, dwgCallback, logger);
+            }
+        }
+
+        /// <summary>
+        /// Captured just before the idling export starts so the PDF callback can
+        /// decide between native export and printing through a system printer.
+        /// </summary>
+        private static PdfEngineSettings? _pdfEngineSnapshot;
+
+        private static Func<long, string, string, PdfExportSettings, bool>? _pdfCb;
+        private static Func<long, string, string, DwgExportConfig?, bool>? _dwgCb;
+        private static ILogger? _idlingLogger;
+        private static List<ExportQueueItem>? _exportQueue;
+        private static int _exportIndex;
+        private static int _exported;
+        private static int _failed;
+        private static List<string>? _exportErrors;
+        private static BimPillsProgressWindow? _progressWindow;
+        private static bool _exportCancelled;
+        private static System.Diagnostics.Stopwatch? _exportStopwatch;
+
+        private static void StartIdlingExport(
+            UIApplication uiApp, Document doc,
+            List<ExportQueueItem> queue,
+            Func<long, string, string, PdfExportSettings, bool>? pdfCb,
+            Func<long, string, string, DwgExportConfig?, bool>? dwgCb,
+            ILogger? logger)
+        {
+            _pdfCb = pdfCb;
+            _dwgCb = dwgCb;
+            _idlingLogger = logger;
+            _exportQueue = queue;
+            _exportIndex = 0;
+            _exported = 0;
+            _failed = 0;
+            _exportErrors = new List<string>();
+            _exportCancelled = false;
+            _exportStopwatch = System.Diagnostics.Stopwatch.StartNew();
+
+            // Create branded BIM Pills progress window (modeless, anchored to Revit)
+            _progressWindow = new BimPillsProgressWindow(
+                header: "Exportando",
+                total: queue.Count,
+                message: $"Exportando {queue.Count} archivos…");
+            _progressWindow.Cancelled += (_, __) => { _exportCancelled = true; };
+            _progressWindow.ShowOverRevit();
+
+            // Suprimir diálogos modales de Revit que aparecen al exportar planos con recursos
+            // externos desactualizados (keynotes/familias en Autodesk Docs, vínculos cloud, etc.).
+            // Sin esto el usuario tendría que pulsar "Continuar" una vez por cada hoja.
+            uiApp.DialogBoxShowing += OnExportDialogBoxShowing;
+            uiApp.Idling += OnExportIdling;
+        }
+
+        private static void OnExportDialogBoxShowing(object? sender, DialogBoxShowingEventArgs e)
+        {
+            try
+            {
+                string dialogId = e.DialogId ?? string.Empty;
+                _idlingLogger?.Info($"[ExportViews] Dialog interceptado: '{dialogId}'");
+
+                // Auto-pulsar "Continuar" en diálogos que aparecen durante la exportación batch.
+                // Cubre el dialog "Actualizar recursos" (External Resources / Update Library /
+                // Reload Latest) que sale una vez por hoja cuando hay keynotes o vínculos
+                // a Autodesk Docs desactualizados.
+                bool shouldSuppress =
+                    dialogId.IndexOf("Resource",       StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    dialogId.IndexOf("Updater",        StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    dialogId.IndexOf("OutOfDate",      StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    dialogId.IndexOf("Out_Of_Date",    StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    dialogId.IndexOf("Update_Library", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    dialogId.IndexOf("Reload",         StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    dialogId.IndexOf("Cloud",          StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    dialogId.IndexOf("Library",        StringComparison.OrdinalIgnoreCase) >= 0;
+
+                if (shouldSuppress)
+                {
+                    // CommandLink1 = "Continuar" (primer enlace de comando)
+                    // Si el diálogo tiene botones OK/Cancel en lugar de CommandLinks,
+                    // OverrideResult con CommandLink1 simplemente no aplica y probamos IDOK.
+                    e.OverrideResult((int)Autodesk.Revit.UI.TaskDialogResult.CommandLink1);
+                    _idlingLogger?.Info($"[ExportViews] Diálogo '{dialogId}' auto-respondido con Continuar.");
+                }
+            }
+            catch (Exception ex)
+            {
+                _idlingLogger?.Warning($"[ExportViews] Error en OnExportDialogBoxShowing: {ex.Message}");
+            }
+        }
+
+        private static void OnExportIdling(object? sender, IdlingEventArgs e)
+        {
+            var uiApp = sender as UIApplication;
+            if (uiApp == null || _exportQueue == null) return;
+
+            if (_exportCancelled || _exportIndex >= _exportQueue.Count)
+            {
+                // Capture state BEFORE closing window
+                bool wasCancelled = _exportCancelled;
+                _exportStopwatch?.Stop();
+                var elapsed = _exportStopwatch?.Elapsed ?? TimeSpan.Zero;
+
+                // Done or cancelled — cleanup
+                uiApp.Idling -= OnExportIdling;
+                uiApp.DialogBoxShowing -= OnExportDialogBoxShowing;
+                _progressWindow?.Complete();
+
+                int total = _exportQueue.Count;
+                string elapsedStr = elapsed.TotalMinutes >= 1
+                    ? $"{(int)elapsed.TotalMinutes} min {elapsed.Seconds} seg"
+                    : $"{elapsed.TotalSeconds:F1} seg";
+
+                string header = wasCancelled
+                    ? "Exportación cancelada"
+                    : "Exportación completada";
+                string message = $"{_exported} de {total} archivos exportados · Tiempo: {elapsedStr}";
+
+                string? detail = null;
+                if (_failed > 0 && _exportErrors != null)
+                {
+                    var sb = new System.Text.StringBuilder();
+                    sb.Append(_failed).Append(" archivos fallaron:");
+                    foreach (var name in _exportErrors.Take(10))
+                        sb.Append("\n  • ").Append(name);
+                    if (_exportErrors.Count > 10)
+                        sb.Append("\n  … y ").Append(_exportErrors.Count - 10).Append(" más");
+                    detail = sb.ToString();
+                }
+
+                _idlingLogger?.Info($"[ExportViews] Finalizado: {_exported}/{total}, fallos: {_failed}, cancelado: {wasCancelled}, tiempo: {elapsedStr}");
+
+                if (_failed > 0 || wasCancelled)
+                    BIMPills.UI.Shared.BimPillsDialog.Warning(header, message, detail);
+                else
+                    BIMPills.UI.Shared.BimPillsDialog.Success(header, message, detail);
+
+                // Cleanup static refs
+                _exportQueue = null;
+                _exportErrors = null;
+                _pdfCb = null;
+                _dwgCb = null;
+                _progressWindow = null;
+                _exportStopwatch = null;
+                return;
+            }
+
+            // Process one item
+            var item = _exportQueue[_exportIndex++];
+            try
+            {
+                _progressWindow?.Report(
+                    current: _exportIndex,
+                    total:   _exportQueue.Count,
+                    currentItem: item.DisplayName,
+                    message: $"Exportando {(item.Format == ExportFormat.Pdf ? "PDF" : "DWG")} ({_exportIndex} de {_exportQueue.Count})");
+
+                bool ok = false;
+                if (item.Format == ExportFormat.Pdf && _pdfCb != null)
+                    ok = _pdfCb(item.ViewId, item.Folder, item.FileName, item.PdfSettings ?? new PdfExportSettings());
+                else if (item.Format == ExportFormat.Dwg && _dwgCb != null)
+                    ok = _dwgCb(item.ViewId, item.Folder, item.FileName, item.DwgConfig);
+
+                if (ok) _exported++;
+                else { _failed++; _exportErrors?.Add($"[{item.Format}] {item.DisplayName}"); }
+            }
+            catch (Exception ex)
+            {
+                _failed++;
+                _exportErrors?.Add($"[{item.Format}] {item.DisplayName}: {ex.Message}");
+                _idlingLogger?.Warning($"[ExportViews] Error: {item.DisplayName} — {ex.Message}");
+            }
+
+            e.SetRaiseWithoutDelay();
         }
 
         private static ACADVersion MapFileVersion(DwgFileVersion version)
@@ -396,6 +655,142 @@ namespace BIMPills.Revit.Commands.ExportFamilies
                 case DwgFileVersion.AutoCAD2018: return ACADVersion.R2018;
                 default: return ACADVersion.R2018;
             }
+        }
+
+        /// <summary>
+        /// Prints a single view/sheet through Revit's <see cref="PrintManager"/>
+        /// redirected to a system PDF printer (PDF24, Microsoft Print to PDF, etc.).
+        /// Used when the native PDF exporter drops lines or text on complex sheets.
+        /// </summary>
+        /// <remarks>
+        /// PDF24 (with "Auto-save" configured) prints silently. Microsoft Print to PDF
+        /// always shows a Save As dialog even with <c>PrintToFile=true</c> — there is
+        /// no Revit-side workaround. Users who want silent printing should install PDF24.
+        /// </remarks>
+        private static bool PrintViewViaSystemPrinter(
+            Document doc, long viewId, string folder, string fileName,
+            string printerName, ILogger? logger)
+        {
+            try
+            {
+                var outputPath = Path.Combine(folder, fileName + ".pdf");
+                logger?.Info($"[ExportViews] PDF (printer '{printerName}'): {outputPath}");
+
+                Directory.CreateDirectory(folder);
+                // Delete stale output without a pre-check (avoids TOCTOU).
+                try { File.Delete(outputPath); }
+                catch (FileNotFoundException) { }
+                catch (DirectoryNotFoundException) { }
+
+                var view = doc.GetElement(new ElementId(viewId)) as View;
+                if (view == null)
+                {
+                    logger?.Warning($"[ExportViews] Vista id={viewId} no encontrada.");
+                    return false;
+                }
+
+                var pm = doc.PrintManager;
+
+                try { pm.SelectNewPrintDriver(printerName); }
+                catch (Exception ex)
+                {
+                    logger?.Error(
+                        $"[ExportViews] No se pudo seleccionar la impresora '{printerName}'. " +
+                        "Verificá que esté instalada y habilitada.", ex);
+                    return false;
+                }
+
+                pm.PrintToFile     = true;
+                pm.PrintToFileName = outputPath;
+                pm.CombinedFile    = false;
+                pm.PrintRange      = PrintRange.Select;
+                pm.Apply();
+
+                var viewSet = new ViewSet();
+                viewSet.Insert(view);
+
+                var vss = pm.ViewSheetSetting;
+                try { vss.CurrentViewSheetSet.Views = viewSet; } catch { }
+
+                // PrintRange.Select requires the view set to exist as a named
+                // entry in the document, so we save it under a unique temp name
+                // and delete it after printing.
+                string tempSetName = "BIMPillsTemp_" + Guid.NewGuid().ToString("N").Substring(0, 8);
+                try { vss.SaveAs(tempSetName); } catch { }
+
+                pm.Apply();
+
+                // Document.Print(ViewSet) returns void in Revit 2024–2027; success
+                // is inferred from whether the output file was actually created.
+                bool printCalled = false;
+                try
+                {
+                    doc.Print(viewSet);
+                    printCalled = true;
+                }
+                catch (Exception ex)
+                {
+                    logger?.Error($"[ExportViews] doc.Print(ViewSet) falló para viewId={viewId}", ex);
+                }
+
+                try { vss.Delete(); } catch { }
+
+                if (!printCalled) return false;
+                if (!File.Exists(outputPath))
+                {
+                    logger?.Warning(
+                        $"[ExportViews] La impresora '{printerName}' no generó el archivo '{outputPath}'. " +
+                        "Si usás Microsoft Print to PDF, el diálogo Guardar como puede haber sido cancelado.");
+                    return false;
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                logger?.Error($"[ExportViews] Error en PrintViewViaSystemPrinter viewId={viewId}", ex);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Tries to load a stable baseline DWGExportOptions from the document's
+        /// predefined setups. Starting from a blank <see cref="DWGExportOptions"/>
+        /// leaves layer mapping and linework settings undefined, which is a known
+        /// cause of missing lines/text in the exported DWG. This method prefers, in
+        /// order: "in-session" &gt; "AEC Extended" &gt; "AEC Standard" &gt; the first
+        /// available preset &gt; a new blank DWGExportOptions().
+        /// </summary>
+        private static DWGExportOptions TryLoadDefaultDwgOptions(Document doc)
+        {
+            try
+            {
+                var names = BaseExportOptions.GetPredefinedSetupNames(doc);
+                if (names != null && names.Count > 0)
+                {
+                    string[] preferred =
+                    {
+                        "in-session", "<in-session>",
+                        "AEC Extended", "AEC Standard", "ISO Standard"
+                    };
+                    foreach (var p in preferred)
+                    {
+                        var match = names.FirstOrDefault(n =>
+                            string.Equals(n, p, StringComparison.OrdinalIgnoreCase));
+                        if (match != null)
+                        {
+                            var loaded = DWGExportOptions.GetPredefinedOptions(doc, match);
+                            if (loaded != null) return loaded;
+                        }
+                    }
+                    // Fall back to the first available preset
+                    var first = DWGExportOptions.GetPredefinedOptions(doc, names[0]);
+                    if (first != null) return first;
+                }
+            }
+            catch { /* fall through */ }
+
+            return new DWGExportOptions();
         }
     }
 }

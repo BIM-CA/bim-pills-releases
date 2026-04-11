@@ -4,7 +4,7 @@
         Title="BIM Pills — Ordenar"
         Width="480" SizeToContent="Height"
         MinWidth="420"
-        WindowStartupLocation="CenterScreen"
+        WindowStartupLocation="CenterOwner"
         Background="{DynamicResource BackgroundBrush}"
         WindowStyle="SingleBorderWindow"
         ResizeMode="NoResize"

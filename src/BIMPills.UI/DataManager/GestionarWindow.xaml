@@ -5,7 +5,7 @@
         Title="BIM Pills — Gestionar"
         Width="960" Height="700"
         MinWidth="800" MinHeight="560"
-        WindowStartupLocation="CenterScreen"
+        WindowStartupLocation="CenterOwner"
         Background="{DynamicResource BackgroundBrush}"
         WindowStyle="SingleBorderWindow"
         ResizeMode="CanResizeWithGrip"

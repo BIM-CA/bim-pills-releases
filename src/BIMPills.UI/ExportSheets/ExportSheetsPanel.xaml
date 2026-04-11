@@ -40,6 +40,18 @@
                     </Setter.Value>
                 </Setter>
             </Style>
+            <!-- Collapsible section expander style -->
+            <Style x:Key="SectionExpander" TargetType="Expander">
+                <Setter Property="Foreground" Value="#1565C0"/>
+                <Setter Property="FontSize" Value="12"/>
+                <Setter Property="FontWeight" Value="SemiBold"/>
+                <Setter Property="FontFamily" Value="Segoe UI"/>
+                <Setter Property="Margin" Value="0,0,0,10"/>
+                <Setter Property="BorderBrush" Value="#E5E5EA"/>
+                <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                <Setter Property="Padding" Value="0,0,0,8"/>
+            </Style>
+
             <!-- Wizard step badge style -->
             <Style x:Key="WizardStepBadge" TargetType="Border">
                 <Setter Property="Width" Value="18"/>
@@ -64,7 +76,7 @@
                        FontFamily="Segoe UI"/>
         </Border>
 
-        <!-- Publication set bar (S6-C) -->
+        <!-- Publication set bar -->
         <Border DockPanel.Dock="Top"
                 Background="#F8F9FA" BorderBrush="#E5E5EA" BorderThickness="0,0,0,1"
                 Padding="14,8">
@@ -73,6 +85,12 @@
                     <Button x:Name="SaveSetBtn" Content="Guardar" Style="{StaticResource TertiaryButton}"
                             Padding="10,4" FontSize="11" Margin="0,0,4,0"
                             Click="SaveSet_Click"/>
+                    <Button x:Name="SaveAsSetBtn" Content="Guardar como..." Style="{StaticResource TertiaryButton}"
+                            Padding="10,4" FontSize="11" Margin="0,0,4,0"
+                            Click="SaveAsSet_Click"/>
+                    <Button x:Name="RenameSetBtn" Content="Renombrar" Style="{StaticResource TertiaryButton}"
+                            Padding="10,4" FontSize="11" Margin="0,0,4,0" IsEnabled="False"
+                            Click="RenameSet_Click"/>
                     <Button x:Name="DeleteSetBtn" Content="Eliminar" Style="{StaticResource TertiaryButton}"
                             Padding="10,4" FontSize="11" IsEnabled="False"
                             Click="DeleteSet_Click"/>
@@ -170,13 +188,20 @@
                               BorderThickness="1"
                               RowHeight="32"
                               ColumnHeaderHeight="34"
-                              SelectionMode="Single"
+                              SelectionMode="Extended"
                               Background="White"
                               FontFamily="Segoe UI"
                               FontSize="12">
                         <DataGrid.Columns>
-                            <DataGridCheckBoxColumn Binding="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}"
-                                                    Header="☑" Width="36"/>
+                            <DataGridTemplateColumn Header="☑" Width="36">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <CheckBox IsChecked="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}"
+                                                  HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                  Click="RowCheckBox_Click"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
                             <DataGridTemplateColumn Header="Tipo" Width="90" IsReadOnly="True"
                                                        SortMemberPath="TypeLabel">
                                 <DataGridTemplateColumn.CellTemplate>
@@ -283,6 +308,66 @@
                                   IsChecked="True" FontSize="12" FontFamily="Segoe UI"
                                   Checked="FormatCheck_Changed" Unchecked="FormatCheck_Changed"/>
                     </StackPanel>
+
+                    <!-- PDF engine selector (global setting, persisted) -->
+                    <Border x:Name="PdfEngineSection"
+                            Background="#F0F7FF" CornerRadius="6"
+                            Margin="0,0,0,10"
+                            BorderBrush="#BBDEFB" BorderThickness="1"
+                            Padding="12,8">
+                        <StackPanel>
+                            <TextBlock Text="Motor PDF (configuración global)"
+                                       FontSize="12" FontWeight="SemiBold"
+                                       Foreground="{StaticResource PrimaryBrush}"
+                                       FontFamily="Segoe UI" Margin="0,0,0,6"/>
+                            <TextBlock FontSize="10" Foreground="#5F6368"
+                                       FontFamily="Segoe UI" TextWrapping="Wrap" Margin="0,0,0,8">
+                                Elegí cómo se generan los PDFs. El motor nativo de Revit es rápido pero a veces pierde líneas, textos o tramas.
+                                La impresora del sistema (PDF24 recomendado) genera el PDF como si imprimieras el plano desde Revit y suele preservar mejor el contenido.
+                            </TextBlock>
+                            <Grid Margin="0,0,0,6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="120"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="Motor:" FontSize="11" VerticalAlignment="Center" FontFamily="Segoe UI"/>
+                                <ComboBox x:Name="PdfEngineCombo" Grid.Column="1"
+                                          Style="{StaticResource BIMPillsComboBox}"
+                                          SelectionChanged="PdfEngine_Changed">
+                                    <ComboBoxItem Content="Revit nativo (rápido)" Tag="Native" IsSelected="True"/>
+                                    <ComboBoxItem Content="Impresora PDF del sistema" Tag="SystemPrinter"/>
+                                </ComboBox>
+                            </Grid>
+                            <Grid x:Name="PdfPrinterRow" Visibility="Collapsed" Margin="0,0,0,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="120"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="Impresora:" FontSize="11" VerticalAlignment="Center" FontFamily="Segoe UI"/>
+                                <ComboBox x:Name="PdfPrinterCombo" Grid.Column="1"
+                                          Style="{StaticResource BIMPillsComboBox}"
+                                          SelectionChanged="PdfPrinter_Changed"/>
+                            </Grid>
+                            <TextBlock x:Name="PdfEngineWarning"
+                                       Visibility="Collapsed"
+                                       FontSize="10" Foreground="#C62828"
+                                       FontFamily="Segoe UI" TextWrapping="Wrap"
+                                       Margin="0,2,0,0"/>
+                            <TextBlock x:Name="Pdf24DownloadHint"
+                                       Visibility="Collapsed"
+                                       FontSize="10" Foreground="#5F6368"
+                                       FontFamily="Segoe UI" TextWrapping="Wrap"
+                                       Margin="0,4,0,0">
+                                <Run Text="¿No tenés PDF24? "/>
+                                <Hyperlink x:Name="Pdf24DownloadLink"
+                                           Foreground="{StaticResource PrimaryBrush}"
+                                           RequestNavigate="Pdf24DownloadLink_RequestNavigate"
+                                           NavigateUri="https://tools.pdf24.org/en/creator">
+                                    Descargalo gratis →
+                                </Hyperlink>
+                            </TextBlock>
+                        </StackPanel>
+                    </Border>
 
                     <!-- PDF configuration section -->
                     <Border x:Name="PdfSection"
@@ -427,6 +512,33 @@
                                           Margin="0,0,16,4"/>
                             </WrapPanel>
 
+                            <!-- Advanced rendering options (content preservation) -->
+                            <Expander Header="Opciones avanzadas (preservar contenido)"
+                                      FontSize="11" FontFamily="Segoe UI"
+                                      Foreground="#3A3A3C"
+                                      IsExpanded="False" Margin="0,4,0,0">
+                                <StackPanel Margin="0,6,0,0">
+                                    <TextBlock Text="Si notás que se pierden líneas, textos o tramas en el PDF exportado, dejá estas opciones en OFF (recomendado)."
+                                               FontSize="10" Foreground="#86868B"
+                                               TextWrapping="Wrap" Margin="0,0,0,6"/>
+                                    <CheckBox x:Name="PdfMaskCoincidentLines"
+                                              Content=" Enmascarar líneas coincidentes"
+                                              ToolTip="Revit oculta líneas que considera coincidentes. Activarlo puede hacer desaparecer textos finos y anotaciones. Por defecto: OFF."
+                                              IsChecked="False" FontSize="11" FontFamily="Segoe UI"
+                                              Margin="0,0,0,4"/>
+                                    <CheckBox x:Name="PdfReplaceHalftones"
+                                              Content=" Reemplazar medios tonos por líneas finas"
+                                              ToolTip="Convierte tramas/sombras de medios tonos en líneas finas. Puede simplificar áreas sombreadas. Por defecto: OFF."
+                                              IsChecked="False" FontSize="11" FontFamily="Segoe UI"
+                                              Margin="0,0,0,4"/>
+                                    <CheckBox x:Name="PdfAlwaysUseRaster"
+                                              Content=" Usar siempre raster (garantiza fidelidad visual)"
+                                              ToolTip="Fuerza render raster incluso cuando vectorial es posible. Archivo más grande pero preserva sombras/transparencias/materiales complejos. Por defecto: OFF."
+                                              IsChecked="False" FontSize="11" FontFamily="Segoe UI"
+                                              Margin="0,0,0,4"/>
+                                </StackPanel>
+                            </Expander>
+
                             <!-- Combine into single PDF -->
                             <Border Background="#EFF3FF" CornerRadius="4" Padding="8,6" BorderBrush="#C5CAE9" BorderThickness="1">
                                 <StackPanel>
@@ -483,8 +595,8 @@
 
                             <!-- Extra options (like ProSheets checkboxes) -->
                             <CheckBox x:Name="DwgExportLinkedCheck"
-                                      Content=" Exportar vistas en planos y links como referencias externas"
-                                      IsChecked="False" FontSize="11" FontFamily="Segoe UI"
+                                      Content=" Exportar vistas como xrefs (paper space correcto, múltiples archivos)"
+                                      IsChecked="True" FontSize="11" FontFamily="Segoe UI"
                                       Margin="0,0,0,6"/>
                             <CheckBox x:Name="DwgCleanPcpCheck"
                                       Content=" Limpiar archivos .pcp después de exportar"
@@ -529,109 +641,115 @@
                         <TextBlock Text="Exportar" VerticalAlignment="Center"/>
                     </StackPanel>
                 </TabItem.Header>
-                <StackPanel Margin="0,12,0,0">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,12,0,0">
+                <StackPanel>
 
-                    <!-- Destination folder -->
-                    <TextBlock Text="Carpeta destino"
-                               FontSize="12" FontWeight="SemiBold"
-                               Foreground="{StaticResource PrimaryBrush}"
-                               FontFamily="Segoe UI" Margin="0,0,0,6"/>
-                    <DockPanel Margin="0,0,0,14">
-                        <Button DockPanel.Dock="Right"
-                                Content="Explorar..."
-                                Style="{StaticResource TertiaryButton}"
-                                Padding="14,0"
-                                Margin="8,0,0,0"
-                                Click="BrowseFolder_Click"/>
-                        <TextBox x:Name="DestinationBox"
-                                 Style="{StaticResource BIMPillsTextBox}"
-                                 TextChanged="DestinationBox_TextChanged">
-                            <TextBox.Tag>Seleccionar carpeta de destino...</TextBox.Tag>
-                        </TextBox>
-                    </DockPanel>
-
-                    <!-- Naming -->
-                    <TextBlock Text="Nombramiento"
-                               FontSize="12" FontWeight="SemiBold"
-                               Foreground="{StaticResource PrimaryBrush}"
-                               FontFamily="Segoe UI" Margin="0,0,0,6"/>
-                    <TextBox x:Name="NamingPatternBox"
-                             Style="{StaticResource BIMPillsTextBox}"
-                             Text="{}{SheetNumber}-{SheetName}"
-                             TextChanged="NamingPattern_TextChanged"/>
-
-                    <!-- Built-in token buttons -->
-                    <WrapPanel Margin="0,6,0,0">
-                        <Button Content="N° Plano" Style="{StaticResource TokenButton}"
-                                Tag="{}{SheetNumber}" Click="InsertToken_Click" Margin="0,0,4,4"/>
-                        <Button Content="Nombre" Style="{StaticResource TokenButton}"
-                                Tag="{}{SheetName}" Click="InsertToken_Click" Margin="0,0,4,4"/>
-                        <Button Content="Revisión" Style="{StaticResource TokenButton}"
-                                Tag="{}{Revision}" Click="InsertToken_Click" Margin="0,0,4,4"/>
-                        <Button Content="Fecha" Style="{StaticResource TokenButton}"
-                                Tag="{}{Date}" Click="InsertToken_Click" Margin="0,0,4,4"/>
-                        <Button Content="Proyecto" Style="{StaticResource TokenButton}"
-                                Tag="{}{ProjectName}" Click="InsertToken_Click" Margin="0,0,4,4"/>
-                    </WrapPanel>
-
-                    <!-- Revit parameter selector -->
-                    <DockPanel Margin="0,6,0,0">
-                        <Button DockPanel.Dock="Right"
-                                Content="Agregar"
-                                Style="{StaticResource TertiaryButton}"
-                                Padding="14,0"
-                                Margin="4,0,0,0"
-                                Click="AddParameterToken_Click"/>
-                        <ComboBox x:Name="RevitParamsCombo"
-                                  Style="{StaticResource BIMPillsComboBox}">
-                            <ComboBox.Tag>Seleccionar parámetro de Revit...</ComboBox.Tag>
-                        </ComboBox>
-                    </DockPanel>
-
-                    <!-- Dynamic parameter tokens -->
-                    <WrapPanel x:Name="DynamicTokensPanel" Margin="0,4,0,0"/>
-
-                    <!-- Preview -->
-                    <Border Background="#F8F9FA" CornerRadius="6"
-                            Padding="10,6" Margin="0,6,0,14">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="Vista previa: "
-                                       FontSize="11" FontFamily="Segoe UI"
-                                       Foreground="{StaticResource TextSecondaryBrush}"/>
-                            <TextBlock x:Name="NamingPreview"
-                                       FontSize="11" FontFamily="Segoe UI"
-                                       Foreground="{StaticResource PrimaryBrush}"
-                                       FontWeight="SemiBold"/>
+                    <!-- ── Section 1: Carpeta destino ── -->
+                    <Expander Style="{StaticResource SectionExpander}"
+                              Header="📁  Carpeta destino" IsExpanded="True">
+                        <StackPanel Margin="0,8,0,0">
+                            <DockPanel>
+                                <Button DockPanel.Dock="Right"
+                                        Content="Explorar..."
+                                        Style="{StaticResource TertiaryButton}"
+                                        Padding="14,0"
+                                        Margin="8,0,0,0"
+                                        Click="BrowseFolder_Click"/>
+                                <TextBox x:Name="DestinationBox"
+                                         Style="{StaticResource BIMPillsTextBox}"
+                                         TextChanged="DestinationBox_TextChanged">
+                                    <TextBox.Tag>Seleccionar carpeta de destino...</TextBox.Tag>
+                                </TextBox>
+                            </DockPanel>
                         </StackPanel>
-                    </Border>
+                    </Expander>
 
-                    <!-- Folder organization -->
-                    <TextBlock Text="Organización de carpetas"
-                               FontSize="12" FontWeight="SemiBold"
-                               Foreground="{StaticResource PrimaryBrush}"
-                               FontFamily="Segoe UI" Margin="0,0,0,6"/>
-                    <ComboBox x:Name="FolderOrgCombo"
-                              Style="{StaticResource BIMPillsComboBox}"
-                              SelectionChanged="FolderOrg_SelectionChanged">
-                        <ComboBoxItem Content="Plano (todos en la misma carpeta)" Tag="Flat"/>
-                        <ComboBoxItem Content="Por formato (/PDF, /DWG)" Tag="ByFormat" IsSelected="True"/>
-                        <ComboBoxItem Content="Por disciplina" Tag="ByDiscipline"/>
-                        <ComboBoxItem Content="Formato + Disciplina" Tag="ByFormatAndDiscipline"/>
-                    </ComboBox>
+                    <!-- ── Section 2: Nombramiento ── -->
+                    <Expander Style="{StaticResource SectionExpander}"
+                              Header="🏷  Nombramiento" IsExpanded="True">
+                        <StackPanel Margin="0,8,0,0">
+                            <TextBox x:Name="NamingPatternBox"
+                                     Style="{StaticResource BIMPillsTextBox}"
+                                     Text="{}{SheetNumber}-{SheetName}"
+                                     TextChanged="NamingPattern_TextChanged"/>
 
-                    <!-- Folder structure preview -->
-                    <Border Background="#FAFAFA" CornerRadius="6"
-                            Padding="12,10" Margin="0,10,0,0"
-                            BorderBrush="#E5E5EA" BorderThickness="1"
-                            MaxHeight="160">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto">
-                            <TextBlock x:Name="FolderPreview"
-                                       FontSize="11" FontFamily="Consolas"
-                                       Foreground="#555"
-                                       TextWrapping="NoWrap"/>
-                        </ScrollViewer>
-                    </Border>
+                            <!-- Built-in token buttons -->
+                            <WrapPanel Margin="0,6,0,0">
+                                <Button Content="N° Plano" Style="{StaticResource TokenButton}"
+                                        Tag="{}{SheetNumber}" Click="InsertToken_Click" Margin="0,0,4,4"/>
+                                <Button Content="Nombre" Style="{StaticResource TokenButton}"
+                                        Tag="{}{SheetName}" Click="InsertToken_Click" Margin="0,0,4,4"/>
+                                <Button Content="Revisión" Style="{StaticResource TokenButton}"
+                                        Tag="{}{Revision}" Click="InsertToken_Click" Margin="0,0,4,4"/>
+                                <Button Content="Fecha" Style="{StaticResource TokenButton}"
+                                        Tag="{}{Date}" Click="InsertToken_Click" Margin="0,0,4,4"/>
+                                <Button Content="Proyecto" Style="{StaticResource TokenButton}"
+                                        Tag="{}{ProjectName}" Click="InsertToken_Click" Margin="0,0,4,4"/>
+                            </WrapPanel>
+
+                            <!-- Revit parameter selector -->
+                            <DockPanel Margin="0,6,0,0">
+                                <Button DockPanel.Dock="Right"
+                                        Content="Agregar"
+                                        Style="{StaticResource TertiaryButton}"
+                                        Padding="14,0"
+                                        Margin="4,0,0,0"
+                                        Click="AddParameterToken_Click"/>
+                                <ComboBox x:Name="RevitParamsCombo"
+                                          Style="{StaticResource BIMPillsComboBox}">
+                                    <ComboBox.Tag>Seleccionar parámetro de Revit...</ComboBox.Tag>
+                                </ComboBox>
+                            </DockPanel>
+
+                            <!-- Dynamic parameter tokens -->
+                            <WrapPanel x:Name="DynamicTokensPanel" Margin="0,4,0,0"/>
+
+                            <!-- Preview -->
+                            <Border Background="#F8F9FA" CornerRadius="6"
+                                    Padding="10,6" Margin="0,6,0,0">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="Vista previa: "
+                                               FontSize="11" FontFamily="Segoe UI"
+                                               Foreground="{StaticResource TextSecondaryBrush}"/>
+                                    <TextBlock x:Name="NamingPreview"
+                                               FontSize="11" FontFamily="Segoe UI"
+                                               Foreground="{StaticResource PrimaryBrush}"
+                                               FontWeight="SemiBold"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </Expander>
+
+                    <!-- ── Section 3: Organización de carpetas ── -->
+                    <Expander Style="{StaticResource SectionExpander}"
+                              Header="📂  Organización de carpetas" IsExpanded="False">
+                        <StackPanel Margin="0,8,0,0">
+                            <ComboBox x:Name="FolderOrgCombo"
+                                      Style="{StaticResource BIMPillsComboBox}"
+                                      SelectionChanged="FolderOrg_SelectionChanged">
+                                <ComboBoxItem Content="Plano (todos en la misma carpeta)" Tag="Flat"/>
+                                <ComboBoxItem Content="Por formato (/PDF, /DWG)" Tag="ByFormat" IsSelected="True"/>
+                                <ComboBoxItem Content="Por disciplina" Tag="ByDiscipline"/>
+                                <ComboBoxItem Content="Formato + Disciplina" Tag="ByFormatAndDiscipline"/>
+                            </ComboBox>
+
+                            <!-- Folder structure preview -->
+                            <Border Background="#FAFAFA" CornerRadius="6"
+                                    Padding="12,10" Margin="0,10,0,0"
+                                    BorderBrush="#E5E5EA" BorderThickness="1"
+                                    MaxHeight="160">
+                                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                    <TextBlock x:Name="FolderPreview"
+                                               FontSize="11" FontFamily="Consolas"
+                                               Foreground="#555"
+                                               TextWrapping="NoWrap"/>
+                                </ScrollViewer>
+                            </Border>
+                        </StackPanel>
+                    </Expander>
+
                 </StackPanel>
+                </ScrollViewer>
             </TabItem>
 
         </TabControl>

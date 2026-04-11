@@ -204,7 +204,11 @@ namespace BIMPills.Core.Tests.Documentacion
     }
 
     // ── AcotadoVanosCommand ───────────────────────────────────────────────────
+    // AcotadoVanosCommand exposes its last result through a static property, so
+    // test classes that exercise Execute() must run serially to avoid races when
+    // xUnit parallelises test classes.
 
+    [Collection("AcotadoVanosCommandLastResult")]
     public class AcotadoVanosCommandTests
     {
         [Fact]
@@ -266,6 +270,7 @@ namespace BIMPills.Core.Tests.Documentacion
 
     // ── AcotadoVanosCommand — extended coverage ───────────────────────────────
 
+    [Collection("AcotadoVanosCommandLastResult")]
     public class AcotadoVanosCommandExtendedTests
     {
         [Fact]

@@ -18,8 +18,8 @@ namespace BIMPills.Commands.Transfer
             builder.AddPushButton(
                 tabName:             TabName,
                 panelName:           PanelName,
-                buttonName:          "Trasladar",
-                tooltip:             "Transfiere plantillas de vista, filtros y normas de proyecto desde otros proyectos abiertos.",
+                buttonName:          "Importar",
+                tooltip:             "Importa plantillas de vista, filtros y normas de proyecto desde otros proyectos abiertos.",
                 commandTypeFullName: "BIMPills.Revit.Commands.Transfer.TransferRevitCommand",
                 assemblyPath:        revitDll,
                 iconKey:             "transfer");
