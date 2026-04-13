@@ -55,6 +55,16 @@ namespace BIMPills.UI.ExportFamilies
                 _modelCanExport = canExport;
                 if (_activeTab == TabModelo) UpdateActionButton();
             };
+
+            // Wire step-change events to update Next/Action button visibility
+            SheetsPanel.StepChanged += (_, step) =>
+            {
+                if (_activeTab == TabPlanos) UpdateFooterButtons();
+            };
+            ModelPanel.StepChanged += (_, step) =>
+            {
+                if (_activeTab == TabModelo) UpdateFooterButtons();
+            };
         }
 
         private void UpdateActionButton()
@@ -73,6 +83,40 @@ namespace BIMPills.UI.ExportFamilies
                     ActionButton.IsEnabled = _familiesCanExport;
                     ActionButton.Content = ExportPanel.ExportLabel;
                     break;
+            }
+            UpdateFooterButtons();
+        }
+
+        /// <summary>
+        /// Shows "Siguiente →" on wizard steps 1 and 2; shows the action button on the last step
+        /// (or when the active tab has no step wizard, e.g. Familias).
+        /// </summary>
+        private void UpdateFooterButtons()
+        {
+            bool onLastStep;
+            switch (_activeTab)
+            {
+                case TabPlanos:
+                    onLastStep = SheetsPanel.CurrentStep >= SheetsPanel.StepCount;
+                    break;
+                case TabModelo:
+                    onLastStep = ModelPanel.CurrentStep >= ModelPanel.StepCount;
+                    break;
+                default: // TabFamilias — single step, always show action button
+                    onLastStep = true;
+                    break;
+            }
+
+            NextButton.Visibility  = onLastStep ? Visibility.Collapsed : Visibility.Visible;
+            ActionButton.Visibility = onLastStep ? Visibility.Visible  : Visibility.Collapsed;
+        }
+
+        private void Next_Click(object sender, RoutedEventArgs e)
+        {
+            switch (_activeTab)
+            {
+                case TabPlanos:  SheetsPanel.NextStep(); break;
+                case TabModelo:  ModelPanel.NextStep();  break;
             }
         }
 
@@ -233,6 +277,7 @@ namespace BIMPills.UI.ExportFamilies
             }
 
             UpdateActionButton();
+            UpdateFooterButtons();
         }
 
         private void Close_Click(object sender, RoutedEventArgs e) => Close();

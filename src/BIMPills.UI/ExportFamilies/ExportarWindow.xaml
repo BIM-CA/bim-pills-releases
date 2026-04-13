@@ -103,6 +103,14 @@
                                 IsCancel="True"
                                 Click="Close_Click"/>
 
+                        <Button x:Name="NextButton"
+                                DockPanel.Dock="Right"
+                                Content="Siguiente →"
+                                Style="{StaticResource SecondaryButton}"
+                                Padding="18,0"
+                                Visibility="Collapsed"
+                                Click="Next_Click"/>
+
                         <Button x:Name="ActionButton"
                                 DockPanel.Dock="Right"
                                 Content="Exportar"

@@ -31,13 +31,30 @@ namespace BIMPills.UI.ExportModel
         /// <summary>Raised when export availability changes.</summary>
         public event EventHandler<bool>? ExportEnabledChanged;
 
+        /// <summary>Raised when the wizard step changes. Arg = 1-based step number.</summary>
+        public event EventHandler<int>? StepChanged;
+
+        /// <summary>Current wizard step (1-based).</summary>
+        public int CurrentStep => (WizardTabs?.SelectedIndex ?? 0) + 1;
+
+        /// <summary>Total wizard steps.</summary>
+        public int StepCount => 3;
+
         public ExportModelPanel()
         {
             InitializeComponent();
+            WizardTabs.SelectionChanged += (_, _) => StepChanged?.Invoke(this, CurrentStep);
         }
 
         /// <summary>Trigger export from external button.</summary>
         public void TriggerExport() => DoExport();
+
+        /// <summary>Advance to the next wizard step.</summary>
+        public void NextStep()
+        {
+            if (WizardTabs != null && WizardTabs.SelectedIndex < WizardTabs.Items.Count - 1)
+                WizardTabs.SelectedIndex++;
+        }
 
         /// <summary>Get export button label.</summary>
         public string ExportLabel => _exportLabel;
@@ -66,6 +83,13 @@ namespace BIMPills.UI.ExportModel
                 _parameterValues = parameterValues.ToDictionary(kv => kv.Key, kv => kv.Value);
             if (availableViews != null)
                 _availableViews = new List<NwcViewInfo>(availableViews);
+
+            // Default output folder = Desktop if not yet set
+            if (string.IsNullOrEmpty(_selectedFolder))
+            {
+                _selectedFolder = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+                DestinationBox.Text = _selectedFolder;
+            }
 
             FileNameBox.Text = System.IO.Path.GetFileNameWithoutExtension(modelTitle);
             BuildParamUI();

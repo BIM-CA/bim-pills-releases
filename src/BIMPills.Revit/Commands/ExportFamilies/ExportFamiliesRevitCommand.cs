@@ -267,23 +267,45 @@ namespace BIMPills.Revit.Commands.ExportFamilies
                     var activeViewName = doc.ActiveView?.Name;
                     var availableViews = docServices.GetNwcViews();
 
-                    // Detect whether Navisworks NWC Export Utility is loaded in this Revit process.
-                    // NavisworksExportOptions lives in RevitAPI.dll and always instantiates, so we
-                    // cannot use typeof(NavisworksExportOptions) to check availability.
-                    // The actual exporter addin ships as "nwexportrevit.dll" (FullClassName:
-                    // NavisWorks21.LcRevitExportApplication) and is loaded by Revit at startup
-                    // when the Navisworks Exporters are installed. We check for that assembly name.
+                    // Detect whether Navisworks NWC Export Utility is installed for this Revit version.
+                    // Strategy: check for the addin/DLL on disk — more reliable than AppDomain
+                    // assembly names, which may differ from file names (manifest vs file name).
+                    // Known layout for Revit 2024+:
+                    //   C:\ProgramData\Autodesk\Revit\Addins\{ver}\nwexportrevit.addin
+                    //   C:\ProgramData\Autodesk\Revit\Addins\{ver}\revit_exporter.Addin.bundle\nwexportrevit\nwexportrevit.dll
                     bool nwcAvailable = false;
                     try
                     {
-                        nwcAvailable = System.AppDomain.CurrentDomain.GetAssemblies()
-                            .Any(a =>
-                            {
-                                var name = a.GetName().Name ?? string.Empty;
-                                return name.IndexOf("nwexportrevit",    StringComparison.OrdinalIgnoreCase) >= 0
-                                    || name.IndexOf("NavisworksConverter", StringComparison.OrdinalIgnoreCase) >= 0
-                                    || name.IndexOf("NavisworksExport",    StringComparison.OrdinalIgnoreCase) >= 0;
-                            });
+                        string revitVer = doc.Application.VersionNumber; // e.g. "2024"
+                        string progData = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
+                        string appData  = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+                        var candidates  = new[]
+                        {
+                            // Addin manifest files (fastest check)
+                            Path.Combine(progData, "Autodesk", "Revit", "Addins", revitVer, "nwexportrevit.addin"),
+                            Path.Combine(appData,  "Autodesk", "Revit", "Addins", revitVer, "nwexportrevit.addin"),
+                            // DLL inside bundle (Revit 2024+ layout)
+                            Path.Combine(progData, "Autodesk", "Revit", "Addins", revitVer,
+                                "revit_exporter.Addin.bundle", "nwexportrevit", "nwexportrevit.dll"),
+                            // Legacy / older layout
+                            Path.Combine(progData, "Autodesk", "Revit", "Addins", revitVer,
+                                "NavisworksExporters", "nwexportrevit.dll"),
+                        };
+                        nwcAvailable = candidates.Any(File.Exists);
+
+                        // Fallback: scan AppDomain for assemblies whose name contains known keywords
+                        if (!nwcAvailable)
+                        {
+                            nwcAvailable = System.AppDomain.CurrentDomain.GetAssemblies()
+                                .Any(a =>
+                                {
+                                    var name = a.GetName().Name ?? string.Empty;
+                                    return name.IndexOf("nwexportrevit",      StringComparison.OrdinalIgnoreCase) >= 0
+                                        || name.IndexOf("NavisworksConverter", StringComparison.OrdinalIgnoreCase) >= 0
+                                        || name.IndexOf("NavisworksExport",    StringComparison.OrdinalIgnoreCase) >= 0
+                                        || name.IndexOf("LcRevitExport",       StringComparison.OrdinalIgnoreCase) >= 0;
+                                });
+                        }
                     }
                     catch { }
 

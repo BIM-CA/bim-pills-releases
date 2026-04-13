@@ -56,6 +56,16 @@ namespace BIMPills.UI.ExportFamilies
             _documentTitle = documentTitle;
             _revitVersion = revitVersion;
             _logger = logger;
+
+            // Default output folder = Desktop if not yet set
+            if (string.IsNullOrEmpty(_selectedFolder))
+            {
+                _selectedFolder = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+                DestinationPath.Text = _selectedFolder;
+                DestinationPath.Foreground = new System.Windows.Media.SolidColorBrush(
+                    System.Windows.Media.Color.FromRgb(0x21, 0x2B, 0x37));
+            }
+
             Populate();
         }
 

@@ -53,6 +53,15 @@ namespace BIMPills.UI.ExportSheets
         /// <summary>Raised when export availability changes. Arg = canExport.</summary>
         public event EventHandler<bool>? ExportEnabledChanged;
 
+        /// <summary>Raised when the wizard step changes. Arg = 1-based step number.</summary>
+        public event EventHandler<int>? StepChanged;
+
+        /// <summary>Current wizard step (1-based).</summary>
+        public int CurrentStep => (WizardTabs?.SelectedIndex ?? 0) + 1;
+
+        /// <summary>Total wizard steps.</summary>
+        public int StepCount => 3;
+
         public ExportSheetsPanel()
         {
             InitializeComponent();
@@ -60,6 +69,13 @@ namespace BIMPills.UI.ExportSheets
 
         /// <summary>Trigger export from external button.</summary>
         public void TriggerExport() => Export_Click(this, new RoutedEventArgs());
+
+        /// <summary>Advance to the next wizard step.</summary>
+        public void NextStep()
+        {
+            if (WizardTabs != null && WizardTabs.SelectedIndex < WizardTabs.Items.Count - 1)
+                WizardTabs.SelectedIndex++;
+        }
 
         /// <summary>Get export button label.</summary>
         public string ExportLabel => _exportLabel;
@@ -108,6 +124,13 @@ namespace BIMPills.UI.ExportSheets
                 }
                 if (DwgSetupCombo.Items.Count > 0)
                     DwgSetupCombo.SelectedIndex = 0;
+            }
+
+            // Default output folder = Desktop if not yet set
+            if (string.IsNullOrEmpty(_selectedFolder))
+            {
+                _selectedFolder = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+                DestinationBox.Text = _selectedFolder;
             }
 
             Populate();
@@ -730,6 +753,7 @@ namespace BIMPills.UI.ExportSheets
         private void WizardTabs_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             UpdateFormatScrollHint();
+            StepChanged?.Invoke(this, CurrentStep);
         }
 
         private void FormatScroll_ScrollChanged(object sender, ScrollChangedEventArgs e)
