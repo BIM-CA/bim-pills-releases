@@ -241,5 +241,11 @@ namespace BIMPills.Core.Models
         public PdfEngineKind Engine { get; set; } = PdfEngineKind.Native;
         /// <summary>Windows printer name (e.g. "PDF24", "Microsoft Print to PDF"). Used when Engine = SystemPrinter.</summary>
         public string PrinterName { get; set; } = "";
+        /// <summary>
+        /// True once the user has explicitly interacted with the engine selector.
+        /// Prevents the auto-upgrade from Native → SystemPrinter from overriding
+        /// the user's deliberate choice on subsequent dialog opens.
+        /// </summary>
+        public bool HasChosenEngine { get; set; } = false;
     }
 }

@@ -91,6 +91,26 @@ namespace BIMPills.Infrastructure.Persistence
         }
 
         /// <summary>
+        /// Serialize a single set to a portable JSON string for export to file.
+        /// </summary>
+        public static string SerializeForExport(PublicationSet set)
+            => JsonConvert.SerializeObject(set, _jsonSettings);
+
+        /// <summary>
+        /// Deserialize a set from a portable JSON string (imported from file).
+        /// Assigns a new Id and timestamps so it is treated as a fresh entry.
+        /// </summary>
+        public static PublicationSet? DeserializeFromImport(string json)
+        {
+            var set = JsonConvert.DeserializeObject<PublicationSet>(json, _jsonSettings);
+            if (set == null) return null;
+            set.Id         = Guid.NewGuid().ToString();
+            set.CreatedAt  = DateTime.UtcNow;
+            set.ModifiedAt = DateTime.UtcNow;
+            return set;
+        }
+
+        /// <summary>
         /// Returns a directory scoped to a specific model name.
         /// Sanitizes the model name for use as a folder name.
         /// </summary>

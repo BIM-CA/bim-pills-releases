@@ -91,6 +91,10 @@ InstallDir "$APPDATA\Autodesk\Revit\Addins"
   File "${BUILD_NET10}\RBush.dll"
   File "${BUILD_NET10}\SixLabors.Fonts.dll"
   File "${BUILD_NET10}\System.Management.dll"
+  ; Microsoft.Win32.Registry: BIMPills.Infrastructure (netstandard2.0) referencia
+  ; la versión 5.0.0.0 de este assembly. En .NET 10 el runtime de Revit no lo resuelve
+  ; automáticamente, por lo que debemos incluirlo explícitamente.
+  File "${BUILD_NET10}\Microsoft.Win32.Registry.dll"
 !macroend
 
 ;--------------------------------
@@ -112,6 +116,10 @@ InstallDir "$APPDATA\Autodesk\Revit\Addins"
   File "${BUILD_NET8}\SixLabors.Fonts.dll"
   File "${BUILD_NET8}\System.IO.Packaging.dll"
   File "${BUILD_NET8}\System.Management.dll"
+  ; Microsoft.Win32.Registry: BIMPills.Infrastructure (netstandard2.0) referencia
+  ; la versión 5.0.0.0 de este assembly. En .NET 8 el runtime de Revit no lo resuelve
+  ; automáticamente, por lo que debemos incluirlo explícitamente.
+  File "${BUILD_NET8}\Microsoft.Win32.Registry.dll"
 !macroend
 
 ;--------------------------------
@@ -138,6 +146,10 @@ InstallDir "$APPDATA\Autodesk\Revit\Addins"
   File "${BUILD_NET48}\System.Numerics.Vectors.dll"
   File "${BUILD_NET48}\System.Runtime.CompilerServices.Unsafe.dll"
   File "${BUILD_NET48}\System.Security.Cryptography.ProtectedData.dll"
+  ; Microsoft.Win32.Registry: BIMPills.Infrastructure (netstandard2.0) referencia
+  ; la versión 5.0.0.0 de este assembly. En .NET Framework 4.8, el runtime de Revit
+  ; no resuelve automáticamente esta versión desde el GAC, por lo que debemos incluirla.
+  File "${BUILD_NET48}\Microsoft.Win32.Registry.dll"
 !macroend
 
 ;--------------------------------

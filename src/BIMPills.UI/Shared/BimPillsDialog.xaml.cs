@@ -1,3 +1,4 @@
+using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -123,7 +124,9 @@ namespace BIMPills.UI.Shared
         {
             var dlg = new BimPillsDialog();
 
-            // Resolve owner — fall back to the currently active window
+            // Resolve owner — fall back to the currently active WPF window,
+            // then fall back to RevitOwnerHelper (anchors to Revit's main window
+            // so dialogs stay on the correct monitor in multi-monitor setups).
             if (owner == null)
             {
                 foreach (Window w in Application.Current?.Windows ?? new WindowCollection())
@@ -137,7 +140,12 @@ namespace BIMPills.UI.Shared
             }
             else
             {
-                dlg.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+                // Use Revit's main window handle as Win32 owner so the dialog
+                // appears on the same monitor as Revit, even after all WPF
+                // windows have been closed (e.g. end-of-batch notification).
+                RevitOwnerHelper.SetRevitAsOwner(dlg);
+                if (RevitOwnerHelper.CurrentRevitHandle == IntPtr.Zero)
+                    dlg.WindowStartupLocation = WindowStartupLocation.CenterScreen;
             }
 
             dlg.ConfigureContent(kind, header, message, detail);

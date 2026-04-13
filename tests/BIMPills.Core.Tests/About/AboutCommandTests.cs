@@ -29,8 +29,8 @@ namespace BIMPills.Core.Tests.About
             Assert.Equal("BIM Pills", AboutCommand.LastResult!.PluginName);
             Assert.NotEmpty(AboutCommand.LastResult.Version);
             Assert.NotEqual("0.0.0", AboutCommand.LastResult.Version);
-            Assert.Equal("Rodrigo Flores + BIM-CA Team", AboutCommand.LastResult.Developer);
-            Assert.Equal("BIM-CA", AboutCommand.LastResult.Company);
+            Assert.Equal("MBA Arq. Rodrigo Flores", AboutCommand.LastResult.Developer);
+            Assert.Equal("BIM-CA (Prototype, S.A.)", AboutCommand.LastResult.Company);
             Assert.Equal("https://bim-ca.com", AboutCommand.LastResult.Website);
         }
 

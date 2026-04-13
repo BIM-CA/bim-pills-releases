@@ -18,8 +18,8 @@ namespace BIMPills.Core.About
                 return plusIdx >= 0 ? full.Substring(0, plusIdx) : full;
             }
         }
-        public string Developer => "Rodrigo Flores + BIM-CA Team";
-        public string Company => "BIM-CA";
+        public string Developer => "MBA Arq. Rodrigo Flores";
+        public string Company => "BIM-CA (Prototype, S.A.)";
         public string Website => "https://bim-ca.com";
         public string SupportEmail => "soporte@bim-ca.com";
         public string Description => "Herramientas inteligentes para optimizar tu flujo de trabajo en Revit.";

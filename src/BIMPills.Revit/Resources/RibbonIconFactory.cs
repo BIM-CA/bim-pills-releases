@@ -78,27 +78,30 @@ namespace BIMPills.Revit.Resources
         {
             return RenderIcon(ctx =>
             {
-                // Box/tray — navy, square proportions
-                var pen = Stroke(Navy, 1.5);
-                var trayGeo = new StreamGeometry();
-                using (var sgc = trayGeo.Open())
-                {
-                    sgc.BeginFigure(new Point(5, 14), true, true);
-                    sgc.LineTo(new Point(5, 26), true, false);
-                    sgc.LineTo(new Point(27, 26), true, false);
-                    sgc.LineTo(new Point(27, 14), true, false);
-                    sgc.LineTo(new Point(22, 14), true, false);
-                    sgc.LineTo(new Point(22, 18), true, false);
-                    sgc.LineTo(new Point(10, 18), true, false);
-                    sgc.LineTo(new Point(10, 14), true, false);
-                }
-                ctx.DrawGeometry(Brushes.White, pen, trayGeo);
+                var boxPen   = RoundStroke(Navy, 2.0);
+                var arrowPen = RoundStroke(Orange, 2.2);
 
-                // Arrow up — orange (export/upload)
-                var arrowPen = RoundStroke(Orange, 2.0);
-                ctx.DrawLine(arrowPen, new Point(16, 15), new Point(16, 5));
-                ctx.DrawLine(arrowPen, new Point(12, 9), new Point(16, 5));
-                ctx.DrawLine(arrowPen, new Point(20, 9), new Point(16, 5));
+                // ── Open-top rounded box (same shape as Transfer/Import) ────
+                var geo = new StreamGeometry();
+                using (var sgc = geo.Open())
+                {
+                    sgc.BeginFigure(new Point(19, 11), false, false);
+                    sgc.LineTo(new Point(23, 11), true, false);
+                    sgc.ArcTo(new Point(27, 15), new Size(4, 4), 0, false, SweepDirection.Clockwise, true, false);
+                    sgc.LineTo(new Point(27, 24), true, false);
+                    sgc.ArcTo(new Point(23, 28), new Size(4, 4), 0, false, SweepDirection.Clockwise, true, false);
+                    sgc.LineTo(new Point(9, 28), true, false);
+                    sgc.ArcTo(new Point(5, 24), new Size(4, 4), 0, false, SweepDirection.Clockwise, true, false);
+                    sgc.LineTo(new Point(5, 15), true, false);
+                    sgc.ArcTo(new Point(9, 11), new Size(4, 4), 0, false, SweepDirection.Clockwise, true, false);
+                    sgc.LineTo(new Point(13, 11), true, false);
+                }
+                ctx.DrawGeometry(Brushes.White, boxPen, geo);
+
+                // ── Arrow up (out of box) — orange ──────────────────────────
+                ctx.DrawLine(arrowPen, new Point(16, 22), new Point(16, 3));
+                ctx.DrawLine(arrowPen, new Point(11, 8), new Point(16, 3));
+                ctx.DrawLine(arrowPen, new Point(21, 8), new Point(16, 3));
             });
         }
 
@@ -295,10 +298,10 @@ namespace BIMPills.Revit.Resources
                 }
                 ctx.DrawGeometry(Brushes.White, boxPen, geo);
 
-                // ── Arrow up — orange ─────────────────────────────────────────
+                // ── Arrow down (into box) — orange ──────────────────────────────
                 ctx.DrawLine(arrowPen, new Point(16, 3), new Point(16, 22));
-                ctx.DrawLine(arrowPen, new Point(11, 8), new Point(16, 3));
-                ctx.DrawLine(arrowPen, new Point(21, 8), new Point(16, 3));
+                ctx.DrawLine(arrowPen, new Point(11, 17), new Point(16, 22));
+                ctx.DrawLine(arrowPen, new Point(21, 17), new Point(16, 22));
             });
         }
 

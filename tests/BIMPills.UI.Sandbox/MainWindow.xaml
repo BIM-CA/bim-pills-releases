@@ -118,5 +118,14 @@
                 HorizontalAlignment="Stretch" Margin="0,0,0,0"
                 Click="OpenLicenseExpired_Click"/>
 
+        <!-- Diagnóstico -->
+        <TextBlock Text="DIAGNÓSTICO" FontSize="10" FontWeight="SemiBold"
+                   Foreground="#86868B" FontFamily="Segoe UI" Margin="4,16,0,8"/>
+
+        <Button Content="&#x1F5A8;  Detectar impresoras PDF"
+                Style="{StaticResource SecondaryButton}"
+                HorizontalAlignment="Stretch" Margin="0,0,0,0"
+                Click="OpenPrinterDiag_Click"/>
+
     </StackPanel>
 </Window>

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>BIM Pills — Sandbox</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #e0e0e0;
+    font-family: 'Segoe UI', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    flex-direction: column;
+    gap: 32px;
+  }
+
+  label {
+    font-size: 12px;
+    color: #555;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  /* ── WPF Window shell ─────────────────────────────────────────────── */
+  .window {
+    width: 420px;
+    border-radius: 4px;
+    box-shadow: 0 8px 32px rgba(0,0,0,.28);
+    overflow: hidden;
+    background: #f0f0f0;
+    border: 1px solid #999;
+  }
+
+  .titlebar {
+    background: #1565C0;
+    color: #fff;
+    font-size: 12px;
+    padding: 7px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    user-select: none;
+  }
+  .titlebar .icon { font-size: 14px; }
+  .titlebar .title { flex: 1; }
+  .titlebar .close {
+    width: 20px; height: 20px;
+    background: rgba(255,255,255,.15);
+    border-radius: 2px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; cursor: pointer;
+  }
+
+  .body {
+    padding: 28px 28px 20px;
+    background: #fff;
+  }
+
+  /* ── sad face + text ──────────────────────────────────────────────── */
+  .dialog-content {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+  }
+
+  .sad-face {
+    font-size: 52px;
+    line-height: 1;
+    flex-shrink: 0;
+    margin-top: 2px;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,.15));
+  }
+
+  .text-block { flex: 1; }
+
+  .dialog-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 10px;
+    line-height: 1.3;
+  }
+
+  .dialog-body {
+    font-size: 13px;
+    color: #444;
+    line-height: 1.6;
+  }
+
+  .dialog-body a {
+    color: #1565C0;
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  /* ── footer ───────────────────────────────────────────────────────── */
+  .footer {
+    padding: 14px 28px 18px;
+    background: #f5f5f5;
+    border-top: 1px solid #ddd;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  .btn {
+    padding: 6px 20px;
+    border-radius: 3px;
+    font-size: 13px;
+    font-family: 'Segoe UI', sans-serif;
+    cursor: pointer;
+    border: 1px solid transparent;
+  }
+  .btn-primary {
+    background: #1565C0;
+    color: #fff;
+    border-color: #0d47a1;
+  }
+  .btn-primary:hover { background: #0d47a1; }
+  .btn-secondary {
+    background: #f5f5f5;
+    color: #333;
+    border-color: #bbb;
+  }
+  .btn-secondary:hover { background: #e8e8e8; }
+</style>
+</head>
+<body>
+
+<label>Opción A — Emoji grande (😢)</label>
+<div class="window">
+  <div class="titlebar">
+    <span class="icon">💊</span>
+    <span class="title">BIM Pills — Licencia vencida</span>
+    <span class="close">✕</span>
+  </div>
+  <div class="body">
+    <div class="dialog-content">
+      <div class="sad-face">😢</div>
+      <div class="text-block">
+        <div class="dialog-title">Tu licencia ha vencido</div>
+        <div class="dialog-body">
+          El período de gracia también ha expirado.<br><br>
+          Renueva tu plan e ingresa tu nueva License Key para continuar usando BIM Pills.
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="footer">
+    <button class="btn btn-secondary">Cancelar</button>
+    <button class="btn btn-primary">Renovar licencia →</button>
+  </div>
+</div>
+
+<label>Opción B — Emoji mediano (😞) con fondo rojo suave</label>
+<div class="window">
+  <div class="titlebar">
+    <span class="icon">💊</span>
+    <span class="title">BIM Pills — Licencia vencida</span>
+    <span class="close">✕</span>
+  </div>
+  <div class="body">
+    <div class="dialog-content">
+      <div class="sad-face" style="font-size:40px; background:#FFEBEB; border-radius:50%; width:56px; height:56px; display:flex; align-items:center; justify-content:center;">😞</div>
+      <div class="text-block">
+        <div class="dialog-title" style="color:#C62828;">Tu licencia ha vencido</div>
+        <div class="dialog-body">
+          El período de gracia también ha expirado.<br><br>
+          Renueva tu plan e ingresa tu nueva License Key para continuar usando BIM Pills.
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="footer">
+    <button class="btn btn-secondary">Cancelar</button>
+    <button class="btn btn-primary" style="background:#C62828; border-color:#b71c1c;">Renovar licencia →</button>
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,3 @@
+# This directory holds optional bundled installers (e.g. pdf24-creator.msi).
+# See installer/download-pdf24.ps1 to populate it before running makensis.
+# The actual binaries are git-ignored.

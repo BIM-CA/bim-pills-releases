@@ -92,8 +92,17 @@
                             Padding="10,4" FontSize="11" Margin="0,0,4,0" IsEnabled="False"
                             Click="RenameSet_Click"/>
                     <Button x:Name="DeleteSetBtn" Content="Eliminar" Style="{StaticResource TertiaryButton}"
-                            Padding="10,4" FontSize="11" IsEnabled="False"
+                            Padding="10,4" FontSize="11" IsEnabled="False" Margin="0,0,6,0"
                             Click="DeleteSet_Click"/>
+                    <Separator Width="1" Background="#D0D0D8" Margin="0,2,6,2"/>
+                    <Button x:Name="ExportSetBtn" Content="Exportar" Style="{StaticResource TertiaryButton}"
+                            Padding="10,4" FontSize="11" Margin="0,0,4,0" IsEnabled="False"
+                            ToolTip="Exportar conjunto a archivo JSON"
+                            Click="ExportSet_Click"/>
+                    <Button x:Name="ImportSetBtn" Content="Importar" Style="{StaticResource TertiaryButton}"
+                            Padding="10,4" FontSize="11"
+                            ToolTip="Importar conjunto desde archivo JSON"
+                            Click="ImportSet_Click"/>
                 </StackPanel>
                 <DockPanel>
                     <TextBlock DockPanel.Dock="Left" Text="Conjunto:"
@@ -288,7 +297,55 @@
                     </StackPanel>
                 </TabItem.Header>
                 <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- Export config preset bar -->
+                <Border Grid.Row="0"
+                        Background="#F8F9FA" BorderBrush="#E5E5EA" BorderThickness="0,0,0,1"
+                        Padding="0,8">
+                    <DockPanel Margin="0,0,0,0">
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Margin="8,0,0,0">
+                            <Button x:Name="SavePresetBtn" Content="Guardar" Style="{StaticResource TertiaryButton}"
+                                    Padding="10,4" FontSize="11" Margin="0,0,4,0"
+                                    Click="SavePreset_Click"/>
+                            <Button x:Name="SaveAsPresetBtn" Content="Guardar como..." Style="{StaticResource TertiaryButton}"
+                                    Padding="10,4" FontSize="11" Margin="0,0,4,0"
+                                    Click="SaveAsPreset_Click"/>
+                            <Button x:Name="RenamePresetBtn" Content="Renombrar" Style="{StaticResource TertiaryButton}"
+                                    Padding="10,4" FontSize="11" Margin="0,0,4,0" IsEnabled="False"
+                                    Click="RenamePreset_Click"/>
+                            <Button x:Name="DeletePresetBtn" Content="Eliminar" Style="{StaticResource TertiaryButton}"
+                                    Padding="10,4" FontSize="11" Margin="0,0,6,0" IsEnabled="False"
+                                    Click="DeletePreset_Click"/>
+                            <Separator Width="1" Background="#D0D0D8" Margin="0,2,6,2"/>
+                            <Button x:Name="ExportPresetBtn" Content="Exportar" Style="{StaticResource TertiaryButton}"
+                                    Padding="10,4" FontSize="11" Margin="0,0,4,0" IsEnabled="False"
+                                    ToolTip="Exportar preset a archivo JSON"
+                                    Click="ExportPreset_Click"/>
+                            <Button x:Name="ImportPresetBtn" Content="Importar" Style="{StaticResource TertiaryButton}"
+                                    Padding="10,4" FontSize="11"
+                                    ToolTip="Importar preset desde archivo JSON"
+                                    Click="ImportPreset_Click"/>
+                        </StackPanel>
+                        <DockPanel>
+                            <TextBlock DockPanel.Dock="Left" Text="Preset:"
+                                       FontSize="11" FontFamily="Segoe UI"
+                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                       VerticalAlignment="Center" Margin="14,0,8,0"/>
+                            <ComboBox x:Name="ExportPresetCombo"
+                                      Style="{StaticResource BIMPillsComboBox}"
+                                      SelectionChanged="ExportPreset_Changed">
+                                <ComboBox.Tag>Seleccionar preset de configuración...</ComboBox.Tag>
+                            </ComboBox>
+                        </DockPanel>
+                    </DockPanel>
+                </Border>
+
                 <ScrollViewer x:Name="FormatScroll"
+                              Grid.Row="1"
                               VerticalScrollBarVisibility="Auto"
                               ScrollChanged="FormatScroll_ScrollChanged">
                 <StackPanel Margin="0,12,0,0">
@@ -609,6 +666,7 @@
 
                 <!-- Scroll hint -->
                 <Border x:Name="FormatScrollHint"
+                        Grid.Row="1"
                         VerticalAlignment="Bottom" Height="48"
                         IsHitTestVisible="False" Visibility="Collapsed">
                     <Border.Background>

@@ -492,6 +492,40 @@ namespace BIMPills.UI.Sandbox
             }
         }
 
+        // ── Diagnóstico: detección de impresoras PDF ─────────────────────────
+
+        private void OpenPrinterDiag_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var printers = BIMPills.Infrastructure.Services.PdfPrinterService.GetInstalledPdfPrinters();
+                var sb = new System.Text.StringBuilder();
+                sb.AppendLine($"Impresoras PDF detectadas: {printers.Count}");
+                sb.AppendLine();
+                foreach (var p in printers)
+                {
+                    sb.AppendLine($"  [{p.Rank}] {p.DisplayName}");
+                    sb.AppendLine($"      Sistema: {p.SystemName}");
+                    sb.AppendLine($"      Silencioso: {p.SupportsSilent}");
+                }
+
+                if (printers.Count == 0)
+                    sb.AppendLine("  (ninguna impresora PDF detectada)");
+
+                // Show diag log path
+                var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+                var logPath = System.IO.Path.Combine(appData, "Autodesk", "Revit", "Addins", "BIMPills", "pdf-printer-diag.log");
+                sb.AppendLine();
+                sb.AppendLine($"Log de diagnóstico: {logPath}");
+
+                MessageBox.Show(sb.ToString(), "Sandbox — Impresoras PDF", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error detectando impresoras:\n{ex.Message}\n\n{ex.StackTrace}", "Sandbox — Error");
+            }
+        }
+
         private void OpenAboutWithLicense(MockLicenseService? licenseService)
         {
             try
