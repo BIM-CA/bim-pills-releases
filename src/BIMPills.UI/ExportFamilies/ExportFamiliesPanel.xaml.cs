@@ -11,7 +11,7 @@ using System.Windows.Controls;
 
 namespace BIMPills.UI.ExportFamilies
 {
-    public partial class ExportFamiliesPanel : UserControl
+    public partial class ExportPanel : UserControl
     {
         private IReadOnlyList<FamilyExportInfo> _families = Array.Empty<FamilyExportInfo>();
         private Func<long, string, bool>? _exportCallback;
@@ -23,7 +23,7 @@ namespace BIMPills.UI.ExportFamilies
         /// <summary>Raised when export availability changes. Arg = canExport.</summary>
         public event EventHandler<bool>? ExportEnabledChanged;
 
-        public ExportFamiliesPanel()
+        public ExportPanel()
         {
             InitializeComponent();
         }

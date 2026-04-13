@@ -125,7 +125,7 @@
                 <Grid>
                     <sheets:ExportSheetsPanel x:Name="SheetsPanel"/>
                     <model:ExportModelPanel x:Name="ModelPanel" Visibility="Collapsed"/>
-                    <local:ExportFamiliesPanel x:Name="ExportPanel" Visibility="Collapsed"/>
+                    <local:ExportPanel x:Name="ExportPanel" Visibility="Collapsed"/>
                 </Grid>
 
             </DockPanel>
