@@ -28,6 +28,10 @@ namespace BIMPills.UI.ExportSheets
         private JsonPublicationSetRepository? _publicationSetRepo;
         private List<PublicationSet> _publicationSets = new List<PublicationSet>();
 
+        // Export config presets
+        private JsonExportConfigPresetRepository? _exportConfigPresetRepo;
+        private List<ExportConfigPreset> _exportConfigPresets = new List<ExportConfigPreset>();
+
         // PDF engine (global printer selector, persisted)
         private JsonPdfEngineSettingsRepository? _pdfEngineRepo;
         private PdfEngineSettings _pdfEngine = new PdfEngineSettings();
@@ -110,6 +114,7 @@ namespace BIMPills.UI.ExportSheets
             UpdateAllFileNames();
             UpdateNamingPreview();
             LoadPublicationSets();
+            LoadExportConfigPresets();
             LoadPdfEngineSettings();
         }
 
@@ -709,83 +714,10 @@ namespace BIMPills.UI.ExportSheets
         }
 
         private string? PromptForSetName(string currentName = "")
-        {
-            var dlg = new Window
-            {
-                Title               = "BIM Pills \u2014 Guardar conjunto",
-                Width               = 380,
-                SizeToContent       = SizeToContent.Height,
-                Owner               = Window.GetWindow(this),
-                WindowStartupLocation = WindowStartupLocation.CenterOwner,
-                ResizeMode          = ResizeMode.NoResize,
-                Background          = System.Windows.Media.Brushes.White,
-                WindowStyle         = WindowStyle.ToolWindow
-            };
-
-            var grid = new Grid { Margin = new Thickness(18) };
-            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(8) });
-            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-
-            var lbl = new TextBlock
-            {
-                Text       = "Nombre del conjunto:",
-                FontSize   = 12,
-                FontFamily = new System.Windows.Media.FontFamily("Segoe UI"),
-                Margin     = new Thickness(0, 0, 0, 6)
-            };
-            Grid.SetRow(lbl, 0);
-
-            var tb = new TextBox
-            {
-                Height       = 30,
-                FontSize     = 12,
-                FontFamily   = new System.Windows.Media.FontFamily("Segoe UI"),
-                Padding      = new Thickness(6, 4, 6, 4),
-                BorderBrush  = System.Windows.Media.Brushes.LightGray,
-                BorderThickness = new Thickness(1),
-                Text         = string.IsNullOrEmpty(currentName) ? $"Conjunto {DateTime.Now:yyyy-MM-dd}" : currentName
-            };
-            Grid.SetRow(tb, 1);
-
-            var btns = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
-            Grid.SetRow(btns, 3);
-
-            string? result = null;
-            var ok = new Button
-            {
-                Content     = "Guardar",
-                Width       = 80,
-                Height      = 28,
-                Margin      = new Thickness(0, 0, 8, 0),
-                IsDefault   = true,
-                FontFamily  = new System.Windows.Media.FontFamily("Segoe UI"),
-                Background  = System.Windows.Media.Brushes.White
-            };
-            ok.Click += (_, __) => { result = tb.Text; dlg.DialogResult = true; };
-
-            var cancel = new Button
-            {
-                Content    = "Cancelar",
-                Width      = 80,
-                Height     = 28,
-                IsCancel   = true,
-                FontFamily = new System.Windows.Media.FontFamily("Segoe UI")
-            };
-
-            btns.Children.Add(ok);
-            btns.Children.Add(cancel);
-            grid.Children.Add(lbl);
-            grid.Children.Add(tb);
-            grid.Children.Add(btns);
-            dlg.Content = grid;
-
-            tb.Loaded += (_, __) => { tb.SelectAll(); tb.Focus(); };
-
-            dlg.ShowDialog();
-            return result;
-        }
+            => PromptForName(
+                title: "BIM Pills \u2014 Guardar conjunto",
+                label: "Nombre del conjunto:",
+                defaultValue: string.IsNullOrEmpty(currentName) ? $"Conjunto {DateTime.Now:yyyy-MM-dd}" : currentName);
 
         // ── Event handlers ──
 
@@ -1325,6 +1257,499 @@ namespace BIMPills.UI.ExportSheets
             return sb.ToString().Trim().TrimEnd('.');
         }
 
+        // ── Export / Import — Publication Sets ─────────────────────────────
+
+        private void ExportSet_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var selectedItem = PublicationSetCombo.SelectedItem as ComboBoxItem;
+                var setId = selectedItem?.Tag?.ToString() ?? "";
+                if (string.IsNullOrEmpty(setId)) return;
+
+                var set = _publicationSets.FirstOrDefault(s => s.Id == setId);
+                if (set == null) return;
+
+                var dlg = new Microsoft.Win32.SaveFileDialog
+                {
+                    Title = "Exportar conjunto de publicación",
+                    FileName = set.Name,
+                    DefaultExt = ".json",
+                    Filter = "JSON (*.json)|*.json"
+                };
+                if (dlg.ShowDialog() != true) return;
+
+                File.WriteAllText(dlg.FileName, JsonPublicationSetRepository.SerializeForExport(set), System.Text.Encoding.UTF8);
+                BimPillsDialog.Success(
+                    header: "Conjunto exportado",
+                    message: $"«{set.Name}» exportado correctamente.",
+                    owner: Window.GetWindow(this));
+            }
+            catch (Exception ex)
+            {
+                _logger?.Error("Error en ExportSet_Click", ex);
+                BimPillsDialog.Error("No se pudo exportar", "Error al exportar el conjunto.", ex.Message, Window.GetWindow(this));
+            }
+        }
+
+        private void ImportSet_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var dlg = new Microsoft.Win32.OpenFileDialog
+                {
+                    Title = "Importar conjunto de publicación",
+                    DefaultExt = ".json",
+                    Filter = "JSON (*.json)|*.json"
+                };
+                if (dlg.ShowDialog() != true) return;
+
+                var json = File.ReadAllText(dlg.FileName, System.Text.Encoding.UTF8);
+                var set = JsonPublicationSetRepository.DeserializeFromImport(json);
+                if (set == null)
+                {
+                    BimPillsDialog.Error("No se pudo importar", "El archivo no contiene un conjunto de publicación válido.", owner: Window.GetWindow(this));
+                    return;
+                }
+
+                _publicationSetRepo?.Create(set);
+                LoadPublicationSets();
+                SelectSetInCombo(set.Id);
+                BimPillsDialog.Success(
+                    header: "Conjunto importado",
+                    message: $"«{set.Name}» importado con {set.Items.Count} items.",
+                    owner: Window.GetWindow(this));
+            }
+            catch (Exception ex)
+            {
+                _logger?.Error("Error en ImportSet_Click", ex);
+                BimPillsDialog.Error("No se pudo importar", "Error al importar el conjunto.", ex.Message, Window.GetWindow(this));
+            }
+        }
+
+        // ── Export Config Presets ───────────────────────────────────────────
+
+        private void LoadExportConfigPresets()
+        {
+            try
+            {
+                _exportConfigPresetRepo = new JsonExportConfigPresetRepository();
+                _exportConfigPresets = _exportConfigPresetRepo.GetAll();
+
+                ExportPresetCombo.Items.Clear();
+                ExportPresetCombo.Items.Add(new ComboBoxItem { Content = "(ninguno)", Tag = "" });
+                foreach (var preset in _exportConfigPresets)
+                    ExportPresetCombo.Items.Add(new ComboBoxItem { Content = preset.Name, Tag = preset.Id });
+
+                ExportPresetCombo.SelectedIndex = 0;
+            }
+            catch (Exception ex)
+            {
+                _logger?.Error("Error loading export config presets", ex);
+            }
+        }
+
+        private void ExportPreset_Changed(object sender, SelectionChangedEventArgs e)
+        {
+            try
+            {
+                var selectedItem = ExportPresetCombo.SelectedItem as ComboBoxItem;
+                var presetId = selectedItem?.Tag?.ToString() ?? "";
+                bool hasActivePreset = !string.IsNullOrEmpty(presetId);
+                DeletePresetBtn.IsEnabled = hasActivePreset;
+                RenamePresetBtn.IsEnabled = hasActivePreset;
+                ExportPresetBtn.IsEnabled = hasActivePreset;
+
+                if (string.IsNullOrEmpty(presetId)) return;
+
+                var preset = _exportConfigPresets.FirstOrDefault(p => p.Id == presetId);
+                if (preset == null) return;
+
+                RestoreFormatSettings(preset);
+            }
+            catch (Exception ex) { _logger?.Error("Error en ExportPreset_Changed", ex); }
+        }
+
+        private void SavePreset_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var activePresetId = (ExportPresetCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "";
+                var activePreset = string.IsNullOrEmpty(activePresetId) ? null
+                    : _exportConfigPresets.FirstOrDefault(p => p.Id == activePresetId);
+
+                if (activePreset != null)
+                {
+                    CaptureFormatSettings(activePreset);
+                    _exportConfigPresetRepo?.Update(activePreset);
+                    LoadExportConfigPresets();
+                    SelectPresetInCombo(activePreset.Id);
+                    BimPillsDialog.Success(
+                        header: "Preset actualizado",
+                        message: $"«{activePreset.Name}» actualizado.",
+                        owner: Window.GetWindow(this));
+                }
+                else
+                {
+                    SaveNewPreset();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger?.Error("Error en SavePreset_Click", ex);
+                BimPillsDialog.Error("No se pudo guardar", "Error al guardar el preset.", ex.Message, Window.GetWindow(this));
+            }
+        }
+
+        private void SaveAsPreset_Click(object sender, RoutedEventArgs e)
+        {
+            try { SaveNewPreset(); }
+            catch (Exception ex)
+            {
+                _logger?.Error("Error en SaveAsPreset_Click", ex);
+                BimPillsDialog.Error("No se pudo guardar", "Error al guardar el preset.", ex.Message, Window.GetWindow(this));
+            }
+        }
+
+        private void SaveNewPreset()
+        {
+            var name = PromptForName(
+                title: "BIM Pills \u2014 Guardar preset",
+                label: "Nombre del preset:",
+                defaultValue: $"Preset {DateTime.Now:yyyy-MM-dd}");
+            if (string.IsNullOrWhiteSpace(name)) return;
+
+            var preset = new ExportConfigPreset { Name = name.Trim() };
+            CaptureFormatSettings(preset);
+
+            _exportConfigPresetRepo?.Create(preset);
+            LoadExportConfigPresets();
+            SelectPresetInCombo(preset.Id);
+
+            BimPillsDialog.Success(
+                header: "Preset creado",
+                message: $"«{preset.Name}» guardado.",
+                owner: Window.GetWindow(this));
+        }
+
+        private void RenamePreset_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var selectedItem = ExportPresetCombo.SelectedItem as ComboBoxItem;
+                var presetId = selectedItem?.Tag?.ToString() ?? "";
+                if (string.IsNullOrEmpty(presetId)) return;
+
+                var preset = _exportConfigPresets.FirstOrDefault(p => p.Id == presetId);
+                if (preset == null) return;
+
+                var newName = PromptForName(
+                    title: "BIM Pills \u2014 Renombrar preset",
+                    label: "Nuevo nombre:",
+                    defaultValue: preset.Name);
+                if (string.IsNullOrWhiteSpace(newName)) return;
+
+                preset.Name = newName.Trim();
+                _exportConfigPresetRepo?.Update(preset);
+                LoadExportConfigPresets();
+                SelectPresetInCombo(preset.Id);
+            }
+            catch (Exception ex)
+            {
+                _logger?.Error("Error en RenamePreset_Click", ex);
+                BimPillsDialog.Error("No se pudo renombrar", "Error al renombrar el preset.", ex.Message, Window.GetWindow(this));
+            }
+        }
+
+        private void DeletePreset_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var selectedItem = ExportPresetCombo.SelectedItem as ComboBoxItem;
+                var presetId = selectedItem?.Tag?.ToString() ?? "";
+                if (string.IsNullOrEmpty(presetId)) return;
+
+                var preset = _exportConfigPresets.FirstOrDefault(p => p.Id == presetId);
+                if (preset == null) return;
+
+                var confirm = BimPillsDialog.Confirm(
+                    header: "\u00bfEliminar preset?",
+                    message: $"El preset «{preset.Name}» se eliminará permanentemente.",
+                    detail: "Esta acción no se puede deshacer.",
+                    owner: Window.GetWindow(this),
+                    yesText: "Eliminar",
+                    noText: "Cancelar",
+                    kind: BimPillsDialog.DialogKind.Warning);
+                if (!confirm) return;
+
+                _exportConfigPresetRepo?.Delete(presetId);
+                LoadExportConfigPresets();
+            }
+            catch (Exception ex)
+            {
+                _logger?.Error("Error en DeletePreset_Click", ex);
+                BimPillsDialog.Error("No se pudo eliminar", "Error al eliminar el preset.", ex.Message, Window.GetWindow(this));
+            }
+        }
+
+        private void ExportPreset_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var selectedItem = ExportPresetCombo.SelectedItem as ComboBoxItem;
+                var presetId = selectedItem?.Tag?.ToString() ?? "";
+                if (string.IsNullOrEmpty(presetId)) return;
+
+                var preset = _exportConfigPresets.FirstOrDefault(p => p.Id == presetId);
+                if (preset == null) return;
+
+                var dlg = new Microsoft.Win32.SaveFileDialog
+                {
+                    Title = "Exportar preset de configuración",
+                    FileName = preset.Name,
+                    DefaultExt = ".json",
+                    Filter = "JSON (*.json)|*.json"
+                };
+                if (dlg.ShowDialog() != true) return;
+
+                File.WriteAllText(dlg.FileName, JsonExportConfigPresetRepository.SerializeForExport(preset), System.Text.Encoding.UTF8);
+                BimPillsDialog.Success(
+                    header: "Preset exportado",
+                    message: $"«{preset.Name}» exportado correctamente.",
+                    owner: Window.GetWindow(this));
+            }
+            catch (Exception ex)
+            {
+                _logger?.Error("Error en ExportPreset_Click", ex);
+                BimPillsDialog.Error("No se pudo exportar", "Error al exportar el preset.", ex.Message, Window.GetWindow(this));
+            }
+        }
+
+        private void ImportPreset_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var dlg = new Microsoft.Win32.OpenFileDialog
+                {
+                    Title = "Importar preset de configuración",
+                    DefaultExt = ".json",
+                    Filter = "JSON (*.json)|*.json"
+                };
+                if (dlg.ShowDialog() != true) return;
+
+                var json = File.ReadAllText(dlg.FileName, System.Text.Encoding.UTF8);
+                var preset = JsonExportConfigPresetRepository.DeserializeFromImport(json);
+                if (preset == null)
+                {
+                    BimPillsDialog.Error("No se pudo importar", "El archivo no contiene un preset de configuración válido.", owner: Window.GetWindow(this));
+                    return;
+                }
+
+                _exportConfigPresetRepo?.Create(preset);
+                LoadExportConfigPresets();
+                SelectPresetInCombo(preset.Id);
+                BimPillsDialog.Success(
+                    header: "Preset importado",
+                    message: $"«{preset.Name}» importado.",
+                    owner: Window.GetWindow(this));
+            }
+            catch (Exception ex)
+            {
+                _logger?.Error("Error en ImportPreset_Click", ex);
+                BimPillsDialog.Error("No se pudo importar", "Error al importar el preset.", ex.Message, Window.GetWindow(this));
+            }
+        }
+
+        private void SelectPresetInCombo(string presetId)
+        {
+            for (int i = 0; i < ExportPresetCombo.Items.Count; i++)
+            {
+                if (ExportPresetCombo.Items[i] is ComboBoxItem ci && ci.Tag?.ToString() == presetId)
+                {
+                    ExportPresetCombo.SelectedIndex = i;
+                    break;
+                }
+            }
+        }
+
+        /// <summary>Captures current Tab 2 (Formato) state into an ExportConfigPreset.</summary>
+        private void CaptureFormatSettings(ExportConfigPreset preset)
+        {
+            preset.ExportPdf = PdfCheck.IsChecked == true;
+            preset.ExportDwg = DwgCheck.IsChecked == true;
+            preset.NamingPattern = NamingPatternBox?.Text ?? "{SheetNumber}-{SheetName}";
+            preset.FolderOrganization = GetSelectedFolderOrganization();
+            preset.PdfEngine = _pdfEngine.Engine;
+            preset.PrinterName = _pdfEngine.PrinterName;
+            preset.PdfSettings = GetPdfSettings();
+            preset.DwgConfig = GetSelectedDwgConfig();
+        }
+
+        /// <summary>Restores an ExportConfigPreset into the Tab 2 (Formato) UI controls.</summary>
+        private void RestoreFormatSettings(ExportConfigPreset preset)
+        {
+            // Format checkboxes
+            PdfCheck.IsChecked = preset.ExportPdf;
+            DwgCheck.IsChecked = preset.ExportDwg;
+
+            // Naming pattern
+            if (!string.IsNullOrEmpty(preset.NamingPattern) && NamingPatternBox != null)
+                NamingPatternBox.Text = preset.NamingPattern;
+
+            // Folder organization
+            foreach (ComboBoxItem item in FolderOrgCombo.Items)
+            {
+                if (item.Tag?.ToString() == preset.FolderOrganization.ToString())
+                {
+                    FolderOrgCombo.SelectedItem = item;
+                    break;
+                }
+            }
+
+            // PDF engine
+            _suppressPdfEngineEvents = true;
+            try
+            {
+                _pdfEngine.Engine = preset.PdfEngine;
+                _pdfEngine.PrinterName = preset.PrinterName ?? "";
+
+                foreach (ComboBoxItem item in PdfEngineCombo.Items)
+                {
+                    if (item.Tag?.ToString() == preset.PdfEngine.ToString())
+                    {
+                        PdfEngineCombo.SelectedItem = item;
+                        break;
+                    }
+                }
+
+                if (!string.IsNullOrWhiteSpace(preset.PrinterName))
+                {
+                    for (int i = 0; i < PdfPrinterCombo.Items.Count; i++)
+                    {
+                        if (PdfPrinterCombo.Items[i] is ComboBoxItem ci &&
+                            string.Equals(ci.Tag?.ToString(), preset.PrinterName, StringComparison.OrdinalIgnoreCase))
+                        {
+                            PdfPrinterCombo.SelectedIndex = i;
+                            break;
+                        }
+                    }
+                }
+                SavePdfEngineSettings();
+            }
+            finally
+            {
+                _suppressPdfEngineEvents = false;
+            }
+
+            // PDF settings
+            if (preset.PdfSettings != null)
+                ApplyPdfSettings(preset.PdfSettings);
+
+            // DWG config
+            if (preset.DwgConfig != null)
+            {
+                var revitPresetName = preset.DwgConfig.RevitPresetName;
+                if (!string.IsNullOrEmpty(revitPresetName))
+                {
+                    foreach (ComboBoxItem item in DwgSetupCombo.Items)
+                    {
+                        if (item.Content?.ToString() == revitPresetName)
+                        {
+                            DwgSetupCombo.SelectedItem = item;
+                            break;
+                        }
+                    }
+                }
+                DwgExportLinkedCheck.IsChecked = preset.DwgConfig.ExportLinkedAsXrefs;
+                DwgCleanPcpCheck.IsChecked = preset.DwgConfig.CleanPcpFiles;
+            }
+
+            // Trigger visibility and preview updates
+            FormatCheck_Changed(this, new RoutedEventArgs());
+            UpdatePdfEngineUi();
+        }
+
+        /// <summary>
+        /// Generic prompt for a name string. Used by publication sets and presets.
+        /// </summary>
+        private string? PromptForName(string title, string label, string defaultValue = "")
+        {
+            var dlg = new Window
+            {
+                Title               = title,
+                Width               = 380,
+                SizeToContent       = SizeToContent.Height,
+                Owner               = Window.GetWindow(this),
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                ResizeMode          = ResizeMode.NoResize,
+                Background          = System.Windows.Media.Brushes.White,
+                WindowStyle         = WindowStyle.ToolWindow
+            };
+
+            var grid = new Grid { Margin = new Thickness(18) };
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(8) });
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+            var lbl = new TextBlock
+            {
+                Text       = label,
+                FontSize   = 12,
+                FontFamily = new System.Windows.Media.FontFamily("Segoe UI"),
+                Margin     = new Thickness(0, 0, 0, 6)
+            };
+            Grid.SetRow(lbl, 0);
+
+            var tb = new TextBox
+            {
+                Height          = 30,
+                FontSize        = 12,
+                FontFamily      = new System.Windows.Media.FontFamily("Segoe UI"),
+                Padding         = new Thickness(6, 4, 6, 4),
+                BorderBrush     = System.Windows.Media.Brushes.LightGray,
+                BorderThickness = new Thickness(1),
+                Text            = string.IsNullOrEmpty(defaultValue) ? $"Preset {DateTime.Now:yyyy-MM-dd}" : defaultValue
+            };
+            Grid.SetRow(tb, 1);
+
+            var btns = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
+            Grid.SetRow(btns, 3);
+
+            string? result = null;
+            var ok = new Button
+            {
+                Content     = "Guardar",
+                Width       = 80,
+                Height      = 28,
+                Margin      = new Thickness(0, 0, 8, 0),
+                IsDefault   = true,
+                FontFamily  = new System.Windows.Media.FontFamily("Segoe UI"),
+                Background  = System.Windows.Media.Brushes.White
+            };
+            ok.Click += (_, __) => { result = tb.Text; dlg.DialogResult = true; };
+
+            var cancel = new Button
+            {
+                Content    = "Cancelar",
+                Width      = 80,
+                Height     = 28,
+                IsCancel   = true,
+                FontFamily = new System.Windows.Media.FontFamily("Segoe UI")
+            };
+
+            btns.Children.Add(ok);
+            btns.Children.Add(cancel);
+            grid.Children.Add(lbl);
+            grid.Children.Add(tb);
+            grid.Children.Add(btns);
+            dlg.Content = grid;
+
+            tb.Loaded += (_, __) => { tb.SelectAll(); tb.Focus(); };
+            dlg.ShowDialog();
+            return result;
+        }
+
         // ── PDF Engine ─────────────────────────────────────────────────────
 
         /// <summary>
@@ -1353,14 +1778,39 @@ namespace BIMPills.UI.ExportSheets
                 // derived from the same enumeration — avoids a second full sweep
                 // of PrinterSettings.InstalledPrinters later.
                 PdfPrinterCombo.Items.Clear();
-                var printers = BIMPills.Infrastructure.Services.PdfPrinterService.GetInstalledPdfPrinters();
+
+                // Diagnostic: write to TEMP to verify this code path executes inside Revit
+                WriteTempDiag("[LoadPdfEngineSettings] calling GetInstalledPdfPrinters...");
+                List<BIMPills.Infrastructure.Services.PdfPrinterService.PdfPrinterInfo> printers;
+                try
+                {
+                    printers = BIMPills.Infrastructure.Services.PdfPrinterService.GetInstalledPdfPrinters();
+                    WriteTempDiag($"[LoadPdfEngineSettings] returned {printers.Count} printers");
+                }
+                catch (Exception pex)
+                {
+                    WriteTempDiag($"[LoadPdfEngineSettings] EXCEPTION: {pex.GetType().FullName}: {pex.Message}");
+                    WriteTempDiag($"  StackTrace: {pex.StackTrace}");
+                    if (pex.InnerException != null)
+                        WriteTempDiag($"  Inner: {pex.InnerException.GetType().FullName}: {pex.InnerException.Message}");
+                    printers = new List<BIMPills.Infrastructure.Services.PdfPrinterService.PdfPrinterInfo>();
+                }
                 _pdf24Installed = false;
+                bool pdf24HkcuFixApplied = false;
                 foreach (var p in printers)
                 {
                     if (!_pdf24Installed &&
                         p.SystemName.IndexOf("pdf24", StringComparison.OrdinalIgnoreCase) >= 0)
                     {
                         _pdf24Installed = true;
+                        // Fix HKCU for the actual logged-in user. The NSIS installer
+                        // may have written to the wrong HKCU (admin account vs the
+                        // user who runs Revit) when elevated with a different admin
+                        // account. Running here guarantees the correct user context.
+                        // No-op if already configured; returns true only on first fix.
+                        pdf24HkcuFixApplied = BIMPills.Infrastructure.Services.PdfPrinterService.EnsureBimpillsHkcuServiceConfig();
+                        if (pdf24HkcuFixApplied)
+                            WriteTempDiag("[LoadPdfEngineSettings] PDF24 HKCU bimpills service config written for current user.");
                     }
                     var label = p.SupportsSilent
                         ? $"{p.DisplayName} (silencioso)"
@@ -1373,15 +1823,17 @@ namespace BIMPills.UI.ExportSheets
                     });
                 }
 
-                // Auto-upgrade: if saved engine is Native BUT a PDF printer is available,
-                // switch to SystemPrinter so the user sees the printer immediately.
-                // This covers fresh installs and cases where the setting got reset.
-                // We only do this once — once the user explicitly chooses Native and
-                // saves, the Engine field stays Native.
-                if (_pdfEngine.Engine == BIMPills.Core.Models.PdfEngineKind.Native &&
+                // Auto-upgrade: if the user has NEVER interacted with the engine
+                // selector and the default is Native, switch to SystemPrinter so
+                // they see the printer immediately. Only fires once — after the
+                // user explicitly changes the combo, HasChosenEngine = true and
+                // this block is skipped forever.
+                if (!_pdfEngine.HasChosenEngine &&
+                    _pdfEngine.Engine == BIMPills.Core.Models.PdfEngineKind.Native &&
                     printers.Count > 0)
                 {
                     _pdfEngine.Engine = BIMPills.Core.Models.PdfEngineKind.SystemPrinter;
+                    _pdfEngine.HasChosenEngine = true;
                     // Pre-select the best available printer (rank 0 = PDF24 if installed)
                     if (string.IsNullOrWhiteSpace(_pdfEngine.PrinterName))
                         _pdfEngine.PrinterName = printers[0].SystemName;
@@ -1489,6 +1941,7 @@ namespace BIMPills.UI.ExportSheets
             if (_suppressPdfEngineEvents) return;
             var tag = (PdfEngineCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString();
             _pdfEngine.Engine = tag == "SystemPrinter" ? PdfEngineKind.SystemPrinter : PdfEngineKind.Native;
+            _pdfEngine.HasChosenEngine = true;
             UpdatePdfEngineUi();
             SavePdfEngineSettings();
         }
@@ -1513,6 +1966,23 @@ namespace BIMPills.UI.ExportSheets
         /// guarantees a non-null default (Native) if the panel was never loaded.
         /// </summary>
         public PdfEngineSettings GetPdfEngineSettings() => _pdfEngine;
+
+        /// <summary>
+        /// Writes a diagnostic line to %TEMP%\bimpills-ui-diag.log.
+        /// Used to troubleshoot printer detection inside Revit's runtime
+        /// where the Infrastructure-level log may not be reachable.
+        /// </summary>
+        private static void WriteTempDiag(string message)
+        {
+            try
+            {
+                var path = System.IO.Path.Combine(
+                    System.IO.Path.GetTempPath(), "bimpills-ui-diag.log");
+                System.IO.File.AppendAllText(path,
+                    $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {message}{Environment.NewLine}");
+            }
+            catch { /* never break the caller */ }
+        }
     }
 
     /// <summary>
