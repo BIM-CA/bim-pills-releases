@@ -12,12 +12,14 @@ using BIMPills.UI.About;
 using BIMPills.UI.CustomDimensionSchemes;
 using BIMPills.UI.DataManager;
 using BIMPills.UI.Documentacion;
-using BIMPills.UI.ExportFamilies;
+using BIMPills.UI.Export;
 using BIMPills.UI.Gestion;
 using BIMPills.UI.Licensing;
 using BIMPills.UI.MCPIntegration;
 using BIMPills.UI.ModelAudit;
+using BIMPills.Core.Updates;
 using BIMPills.UI.Ordering;
+using BIMPills.UI.Updates;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -73,18 +75,36 @@ namespace BIMPills.UI.Sandbox
                     },
                     OrphanElements = new List<ElementInfo>
                     {
-                        new ElementInfo(100123, "Generic Model [100123]", null),
-                        new ElementInfo(100456, "Generic Model [100456]", null),
+                        new ElementInfo(100123, "Importación DWG planta baja",  null, "Importación CAD", canDelete: true,
+                            description: "Importación CAD embebida en el modelo. Si ya no la necesitas, puede eliminarse para reducir el peso del archivo."),
+                        new ElementInfo(100456, "Generic Model [100456]",        null, "Importación CAD", canDelete: true,
+                            description: "Importación CAD embebida en el modelo. Si ya no la necesitas, puede eliminarse para reducir el peso del archivo."),
+                        new ElementInfo(100789, "Grupo_Baños_Tipo_A",            null, "Grupo",           canDelete: false,
+                            description: "Grupo anclado en Revit — no se puede eliminar hasta desanclarlo manualmente."),
+                        new ElementInfo(100890, "DWG_Planta_Vinculado",          null, "Importación CAD", canDelete: false,
+                            description: "Enlace CAD (DWG/DXF) vinculado externamente. Para eliminarlo, desvincúlalo primero desde Administrar → Vínculos."),
                     },
                     PurgeableItems = new List<PurgeableItem>
                     {
-                        new PurgeableItem(200001, "Familia_Sin_Usar_01",  "Mobiliario", "Familia",  2_097_152),
-                        new PurgeableItem(200002, "Vista_Sin_Colocar_02", "FloorPlan",  "Vista",    0        ),
-                        new PurgeableItem(200003, "Material_Obsoleto_03", "General",    "Material", 524_288  ),
+                        new PurgeableItem(200001, "Familia_Sin_Usar_01",      "Mobiliario",       "Familia",        2_097_152),
+                        new PurgeableItem(200002, "Familia_Sin_Usar_02",      "Puertas",          "Familia",        1_048_576),
+                        new PurgeableItem(200003, "Vista_Sin_Colocar_Borrador","FloorPlan",       "Vista",          0        ),
+                        new PurgeableItem(200004, "Sección Antigua TEST",     "Section",          "Vista",          0        ),
+                        new PurgeableItem(200005, "Arial 2.5mm",              "Estilos de texto", "Estilo texto",   0        ),
+                        new PurgeableItem(200006, "Nota 3.5 Negrita",         "Estilos de texto", "Estilo texto",   0        ),
+                        new PurgeableItem(200007, "Lineal 1:100 BIM-CA",      "Tipos de cota",    "Tipo cota",      0        ),
+                        new PurgeableItem(200008, "Angular Grados",           "Tipos de cota",    "Tipo cota",      0        ),
+                        new PurgeableItem(200009, "Patrón Hormigón Rayado",   "Regiones rellenas","Patron relleno", 0        ),
+                        new PurgeableItem(200010, "Material_Obsoleto",        "General",          "Material",       524_288  ),
                     }
                 };
 
-                var win = new ModelAuditWindow(result, purgeCallback: null);
+                // En sandbox, mock callback que simula la purga (solo muestra qué IDs se purgarían)
+                Action<IReadOnlyList<long>> mockPurge = ids =>
+                    MessageBox.Show($"[Sandbox] Purgar/eliminar {ids.Count} elementos:\n{string.Join(", ", ids)}",
+                        "Sandbox — Mock purge");
+
+                var win = new ModelAuditWindow(result, purgeCallback: mockPurge);
                 win.Show();
             }
             catch (Exception ex)
@@ -493,6 +513,42 @@ namespace BIMPills.UI.Sandbox
         }
 
         // ── Diagnóstico: detección de impresoras PDF ─────────────────────────
+
+        private void OpenUpdateAvailable_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var fakeUpdate = new UpdateInfo
+                {
+                    TagName      = "beta-1.1",
+                    ReleaseNotes =
+                        "## Novedades en beta 1.1\n\n" +
+                        "- **Auditoría:** Corrección del peso del archivo en modelos colaborativos (BIM 360/ACC/Revit Server)\n" +
+                        "- **Auditoría:** Barras de metodología ahora se llenan según el puntaje real\n" +
+                        "- **UI:** Selección múltiple con Shift+Click en pestaña Purgables\n" +
+                        "- **Auto-update:** Sistema de actualización automática desde GitHub Releases\n" +
+                        "- **Diálogos:** Reemplazo completo de MessageBox por BimPillsDialog",
+                    InstallerDownloadUrl = "https://github.com/BIM-CA/bim-pills/releases/download/beta-1.1/BIMPills-setup.exe",
+                };
+
+                // Simular descarga: espera 2 segundos y retorna ruta ficticia
+                async Task<string?> FakeDownload(UpdateInfo u)
+                {
+                    await Task.Delay(2000);
+                    return @"C:\Temp\BIMPills_update_setup.exe";
+                }
+
+                var win = new UpdateAvailableWindow(fakeUpdate, "beta 1.0", FakeDownload)
+                {
+                    Owner = this
+                };
+                win.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error: {ex.Message}", "Sandbox — Update");
+            }
+        }
 
         private void OpenPrinterDiag_Click(object sender, RoutedEventArgs e)
         {

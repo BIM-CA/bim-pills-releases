@@ -26,6 +26,22 @@ namespace BIMPills.Commands.ModelAudit
 
             var unplacedViews = doc.GetUnplacedViews();
             var purgeableItems = doc.GetPurgeableElements();
+            var orphanElements = doc.GetElementsWithoutCategory();
+
+            // Los huérfanos borrables (ImportInstance, Group, RevitLink) se añaden a la lista
+            // de purgables para que puedan eliminarse desde esa pestaña centralizada.
+            var orphanAsPurgeable = orphanElements
+                .Where(e => e.CanDelete)
+                .Select(e => new PurgeableItem(
+                    id:       e.Id,
+                    name:     e.Name,
+                    category: e.Category ?? e.ClassName ?? "Sin categoría",
+                    itemType: "Elemento huérfano"))
+                .ToList();
+
+            var allPurgeableItems = purgeableItems
+                .Concat(orphanAsPurgeable)
+                .ToList();
 
             var healthScore = new ModelHealthScore(
                 warningsCount: warnings.Count,
@@ -33,7 +49,7 @@ namespace BIMPills.Commands.ModelAudit
                 largestFamilyMB: largestFamilyMB,
                 totalElements: totalElements,
                 unplacedViewsCount: unplacedViews.Count,
-                purgeableCount: purgeableItems.Count);
+                purgeableCount: allPurgeableItems.Count);
 
             var result = new ModelAuditResult
             {
@@ -42,8 +58,8 @@ namespace BIMPills.Commands.ModelAudit
                 Warnings        = warnings,
                 Families        = families,
                 UnplacedViews   = unplacedViews,
-                OrphanElements  = doc.GetElementsWithoutCategory(),
-                PurgeableItems  = purgeableItems,
+                OrphanElements  = orphanElements,
+                PurgeableItems  = allPurgeableItems,
                 HealthScore     = healthScore,
                 FileSizeBytes   = fileSizeBytes,
                 TotalElements   = totalElements
@@ -75,6 +91,7 @@ namespace BIMPills.Commands.ModelAudit
         public IReadOnlyList<PurgeableItem> PurgeableItems { get; set; } = new List<PurgeableItem>();
 
         public string FileSizeLabel =>
+            FileSizeBytes <= 0             ? "—" :
             FileSizeBytes >= 1_073_741_824 ? $"{FileSizeBytes / 1_073_741_824.0:F1} GB" :
             FileSizeBytes >= 1_048_576     ? $"{FileSizeBytes / 1_048_576.0:F1} MB" :
             FileSizeBytes >= 1_024         ? $"{FileSizeBytes / 1_024.0:F1} KB" :

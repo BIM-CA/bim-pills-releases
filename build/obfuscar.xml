@@ -1,0 +1,34 @@
+<?xml version='1.0'?>
+<!--
+  Obfuscar config para BIM Pills — Release builds únicamente.
+
+  Estrategia: KeepPublicApi=true
+  - Tipos/métodos PÚBLICOS conservan sus nombres (necesario para referencias
+    cross-assembly entre Core ↔ Revit ↔ UI).
+  - Miembros privados/internos se renombran (lógica de licencias, HTTP, etc.).
+  - Strings se cifran (HideStrings).
+  - Control flow se ofusca (ControlFlowObfuscation — default on).
+
+  Assemblies incluidos: Core, Infrastructure, Commands.
+  Excluidos: BIMPills.Revit (API de Revit necesita names exactos para .addin),
+             BIMPills.UI   (XAML usa reflexión / x:Class).
+
+  Usage (run desde build-all.ps1 después del Release build):
+    obfuscar.console build\obfuscar.xml /var:InPath=<dir> /var:OutPath=<dir>
+-->
+<Obfuscator>
+  <Var name="InPath"              value="." />
+  <Var name="OutPath"             value="Obfuscated" />
+  <Var name="HideStrings"         value="true" />
+  <Var name="UseUnicodeNames"     value="true" />
+  <Var name="RenameProperties"    value="true" />
+  <Var name="RenameEvents"        value="true" />
+  <Var name="RenameFields"        value="true" />
+  <Var name="KeepPublicApi"       value="true" />
+  <Var name="RegenerateDebugInfo" value="false" />
+
+  <Module file="$(InPath)\BIMPills.Core.dll" />
+  <Module file="$(InPath)\BIMPills.Infrastructure.dll" />
+  <Module file="$(InPath)\BIMPills.Commands.dll" />
+
+</Obfuscator>

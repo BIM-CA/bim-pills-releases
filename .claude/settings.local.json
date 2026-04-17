@@ -108,7 +108,9 @@
       "Bash(cmd.exe /c \"dir /s /b \"\"C:\\\\Users\\\\guita\\\\*ISCC*\"\" 2>nul & dir /s /b \"\"C:\\\\Users\\\\guita\\\\AppData\\\\*Inno*\"\" 2>nul\")",
       "Bash(cmd.exe /c \"\"\"C:\\\\Users\\\\guita\\\\AppData\\\\Local\\\\Programs\\\\Inno Setup 6\\\\ISCC.exe\"\" /Q \"\"G:\\\\Claude\\\\Code\\\\installer\\\\BIMPills_Setup.iss\"\"\")",
       "Bash(echo \"EXIT:$?\")",
-      "Bash(powershell.exe -Command \"& ''C:\\\\Users\\\\guita\\\\AppData\\\\Local\\\\Programs\\\\Inno Setup 6\\\\ISCC.exe'' ''G:\\\\Claude\\\\Code\\\\installer\\\\BIMPills_Setup.iss''; Write-Host ''Exit:'' $LASTEXITCODE\")"
+      "Bash(powershell.exe -Command \"& ''C:\\\\Users\\\\guita\\\\AppData\\\\Local\\\\Programs\\\\Inno Setup 6\\\\ISCC.exe'' ''G:\\\\Claude\\\\Code\\\\installer\\\\BIMPills_Setup.iss''; Write-Host ''Exit:'' $LASTEXITCODE\")",
+      "Bash(powershell -ExecutionPolicy Bypass -File build/build-all.ps1 -Versions 2024,2025,2026,2027 -Configuration Release)",
+      "Bash(powershell -ExecutionPolicy Bypass -Command \"& '.\\\\build\\\\build-all.ps1' -Versions @\\('2024','2025','2026','2027'\\) -Configuration Release\")"
     ]
   }
 }

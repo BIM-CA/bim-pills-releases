@@ -85,7 +85,9 @@ namespace BIMPills.Revit.Commands.Ordering
         private static long GetElementIdValue(ElementId id)
         {
 #if REVIT2024
+#pragma warning disable CS0618 // IntegerValue obsoleto en 2024 — necesario para net48
             return id.IntegerValue;
+#pragma warning restore CS0618
 #else
             return id.Value;
 #endif

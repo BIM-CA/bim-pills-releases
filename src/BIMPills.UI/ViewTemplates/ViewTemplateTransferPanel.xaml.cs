@@ -1,4 +1,5 @@
 using BIMPills.Core.Models;
+using BIMPills.UI.Shared;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -80,8 +81,11 @@ namespace BIMPills.UI.ViewTemplates
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error cargando plantillas: {ex.Message}",
-                    "BIM Pills \u2014 Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                BimPillsDialog.Error(
+                    "Error cargando plantillas",
+                    "No se pudieron obtener las plantillas del documento fuente.",
+                    detail: ex.Message,
+                    owner: Window.GetWindow(this));
             }
         }
 
@@ -184,8 +188,11 @@ namespace BIMPills.UI.ViewTemplates
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error cargando detalle: {ex.Message}",
-                    "BIM Pills \u2014 Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                BimPillsDialog.Error(
+                    "Error cargando detalle",
+                    "No se pudo cargar el detalle de la plantilla seleccionada.",
+                    detail: ex.Message,
+                    owner: Window.GetWindow(this));
             }
         }
 
@@ -322,25 +329,38 @@ namespace BIMPills.UI.ViewTemplates
             }
             else
             {
-                MessageBox.Show(
-                    $"Callback de transferencia no configurado (sandbox).\n\n" +
-                    $"Se transferir\u00edan {ids.Count} plantillas desde \u00ab{docTitle}\u00bb.",
-                    "BIM Pills \u2014 Sandbox", MessageBoxButton.OK, MessageBoxImage.Information);
+                BimPillsDialog.Info(
+                    "Sandbox: transferencia simulada",
+                    $"Se transferirían {ids.Count} plantillas desde «{docTitle}».",
+                    detail: "Callback de transferencia no configurado en el entorno de sandbox.",
+                    owner: Window.GetWindow(this));
             }
         }
 
-        private static void ShowTransferResult(TransferResult result)
+        private void ShowTransferResult(TransferResult result)
         {
-            var msg = $"Transferencia completada.\n\n" +
-                      $"\u2022 Transferidas: {result.Transferred}\n" +
-                      $"\u2022 Omitidas: {result.Skipped}\n" +
-                      $"\u2022 Conflictos resueltos: {result.Conflicts}";
-            if (result.Errors.Count > 0)
-                msg += $"\n\nErrores:\n{string.Join("\n", result.Errors.Take(5))}";
+            var summary =
+                $"• Transferidas: {result.Transferred}\n" +
+                $"• Omitidas: {result.Skipped}\n" +
+                $"• Conflictos resueltos: {result.Conflicts}";
 
-            MessageBox.Show(msg, "BIM Pills \u2014 Transferencia",
-                MessageBoxButton.OK,
-                result.Errors.Count > 0 ? MessageBoxImage.Warning : MessageBoxImage.Information);
+            if (result.Errors.Count > 0)
+            {
+                var errorDetail = summary + "\n\nErrores:\n" + string.Join("\n", result.Errors.Take(5));
+                BimPillsDialog.Warning(
+                    "Transferencia completada con advertencias",
+                    $"{result.Transferred} plantillas transferidas, {result.Errors.Count} con errores.",
+                    detail: errorDetail,
+                    owner: Window.GetWindow(this));
+            }
+            else
+            {
+                BimPillsDialog.Success(
+                    "Transferencia completada",
+                    $"{result.Transferred} plantillas transferidas correctamente.",
+                    detail: summary,
+                    owner: Window.GetWindow(this));
+            }
         }
     }
 }

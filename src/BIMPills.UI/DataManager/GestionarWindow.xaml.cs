@@ -1,6 +1,7 @@
 using BIMPills.Core.Models;
 using BIMPills.Core.Services;
 using BIMPills.Infrastructure.Export;
+using BIMPills.UI.Shared;
 using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
@@ -131,7 +132,13 @@ namespace BIMPills.UI.DataManager
             {
                 try   { LoadSchedules(); _tablasLoaded = true; }
                 catch (Exception ex)
-                { MessageBox.Show($"Error cargando tablas: {ex.Message}", "BIM Pills \u2014 Error"); }
+                {
+                    BimPillsDialog.Error(
+                        header: "Error cargando tablas",
+                        message: "No se pudieron cargar las tablas de planificación.",
+                        detail: ex.Message,
+                        owner: this);
+                }
                 finally { HideLoading(); }
             }), DispatcherPriority.Background);
         }
@@ -185,7 +192,11 @@ namespace BIMPills.UI.DataManager
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error cargando datos: {ex.Message}", "BIM Pills \u2014 Error");
+                BimPillsDialog.Error(
+                    header: "Error cargando datos",
+                    message: "No se pudieron cargar los datos de la tabla seleccionada.",
+                    detail: ex.Message,
+                    owner: this);
             }
         }
 
@@ -310,7 +321,10 @@ namespace BIMPills.UI.DataManager
 
             if (selected.Count == 0)
             {
-                MessageBox.Show("Selecciona al menos una tabla para exportar.", "BIM Pills \u2014 Gestionar");
+                BimPillsDialog.Warning(
+                    header: "Nada seleccionado",
+                    message: "Selecciona al menos una tabla para exportar.",
+                    owner: this);
                 return;
             }
 
@@ -358,7 +372,11 @@ namespace BIMPills.UI.DataManager
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al exportar: {ex.Message}", "BIM Pills \u2014 Error");
+                BimPillsDialog.Error(
+                    header: "Error al exportar",
+                    message: "No se pudo exportar la tabla a Excel.",
+                    detail: ex.Message,
+                    owner: this);
             }
         }
 
@@ -393,7 +411,11 @@ namespace BIMPills.UI.DataManager
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al exportar: {ex.Message}", "BIM Pills \u2014 Error");
+                BimPillsDialog.Error(
+                    header: "Error al exportar",
+                    message: "No se pudo exportar la tabla a Excel.",
+                    detail: ex.Message,
+                    owner: this);
             }
         }
 
@@ -429,7 +451,10 @@ namespace BIMPills.UI.DataManager
 
                 if (allData.Count == 0)
                 {
-                    MessageBox.Show("Las tablas seleccionadas no contienen datos.", "BIM Pills \u2014 Gestionar");
+                    BimPillsDialog.Warning(
+                        header: "Sin datos para exportar",
+                        message: "Las tablas seleccionadas no contienen datos.",
+                        owner: this);
                     return;
                 }
 
@@ -441,27 +466,31 @@ namespace BIMPills.UI.DataManager
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al exportar: {ex.Message}", "BIM Pills \u2014 Error");
+                BimPillsDialog.Error(
+                    header: "Error al exportar",
+                    message: "No se pudieron exportar las tablas a Excel.",
+                    detail: ex.Message,
+                    owner: this);
             }
         }
 
         private void AskOpenFile(string path, TimeSpan? elapsed = null)
         {
-            var elapsedStr = "";
-            if (elapsed.HasValue)
-            {
-                elapsedStr = elapsed.Value.TotalMinutes >= 1
-                    ? $"\nTiempo: {(int)elapsed.Value.TotalMinutes} min {elapsed.Value.Seconds} seg"
-                    : $"\nTiempo: {elapsed.Value.TotalSeconds:F1} seg";
-            }
+            var elapsedStr = elapsed.HasValue
+                ? (elapsed.Value.TotalMinutes >= 1
+                    ? $" ({(int)elapsed.Value.TotalMinutes} min {elapsed.Value.Seconds} seg)"
+                    : $" ({elapsed.Value.TotalSeconds:F1} seg)")
+                : "";
 
-            var result = MessageBox.Show(
-                $"Archivo exportado:\n{path}{elapsedStr}\n\n¿Abrir en Excel?",
-                "BIM Pills \u2014 Exportar",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Information);
+            var open = BimPillsDialog.Confirm(
+                header: "Exportación completada",
+                message: $"Archivo guardado correctamente{elapsedStr}.",
+                detail: path,
+                owner: this,
+                yesText: "Abrir en Excel",
+                noText: "Cerrar");
 
-            if (result == MessageBoxResult.Yes)
+            if (open)
                 Helpers.ProcessHelper.OpenDocument(path);
         }
 
@@ -482,8 +511,10 @@ namespace BIMPills.UI.DataManager
 
                 if (multiUpdates.Count == 0)
                 {
-                    MessageBox.Show("No se detectaron datos importables en el archivo.",
-                        "BIM Pills \u2014 Importar");
+                    BimPillsDialog.Warning(
+                        header: "Sin datos importables",
+                        message: "No se detectaron datos importables en el archivo seleccionado.",
+                        owner: this);
                     return;
                 }
 
@@ -525,12 +556,19 @@ namespace BIMPills.UI.DataManager
                 }
                 else
                 {
-                    MessageBox.Show("No se detectaron cambios en el archivo.", "BIM Pills \u2014 Importar");
+                    BimPillsDialog.Info(
+                        header: "Sin cambios",
+                        message: "No se detectaron cambios entre el archivo y el modelo actual.",
+                        owner: this);
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al leer el archivo: {ex.Message}", "BIM Pills \u2014 Error");
+                BimPillsDialog.Error(
+                    header: "Error al leer el archivo",
+                    message: "No se pudo procesar el archivo Excel importado.",
+                    detail: ex.Message,
+                    owner: this);
             }
         }
 
@@ -556,13 +594,15 @@ namespace BIMPills.UI.DataManager
         {
             if (_pendingUpdates.Count == 0) return;
 
-            var confirm = MessageBox.Show(
-                $"\u00bfAplicar {_pendingUpdates.Count} cambios al modelo Revit?",
-                "BIM Pills \u2014 Gestionar",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Question);
+            var confirmed = BimPillsDialog.Confirm(
+                header: "¿Aplicar cambios?",
+                message: $"Se aplicarán {_pendingUpdates.Count} cambios al modelo Revit.",
+                detail: "Esta acción modificará parámetros de elementos en el modelo actual.",
+                owner: this,
+                yesText: "Aplicar",
+                noText: "Cancelar");
 
-            if (confirm != MessageBoxResult.Yes) return;
+            if (!confirmed) return;
 
             try
             {
@@ -570,12 +610,22 @@ namespace BIMPills.UI.DataManager
 
                 StatusLabel.Text = $"Aplicados: {result.Updated} · Omitidos: {result.Skipped}";
 
-                var msg = $"Operaci\u00f3n completada.\n\n\u2022 Actualizados: {result.Updated}\n\u2022 Omitidos: {result.Skipped}";
+                var summary = $"• Actualizados: {result.Updated}\n• Omitidos: {result.Skipped}";
                 if (result.Errors.Count > 0)
-                    msg += $"\n\u2022 Errores: {result.Errors.Count}\n{string.Join("\n", result.Errors.Take(5))}";
+                    summary += $"\n• Errores: {result.Errors.Count}";
 
-                MessageBox.Show(msg, "BIM Pills \u2014 Importar", MessageBoxButton.OK,
-                    result.Errors.Count > 0 ? MessageBoxImage.Warning : MessageBoxImage.Information);
+                if (result.Errors.Count > 0)
+                    BimPillsDialog.Warning(
+                        header: "Importación completada con errores",
+                        message: $"{result.Updated} cambios aplicados, {result.Errors.Count} con errores.",
+                        detail: summary + "\n\n" + string.Join("\n", result.Errors.Take(5)),
+                        owner: this);
+                else
+                    BimPillsDialog.Success(
+                        header: "Importación completada",
+                        message: $"{result.Updated} cambios aplicados correctamente.",
+                        detail: summary,
+                        owner: this);
 
                 _pendingUpdates.Clear();
                 DiffGrid.ItemsSource = null;
@@ -596,7 +646,11 @@ namespace BIMPills.UI.DataManager
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al aplicar cambios: {ex.Message}", "BIM Pills \u2014 Error");
+                BimPillsDialog.Error(
+                    header: "Error al aplicar cambios",
+                    message: "No se pudieron aplicar los cambios al modelo Revit.",
+                    detail: ex.Message,
+                    owner: this);
             }
         }
 

@@ -2,6 +2,7 @@ using BIMPills.Core.Models;
 using BIMPills.Infrastructure.DI;
 using BIMPills.Infrastructure.Security;
 using BIMPills.Core.Services;
+using BIMPills.UI.Shared;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -159,8 +160,10 @@ namespace BIMPills.UI.MCPIntegration
             var apiKey = ApiKeyBox.Password?.Trim();
             if (string.IsNullOrEmpty(apiKey))
             {
-                MessageBox.Show("Ingresa una API Key antes de guardar.",
-                    "BIM Pills", MessageBoxButton.OK, MessageBoxImage.Warning);
+                BimPillsDialog.Warning(
+                    header: "API Key requerida",
+                    message: "Ingresa una API Key antes de guardar.",
+                    owner: this);
                 return;
             }
 
@@ -172,14 +175,19 @@ namespace BIMPills.UI.MCPIntegration
                 SaveClaudeConfig(apiKey, selectedModel);   // ← encrypts with DPAPI
 
                 SetClaudeStatus(true, "✓ Configuración guardada correctamente");
-                MessageBox.Show(
-                    "Claude AI configurado correctamente.\n\nAhora puedes usar el análisis AI desde el informe de auditoría.",
-                    "BIMPills — Claude AI", MessageBoxButton.OK, MessageBoxImage.Information);
+                BimPillsDialog.Success(
+                    header: "Claude AI configurado",
+                    message: "La configuración se guardó correctamente.",
+                    detail: "Ahora puedes usar el análisis AI desde el informe de auditoría.",
+                    owner: this);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al guardar: {ex.Message}", "BIM Pills",
-                    MessageBoxButton.OK, MessageBoxImage.Error);
+                BimPillsDialog.Error(
+                    header: "Error al guardar",
+                    message: "No se pudo guardar la configuración de Claude AI.",
+                    detail: ex.Message,
+                    owner: this);
             }
         }
 
@@ -251,14 +259,18 @@ namespace BIMPills.UI.MCPIntegration
 
             if (string.IsNullOrEmpty(name))
             {
-                MessageBox.Show("Ingresa un nombre para la conexión.",
-                    "BIM Pills", MessageBoxButton.OK, MessageBoxImage.Warning);
+                BimPillsDialog.Warning(
+                    header: "Nombre requerido",
+                    message: "Ingresa un nombre para la conexión.",
+                    owner: this);
                 return;
             }
             if (string.IsNullOrEmpty(endpoint))
             {
-                MessageBox.Show("Ingresa el endpoint (URL o ruta local) de la conexión.",
-                    "BIM Pills", MessageBoxButton.OK, MessageBoxImage.Warning);
+                BimPillsDialog.Warning(
+                    header: "Endpoint requerido",
+                    message: "Ingresa el endpoint (URL o ruta local) de la conexión.",
+                    owner: this);
                 return;
             }
 
@@ -282,8 +294,11 @@ namespace BIMPills.UI.MCPIntegration
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al agregar la conexión:\n{ex.Message}",
-                    "BIM Pills", MessageBoxButton.OK, MessageBoxImage.Error);
+                BimPillsDialog.Error(
+                    header: "Error al agregar conexión",
+                    message: "No se pudo agregar la conexión MCP.",
+                    detail: ex.Message,
+                    owner: this);
             }
         }
 
@@ -331,14 +346,15 @@ namespace BIMPills.UI.MCPIntegration
         {
             if (McpConnectionsList.SelectedItem is not McpConnectionViewModel vm) return;
 
-            var result = MessageBox.Show(
-                $"¿Eliminar la conexión '{vm.Name}'?",
-                "BIMPills — Confirmar",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Question,
-                MessageBoxResult.No);
+            var confirmed = BimPillsDialog.Confirm(
+                header: "¿Eliminar conexión?",
+                message: $"Se eliminará la conexión «{vm.Name}».",
+                detail: "Esta acción no se puede deshacer.",
+                owner: this,
+                yesText: "Eliminar",
+                noText: "Cancelar");
 
-            if (result != MessageBoxResult.Yes) return;
+            if (!confirmed) return;
 
             try
             {
@@ -352,8 +368,11 @@ namespace BIMPills.UI.MCPIntegration
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al eliminar:\n{ex.Message}",
-                    "BIM Pills", MessageBoxButton.OK, MessageBoxImage.Error);
+                BimPillsDialog.Error(
+                    header: "Error al eliminar",
+                    message: "No se pudo eliminar la conexión MCP.",
+                    detail: ex.Message,
+                    owner: this);
             }
         }
     }

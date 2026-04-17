@@ -6,16 +6,20 @@ namespace BIMPills.Core.About
     public sealed class AboutInfo
     {
         public string PluginName => "BIM Pills";
+        /// <summary>
+        /// User-facing version. InformationalVersion format: "1.0.0-beta.X.Y"
+        /// (ej. "1.0.0-beta.3.3"). Retorna la versión limpia sin metadata de build.
+        /// </summary>
         public string Version
         {
             get
             {
-                var full = typeof(AboutInfo).Assembly
+                var raw = typeof(AboutInfo).Assembly
                     .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
-                    ?.InformationalVersion ?? "0.0.0";
-                // Strip build metadata (+commitHash) — show only semver portion
-                var plusIdx = full.IndexOf('+');
-                return plusIdx >= 0 ? full.Substring(0, plusIdx) : full;
+                    ?.InformationalVersion ?? "1.0.0-beta.3.2";
+                // Strip build metadata (+commitHash) added by SDK
+                var plusIdx = raw.IndexOf('+');
+                return plusIdx >= 0 ? raw.Substring(0, plusIdx) : raw;
             }
         }
         public string Developer => "MBA Arq. Rodrigo Flores";

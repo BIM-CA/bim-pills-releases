@@ -9,17 +9,21 @@ using BIMPills.Commands.Gestion;
 using BIMPills.Commands.MCPIntegration;
 using BIMPills.Commands.ModelAudit;
 using BIMPills.Commands.Ordering;
+using BIMPills.Core.About;
 using BIMPills.Core.Licensing;
 using BIMPills.Core.Modules;
 using BIMPills.Core.Services;
+using BIMPills.Core.Updates;
 using BIMPills.Infrastructure.DI;
 using BIMPills.Infrastructure.Licensing;
 using BIMPills.Infrastructure.Logging;
 using BIMPills.Infrastructure.Persistence;
 using BIMPills.Infrastructure.Services;
+using BIMPills.Infrastructure.Updates;
 using BIMPills.Revit.Compatibility;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -73,6 +77,9 @@ namespace BIMPills.Revit.Application
 
                 // 4. License service — validates against Airtable, caches locally (DPAPI)
                 RegisterLicenseService(logger, app);
+
+                // 4b. Update checker — comprueba GitHub Releases una vez cada 24 h
+                RegisterUpdateChecker(logger, app);
 
                 // 5. Global exception handlers — prevent any BIMPills exception from crashing Revit
                 RegisterGlobalExceptionHandlers(logger);
@@ -145,6 +152,12 @@ namespace BIMPills.Revit.Application
             };
         }
 
+        // ── Update checker state ────────────────────────────────────────────────
+        private static readonly GitHubUpdateChecker _updateChecker = new GitHubUpdateChecker();
+        private static DateTime _lastUpdateCheck = DateTime.MinValue;
+        private static readonly TimeSpan _updateCheckCooldown = TimeSpan.FromHours(24);
+        private static string? _pendingInstallerPath = null;
+
         // Last time we revalidated against Airtable — used to throttle DocumentOpened calls
         private static DateTime _lastRevalidation = DateTime.MinValue;
         private static readonly TimeSpan _revalidationCooldown = TimeSpan.FromMinutes(30);
@@ -208,7 +221,133 @@ namespace BIMPills.Revit.Application
         {
             if (ServiceLocator.IsRegistered<ILogger>())
                 ServiceLocator.Get<ILogger>().Info("BIMPills cerrado.");
+
+            // Si hay un instalador pendiente descargado, lanzarlo ahora que Revit se cierra.
+            LaunchPendingInstallerIfAny();
+
             return Result.Succeeded;
+        }
+
+        private static void LaunchPendingInstallerIfAny()
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(_pendingInstallerPath)) return;
+                if (!File.Exists(_pendingInstallerPath)) return;
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName        = _pendingInstallerPath,
+                    UseShellExecute = true,
+                });
+            }
+            catch { /* No bloquear el cierre de Revit si falla el lanzamiento */ }
+        }
+
+        /// <summary>
+        /// Registra el chequeo de actualizaciones en el evento DocumentOpened
+        /// (máximo una vez cada 24 horas) y suscribe la lógica de notificación.
+        /// </summary>
+        private static void RegisterUpdateChecker(ILogger logger, UIControlledApplication app)
+        {
+            app.ControlledApplication.DocumentOpened += (s, e) =>
+            {
+                if (DateTime.UtcNow - _lastUpdateCheck < _updateCheckCooldown) return;
+                _lastUpdateCheck = DateTime.UtcNow;
+
+                var currentVersion = new AboutInfo().Version; // "beta 1.0"
+
+                Task.Run(async () =>
+                {
+                    try
+                    {
+                        var update = await _updateChecker.CheckAsync(currentVersion);
+                        if (update == null) return;
+
+                        logger.Info($"Actualización disponible: {update.DisplayVersion}");
+
+                        // Volver al hilo UI de WPF para mostrar el diálogo
+                        System.Windows.Application.Current?.Dispatcher.BeginInvoke(
+                            System.Windows.Threading.DispatcherPriority.Background,
+                            new Action(() => ShowUpdateDialog(update, logger)));
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.Warning($"Error al verificar actualizaciones: {ex.Message}");
+                    }
+                });
+            };
+        }
+
+        private static void ShowUpdateDialog(UpdateInfo update, ILogger logger)
+        {
+            try
+            {
+                var notes = string.IsNullOrWhiteSpace(update.ReleaseNotes)
+                    ? string.Empty
+                    : $"\n\n{update.ReleaseNotes}";
+
+                var td = new TaskDialog("BIM Pills — Actualización disponible")
+                {
+                    MainInstruction = $"Nueva versión disponible: {update.DisplayVersion}",
+                    MainContent     = $"Tienes instalada la versión actual. Hay una nueva versión " +
+                                      $"de BIM Pills lista para descargar.{notes}",
+                    CommonButtons   = TaskDialogCommonButtons.Close,
+                    DefaultButton   = TaskDialogResult.Close,
+                };
+
+                if (!string.IsNullOrEmpty(update.InstallerDownloadUrl))
+                {
+                    td.AddCommandLink(TaskDialogCommandLinkId.CommandLink1,
+                        "Descargar e instalar al cerrar Revit",
+                        "El instalador se descargará ahora. Se ejecutará automáticamente cuando cierres Revit.");
+                }
+
+                var result = td.Show();
+
+                if (result == TaskDialogResult.CommandLink1 &&
+                    !string.IsNullOrEmpty(update.InstallerDownloadUrl))
+                {
+                    DownloadUpdateInBackground(update, logger);
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.Warning($"Error al mostrar diálogo de actualización: {ex.Message}");
+            }
+        }
+
+        private static void DownloadUpdateInBackground(UpdateInfo update, ILogger logger)
+        {
+            Task.Run(async () =>
+            {
+                try
+                {
+                    logger.Info($"Descargando actualización {update.DisplayVersion}...");
+                    var path = await _updateChecker.DownloadInstallerAsync(update);
+                    if (!string.IsNullOrEmpty(path))
+                    {
+                        _pendingInstallerPath = path;
+                        logger.Info($"Instalador descargado: {path}");
+
+                        System.Windows.Application.Current?.Dispatcher.BeginInvoke(
+                            System.Windows.Threading.DispatcherPriority.Background,
+                            new Action(() =>
+                            {
+                                new TaskDialog("BIM Pills — Descarga completada")
+                                {
+                                    MainInstruction = "Descarga completada",
+                                    MainContent     = "El instalador está listo. " +
+                                                      "Se ejecutará automáticamente al cerrar Revit.",
+                                    CommonButtons   = TaskDialogCommonButtons.Ok,
+                                }.Show();
+                            }));
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.Warning($"Error al descargar actualización: {ex.Message}");
+                }
+            });
         }
 
         // ── Assembly resolver (solo Revit 2026 / .NET 8) ───────────────────────

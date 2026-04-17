@@ -70,3 +70,4 @@ README_STYLED.md
 ## Installer — optional bundled third-party installers (downloaded locally, not checked in)
 installer/vendor/*.msi
 installer/vendor/*.exe
+Obfuscated/

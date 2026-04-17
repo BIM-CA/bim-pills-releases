@@ -2,13 +2,16 @@ using BIMPills.Commands.ModelAudit;
 using BIMPills.Core.Audit;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Data;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
 
@@ -24,7 +27,11 @@ namespace BIMPills.UI.ModelAudit
 
         private readonly ModelAuditResult _result;
         private readonly Action<IReadOnlyList<long>>? _purgeCallback;
+        private List<PurgeableItemViewModel> _allPurgeableViewModels = new List<PurgeableItemViewModel>();
         private List<PurgeableItemViewModel> _purgeableViewModels = new List<PurgeableItemViewModel>();
+        private string? _activeTypeFilter = null;
+        private string _purgeSearchText = "";
+        private List<OrphanElementViewModel> _orphanViewModels = new List<OrphanElementViewModel>();
 
         public ModelAuditWindow(ModelAuditResult result, Action<IReadOnlyList<long>>? purgeCallback = null)
         {
@@ -72,9 +79,21 @@ namespace BIMPills.UI.ModelAudit
             PurgeableCountText.Text = _result.PurgeableItems.Count.ToString("N0");
 
             // Datos en grids
-            WarningsGrid.ItemsSource   = _result.Warnings;
-            ViewsGrid.ItemsSource      = _result.UnplacedViews;
-            OrphansGrid.ItemsSource    = _result.OrphanElements;
+            WarningsGrid.ItemsSource = _result.Warnings;
+            ViewsGrid.ItemsSource    = _result.UnplacedViews;
+
+            // Huérfanos — wrap en ViewModels (solo informativo; los borrables se gestionan en Purgables)
+            _orphanViewModels = _result.OrphanElements
+                .Select(e => new OrphanElementViewModel(e))
+                .ToList();
+            OrphansGrid.ItemsSource = _orphanViewModels;
+
+            // Los botones de eliminación ya no existen en esta pestaña;
+            // los huérfanos borrables aparecen en la pestaña Purgables.
+            DeleteOrphansButton.Visibility   = Visibility.Collapsed;
+            OrphanSelectAllButton.Visibility = Visibility.Collapsed;
+
+            UpdateOrphanSelection();
 
             // Scroll hints en todos los DataGrids
             Shared.ScrollHintHelper.Attach(WarningsGrid, WarningsScrollUp, WarningsScrollDown);
@@ -95,9 +114,10 @@ namespace BIMPills.UI.ModelAudit
             FamiliesGrouped.ItemsSource = familyGroups;
 
             // Purgables — wrap en ViewModels
-            _purgeableViewModels = _result.PurgeableItems
+            _allPurgeableViewModels = _result.PurgeableItems
                 .Select(p => new PurgeableItemViewModel(p))
                 .ToList();
+            _purgeableViewModels = _allPurgeableViewModels;
             PurgeableGrid.ItemsSource = _purgeableViewModels;
 
             // Deshabilitar purga si no hay callback
@@ -134,6 +154,43 @@ namespace BIMPills.UI.ModelAudit
                 : "Seleccionar todo";
         }
 
+        private void ApplyPurgeFilters()
+        {
+            if (PurgeableGrid == null) return; // Called during XAML init before controls exist
+
+            var filtered = _allPurgeableViewModels.AsEnumerable();
+
+            if (!string.IsNullOrEmpty(_activeTypeFilter))
+                filtered = filtered.Where(vm => vm.ItemType == _activeTypeFilter);
+
+            if (!string.IsNullOrEmpty(_purgeSearchText))
+                filtered = filtered.Where(vm =>
+                    vm.Name.IndexOf(_purgeSearchText, StringComparison.OrdinalIgnoreCase) >= 0);
+
+            _purgeableViewModels = filtered.ToList();
+            PurgeableGrid.ItemsSource = _purgeableViewModels;
+            UpdatePurgeSelection();
+        }
+
+        private void FilterChip_Checked(object sender, RoutedEventArgs e)
+        {
+            if (sender is System.Windows.Controls.Primitives.ToggleButton tb)
+            {
+                var tag = tb.Tag as string;
+                _activeTypeFilter = string.IsNullOrEmpty(tag) ? null : tag;
+
+                foreach (System.Windows.Controls.Primitives.ToggleButton chip in FilterChipsPanel.Children)
+                    if (chip != tb) chip.IsChecked = false;
+            }
+            ApplyPurgeFilters();
+        }
+
+        private void PurgeSearch_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            _purgeSearchText = PurgeSearchBox.Text;
+            ApplyPurgeFilters();
+        }
+
         private void SelectAll_Click(object sender, RoutedEventArgs e)
         {
             bool allSelected = _purgeableViewModels.All(vm => vm.IsSelected);
@@ -147,6 +204,23 @@ namespace BIMPills.UI.ModelAudit
 
         private void PurgeCheckBox_Click(object sender, RoutedEventArgs e)
         {
+            if (sender is CheckBox cb && cb.DataContext is PurgeableItemViewModel clicked)
+            {
+                bool newState = cb.IsChecked == true;
+
+                // Si hay múltiples filas seleccionadas en el grid y la fila clickeada
+                // es una de ellas, aplica el mismo estado a todas (Shift+Click nativo del DataGrid).
+                var highlighted = PurgeableGrid.SelectedItems
+                    .OfType<PurgeableItemViewModel>()
+                    .ToList();
+
+                if (highlighted.Count > 1 && highlighted.Contains(clicked))
+                {
+                    foreach (var vm in highlighted)
+                        vm.IsSelected = newState;
+                    PurgeableGrid.Items.Refresh();
+                }
+            }
             UpdatePurgeSelection();
         }
 
@@ -164,42 +238,149 @@ namespace BIMPills.UI.ModelAudit
             double totalMB = totalBytes / 1_048_576.0;
             string sizeInfo = totalMB >= 0.1 ? $" (~{totalMB:F1} MB)" : "";
 
-            var confirm = MessageBox.Show(
-                $"Se eliminarán {selectedItems.Count} elementos del modelo{sizeInfo}.\n\n" +
-                "Esta acción no se puede deshacer. ¿Desea continuar?",
-                "BIMPills — Confirmar purga",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Warning,
-                MessageBoxResult.No);
+            bool confirmed = Shared.BimPillsDialog.Confirm(
+                "Confirmar purga",
+                $"Se eliminarán {selectedItems.Count} elementos del modelo{sizeInfo}.",
+                detail: "Esta acción no se puede deshacer.",
+                owner: this,
+                yesText: "Eliminar",
+                noText: "Cancelar",
+                kind: Shared.BimPillsDialog.DialogKind.Warning);
 
-            if (confirm != MessageBoxResult.Yes) return;
+            if (!confirmed) return;
 
             try
             {
                 var ids = selectedItems.Select(vm => vm.Id).ToList();
                 _purgeCallback(ids);
 
-                // Remove purged items from the list
+                // Remove purged items from both lists
                 foreach (var item in selectedItems)
+                {
                     _purgeableViewModels.Remove(item);
+                    _allPurgeableViewModels.Remove(item);
+                }
 
                 PurgeableGrid.ItemsSource = null;
                 PurgeableGrid.ItemsSource = _purgeableViewModels;
                 UpdatePurgeSelection();
 
-                MessageBox.Show(
+                Shared.BimPillsDialog.Success(
+                    "Purga completada",
                     $"Se purgaron {selectedItems.Count} elementos exitosamente.",
-                    "BIMPills — Purga completada",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information);
+                    owner: this);
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
-                    $"Error al purgar elementos:\n\n{ex.Message}",
-                    "BIMPills — Error",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                Shared.BimPillsDialog.Error(
+                    "Error al purgar",
+                    "No se pudieron eliminar los elementos seleccionados.",
+                    detail: ex.Message,
+                    owner: this);
+            }
+        }
+
+        // ── Orphan filter / display ───────────────────────────────────
+
+        private void OrphanFilterDeletable_Changed(object sender, RoutedEventArgs e)
+        {
+            ApplyOrphanFilter();
+        }
+
+        private void ApplyOrphanFilter()
+        {
+            bool onlyDeletable = OrphanFilterDeletableBtn?.IsChecked == true;
+            var visible = onlyDeletable
+                ? _orphanViewModels.Where(vm => vm.CanDelete).ToList()
+                : _orphanViewModels;
+
+            OrphansGrid.ItemsSource = visible;
+            UpdateOrphanSelection();
+        }
+
+        private void UpdateOrphanSelection()
+        {
+            int total     = _orphanViewModels.Count;
+            int deletable = _orphanViewModels.Count(vm => vm.CanDelete);
+
+            bool filtering = OrphanFilterDeletableBtn?.IsChecked == true;
+            int shown = filtering ? deletable : total;
+
+            OrphanSelectionText.Text = deletable > 0
+                ? $"{shown} mostrados · {deletable} borrables (ver pestaña Purgables)"
+                : $"{total} elementos del sistema (no borrables desde aquí)";
+        }
+
+        private void OrphanSelectAll_Click(object sender, RoutedEventArgs e)
+        {
+            // Solo considera los purgables; los no-purgables se ignoran (el setter los rechaza).
+            var deletable = _orphanViewModels.Where(vm => vm.CanDelete).ToList();
+            bool allSelected = deletable.Count > 0 && deletable.All(vm => vm.IsSelected);
+            bool newValue = !allSelected;
+            foreach (var vm in deletable)
+                vm.IsSelected = newValue;
+            OrphansGrid.Items.Refresh();
+            UpdateOrphanSelection();
+        }
+
+        private void OrphanCheckBox_Click(object sender, RoutedEventArgs e)
+        {
+            UpdateOrphanSelection();
+        }
+
+        private void DeleteOrphans_Click(object sender, RoutedEventArgs e)
+        {
+            if (_purgeCallback == null) return;
+
+            var selected = _orphanViewModels.Where(vm => vm.IsSelected && vm.CanDelete).ToList();
+            if (selected.Count == 0) return;
+
+            // Advertencia extra si hay mezcla de tipos, para que el usuario confirme
+            // con información concreta sobre qué va a eliminar.
+            var tipos = selected
+                .GroupBy(vm => vm.ClassName)
+                .OrderByDescending(g => g.Count())
+                .Select(g => $"• {g.Count()} × {g.Key}")
+                .Take(5);
+            var detalle = string.Join("\n", tipos);
+
+            bool confirmed = Shared.BimPillsDialog.Confirm(
+                "Confirmar eliminación",
+                $"Se eliminarán {selected.Count} elementos sin categoría del modelo.",
+                detail:
+                    $"{detalle}\n\nEsta acción no se puede deshacer. " +
+                    "Solo se permiten eliminar elementos marcados como purgables.",
+                owner: this,
+                yesText: "Eliminar",
+                noText: "Cancelar",
+                kind: Shared.BimPillsDialog.DialogKind.Warning);
+
+            if (!confirmed) return;
+
+            try
+            {
+                var ids = selected.Select(vm => (long)vm.Id).ToList();
+                _purgeCallback(ids);
+
+                foreach (var vm in selected)
+                    _orphanViewModels.Remove(vm);
+
+                OrphansGrid.ItemsSource = null;
+                OrphansGrid.ItemsSource = _orphanViewModels;
+                UpdateOrphanSelection();
+
+                Shared.BimPillsDialog.Success(
+                    "Eliminación completada",
+                    $"Se eliminaron {selected.Count} elementos exitosamente.",
+                    owner: this);
+            }
+            catch (Exception ex)
+            {
+                Shared.BimPillsDialog.Error(
+                    "Error al eliminar",
+                    "No se pudieron eliminar todos los elementos seleccionados.",
+                    detail: ex.Message,
+                    owner: this);
             }
         }
 
@@ -229,24 +410,27 @@ namespace BIMPills.UI.ModelAudit
                 var html = GenerateHtmlReport();
                 File.WriteAllText(dialog.FileName, html, Encoding.UTF8);
 
-                var openResult = MessageBox.Show(
-                    $"Informe exportado exitosamente.\n\n{dialog.FileName}\n\n¿Desea abrirlo en el navegador?",
-                    "BIMPills — Exportación completada",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Information);
+                bool openInBrowser = Shared.BimPillsDialog.Confirm(
+                    "Exportación completada",
+                    "Informe de auditoría exportado correctamente.",
+                    detail: $"Archivo: {dialog.FileName}\n\n¿Desea abrirlo en el navegador?",
+                    owner: this,
+                    yesText: "Abrir",
+                    noText: "Cerrar",
+                    kind: Shared.BimPillsDialog.DialogKind.Success);
 
-                if (openResult == MessageBoxResult.Yes)
+                if (openInBrowser)
                 {
                     Helpers.ProcessHelper.OpenDocument(dialog.FileName);
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
-                    $"Error al exportar el informe:\n\n{ex.Message}",
-                    "BIMPills — Error",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                Shared.BimPillsDialog.Error(
+                    "Error al exportar",
+                    "No se pudo exportar el informe.",
+                    detail: ex.Message,
+                    owner: this);
             }
         }
 
@@ -312,19 +496,19 @@ namespace BIMPills.UI.ModelAudit
 
                 File.WriteAllText(dialog.FileName, sb.ToString(), Encoding.UTF8);
 
-                MessageBox.Show(
-                    $"CSV exportado exitosamente.\n\n{dialog.FileName}",
-                    "BIMPills — Exportación completada",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information);
+                Shared.BimPillsDialog.Success(
+                    "CSV exportado",
+                    "Datos de auditoría exportados correctamente.",
+                    detail: $"Archivo: {dialog.FileName}",
+                    owner: this);
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
-                    $"Error al exportar CSV:\n\n{ex.Message}",
-                    "BIMPills — Error",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                Shared.BimPillsDialog.Error(
+                    "Error al exportar CSV",
+                    "No se pudo exportar el archivo CSV.",
+                    detail: ex.Message,
+                    owner: this);
             }
         }
 
@@ -573,12 +757,310 @@ namespace BIMPills.UI.ModelAudit
 
         private void HealthInfo_Click(object sender, RoutedEventArgs e)
         {
-            var methodology = _result.HealthScore.GetMethodologyText();
-            MessageBox.Show(
-                methodology,
-                "BIMPills \u2014 Metodolog\u00EDa de evaluaci\u00F3n",
-                MessageBoxButton.OK,
-                MessageBoxImage.Information);
+            ShowMethodologyWindow();
+        }
+
+        private void ShowMethodologyWindow()
+        {
+            var hs = _result.HealthScore;
+
+            // ── Criterios ──────────────────────────────────────────────────────
+            var criteria = new[]
+            {
+                ("Advertencias",          hs.WarningsScore,      30,  $"{hs.WarningsCount} detectadas",     "≤50: 30 · ≤100: 24 · ≤200: 18 · ≤400: 10 · ≤600: 5 · >600: 0"),
+                ("Tamaño del archivo",    hs.FileSizeScore,      20,  hs.FileSizeMB > 0 ? $"{hs.FileSizeMB:F1} MB" : "—",  "<150 MB: 20 · <300 MB: 15 · <500 MB: 10 · <1 GB: 5 · ≥1 GB: 0"),
+                ("Familia más pesada",    hs.FamilySizeScore,    15,  $"{hs.LargestFamilyMB:F2} MB",        "<0.5 MB: 15 · <1 MB: 12 · <2 MB: 6 · <5 MB: 3 · ≥5 MB: 0"),
+                ("Cantidad de elementos", hs.ElementsScore,      10,  $"{hs.TotalElements:N0} elementos",   "<300K: 10 · <500K: 8 · <1M: 5 · <2M: 2 · ≥2M: 0"),
+                ("Vistas sin colocar",    hs.UnplacedViewsScore, 10,  $"{hs.UnplacedViewsCount} vistas",    "≤5: 10 · ≤15: 7 · ≤30: 4 · ≤50: 2 · >50: 0"),
+                ("Elementos purgables",   hs.PurgeableScore,     15,  $"{hs.PurgeableCount} elementos",     "≤10: 15 · ≤30: 11 · ≤60: 7 · ≤100: 3 · >100: 0"),
+            };
+
+            // ── Ventana ─────────────────────────────────────────────────────────
+            // Colores del design system (mismos valores que Styles.xaml)
+            var bgBrush      = new SolidColorBrush(Color.FromRgb(0xF0, 0xF0, 0xF0));
+            var whiteBrush   = new SolidColorBrush(Color.FromRgb(0xFB, 0xFA, 0xF8));
+            var primaryBrush = new SolidColorBrush(Color.FromRgb(0x21, 0x2B, 0x37));
+            var accentBrush  = new SolidColorBrush(Color.FromRgb(0xEF, 0x63, 0x37));
+            var secBrush     = new SolidColorBrush(Color.FromRgb(0x86, 0x86, 0x8B));
+            var sepBrush     = new SolidColorBrush(Color.FromRgb(0xE5, 0xE5, 0xEA));
+
+            var win = new Window
+            {
+                Title                 = "BIM Pills — Metodología de evaluación",
+                Width                 = 620,
+                Height                = 540,
+                MinWidth              = 480,
+                MinHeight             = 400,
+                ResizeMode            = ResizeMode.CanResize,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                Owner                 = this,
+                Background            = bgBrush,
+                FontFamily            = new FontFamily("Segoe UI"),
+                UseLayoutRounding     = true,
+                SnapsToDevicePixels   = true,
+            };
+            Shared.ThemeHelper.Apply(win);
+
+            // ── Layout principal ─────────────────────────────────────────────────
+            var root = new Grid();
+            root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            root.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+            root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+            // ── Header (patrón idéntico al resto de ventanas BIM Pills) ──────────
+            var header = new Border
+            {
+                Background      = whiteBrush,
+                Padding         = new Thickness(24, 16, 24, 14),
+                BorderBrush     = sepBrush,
+                BorderThickness = new Thickness(0, 0, 0, 1),
+            };
+            var headerStack = new StackPanel();
+            headerStack.Children.Add(new TextBlock
+            {
+                Text       = "Metodología",
+                FontFamily = new FontFamily("Segoe UI"),
+                FontSize   = 11,
+                FontWeight = FontWeights.SemiBold,
+                Foreground = accentBrush,
+                Margin     = new Thickness(0, 0, 0, 2),
+            });
+            headerStack.Children.Add(new TextBlock
+            {
+                Text       = "Evaluación del Modelo",
+                FontFamily = new FontFamily("Segoe UI"),
+                FontSize   = 16,
+                FontWeight = FontWeights.SemiBold,
+                Foreground = primaryBrush,
+            });
+            headerStack.Children.Add(new TextBlock
+            {
+                Text       = $"Puntaje actual: {hs.TotalScore}/100 — {hs.LevelLabel}",
+                FontFamily = new FontFamily("Segoe UI"),
+                FontSize   = 12,
+                Foreground = secBrush,
+                Margin     = new Thickness(0, 3, 0, 0),
+            });
+            header.Child = headerStack;
+            Grid.SetRow(header, 0);
+            root.Children.Add(header);
+
+            // ── Tabla de criterios ───────────────────────────────────────────────
+            var scroll = new ScrollViewer
+            {
+                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                Padding = new Thickness(20, 12, 20, 12),
+            };
+            var itemsPanel = new StackPanel { Margin = new Thickness(0, 4, 0, 4) };
+
+            foreach (var (name, score, max, current, scale) in criteria)
+            {
+                double pct = max > 0 ? (double)score / max : 0;
+                var accentColor = pct >= 0.8
+                    ? Color.FromRgb(0x34, 0xC7, 0x59)   // verde
+                    : pct >= 0.5
+                        ? Color.FromRgb(0xFE, 0xCA, 0x29) // amarillo
+                        : Color.FromRgb(0xFF, 0x3B, 0x30); // rojo
+
+                var card = new Border
+                {
+                    Background      = whiteBrush,
+                    CornerRadius    = new CornerRadius(8),
+                    Padding         = new Thickness(14, 11, 14, 11),
+                    Margin          = new Thickness(0, 0, 0, 6),
+                    BorderBrush     = sepBrush,
+                    BorderThickness = new Thickness(1),
+                };
+                var cardGrid = new Grid();
+                cardGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                cardGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+                var left = new StackPanel();
+                left.Children.Add(new TextBlock
+                {
+                    Text       = name,
+                    FontFamily = new FontFamily("Segoe UI"),
+                    FontSize   = 13,
+                    FontWeight = FontWeights.Medium,
+                    Foreground = new SolidColorBrush(Color.FromRgb(0x21, 0x2B, 0x37)),
+                });
+                left.Children.Add(new TextBlock
+                {
+                    Text       = current,
+                    FontFamily = new FontFamily("Segoe UI"),
+                    FontSize   = 11,
+                    Foreground = new SolidColorBrush(Color.FromRgb(0x86, 0x86, 0x8B)),
+                    Margin     = new Thickness(0, 1, 0, 4),
+                });
+                // Barra de progreso
+                var barBg = new Border
+                {
+                    Height          = 4,
+                    CornerRadius    = new CornerRadius(2),
+                    Background      = new SolidColorBrush(Color.FromRgb(0xF0, 0xF0, 0xF5)),
+                    Margin          = new Thickness(0, 0, 8, 0),
+                };
+                var barFill = new Border
+                {
+                    Height          = 4,
+                    CornerRadius    = new CornerRadius(2),
+                    Background      = new SolidColorBrush(accentColor),
+                    HorizontalAlignment = HorizontalAlignment.Stretch,
+                };
+                // Use a Grid to layer fill over background
+                var barGrid = new Grid { Margin = new Thickness(0, 0, 8, 0) };
+                barGrid.Children.Add(barBg);
+                var fillWrapper = new Grid();
+                fillWrapper.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(pct, GridUnitType.Star) });
+                fillWrapper.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1 - pct, GridUnitType.Star) });
+                barFill.SetValue(Grid.ColumnProperty, 0);
+                fillWrapper.Children.Add(barFill);
+                barGrid.Children.Add(fillWrapper);
+                left.Children.Add(barGrid);
+
+                left.Children.Add(new TextBlock
+                {
+                    Text            = scale,
+                    FontFamily      = new FontFamily("Segoe UI"),
+                    FontSize        = 10,
+                    Foreground      = new SolidColorBrush(Color.FromRgb(0xAA, 0xAA, 0xB0)),
+                    TextWrapping    = TextWrapping.Wrap,
+                    Margin          = new Thickness(0, 3, 0, 0),
+                });
+
+                Grid.SetColumn(left, 0);
+                cardGrid.Children.Add(left);
+
+                // Score badge
+                var badge = new Border
+                {
+                    Background      = new SolidColorBrush(Color.FromArgb(0x22,
+                        accentColor.R, accentColor.G, accentColor.B)),
+                    CornerRadius    = new CornerRadius(6),
+                    Padding         = new Thickness(10, 4, 10, 4),
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Margin          = new Thickness(10, 0, 0, 0),
+                };
+                badge.Child = new TextBlock
+                {
+                    Text       = $"{score}/{max}",
+                    FontFamily = new FontFamily("Segoe UI"),
+                    FontSize   = 14,
+                    FontWeight = FontWeights.SemiBold,
+                    Foreground = new SolidColorBrush(accentColor),
+                };
+                Grid.SetColumn(badge, 1);
+                cardGrid.Children.Add(badge);
+
+                card.Child = cardGrid;
+                itemsPanel.Children.Add(card);
+            }
+
+            // Niveles de salud
+            itemsPanel.Children.Add(new TextBlock
+            {
+                Text            = "NIVELES DE SALUD  •  80–100: Excelente  •  60–79: Bueno  •  40–59: Regular  •  0–39: Crítico",
+                FontFamily      = new FontFamily("Segoe UI"),
+                FontSize        = 11,
+                Foreground      = new SolidColorBrush(Color.FromRgb(0x86, 0x86, 0x8B)),
+                TextWrapping    = TextWrapping.Wrap,
+                Margin          = new Thickness(0, 6, 0, 16),
+            });
+
+            // Fuentes y referencias
+            var refsCard = new Border
+            {
+                Background      = bgBrush,
+                CornerRadius    = new CornerRadius(8),
+                Padding         = new Thickness(14, 12, 14, 12),
+                BorderBrush     = sepBrush,
+                BorderThickness = new Thickness(1),
+            };
+            var refsStack = new StackPanel();
+            refsStack.Children.Add(new TextBlock
+            {
+                Text       = "FUENTES Y REFERENCIAS",
+                FontFamily = new FontFamily("Segoe UI"),
+                FontSize   = 10,
+                FontWeight = FontWeights.SemiBold,
+                Foreground = secBrush,
+                Margin     = new Thickness(0, 0, 0, 8),
+            });
+
+            var refs = new[]
+            {
+                ("ISO 19650-1:2018",           "Conceptos y principios de gestión de información BIM (§11.1, §8.1)"),
+                ("ISO 19650-2:2018",           "Fase de desarrollo de activos (§5.2.2 Intercambio de información)"),
+                ("Autodesk AU IT20549",        "Health Check for Your Revit Project Models (umbrales de advertencias)"),
+                ("Autodesk Knowledge Network", "Model Performance Best Practices & File Maintenance"),
+                ("AEC (UK) BIM Protocol v2.0", "Model Validation Checklist (purga, vistas, limpieza de worksets)"),
+                ("BIM Forum",                  "LOD Specification (gestión de contenido y peso de familias)"),
+            };
+
+            foreach (var (refName, refDesc) in refs)
+            {
+                var row = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 4) };
+                row.Children.Add(new TextBlock
+                {
+                    Text       = "• ",
+                    FontFamily = new FontFamily("Segoe UI"),
+                    FontSize   = 11,
+                    Foreground = new SolidColorBrush(Color.FromRgb(0x21, 0x2B, 0x37)),
+                });
+                var refText = new TextBlock
+                {
+                    TextWrapping = TextWrapping.Wrap,
+                    FontFamily   = new FontFamily("Segoe UI"),
+                    FontSize     = 11,
+                };
+                refText.Inlines.Add(new System.Windows.Documents.Run(refName + " — ")
+                {
+                    FontWeight = FontWeights.SemiBold,
+                    Foreground = primaryBrush,
+                });
+                refText.Inlines.Add(new System.Windows.Documents.Run(refDesc)
+                {
+                    Foreground = secBrush,
+                });
+                row.Children.Add(refText);
+                refsStack.Children.Add(row);
+            }
+
+            refsCard.Child = refsStack;
+            itemsPanel.Children.Add(refsCard);
+
+            scroll.Content = itemsPanel;
+            Grid.SetRow(scroll, 1);
+            root.Children.Add(scroll);
+
+            // Footer
+            var footer = new Border
+            {
+                Background      = whiteBrush,
+                Padding         = new Thickness(24, 12, 24, 12),
+                BorderBrush     = sepBrush,
+                BorderThickness = new Thickness(0, 1, 0, 0),
+            };
+            var closeBtn = new Button
+            {
+                Content     = "Cerrar",
+                FontFamily  = new FontFamily("Segoe UI"),
+                FontSize    = 13,
+                FontWeight  = FontWeights.Medium,
+                Padding     = new Thickness(24, 8, 24, 8),
+                Background  = new SolidColorBrush(Color.FromRgb(0x21, 0x2B, 0x37)),
+                Foreground  = new SolidColorBrush(Colors.White),
+                BorderThickness = new Thickness(0),
+                Cursor      = Cursors.Hand,
+                HorizontalAlignment = HorizontalAlignment.Right,
+            };
+            closeBtn.Click += (_, _) => win.Close();
+            footer.Child = closeBtn;
+            Grid.SetRow(footer, 2);
+            root.Children.Add(footer);
+
+            win.Content = root;
+            win.ShowDialog();
         }
 
         private void CloseButton_Click(object sender, RoutedEventArgs e) => Close();
@@ -646,6 +1128,46 @@ namespace BIMPills.UI.ModelAudit
             => throw new NotSupportedException();
     }
 
+    // ── OrphanElementViewModel ────────────────────────────────────────
+
+    public sealed class OrphanElementViewModel : INotifyPropertyChanged
+    {
+        private bool _isSelected;
+
+        public ElementInfo Item { get; }
+
+        public int    Id          => Item.Id;
+        public string Name        => Item.Name;
+        public string ClassName   => Item.ClassName ?? "—";
+        public bool   CanDelete   => Item.CanDelete;
+        public string Description => Item.Description
+            ?? (CanDelete
+                ? "Elemento sin categoría. Revisar antes de eliminar."
+                : "Elemento del sistema o anclado — no es seguro eliminarlo desde aquí.");
+
+        public string CanDeleteLabel => CanDelete ? "Sí" : "No";
+
+        public Brush CanDeleteBrush => CanDelete
+            ? new SolidColorBrush(Color.FromRgb(52, 199, 89))    // verde
+            : new SolidColorBrush(Color.FromRgb(142, 142, 147));  // gris
+
+        public bool IsSelected
+        {
+            get => _isSelected;
+            set
+            {
+                if (!CanDelete && value) return; // no seleccionar lo que no se puede borrar
+                if (_isSelected == value) return;
+                _isSelected = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsSelected)));
+            }
+        }
+
+        public OrphanElementViewModel(ElementInfo item) => Item = item;
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+    }
+
     // ── Value Converter for type badges ───────────────────────────────
 
     /// <summary>
@@ -655,10 +1177,13 @@ namespace BIMPills.UI.ModelAudit
     {
         public static readonly TypeToBrushConverter Instance = new TypeToBrushConverter();
 
-        private static readonly SolidColorBrush FamiliaBrush  = new SolidColorBrush(Color.FromRgb(239, 99, 55));   // #EF6337
-        private static readonly SolidColorBrush VistaBrush    = new SolidColorBrush(Color.FromRgb(0, 122, 255));    // #007AFF
-        private static readonly SolidColorBrush MaterialBrush = new SolidColorBrush(Color.FromRgb(52, 199, 89));    // #34C759
-        private static readonly SolidColorBrush DefaultBrush  = new SolidColorBrush(Color.FromRgb(142, 142, 147));  // #8E8E93
+        private static readonly SolidColorBrush FamiliaBrush      = new SolidColorBrush(Color.FromRgb(239, 99, 55));   // #EF6337 orange
+        private static readonly SolidColorBrush VistaBrush        = new SolidColorBrush(Color.FromRgb(0, 122, 255));    // #007AFF blue
+        private static readonly SolidColorBrush MaterialBrush     = new SolidColorBrush(Color.FromRgb(52, 199, 89));    // #34C759 green
+        private static readonly SolidColorBrush EstiloTextoBrush  = new SolidColorBrush(Color.FromRgb(175, 82, 222));   // #AF52DE purple
+        private static readonly SolidColorBrush TipoCotaBrush     = new SolidColorBrush(Color.FromRgb(88, 86, 214));    // #5856D6 indigo
+        private static readonly SolidColorBrush PatronRellenoBrush= new SolidColorBrush(Color.FromRgb(255, 45, 85));    // #FF2D55 pink
+        private static readonly SolidColorBrush DefaultBrush      = new SolidColorBrush(Color.FromRgb(142, 142, 147));  // #8E8E93 grey
 
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
@@ -667,10 +1192,13 @@ namespace BIMPills.UI.ModelAudit
 
             return type.ToLowerInvariant() switch
             {
-                "familia"  => FamiliaBrush,
-                "vista"    => VistaBrush,
-                "material" => MaterialBrush,
-                _          => DefaultBrush
+                "familia"        => FamiliaBrush,
+                "vista"          => VistaBrush,
+                "material"       => MaterialBrush,
+                "estilo texto"   => EstiloTextoBrush,
+                "tipo cota"      => TipoCotaBrush,
+                "patron relleno" => PatronRellenoBrush,
+                _                => DefaultBrush
             };
         }
 

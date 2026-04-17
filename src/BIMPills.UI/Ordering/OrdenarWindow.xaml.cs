@@ -1,4 +1,5 @@
 using BIMPills.Core.Models;
+using BIMPills.UI.Shared;
 using System;
 using System.Collections.Generic;
 using System.Windows;
@@ -168,12 +169,18 @@ namespace BIMPills.UI.Ordering
 
             if (string.IsNullOrWhiteSpace(categoryName))
             {
-                MessageBox.Show("Selecciona una categoría.", "BIMPills — Ordenar");
+                BimPillsDialog.Warning(
+                    header: "Categoría requerida",
+                    message: "Selecciona una categoría para continuar.",
+                    owner: this);
                 return;
             }
             if (string.IsNullOrWhiteSpace(parameterName))
             {
-                MessageBox.Show("Selecciona o escribe el nombre del parámetro.", "BIMPills — Ordenar");
+                BimPillsDialog.Warning(
+                    header: "Parámetro requerido",
+                    message: "Selecciona o escribe el nombre del parámetro.",
+                    owner: this);
                 return;
             }
             int start;
@@ -183,8 +190,10 @@ namespace BIMPills.UI.Ordering
                 if (string.IsNullOrEmpty(startText) ||
                     !System.Text.RegularExpressions.Regex.IsMatch(startText, @"^[A-Za-z]+$"))
                 {
-                    MessageBox.Show("Para modo alfabético, el inicio debe ser una letra (A, B, Z, AA…).",
-                        "BIMPills — Ordenar");
+                    BimPillsDialog.Warning(
+                        header: "Valor de inicio inválido",
+                        message: "Para el modo alfabético, el inicio debe ser una letra (A, B, Z, AA…).",
+                        owner: this);
                     return;
                 }
                 start = OrderingConfig.LettersToIndex(startText.ToUpperInvariant());
@@ -193,14 +202,20 @@ namespace BIMPills.UI.Ordering
             {
                 if (!int.TryParse(StartBox.Text, out start))
                 {
-                    MessageBox.Show("El valor de inicio debe ser un número entero.", "BIMPills — Ordenar");
+                    BimPillsDialog.Warning(
+                        header: "Valor de inicio inválido",
+                        message: "El valor de inicio debe ser un número entero.",
+                        owner: this);
                     return;
                 }
             }
 
             if (!int.TryParse(StepBox.Text, out int step) || step == 0)
             {
-                MessageBox.Show("El paso debe ser un número entero distinto de cero.", "BIMPills — Ordenar");
+                BimPillsDialog.Warning(
+                    header: "Paso inválido",
+                    message: "El paso debe ser un número entero distinto de cero.",
+                    owner: this);
                 return;
             }
 

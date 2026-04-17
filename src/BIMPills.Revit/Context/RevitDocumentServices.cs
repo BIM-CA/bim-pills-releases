@@ -31,11 +31,128 @@ namespace BIMPills.Revit.Context
         {
             try
             {
-                var path = _doc.PathName;
-                if (!string.IsNullOrEmpty(path) && File.Exists(path))
-                    return new FileInfo(path).Length;
+                var raw = _doc.PathName?.Trim().TrimEnd('\0');
+                if (string.IsNullOrEmpty(raw)) return 0;
+
+                var path = raw.Replace('/', Path.DirectorySeparatorChar);
+
+                if (!IsCloudOrServerPath(raw))
+                {
+                    try { var fi = new FileInfo(path); if (fi.Exists && fi.Length > 0) return fi.Length; } catch { }
+                    try
+                    {
+                        using var fs = new FileStream(path, FileMode.Open, FileAccess.Read,
+                                                      FileShare.ReadWrite | FileShare.Delete);
+                        if (fs.Length > 0) return fs.Length;
+                    }
+                    catch { }
+                }
+
+                var title = _doc.Title;
+                if (!string.IsNullOrEmpty(title))
+                    return FindFileSizeByTitle(title);
             }
-            catch { /* Modelo no guardado o sin acceso */ }
+            catch { }
+            return 0;
+        }
+
+        /// <summary>
+        /// Retorna true si el path es una URL de servidor/nube que FileInfo no puede resolver
+        /// como ruta de sistema de archivos local (RSN://, BIM 360://, Autodesk Docs://, etc.).
+        /// </summary>
+        private static bool IsCloudOrServerPath(string path) =>
+            path.IndexOf("://", StringComparison.Ordinal) >= 0 ||
+            path.StartsWith("RSN:", StringComparison.OrdinalIgnoreCase) ||
+            path.StartsWith("BIM 360:", StringComparison.OrdinalIgnoreCase) ||
+            path.StartsWith("BIM360:", StringComparison.OrdinalIgnoreCase) ||
+            path.StartsWith("Autodesk Docs:", StringComparison.OrdinalIgnoreCase);
+
+        /// <summary>
+        /// Busca un archivo .rvt cuyo nombre comience con <paramref name="title"/> en las
+        /// ubicaciones locales donde Revit guarda cachés y copias de modelos colaborativos.
+        /// </summary>
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+        private long FindFileSizeByTitle(string title)
+        {
+            var titleNoExt = title.EndsWith(".rvt", StringComparison.OrdinalIgnoreCase)
+                ? title.Substring(0, title.Length - 4) : title;
+
+            var year      = _doc.Application.VersionNumber;
+            var appData   = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            var profile   = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            var userDocs  = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            var revitBase = Path.Combine(appData, "Autodesk", "Revit", $"Autodesk Revit {year}");
+
+            // Carpetas con archivos nombrados normalmente (Desktop Connector, Revit Server, Documentos)
+            var namedDirs = new[]
+            {
+                (Path.Combine(profile, "ACCDocs"),            SearchOption.AllDirectories),
+                (Path.Combine(profile, "BIM 360"),            SearchOption.AllDirectories),
+                (Path.Combine(profile, "Autodesk Docs"),      SearchOption.AllDirectories),
+                (Path.Combine(revitBase, "RevitServerCache"), SearchOption.AllDirectories),
+                (userDocs,                                     SearchOption.TopDirectoryOnly),
+            };
+
+            foreach (var (dir, opt) in namedDirs)
+            {
+                if (!Directory.Exists(dir)) continue;
+                try
+                {
+                    var candidates = Directory.GetFiles(dir, "*.rvt", opt)
+                        .Where(f =>
+                        {
+                            var fn = Path.GetFileNameWithoutExtension(f);
+                            return fn.Equals(titleNoExt, StringComparison.OrdinalIgnoreCase) ||
+                                   fn.StartsWith(titleNoExt + "_", StringComparison.OrdinalIgnoreCase);
+                        })
+                        .OrderByDescending(f => { try { return new FileInfo(f).LastWriteTime; } catch { return DateTime.MinValue; } });
+
+                    foreach (var candidate in candidates)
+                    {
+                        try { var fi = new FileInfo(candidate); if (fi.Exists && fi.Length > 0) return fi.Length; } catch { }
+                    }
+                }
+                catch { }
+            }
+
+            // CollaborationCache: BIM 360/ACC/Revit Server guardan copias locales con nombres GUID.
+            // Tomamos el .rvt más recientemente modificado (= modelo activo en sesión).
+            var collabCache = Path.Combine(revitBase, "CollaborationCache");
+            if (Directory.Exists(collabCache))
+            {
+                try
+                {
+                    var best = Directory.GetFiles(collabCache, "*.rvt", SearchOption.AllDirectories)
+                        .Select(f => { try { var fi = new FileInfo(f); return (Size: fi.Length, Modified: fi.LastWriteTime); } catch { return (Size: 0L, Modified: DateTime.MinValue); } })
+                        .Where(x => x.Size > 0)
+                        .OrderByDescending(x => x.Modified)
+                        .FirstOrDefault();
+                    if (best.Size > 0) return best.Size;
+                }
+                catch { }
+            }
+
+            // Último recurso: subdirectorios de Documentos
+            try
+            {
+                foreach (var sub in Directory.EnumerateDirectories(userDocs))
+                {
+                    try
+                    {
+                        var hit = Directory.GetFiles(sub, "*.rvt", SearchOption.TopDirectoryOnly)
+                            .FirstOrDefault(f =>
+                            {
+                                var fn = Path.GetFileNameWithoutExtension(f);
+                                return fn.Equals(titleNoExt, StringComparison.OrdinalIgnoreCase) ||
+                                       fn.StartsWith(titleNoExt + "_", StringComparison.OrdinalIgnoreCase);
+                            });
+                        if (hit != null) { var fi = new FileInfo(hit); if (fi.Exists && fi.Length > 0) return fi.Length; }
+                    }
+                    catch { }
+                }
+            }
+            catch { }
+
             return 0;
         }
 
@@ -103,13 +220,203 @@ namespace BIMPills.Revit.Context
                 .ToList();
         }
 
+        /// <summary>
+        /// Clases de elementos internos de Revit que nunca tienen categoría asignada
+        /// por diseño (parámetros del sistema, fases, patrones, impresión, etc.).
+        /// Estos NUNCA deben aparecer como "elementos huérfanos" para el usuario:
+        /// son esenciales para la operación de Revit y su eliminación puede corromper
+        /// el modelo o bloquear operaciones críticas (ej. "no se permite suprimir
+        /// todas las vistas abiertas del proyecto").
+        /// </summary>
+        private static readonly HashSet<string> _systemOrphanExclusions = new HashSet<string>
+        {
+            // Parámetros de proyecto y compartidos
+            "ParameterElement", "SharedParameterElement", "GlobalParameter",
+            "InternalDefinition", "ExternalDefinition",
+
+            // Fases del proyecto
+            "Phase", "PhaseFilter",
+
+            // Información general del proyecto
+            "ProjectInfo", "DocumentVersion",
+
+            // Patrones de línea y relleno (recursos del sistema)
+            "LinePatternElement", "FillPatternElement",
+
+            // Visualización e impresión
+            "WorksharingDisplaySettings", "PrintSetting", "PrintManager",
+            "BrowserOrganization", "ViewSheetSet",
+
+            // Esquemas de área
+            "AreaScheme",
+
+            // Revisiones
+            "Revision", "RevisionSettings",
+
+            // Sol y sombras
+            "SunAndShadowSettings",
+
+            // Origen y punto base
+            "BasePoint", "InternalOrigin",
+
+            // Planos de boceto y referencia
+            "SketchPlane", "ReferencePlane",
+
+            // Análisis energético
+            "EnergyAnalysisDetailModel", "EnergyAnalysisSpace",
+            "EnergyAnalysisSurface", "EnergyAnalysisOpeningBase",
+            "EnergyAnalysisLineSurface",
+
+            // Análisis y resultados
+            "AnalysisResultSchema", "AnalysisDisplayStyle",
+
+            // Filtros de selección
+            "SelectionFilterElement",
+
+            // Navegación
+            "ViewNavigationToolSettings",
+
+            // Worksharing (colaborativo)
+            "WorksharingTooltipInfo",
+
+            // Estructural
+            "StructuralResultSchemaDescription",
+
+            // Conjuntos de propiedades (IFC/COBie)
+            "PropertySetElement",
+
+            // Notas clave del sistema
+            "KeynoteTable",
+
+            // Editor de forma de losa (interno)
+            "SlabShapeEditor",
+
+            // Líneas de cuadrícula de muro cortina (interno)
+            "CurtainGridLine",
+
+            // Boceto del sistema
+            "Sketch",
+
+            // Materiales y apariencia (internos)
+            "MaterialQuantities",
+            "AppearanceAssetElement",
+        };
+
         public IReadOnlyList<ElementInfo> GetElementsWithoutCategory()
         {
-            return new FilteredElementCollector(_doc)
+            var orphans = new FilteredElementCollector(_doc)
                 .WhereElementIsNotElementType()
-                .Where(e => e.Category == null)
-                .Select(e => new ElementInfo(GetElementIdValue(e.Id), e.Name ?? "(sin nombre)", null))
+                .Where(e =>
+                {
+                    // Solo elementos sin categoría
+                    if (e.Category != null) return false;
+
+                    // Excluir tipos del sistema conocidos (por nombre de clase Revit API)
+                    var typeName = e.GetType().Name;
+                    if (_systemOrphanExclusions.Contains(typeName)) return false;
+
+                    // Excluir elementos con nombres del sistema Revit (<Solid fill>, <None>, …)
+                    var name = e.Name ?? "";
+                    if (name.StartsWith("<") && name.EndsWith(">")) return false;
+
+                    // Excluir IDs negativos (elementos inválidos)
+                    if (GetElementIdValue(e.Id) < 0) return false;
+
+                    return true;
+                })
                 .ToList();
+
+            return orphans.Select(e =>
+            {
+                var className   = FriendlyClassName(e);
+                var description = OrphanDescription(e);
+
+                // Elemento anclado (Pinned) → nunca se puede eliminar
+                if (e.Pinned)
+                    return new ElementInfo(GetElementIdValue(e.Id), e.Name ?? "(sin nombre)", null, className, false, description);
+
+                // Lista blanca estricta: solo tipos explícitamente seguros pueden
+                // eliminarse. Si llegara algún tipo del sistema que no esté en
+                // _systemOrphanExclusions, caerá aquí como NO purgable — previene
+                // crashes de Revit por eliminación de elementos críticos.
+                bool canDelete = e.GetType().Name switch
+                {
+                    "ImportInstance"    => SafeImportInstanceDelete(e),
+                    "RevitLinkInstance" => true,  // enlaces Revit pueden eliminarse
+                    "Group"              => true, // grupos sin categoría son seguros
+                    _                    => false // todo lo demás: no eliminar
+                };
+
+                return new ElementInfo(
+                    GetElementIdValue(e.Id),
+                    e.Name ?? "(sin nombre)",
+                    null,
+                    className,
+                    canDelete,
+                    description);
+            }).ToList();
+        }
+
+        private static bool SafeImportInstanceDelete(Element e)
+        {
+            try
+            {
+                // Un ImportInstance vinculado (CAD link) debe desenlazarse antes
+                // de eliminar — marcarlo como no-purgable evita errores de Revit.
+                if (e is ImportInstance imp && imp.IsLinked) return false;
+            }
+            catch { /* IsLinked puede no estar disponible en todas las versiones */ }
+            return true;
+        }
+
+        private static string FriendlyClassName(Element e)
+        {
+            return e.GetType().Name switch
+            {
+                "ImportInstance"     => "Importación CAD",
+                "RevitLinkInstance"  => "Enlace Revit",
+                "Group"              => "Grupo",
+                "ModelLine"          => "Línea de modelo",
+                "DetailLine"         => "Línea de detalle",
+                "ModelCurve"         => "Curva de modelo",
+                "DetailCurve"        => "Curva de detalle",
+                "LinePatternElement" => "Patrón de línea",
+                "FillPatternElement" => "Patrón de relleno",
+                "ParameterElement"   => "Parámetro de proyecto",
+                "Phase"              => "Fase del proyecto",
+                "ProjectInfo"        => "Información del proyecto",
+                var n                => n
+            };
+        }
+
+        /// <summary>
+        /// Descripción legible del elemento huérfano, explicando qué es, cómo llegó ahí,
+        /// y si es seguro eliminarlo. Se muestra como tooltip para que el usuario
+        /// decida con información suficiente.
+        /// </summary>
+        private static string OrphanDescription(Element e)
+        {
+            return e.GetType().Name switch
+            {
+                "ImportInstance" => e is ImportInstance imp && imp.IsLinked
+                    ? "Enlace CAD (DWG/DXF) vinculado externamente. Para eliminarlo, desvincúlalo primero desde Administrar → Vínculos."
+                    : "Importación CAD embebida en el modelo. Si ya no la necesitas, puede eliminarse para reducir el peso del archivo.",
+
+                "RevitLinkInstance" =>
+                    "Enlace a otro archivo Revit. Si el enlace está roto o no se usa, es seguro eliminarlo.",
+
+                "Group" =>
+                    "Grupo de elementos sin categoría asignada. Verifica que no tenga instancias activas en el modelo antes de eliminar.",
+
+                "ModelLine" or "ModelCurve" =>
+                    "Línea o curva de modelo sin categoría asignada. Normalmente es residuo de edición.",
+
+                "DetailLine" or "DetailCurve" =>
+                    "Línea o curva de detalle sin categoría asignada. Normalmente es residuo de edición.",
+
+                var n =>
+                    $"Elemento de tipo '{n}' sin categoría en Revit. No está clasificado como seguro para eliminación automática — revísalo manualmente antes de actuar."
+            };
         }
 
         public IReadOnlyList<PurgeableItem> GetPurgeableElements()
@@ -175,6 +482,72 @@ namespace BIMPills.Revit.Context
                     "Vista",
                     0));
             }
+
+            // Estilos de texto sin uso (TextNoteType)
+            try
+            {
+                var usedTextTypeIds = new FilteredElementCollector(_doc)
+                    .OfClass(typeof(TextNote))
+                    .Cast<TextNote>()
+                    .Select(tn => tn.GetTypeId())
+                    .ToHashSet();
+
+                var textTypes = new FilteredElementCollector(_doc)
+                    .OfClass(typeof(TextNoteType))
+                    .Cast<TextNoteType>()
+                    .Where(t => !usedTextTypeIds.Contains(t.Id))
+                    .ToList();
+
+                foreach (var t in textTypes)
+                    purgeable.Add(new PurgeableItem(
+                        GetElementIdValue(t.Id), t.Name,
+                        "Estilos de texto", "Estilo texto", 0));
+            }
+            catch { /* No crítico */ }
+
+            // Tipos de cota sin uso (DimensionType)
+            try
+            {
+                var usedDimTypeIds = new FilteredElementCollector(_doc)
+                    .OfClass(typeof(Dimension))
+                    .Cast<Dimension>()
+                    .Select(d => d.GetTypeId())
+                    .ToHashSet();
+
+                var dimTypes = new FilteredElementCollector(_doc)
+                    .OfClass(typeof(DimensionType))
+                    .Cast<DimensionType>()
+                    .Where(t => !usedDimTypeIds.Contains(t.Id))
+                    .ToList();
+
+                foreach (var t in dimTypes)
+                    purgeable.Add(new PurgeableItem(
+                        GetElementIdValue(t.Id), t.Name,
+                        "Tipos de cota", "Tipo cota", 0));
+            }
+            catch { /* No crítico */ }
+
+            // Tipos de región rellena sin uso (FilledRegionType)
+            try
+            {
+                var usedFilledRegionTypeIds = new FilteredElementCollector(_doc)
+                    .OfClass(typeof(FilledRegion))
+                    .Cast<FilledRegion>()
+                    .Select(fr => fr.GetTypeId())
+                    .ToHashSet();
+
+                var filledRegionTypes = new FilteredElementCollector(_doc)
+                    .OfClass(typeof(FilledRegionType))
+                    .Cast<FilledRegionType>()
+                    .Where(t => !usedFilledRegionTypeIds.Contains(t.Id))
+                    .ToList();
+
+                foreach (var t in filledRegionTypes)
+                    purgeable.Add(new PurgeableItem(
+                        GetElementIdValue(t.Id), t.Name,
+                        "Regiones rellenas", "Patron relleno", 0));
+            }
+            catch { /* No crítico */ }
 
             return purgeable;
         }
@@ -650,7 +1023,7 @@ namespace BIMPills.Revit.Context
         {
             try
             {
-                var vs = _doc.GetElement(new ElementId((int)scheduleId)) as ViewSchedule;
+                var vs = _doc.GetElement(new ElementId(scheduleId)) as ViewSchedule;
                 if (vs == null) return new ScheduleData();
 
                 var definition = vs.Definition;
@@ -751,7 +1124,7 @@ namespace BIMPills.Revit.Context
                 {
                     try
                     {
-                        var element = _doc.GetElement(new ElementId((int)req.ElementId));
+                        var element = _doc.GetElement(new ElementId(req.ElementId));
                         var param   = element?.LookupParameter(req.ParameterName);
                         if (param == null || param.IsReadOnly) { skipped++; continue; }
 
@@ -802,7 +1175,9 @@ namespace BIMPills.Revit.Context
         private static int GetElementIdValue(ElementId id)
         {
 #if REVIT2024
+#pragma warning disable CS0618 // IntegerValue obsoleto en 2024 — necesario para net48
             return id.IntegerValue;
+#pragma warning restore CS0618
 #else
             return (int)id.Value;
 #endif

@@ -504,7 +504,9 @@ namespace BIMPills.Revit.Commands.Transfer
         private static long RevitId(ElementId id)
         {
 #if REVIT2024
+#pragma warning disable CS0618 // IntegerValue obsoleto en 2024 — necesario para net48
             return (long)id.IntegerValue;
+#pragma warning restore CS0618
 #else
             return id.Value;
 #endif
@@ -553,7 +555,9 @@ namespace BIMPills.Revit.Commands.Transfer
                                 try
                                 {
 #if REVIT2024
+#pragma warning disable CS0618 // IntegerValue obsoleto en 2024 — necesario para net48
                                     var bip = (BuiltInParameter)paramId.IntegerValue;
+#pragma warning restore CS0618
 #else
                                     var bip = (BuiltInParameter)(int)paramId.Value;
 #endif

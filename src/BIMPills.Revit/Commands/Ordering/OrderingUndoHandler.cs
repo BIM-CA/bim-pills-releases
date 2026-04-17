@@ -29,7 +29,7 @@ namespace BIMPills.Revit.Commands.Ordering
 
             try
             {
-                var element = doc.GetElement(new ElementId((int)entry.ElementId));
+                var element = doc.GetElement(new ElementId(entry.ElementId));
                 var param   = element?.LookupParameter(_session.Config.ParameterName);
 
                 if (param != null && !param.IsReadOnly)

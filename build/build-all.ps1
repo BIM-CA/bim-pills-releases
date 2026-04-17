@@ -74,4 +74,56 @@ foreach ($version in $Versions) {
     Write-Host "  Output: dist\Revit$version\" -ForegroundColor Green
 }
 
+# ── Obfuscación (solo Release) ────────────────────────────────────────────────
+if ($Configuration -eq "Release") {
+    Write-Host "`n=== Obfuscando assemblies (Core, Infrastructure, Commands) ===" -ForegroundColor Cyan
+
+
+    $obfuscarCmd = Get-Command "obfuscar.console" -ErrorAction SilentlyContinue
+    $obfuscar = if ($obfuscarCmd) { $obfuscarCmd.Source } else { $null }
+    if (-not $obfuscar) {
+        Write-Warning "obfuscar.console no encontrado. Instalar con: dotnet tool install --global Obfuscar.GlobalTool"
+    } else {
+        $xmlTemplate = Join-Path $PSScriptRoot "obfuscar.xml"
+
+        foreach ($version in $Versions) {
+            $tfm = switch ($version) {
+                "2024" { "net48-windows" }
+                "2027" { "net10.0-windows" }
+                default { "net8.0-windows" }
+            }
+            $binDir = Join-Path $solutionDir "src\BIMPills.Revit\bin\$Configuration\$tfm"
+            $obfDir = Join-Path $binDir "Obfuscated"
+            New-Item -ItemType Directory -Force -Path $obfDir | Out-Null
+
+            # Generate XML with absolute paths (Obfuscar resolves relative to XML location)
+            $xmlContent = (Get-Content $xmlTemplate -Raw) `
+                -replace '\$\(InPath\)',  $binDir `
+                -replace '\$\(OutPath\)', $obfDir
+            $tmpXml = Join-Path $binDir "obfuscar_tmp.xml"
+            Set-Content -Path $tmpXml -Value $xmlContent -Encoding UTF8
+
+            # Run Obfuscar with resolved XML
+            & $obfuscar $tmpXml 2>&1 | Out-Null
+            Remove-Item $tmpXml -Force -ErrorAction SilentlyContinue
+
+            if ($LASTEXITCODE -ne 0) {
+                Write-Warning "  Obfuscar fallo para Revit $version - usando DLLs sin ofuscar."
+            } else {
+                # Replace originals with obfuscated versions
+                foreach ($dll in @("BIMPills.Core.dll", "BIMPills.Infrastructure.dll", "BIMPills.Commands.dll")) {
+                    $src = Join-Path $obfDir $dll
+                    if (Test-Path $src) {
+                        Copy-Item $src (Join-Path $binDir $dll) -Force
+                        Copy-Item $src (Join-Path $solutionDir "dist\Revit$version\BIMPills\$dll") -Force
+                    }
+                }
+                # Clean up temp obfuscation dir
+                Remove-Item $obfDir -Recurse -Force
+                Write-Host "  Revit ${version}: assemblies ofuscados OK" -ForegroundColor Green
+            }
+        }
+    }
+}
+
 Write-Host "`nListo. Carpeta dist\ lista para distribuir." -ForegroundColor Green

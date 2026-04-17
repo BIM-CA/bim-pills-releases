@@ -322,8 +322,11 @@ namespace BIMPills.UI.ProjectStandards
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error cargando {cat.DisplayName}: {ex.Message}",
-                    "BIM Pills \u2014 Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                BIMPills.UI.Shared.BimPillsDialog.Error(
+                    header: "Error cargando categoría",
+                    message: $"No se pudieron cargar los elementos de «{cat.DisplayName}».",
+                    detail: ex.Message,
+                    owner: Window.GetWindow(this));
             }
         }
 

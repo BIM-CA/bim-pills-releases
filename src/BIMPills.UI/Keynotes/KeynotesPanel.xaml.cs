@@ -1,5 +1,6 @@
 using BIMPills.Core.Models;
 using BIMPills.UI.Helpers;
+using BIMPills.UI.Shared;
 using ClosedXML.Excel;
 using Microsoft.Win32;
 using System;
@@ -158,8 +159,11 @@ namespace BIMPills.UI.Keynotes
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al leer el archivo:\n{ex.Message}",
-                    "BIM Pills \u2014 Notas Clave", MessageBoxButton.OK, MessageBoxImage.Error);
+                BimPillsDialog.Error(
+                    "Error al leer el archivo",
+                    "No se pudo leer el archivo de notas clave.",
+                    detail: ex.Message,
+                    owner: Window.GetWindow(this));
             }
         }
 
@@ -512,8 +516,10 @@ namespace BIMPills.UI.Keynotes
 
             if (string.IsNullOrEmpty(parentKey))
             {
-                MessageBox.Show("Selecciona una carpeta donde agregar la nota clave.",
-                    "BIM Pills \u2014 Notas Clave", MessageBoxButton.OK, MessageBoxImage.Information);
+                BimPillsDialog.Warning(
+                    "Notas Clave",
+                    "Selecciona una carpeta donde agregar la nota clave.",
+                    owner: Window.GetWindow(this));
                 return;
             }
 
@@ -561,11 +567,15 @@ namespace BIMPills.UI.Keynotes
         private void DeleteRow_Click(object sender, RoutedEventArgs e)
         {
             if (KeynotesGrid.SelectedItem is not KeynoteEntry item) return;
-            var confirm = MessageBox.Show(
-                $"\u00bfEliminar \u00ab{item.Key}\u00bb?",
-                "BIM Pills \u2014 Notas Clave",
-                MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No);
-            if (confirm != MessageBoxResult.Yes) return;
+            bool confirmed = BimPillsDialog.Confirm(
+                "Eliminar nota clave",
+                $"¿Eliminar la entrada «{item.Key}»?",
+                detail: "Esta acción puede deshacerse hasta que guardes el archivo.",
+                owner: Window.GetWindow(this),
+                yesText: "Eliminar",
+                noText: "Cancelar",
+                kind: BimPillsDialog.DialogKind.Warning);
+            if (!confirmed) return;
             _allEntries.Remove(item);
             MarkChanged();
             RefreshGrid();
@@ -600,8 +610,11 @@ namespace BIMPills.UI.Keynotes
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al crear el archivo:\n{ex.Message}",
-                    "BIM Pills \u2014 Notas Clave", MessageBoxButton.OK, MessageBoxImage.Error);
+                BimPillsDialog.Error(
+                    "Error al crear el archivo",
+                    "No se pudo crear el archivo de notas clave.",
+                    detail: ex.Message,
+                    owner: Window.GetWindow(this));
             }
         }
 
@@ -618,13 +631,26 @@ namespace BIMPills.UI.Keynotes
         private void ReloadFile_Click(object sender, RoutedEventArgs e)
         {
             if (_currentFile == null)
-            { MessageBox.Show("No hay archivo cargado. Usa Examinar para seleccionar uno.", "BIM Pills \u2014 Notas Clave"); return; }
+            {
+                BimPillsDialog.Info(
+                    "Notas Clave",
+                    "No hay archivo cargado.",
+                    detail: "Usa Examinar para seleccionar un archivo de notas clave.",
+                    owner: Window.GetWindow(this));
+                return;
+            }
 
             if (_hasChanges)
             {
-                var confirm = MessageBox.Show("Hay cambios sin guardar. \u00bfRecargar igualmente?",
-                    "BIM Pills \u2014 Notas Clave", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No);
-                if (confirm != MessageBoxResult.Yes) return;
+                bool confirmed = BimPillsDialog.Confirm(
+                    "Cambios sin guardar",
+                    "Hay cambios sin guardar en el archivo actual.",
+                    detail: "Si recargas, se perderán todos los cambios no guardados.",
+                    owner: Window.GetWindow(this),
+                    yesText: "Recargar igualmente",
+                    noText: "Cancelar",
+                    kind: BimPillsDialog.DialogKind.Warning);
+                if (!confirmed) return;
             }
             LoadFromFile(_currentFile);
         }
@@ -654,20 +680,38 @@ namespace BIMPills.UI.Keynotes
 
                 if (_reloadInRevitCallback != null)
                 {
-                    var ask = MessageBox.Show("Archivo guardado.\n\n\u00bfRecargar en Revit ahora?",
-                        "BIM Pills \u2014 Notas Clave", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.Yes);
-                    if (ask == MessageBoxResult.Yes && !_reloadInRevitCallback(_currentFile))
-                        MessageBox.Show("No se pudo recargar en Revit.", "BIM Pills \u2014 Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    bool reload = BimPillsDialog.Confirm(
+                        "Archivo guardado",
+                        "El archivo de notas clave se guardó correctamente.",
+                        detail: "¿Recargarlo en Revit ahora?",
+                        owner: Window.GetWindow(this),
+                        yesText: "Recargar",
+                        noText: "Ahora no",
+                        kind: BimPillsDialog.DialogKind.Success);
+                    if (reload && !_reloadInRevitCallback(_currentFile))
+                    {
+                        BimPillsDialog.Warning(
+                            "Recarga fallida",
+                            "No se pudo recargar el archivo en Revit.",
+                            detail: "Verifica que el archivo no esté bloqueado por otro proceso.",
+                            owner: Window.GetWindow(this));
+                    }
                 }
                 else
                 {
-                    MessageBox.Show($"Guardado: {Path.GetFileName(_currentFile)}",
-                        "BIM Pills \u2014 Notas Clave", MessageBoxButton.OK, MessageBoxImage.Information);
+                    BimPillsDialog.Success(
+                        "Guardado",
+                        $"Archivo guardado: {Path.GetFileName(_currentFile)}",
+                        owner: Window.GetWindow(this));
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al guardar: {ex.Message}", "BIM Pills \u2014 Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                BimPillsDialog.Error(
+                    "Error al guardar",
+                    "No se pudo guardar el archivo.",
+                    detail: ex.Message,
+                    owner: Window.GetWindow(this));
             }
         }
 
@@ -694,12 +738,24 @@ namespace BIMPills.UI.Keynotes
                 }
 
                 if (imported.Count == 0)
-                { MessageBox.Show("No se encontraron entradas.", "BIM Pills \u2014 Notas Clave"); return; }
+                {
+                    BimPillsDialog.Info(
+                        "Importar Excel",
+                        "No se encontraron entradas en el archivo.",
+                        detail: "Verifica que el Excel tenga las columnas Key, Texto y Categoría.",
+                        owner: Window.GetWindow(this));
+                    return;
+                }
 
-                var confirm = MessageBox.Show(
-                    $"\u00bfSustituir las {_allEntries.Count} entradas con las {imported.Count} del Excel?",
-                    "BIM Pills \u2014 Importar", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.Yes);
-                if (confirm != MessageBoxResult.Yes) return;
+                bool confirmed = BimPillsDialog.Confirm(
+                    "Sustituir entradas",
+                    $"¿Sustituir las {_allEntries.Count} entradas actuales con las {imported.Count} del Excel?",
+                    detail: "Los cambios se aplicarán a la tabla en memoria. Para persistirlos deberás guardar.",
+                    owner: Window.GetWindow(this),
+                    yesText: "Sustituir",
+                    noText: "Cancelar",
+                    kind: BimPillsDialog.DialogKind.Warning);
+                if (!confirmed) return;
 
                 _allEntries = imported;
                 MarkChanged();
@@ -708,14 +764,24 @@ namespace BIMPills.UI.Keynotes
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al importar: {ex.Message}", "BIM Pills \u2014 Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                BimPillsDialog.Error(
+                    "Error al importar",
+                    "No se pudo importar el archivo Excel.",
+                    detail: ex.Message,
+                    owner: Window.GetWindow(this));
             }
         }
 
         private void ExportExcel_Click(object sender, RoutedEventArgs e)
         {
             if (_allEntries.Count == 0)
-            { MessageBox.Show("No hay entradas para exportar.", "BIM Pills \u2014 Notas Clave"); return; }
+            {
+                BimPillsDialog.Info(
+                    "Exportar Excel",
+                    "No hay entradas para exportar.",
+                    owner: Window.GetWindow(this));
+                return;
+            }
 
             var dlg = new SaveFileDialog { Filter = "Excel (*.xlsx)|*.xlsx", FileName = "NotasClave.xlsx" };
             if (dlg.ShowDialog() != true) return;
@@ -745,13 +811,23 @@ namespace BIMPills.UI.Keynotes
                 ws.Columns().AdjustToContents();
                 wb.SaveAs(dlg.FileName);
 
-                var ask = MessageBox.Show($"Exportado. \u00bfAbrir en Excel?",
-                    "BIM Pills \u2014 Exportar", MessageBoxButton.YesNo, MessageBoxImage.Information);
-                if (ask == MessageBoxResult.Yes) ProcessHelper.OpenDocument(dlg.FileName);
+                bool openFile = BimPillsDialog.Confirm(
+                    "Exportación completada",
+                    "El archivo Excel se exportó correctamente.",
+                    detail: $"Archivo: {dlg.FileName}\n\n¿Deseas abrirlo en Excel ahora?",
+                    owner: Window.GetWindow(this),
+                    yesText: "Abrir",
+                    noText: "Cerrar",
+                    kind: BimPillsDialog.DialogKind.Success);
+                if (openFile) ProcessHelper.OpenDocument(dlg.FileName);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al exportar: {ex.Message}", "BIM Pills \u2014 Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                BimPillsDialog.Error(
+                    "Error al exportar",
+                    "No se pudo exportar el archivo Excel.",
+                    detail: ex.Message,
+                    owner: Window.GetWindow(this));
             }
         }
     }
