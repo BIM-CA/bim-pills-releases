@@ -42,7 +42,7 @@ namespace BIMPills.Core.Tests.About
             var result  = command.Execute(context);
 
             Assert.Contains("BIM Pills", result.Message);
-            Assert.Contains("1.0.0", result.Message);
+            Assert.Contains("beta", result.Message);
             Assert.Contains("BIM-CA", result.Message);
         }
     }
