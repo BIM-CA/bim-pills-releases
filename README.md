@@ -1,4 +1,5 @@
 <div align="center">
+  <img src="assets/pill-icon.png" alt="BIM Pills" width="80"/>
   <h1>BIM Pills</h1>
   <p><strong>Herramientas inteligentes para optimizar tu flujo de trabajo en Autodesk Revit</strong></p>
   <p>
@@ -86,7 +87,7 @@ Ve a **Panel de Control → Programas → BIM Pills** y haz clic en Desinstalar.
 
 BIM Pills requiere una licencia activa para su uso. Contacta a soporte para obtener una licencia de evaluación o comercial.
 
-📧 soporte@bim-ca.com
+📧 soporte@bim-ca.com  
 🌐 [bim-ca.com](https://bim-ca.com)
 
 ---
