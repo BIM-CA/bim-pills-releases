@@ -282,72 +282,27 @@ namespace BIMPills.Revit.Application
         {
             try
             {
-                var notes = string.IsNullOrWhiteSpace(update.ReleaseNotes)
-                    ? string.Empty
-                    : $"\n\n{update.ReleaseNotes}";
+                var currentVersion = new AboutInfo().Version;
 
-                var td = new TaskDialog("BIM Pills — Actualización disponible")
+                async Task<string?> DownloadCallback(UpdateInfo u)
                 {
-                    MainInstruction = $"Nueva versión disponible: {update.DisplayVersion}",
-                    MainContent     = $"Tienes instalada la versión actual. Hay una nueva versión " +
-                                      $"de BIM Pills lista para descargar.{notes}",
-                    CommonButtons   = TaskDialogCommonButtons.Close,
-                    DefaultButton   = TaskDialogResult.Close,
-                };
-
-                if (!string.IsNullOrEmpty(update.InstallerDownloadUrl))
-                {
-                    td.AddCommandLink(TaskDialogCommandLinkId.CommandLink1,
-                        "Descargar e instalar al cerrar Revit",
-                        "El instalador se descargará ahora. Se ejecutará automáticamente cuando cierres Revit.");
+                    logger.Info($"Descargando actualización {u.DisplayVersion}...");
+                    var path = await _updateChecker.DownloadInstallerAsync(u);
+                    if (!string.IsNullOrEmpty(path))
+                    {
+                        _pendingInstallerPath = path;
+                        logger.Info($"Instalador descargado: {path}");
+                    }
+                    return path;
                 }
 
-                var result = td.Show();
-
-                if (result == TaskDialogResult.CommandLink1 &&
-                    !string.IsNullOrEmpty(update.InstallerDownloadUrl))
-                {
-                    DownloadUpdateInBackground(update, logger);
-                }
+                var win = new BIMPills.UI.Updates.UpdateAvailableWindow(update, currentVersion, DownloadCallback);
+                win.ShowDialog();
             }
             catch (Exception ex)
             {
                 logger.Warning($"Error al mostrar diálogo de actualización: {ex.Message}");
             }
-        }
-
-        private static void DownloadUpdateInBackground(UpdateInfo update, ILogger logger)
-        {
-            Task.Run(async () =>
-            {
-                try
-                {
-                    logger.Info($"Descargando actualización {update.DisplayVersion}...");
-                    var path = await _updateChecker.DownloadInstallerAsync(update);
-                    if (!string.IsNullOrEmpty(path))
-                    {
-                        _pendingInstallerPath = path;
-                        logger.Info($"Instalador descargado: {path}");
-
-                        System.Windows.Application.Current?.Dispatcher.BeginInvoke(
-                            System.Windows.Threading.DispatcherPriority.Background,
-                            new Action(() =>
-                            {
-                                new TaskDialog("BIM Pills — Descarga completada")
-                                {
-                                    MainInstruction = "Descarga completada",
-                                    MainContent     = "El instalador está listo. " +
-                                                      "Se ejecutará automáticamente al cerrar Revit.",
-                                    CommonButtons   = TaskDialogCommonButtons.Ok,
-                                }.Show();
-                            }));
-                    }
-                }
-                catch (Exception ex)
-                {
-                    logger.Warning($"Error al descargar actualización: {ex.Message}");
-                }
-            });
         }
 
         // ── Assembly resolver (solo Revit 2026 / .NET 8) ───────────────────────
