@@ -16,10 +16,14 @@ namespace BIMPills.Core.About
             {
                 var raw = typeof(AboutInfo).Assembly
                     .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
-                    ?.InformationalVersion ?? "1.0.0-beta.3.2";
+                    ?.InformationalVersion ?? "1.0.0-beta.3.3";
                 // Strip build metadata (+commitHash) added by SDK
                 var plusIdx = raw.IndexOf('+');
-                return plusIdx >= 0 ? raw.Substring(0, plusIdx) : raw;
+                var clean = plusIdx >= 0 ? raw.Substring(0, plusIdx) : raw;
+                // "1.0.0-beta.3.3" → "beta 3.3"  (user never sees "1.0.0")
+                var betaIdx = clean.IndexOf("-beta.", StringComparison.OrdinalIgnoreCase);
+                if (betaIdx >= 0) return "beta " + clean.Substring(betaIdx + 6);
+                return clean;
             }
         }
         public string Developer => "MBA Arq. Rodrigo Flores";
