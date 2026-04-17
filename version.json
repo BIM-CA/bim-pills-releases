@@ -1,5 +1,5 @@
 {
-  "version": "1.0.0-beta.3.2",
-  "notes": "- Auditoría: corrección del tamaño de archivo en modelos colaborativos (BIM 360/ACC)\n- Auditoría: referencias ISO en ventana de metodología de evaluación\n- UI: ventana de actualización rediseñada con overlay de descarga\n- Auto-update: sistema de actualización automática desde GitHub Releases",
-  "installer_url": ""
+  "version": "1.0.0-beta.3.3",
+  "notes": "- Auditoría: corrección del tamaño de archivo en modelos colaborativos (BIM 360/ACC)\n- Auditoría: referencias ISO 19650-1/2 y AEC UK BIM Protocol en metodología\n- UI: ventana de actualización rediseñada con overlay de descarga\n- Auto-update: detección automática de nuevas versiones",
+  "installer_url": "https://github.com/BIM-CA/bim-pills-releases/releases/download/v1.0.0-beta.3.3/BIM.Pills.beta.3.3.Setup.exe"
 }
