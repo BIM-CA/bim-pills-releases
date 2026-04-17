@@ -40,7 +40,7 @@
 ;--------------------------------
 ; Attributes
 Name "BIM Pills"
-OutFile "BIM Pills beta 3.3 Setup.exe"
+OutFile "BIMPills-beta-3.4-Setup.exe"
 RequestExecutionLevel admin
 InstallDir "$APPDATA\Autodesk\Revit\Addins"
 
@@ -160,7 +160,7 @@ Section "-WriteUninstaller" SEC_UNINSTALL_REG
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\BIMPills" \
     "DisplayName" "BIM Pills"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\BIMPills" \
-    "DisplayVersion" "beta 3.3"
+    "DisplayVersion" "beta 3.4"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\BIMPills" \
     "Publisher" "BIM-CA"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\BIMPills" \

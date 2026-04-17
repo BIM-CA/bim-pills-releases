@@ -7,7 +7,7 @@ namespace BIMPills.Commands.Transfer
     public sealed class TransferModule : IPluginModule
     {
         public string TabName   => "BIM Pills";
-        public string PanelName => "Procesos";
+        public string PanelName => "Datos";
 
         public void BuildRibbon(IRibbonBuilder builder)
         {

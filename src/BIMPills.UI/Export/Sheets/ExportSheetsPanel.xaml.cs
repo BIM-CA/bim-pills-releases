@@ -1803,20 +1803,13 @@ namespace BIMPills.UI.Export.Sheets
                 // of PrinterSettings.InstalledPrinters later.
                 PdfPrinterCombo.Items.Clear();
 
-                // Diagnostic: write to TEMP to verify this code path executes inside Revit
-                WriteTempDiag("[LoadPdfEngineSettings] calling GetInstalledPdfPrinters...");
                 List<BIMPills.Infrastructure.Services.PdfPrinterService.PdfPrinterInfo> printers;
                 try
                 {
                     printers = BIMPills.Infrastructure.Services.PdfPrinterService.GetInstalledPdfPrinters();
-                    WriteTempDiag($"[LoadPdfEngineSettings] returned {printers.Count} printers");
                 }
-                catch (Exception pex)
+                catch
                 {
-                    WriteTempDiag($"[LoadPdfEngineSettings] EXCEPTION: {pex.GetType().FullName}: {pex.Message}");
-                    WriteTempDiag($"  StackTrace: {pex.StackTrace}");
-                    if (pex.InnerException != null)
-                        WriteTempDiag($"  Inner: {pex.InnerException.GetType().FullName}: {pex.InnerException.Message}");
                     printers = new List<BIMPills.Infrastructure.Services.PdfPrinterService.PdfPrinterInfo>();
                 }
                 _pdf24Installed = false;
@@ -1833,8 +1826,7 @@ namespace BIMPills.UI.Export.Sheets
                         // account. Running here guarantees the correct user context.
                         // No-op if already configured; returns true only on first fix.
                         pdf24HkcuFixApplied = BIMPills.Infrastructure.Services.PdfPrinterService.EnsureBimpillsHkcuServiceConfig();
-                        if (pdf24HkcuFixApplied)
-                            WriteTempDiag("[LoadPdfEngineSettings] PDF24 HKCU bimpills service config written for current user.");
+                        _ = pdf24HkcuFixApplied; // fix applied silently, no logging needed
                     }
                     var label = p.SupportsSilent
                         ? $"{p.DisplayName} (silencioso)"
@@ -1991,22 +1983,6 @@ namespace BIMPills.UI.Export.Sheets
         /// </summary>
         public PdfEngineSettings GetPdfEngineSettings() => _pdfEngine;
 
-        /// <summary>
-        /// Writes a diagnostic line to %TEMP%\bimpills-ui-diag.log.
-        /// Used to troubleshoot printer detection inside Revit's runtime
-        /// where the Infrastructure-level log may not be reachable.
-        /// </summary>
-        private static void WriteTempDiag(string message)
-        {
-            try
-            {
-                var path = System.IO.Path.Combine(
-                    System.IO.Path.GetTempPath(), "bimpills-ui-diag.log");
-                System.IO.File.AppendAllText(path,
-                    $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {message}{Environment.NewLine}");
-            }
-            catch { /* never break the caller */ }
-        }
     }
 
     /// <summary>

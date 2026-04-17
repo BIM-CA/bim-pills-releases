@@ -340,12 +340,12 @@ namespace BIMPills.Revit.Application
             // Panel: Datos
             yield return new ModelAuditModule();
             yield return new ExportFamiliesModule();
+            yield return new TransferModule(); // Importar — justo después de Exportar
             // CustomDimensionSchemesModule — se accede desde Documentar → Acotar
             // ExportAudit — se accede desde la ventana de Auditoría (sin módulo propio)
             yield return new MCPIntegrationModule();
             yield return new OrderingModule();
             yield return new DataManagerModule();
-            yield return new TransferModule();
             // Panel: Procesos
             yield return new DocumentacionModule();
             yield return new GestionModule();
