@@ -1,0 +1,5 @@
+{
+  "version": "1.0.0-beta.3.2",
+  "notes": "- Auditoría: corrección del tamaño de archivo en modelos colaborativos (BIM 360/ACC)\n- Auditoría: referencias ISO en ventana de metodología de evaluación\n- UI: ventana de actualización rediseñada con overlay de descarga\n- Auto-update: sistema de actualización automática desde GitHub Releases",
+  "installer_url": ""
+}
