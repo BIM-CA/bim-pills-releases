@@ -82,7 +82,10 @@ namespace BIMPills.Infrastructure.Persistence
         /// </summary>
         public static ExportConfigPreset? DeserializeFromImport(string json)
         {
-            var preset = JsonConvert.DeserializeObject<ExportConfigPreset>(json, _jsonSettings);
+            if (string.IsNullOrWhiteSpace(json)) return null;
+            ExportConfigPreset? preset;
+            try { preset = JsonConvert.DeserializeObject<ExportConfigPreset>(json, _jsonSettings); }
+            catch { return null; }
             if (preset == null) return null;
             preset.Id         = Guid.NewGuid().ToString();
             preset.CreatedAt  = DateTime.UtcNow;

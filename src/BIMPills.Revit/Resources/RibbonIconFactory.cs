@@ -305,6 +305,34 @@ namespace BIMPills.Revit.Resources
             });
         }
 
+        public static BitmapSource CreateSupportIcon()
+        {
+            return RenderIcon(ctx =>
+            {
+                var bubblePen = Stroke(Navy, 1.5);
+                var dotBrush  = Brush(Orange);
+
+                // Chat bubble body — rounded rectangle
+                ctx.DrawRoundedRectangle(Brushes.White, bubblePen,
+                    new Rect(4, 5, 24, 18), 4, 4);
+
+                // Chat bubble tail — bottom-left triangle
+                var tailGeo = new StreamGeometry();
+                using (var sgc = tailGeo.Open())
+                {
+                    sgc.BeginFigure(new Point(7, 22), true, true);
+                    sgc.LineTo(new Point(5, 27), true, false);
+                    sgc.LineTo(new Point(13, 22), true, false);
+                }
+                ctx.DrawGeometry(Brush(Navy), null, tailGeo);
+
+                // Three dots — orange
+                ctx.DrawEllipse(dotBrush, null, new Point(10, 14), 1.8, 1.8);
+                ctx.DrawEllipse(dotBrush, null, new Point(16, 14), 1.8, 1.8);
+                ctx.DrawEllipse(dotBrush, null, new Point(22, 14), 1.8, 1.8);
+            });
+        }
+
         private static FormattedText CreateText(string text, Color color, double size)
         {
             return new FormattedText(

@@ -1,5 +1,6 @@
 using Autodesk.Revit.UI;
 using BIMPills.Commands.About;
+using BIMPills.Commands.Support;
 using BIMPills.Commands.CustomDimensionSchemes;
 using BIMPills.Commands.DataManager;
 using BIMPills.Commands.Transfer;
@@ -351,6 +352,7 @@ namespace BIMPills.Revit.Application
             yield return new GestionModule();
             // Panel: Información
             yield return new AboutModule();
+            yield return new SupportModule();
         }
     }
 }

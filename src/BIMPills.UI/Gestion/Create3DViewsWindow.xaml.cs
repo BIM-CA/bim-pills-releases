@@ -1,4 +1,5 @@
 using BIMPills.Core.Gestion;
+using BIMPills.UI.Shared;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -85,19 +86,20 @@ namespace BIMPills.UI.Gestion
                 ResultConfig = config;
                 var msg = $"Operación completada.\n\n• Creadas: {result.Created}\n• Omitidas: {result.Skipped}\n• Errores: {result.Failed}";
                 if (result.Errors.Count > 0) msg += $"\n\n{string.Join("\n", result.Errors.Take(5))}";
-                MessageBox.Show(msg, "BIM Pills — Crear Vistas 3D", MessageBoxButton.OK,
-                    result.Failed > 0 ? MessageBoxImage.Warning : MessageBoxImage.Information);
+                if (result.Failed > 0)
+                    BimPillsDialog.Warning("BIM Pills — Crear Vistas 3D", msg);
+                else
+                    BimPillsDialog.Info("BIM Pills — Crear Vistas 3D", msg);
                 Close();
             }
             else
             {
                 // Sandbox: show mock result
                 ResultConfig = config;
-                MessageBox.Show(
+                BimPillsDialog.Info("BIM Pills — Crear Vistas 3D",
                     $"[Sandbox] Se crearían {selected.Count} vistas 3D:\n\n" +
                     string.Join("\n", selected.Take(5).Select(i => $"• {config.ViewNameTemplate.Replace("{nombre}", i.Name)}")) +
-                    (selected.Count > 5 ? $"\n… y {selected.Count - 5} más" : ""),
-                    "BIM Pills — Crear Vistas 3D", MessageBoxButton.OK, MessageBoxImage.Information);
+                    (selected.Count > 5 ? $"\n… y {selected.Count - 5} más" : ""));
                 Close();
             }
         }

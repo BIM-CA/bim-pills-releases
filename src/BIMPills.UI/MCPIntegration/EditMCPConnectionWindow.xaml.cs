@@ -1,4 +1,5 @@
 using BIMPills.Core.Models;
+using BIMPills.UI.Shared;
 using System;
 using System.Windows;
 
@@ -38,13 +39,13 @@ namespace BIMPills.UI.MCPIntegration
         {
             if (string.IsNullOrWhiteSpace(NameTextBox.Text))
             {
-                MessageBox.Show("El nombre de la conexión no puede estar vacío.", "BIMPills — Validación");
+                BimPillsDialog.Warning("BIMPills — Validación", "El nombre de la conexión no puede estar vacío.");
                 return;
             }
 
             if (string.IsNullOrWhiteSpace(EndpointTextBox.Text))
             {
-                MessageBox.Show("El endpoint no puede estar vacío.", "BIMPills — Validación");
+                BimPillsDialog.Warning("BIMPills — Validación", "El endpoint no puede estar vacío.");
                 return;
             }
 

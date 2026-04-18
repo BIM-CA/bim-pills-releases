@@ -1,4 +1,5 @@
 using BIMPills.Core.Audit;
+using BIMPills.UI.Shared;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -169,14 +170,12 @@ namespace BIMPills.UI.Export.Families
 
             message += "\nEste proceso puede tomar varios minutos. \u00BFDesea continuar?";
 
-            var confirm = MessageBox.Show(
+            var confirm = BimPillsDialog.Confirm(
+                "BIMPills — Confirmar exportación",
                 message,
-                "BIMPills \u2014 Confirmar exportaci\u00F3n",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Question,
-                MessageBoxResult.Yes);
+                kind: BimPillsDialog.DialogKind.Question);
 
-            if (confirm != MessageBoxResult.Yes) return;
+            if (!confirm) return;
 
             // Show progress
             ProgressOverlay.Visibility = Visibility.Visible;
@@ -239,11 +238,10 @@ namespace BIMPills.UI.Export.Families
                     summary += $"\n  ... y {errors.Count - 10} m\u00E1s";
             }
 
-            MessageBox.Show(
-                summary,
-                "BIMPills \u2014 Exportaci\u00F3n completada",
-                MessageBoxButton.OK,
-                failed > 0 ? MessageBoxImage.Warning : MessageBoxImage.Information);
+            if (failed > 0)
+                BimPillsDialog.Warning("BIMPills — Exportación completada", summary);
+            else
+                BimPillsDialog.Info("BIMPills — Exportación completada", summary);
         }
 
         /// <summary>

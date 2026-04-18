@@ -3,6 +3,7 @@ using BIMPills.Core.Licensing;
 using BIMPills.Infrastructure.DI;
 using BIMPills.UI.Helpers;
 using BIMPills.UI.Licensing;
+using BIMPills.UI.Shared;
 using System;
 using System.Windows;
 using System.Windows.Input;
@@ -130,14 +131,11 @@ namespace BIMPills.UI.About
 
         private async void DeactivateLicense_Click(object sender, RoutedEventArgs e)
         {
-            var confirm = MessageBox.Show(
-                "¿Desactivar BIMPills en este equipo?\n\n" +
-                "Podrás volver a activar la licencia en otro equipo o en este mismo.",
+            var confirm = BimPillsDialog.Confirm(
                 "Desactivar licencia",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Question);
+                "¿Desactivar BIMPills en este equipo?\n\nPodrás volver a activar la licencia en otro equipo o en este mismo.");
 
-            if (confirm != MessageBoxResult.Yes) return;
+            if (!confirm) return;
 
             BtnDeactivateLicense.IsEnabled = false;
             BtnDeactivateLicense.Content = "Desactivando...";
@@ -148,17 +146,17 @@ namespace BIMPills.UI.About
             if (ok)
             {
                 PopulateLicense();
-                MessageBox.Show(
-                    "Licencia desactivada. Ya puedes activarla en otro equipo.",
-                    "Desactivado", MessageBoxButton.OK, MessageBoxImage.Information);
+                BimPillsDialog.Info(
+                    "Desactivado",
+                    "Licencia desactivada. Ya puedes activarla en otro equipo.");
             }
             else
             {
                 BtnDeactivateLicense.IsEnabled = true;
                 BtnDeactivateLicense.Content = "Desactivar equipo";
-                MessageBox.Show(
-                    "No se pudo desactivar la licencia remotamente. Intenta de nuevo.",
-                    "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                BimPillsDialog.Warning(
+                    "Error",
+                    "No se pudo desactivar la licencia remotamente. Intenta de nuevo.");
             }
         }
 

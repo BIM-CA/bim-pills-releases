@@ -1,5 +1,6 @@
 using BIMPills.Core.Audit;
 using BIMPills.Core.Services;
+using BIMPills.UI.Shared;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -165,8 +166,7 @@ namespace BIMPills.UI.Export.Families
             catch (Exception ex)
             {
                 _logger?.Error("Error en SelectAll_Click", ex);
-                MessageBox.Show($"Error inesperado:\n{ex.Message}\n\nRevisa el log para más detalles.",
-                    "BIMPills — Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                BimPillsDialog.Error("BIMPills — Error", $"Error inesperado:\n{ex.Message}\n\nRevisa el log para más detalles.");
             }
         }
 
@@ -205,8 +205,7 @@ namespace BIMPills.UI.Export.Families
             catch (Exception ex)
             {
                 _logger?.Error("Error en Browse_Click", ex);
-                MessageBox.Show($"Error inesperado:\n{ex.Message}\n\nRevisa el log para más detalles.",
-                    "BIMPills — Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                BimPillsDialog.Error("BIMPills — Error", $"Error inesperado:\n{ex.Message}\n\nRevisa el log para más detalles.");
             }
         }
 
@@ -234,14 +233,12 @@ namespace BIMPills.UI.Export.Families
 
             message += "\nEste proceso puede tomar varios minutos. ¿Desea continuar?";
 
-            var confirm = MessageBox.Show(
+            var confirm = BimPillsDialog.Confirm(
+                "BIMPills — Confirmar exportación",
                 message,
-                "BIMPills \u2014 Confirmar exportación",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Question,
-                MessageBoxResult.Yes);
+                kind: BimPillsDialog.DialogKind.Question);
 
-            if (confirm != MessageBoxResult.Yes) return;
+            if (!confirm) return;
 
             ProgressOverlay.Visibility = Visibility.Visible;
             ProgressBar.Maximum = selectedFamilies.Count;
@@ -306,11 +303,10 @@ namespace BIMPills.UI.Export.Families
                     summary += $"\n  ... y {errors.Count - 10} más";
             }
 
-            MessageBox.Show(
-                summary,
-                "BIMPills \u2014 Exportación completada",
-                MessageBoxButton.OK,
-                failed > 0 ? MessageBoxImage.Warning : MessageBoxImage.Information);
+            if (failed > 0)
+                BimPillsDialog.Warning("BIMPills — Exportación completada", summary);
+            else
+                BimPillsDialog.Info("BIMPills — Exportación completada", summary);
 
             if (exported > 0 && failed == 0)
             {
@@ -323,11 +319,7 @@ namespace BIMPills.UI.Export.Families
             {
                 _logger?.Error("Error no controlado en Export_Click", ex);
                 ProgressOverlay.Visibility = Visibility.Collapsed;
-                MessageBox.Show(
-                    $"Error inesperado durante la exportación:\n{ex.Message}\n\nRevisa el log para más detalles.",
-                    "BIMPills — Error",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                BimPillsDialog.Error("BIMPills — Error", $"Error inesperado durante la exportación:\n{ex.Message}\n\nRevisa el log para más detalles.");
             }
         }
 

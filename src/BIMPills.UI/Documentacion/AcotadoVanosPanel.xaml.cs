@@ -1,5 +1,6 @@
 using BIMPills.Core.Documentacion;
 using BIMPills.Core.Services;
+using BIMPills.UI.Shared;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -132,8 +133,7 @@ namespace BIMPills.UI.Documentacion
             catch (Exception ex)
             {
                 _logger?.Error("Error en ScopeChip_Click", ex);
-                MessageBox.Show($"Error inesperado:\n{ex.Message}\n\nRevisa el log para más detalles.",
-                    "BIMPills — Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                BimPillsDialog.Error("BIMPills — Error", $"Error inesperado:\n{ex.Message}\n\nRevisa el log para más detalles.");
             }
         }
 
@@ -179,8 +179,7 @@ namespace BIMPills.UI.Documentacion
             catch (Exception ex)
             {
                 _logger?.Error("Error al abrir selector de esquema", ex);
-                MessageBox.Show($"Error inesperado:\n{ex.Message}\n\nRevisa el log para más detalles.",
-                    "BIMPills — Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                BimPillsDialog.Error("BIMPills — Error", $"Error inesperado:\n{ex.Message}\n\nRevisa el log para más detalles.");
             }
         }
 
@@ -276,8 +275,7 @@ namespace BIMPills.UI.Documentacion
             catch (Exception ex)
             {
                 _logger?.Error("Error en EndpointChip_Click", ex);
-                MessageBox.Show($"Error inesperado:\n{ex.Message}\n\nRevisa el log para más detalles.",
-                    "BIMPills — Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                BimPillsDialog.Error("BIMPills — Error", $"Error inesperado:\n{ex.Message}\n\nRevisa el log para más detalles.");
             }
         }
 
@@ -354,8 +352,7 @@ namespace BIMPills.UI.Documentacion
             catch (Exception ex)
             {
                 _logger?.Error("Error en PresetButton_Click", ex);
-                MessageBox.Show($"Error inesperado:\n{ex.Message}\n\nRevisa el log para más detalles.",
-                    "BIMPills — Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                BimPillsDialog.Error("BIMPills — Error", $"Error inesperado:\n{ex.Message}\n\nRevisa el log para más detalles.");
             }
         }
 
@@ -384,18 +381,14 @@ namespace BIMPills.UI.Documentacion
         {
             if (_executeCallback == null)
             {
-                MessageBox.Show(
-                    "La función de acotado solo está disponible dentro de Revit.",
-                    "BIM Pills", MessageBoxButton.OK, MessageBoxImage.Information);
+                BimPillsDialog.Info("BIM Pills", "La función de acotado solo está disponible dentro de Revit.");
                 return;
             }
 
             var selectedDimType = DimTypeCombo.SelectedItem as DimensionTypeInfo;
             if (selectedDimType == null)
             {
-                MessageBox.Show(
-                    "Selecciona un tipo de cota antes de ejecutar.",
-                    "BIM Pills", MessageBoxButton.OK, MessageBoxImage.Warning);
+                BimPillsDialog.Warning("BIM Pills", "Selecciona un tipo de cota antes de ejecutar.");
                 return;
             }
 
@@ -453,11 +446,7 @@ namespace BIMPills.UI.Documentacion
                     // ── Fatal error ──────────────────────────────────────────────────────────
                     _logger?.Error($"[AcotadoVanos] Error fatal en esquema '{settings.Scheme}': {result.ErrorMessage}");
 
-                    MessageBox.Show(
-                        $"Error durante el acotado:\n{result.ErrorMessage}\n\nRevisa el log para más detalles.",
-                        "BIMPills — Error",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Error);
+                    BimPillsDialog.Error("BIMPills — Error", $"Error durante el acotado:\n{result.ErrorMessage}\n\nRevisa el log para más detalles.");
                 }
                 else if (result.SkippedItems?.Any() == true)
                 {
@@ -467,12 +456,9 @@ namespace BIMPills.UI.Documentacion
                         _logger?.Warning($"[AcotadoVanos] Omitido — {skipped}");
 
                     var skippedText = string.Join("\n", result.SkippedItems.Select(s => $"• {s}"));
-                    MessageBox.Show(
+                    BimPillsDialog.Warning("BIMPills — Resumen",
                         $"✓ Acotado completado: {result.CreatedCount} cota(s) creada(s).\n\n" +
-                        $"⚠ {result.SkippedItems.Count} elemento(s) omitido(s):\n{skippedText}",
-                        "BIMPills — Resumen",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Warning);
+                        $"⚠ {result.SkippedItems.Count} elemento(s) omitido(s):\n{skippedText}");
 
                     ShowResultStatus($"✓ {result.CreatedCount} cota(s) creada(s) — {result.SkippedItems.Count} omitida(s).");
 
@@ -500,11 +486,7 @@ namespace BIMPills.UI.Documentacion
                     {
                         // Zero cotas but no error and no skipped items — warn the user
                         _logger?.Warning($"[AcotadoVanos] El acotado no creó ninguna cota. Motivo: {result.Message}");
-                        MessageBox.Show(
-                            result.Message,
-                            "BIMPills — Acotado",
-                            MessageBoxButton.OK,
-                            MessageBoxImage.Warning);
+                        BimPillsDialog.Warning("BIMPills — Acotado", result.Message);
                     }
                 }
             }
@@ -512,11 +494,7 @@ namespace BIMPills.UI.Documentacion
             {
                 _logger?.Error($"[AcotadoVanos] Excepción no controlada en esquema '{settings.Scheme}'", ex);
 
-                MessageBox.Show(
-                    $"Error durante el acotado:\n{ex.Message}\n\nRevisa el log para más detalles.",
-                    "BIMPills — Error",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                BimPillsDialog.Error("BIMPills — Error", $"Error durante el acotado:\n{ex.Message}\n\nRevisa el log para más detalles.");
             }
             finally
             {

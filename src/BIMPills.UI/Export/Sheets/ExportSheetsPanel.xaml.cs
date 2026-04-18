@@ -1942,11 +1942,9 @@ namespace BIMPills.UI.Export.Sheets
                 _logger?.Warning($"[PdfEngine] No se pudo abrir el navegador: {ex.Message}");
                 try
                 {
-                    System.Windows.MessageBox.Show(
-                        "No se pudo abrir el navegador. Copiá y pegá esta dirección:\n\n" + e.Uri.AbsoluteUri,
+                    BimPillsDialog.Info(
                         "BIM Pills — Descargar PDF24",
-                        System.Windows.MessageBoxButton.OK,
-                        System.Windows.MessageBoxImage.Information);
+                        "No se pudo abrir el navegador. Copiá y pegá esta dirección:\n\n" + e.Uri.AbsoluteUri);
                 }
                 catch { }
             }

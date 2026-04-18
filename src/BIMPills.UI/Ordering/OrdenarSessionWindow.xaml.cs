@@ -1,4 +1,5 @@
 using BIMPills.Core.Models;
+using BIMPills.UI.Shared;
 using System;
 using System.Linq;
 using System.Windows;
@@ -128,23 +129,18 @@ namespace BIMPills.UI.Ordering
             _session.IsActive = false;
             int count = _session.History.Count;
             Close();
-            MessageBox.Show(
-                $"Sesión finalizada. Se asignaron {count} valores.",
-                "BIMPills — Ordenar",
-                MessageBoxButton.OK,
-                MessageBoxImage.Information);
+            BimPillsDialog.Info("BIMPills — Ordenar", $"Sesión finalizada. Se asignaron {count} valores.");
         }
 
         private void Cancel_Click(object sender, RoutedEventArgs e)
         {
             if (_session.History.Count > 0)
             {
-                var result = MessageBox.Show(
-                    $"Se desharán los {_session.History.Count} valores asignados. ¿Continuar?",
+                var result = BimPillsDialog.Confirm(
                     "BIMPills — Ordenar",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Question);
-                if (result != MessageBoxResult.Yes) return;
+                    $"Se desharán los {_session.History.Count} valores asignados. ¿Continuar?",
+                    kind: BimPillsDialog.DialogKind.Question);
+                if (!result) return;
             }
             _finishedNormally = true;
             _session.IsActive = false;
@@ -166,12 +162,11 @@ namespace BIMPills.UI.Ordering
         {
             if (!_finishedNormally && _session.History.Count > 0)
             {
-                var result = MessageBox.Show(
-                    $"Se desharán los {_session.History.Count} valores asignados. ¿Cerrar de todas formas?",
+                var result = BimPillsDialog.Confirm(
                     "BIMPills — Ordenar",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Warning);
-                if (result != MessageBoxResult.Yes) { e.Cancel = true; return; }
+                    $"Se desharán los {_session.History.Count} valores asignados. ¿Cerrar de todas formas?",
+                    kind: BimPillsDialog.DialogKind.Warning);
+                if (!result) { e.Cancel = true; return; }
                 _session.IsActive = false;
                 for (int i = _session.History.Count - 1; i >= 0; i--)
                     _raiseUndo();

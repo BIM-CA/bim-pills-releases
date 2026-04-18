@@ -1,4 +1,5 @@
 using BIMPills.Core.Gestion;
+using BIMPills.UI.Shared;
 using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
@@ -245,10 +246,11 @@ namespace BIMPills.UI.Gestion
             var selected = _templateItems.Where(i => i.IsSelected && !i.AlreadyExists).ToList();
             if (selected.Count == 0) return;
 
-            var confirm = MessageBox.Show(
+            var confirm = BimPillsDialog.Confirm(
+                "BIM Pills — Estandarizar",
                 $"¿Crear {selected.Count} subproyectos en el modelo?",
-                "BIM Pills — Estandarizar", MessageBoxButton.YesNo, MessageBoxImage.Question);
-            if (confirm != MessageBoxResult.Yes) return;
+                kind: BimPillsDialog.DialogKind.Question);
+            if (!confirm) return;
 
             int created = 0, failed = 0;
             foreach (var item in selected)
@@ -267,7 +269,10 @@ namespace BIMPills.UI.Gestion
             UpdateCount();
             var msg = $"Se crearon {created} subproyectos.";
             if (failed > 0) msg += $"\n{failed} no se pudieron crear.";
-            MessageBox.Show(msg, "BIM Pills — Estandarizar", MessageBoxButton.OK, failed > 0 ? MessageBoxImage.Warning : MessageBoxImage.Information);
+            if (failed > 0)
+                BimPillsDialog.Warning("BIM Pills — Estandarizar", msg);
+            else
+                BimPillsDialog.Info("BIM Pills — Estandarizar", msg);
         }
 
         private void LoadCustomTemplate_Click(object sender, RoutedEventArgs e)
@@ -275,7 +280,7 @@ namespace BIMPills.UI.Gestion
             var dlg = new OpenFileDialog { Filter = "Texto (*.txt)|*.txt|Todos (*.*)|*.*", Title = "Cargar plantilla" };
             if (dlg.ShowDialog() != true) return;
             try { LoadLines(File.ReadAllLines(dlg.FileName)); }
-            catch (Exception ex) { MessageBox.Show($"Error: {ex.Message}", "BIM Pills — Error"); }
+            catch (Exception ex) { BimPillsDialog.Error("BIM Pills — Error", $"Error: {ex.Message}"); }
         }
 
         private void Close_Click(object sender, RoutedEventArgs e) => Close();
