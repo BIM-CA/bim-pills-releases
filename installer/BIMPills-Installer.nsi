@@ -1,4 +1,4 @@
-; BIMPills v1.0.0-beta.3.3 Installer
+; BIMPills v1.0.0-beta.3.4 Installer
 ; NSIS Installer Script — Revit 2024, 2025, 2026 y 2027
 ;
 ; Build: cd installer && makensis BIMPills-Installer.nsi

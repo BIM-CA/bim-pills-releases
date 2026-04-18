@@ -35,7 +35,7 @@ namespace BIMPills.Infrastructure.Updates
                 var manifest = JsonConvert.DeserializeObject<VersionManifest>(json);
                 if (manifest == null || string.IsNullOrEmpty(manifest.Version)) return null;
 
-                if (!IsNewer(manifest.Version, currentVersionRaw)) return null;
+                if (!IsNewer(manifest.Version!, currentVersionRaw)) return null;
 
                 return new UpdateInfo
                 {

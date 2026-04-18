@@ -62,7 +62,7 @@ namespace BIMPills.Core.Models
     /// </summary>
     public class OrderingSessionState
     {
-        public OrderingConfig Config       { get; set; }
+        public OrderingConfig Config       { get; set; } = new OrderingConfig();
         public int            CurrentValue { get; set; }
         public bool           IsActive     { get; set; } = true;
 
@@ -72,7 +72,7 @@ namespace BIMPills.Core.Models
     public class OrderingHistoryEntry
     {
         public long   ElementId     { get; set; }
-        public string PreviousValue { get; set; }
-        public string AssignedValue { get; set; }
+        public string PreviousValue { get; set; } = "";
+        public string AssignedValue { get; set; } = "";
     }
 }

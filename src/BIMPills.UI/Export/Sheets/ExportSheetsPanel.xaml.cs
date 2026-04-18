@@ -804,7 +804,7 @@ namespace BIMPills.UI.Export.Sheets
             {
                 var cb = sender as CheckBox;
                 var row = cb?.DataContext as ExportableViewRow;
-                if (row == null) return;
+                if (cb == null || row == null) return;
 
                 bool state = cb.IsChecked == true;
 

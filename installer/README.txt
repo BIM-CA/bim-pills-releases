@@ -7,29 +7,37 @@
 
   Herramientas de productividad para Autodesk Revit
   Desarrollado por BIM-CA | bim-ca.com
-  Version 1.0.0-beta.3.2
+  Version 1.0.0-beta.3.4
 
 ========================================================
 
 
-NOVEDADES EN ESTA VERSION
---------------------------
-* Exportacion PDF silenciosa con PDF24: los planos se
-  exportan directo a la carpeta de destino sin mostrar
-  ningun dialogo ni ventana de PDF24. El installer
-  configura todo automaticamente.
+NOVEDADES EN ESTA VERSION (beta 3.4)
+--------------------------------------
+* Importar datos movido al panel Datos (junto a Exportar)
+  para un flujo mas intuitivo.
 
-* Exportacion por lotes mas robusta: correccion de error
-  al exportar con impresora virtual; los PDFs ya no se
-  pierden en cola de impresion.
+* Ventana de metodologia actualizada con referencias
+  normativas: ISO 19650-1/2, AEC UK BIM Protocol y
+  BIM Forum LOD Specification.
 
-* Diálogos de configuracion suprimidos durante exportacion
-  en lote — sin interrupciones.
+* Actualizacion automatica rediseniada: nueva ventana
+  con logo, insignias de version, barra de progreso
+  de descarga y soporte markdown en notas de cambio.
+
+* Correccion de tamanio de archivo en modelos
+  colaborativos BIM 360 / ACC (estrategia
+  CollaborationCache para rutas en nube).
+
+* Codigo de diagnostico interno eliminado de produccion.
+
+* Obfuscacion integrada en el proceso de compilacion
+  Release (Core, Infrastructure, Commands).
 
 
 INSTALACION
 -----------
-1. Ejecuta "BIM Pills 1.0.0-beta.3.2 Setup.exe"
+1. Ejecuta "BIMPills-beta-3.4-Setup.exe"
 2. Selecciona las versiones de Revit a instalar
    (2024, 2025, 2026 o 2027)
 3. Opcionalmente instala PDF24 Creator (recomendado

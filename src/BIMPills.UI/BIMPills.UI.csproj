@@ -8,6 +8,8 @@
     <RootNamespace>BIMPills.UI</RootNamespace>
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
+    <!-- Windows-only WPF/WinForms plugin — CA1416 platform warnings expected. -->
+    <NoWarn>$(NoWarn);CA1416</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

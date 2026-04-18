@@ -9,6 +9,8 @@
     <IncludeRevitRefs>true</IncludeRevitRefs>
     <UseWPF>true</UseWPF>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <!-- This plugin targets Windows-only (Revit). CA1416 platform-specific API warnings are expected. -->
+    <NoWarn>$(NoWarn);CA1416</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

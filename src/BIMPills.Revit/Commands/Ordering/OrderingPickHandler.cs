@@ -46,7 +46,7 @@ namespace BIMPills.Revit.Commands.Ordering
                 var element = doc.GetElement(reference);
                 var param   = element?.LookupParameter(_session.Config.ParameterName);
 
-                if (param == null || param.IsReadOnly)
+                if (element == null || param == null || param.IsReadOnly)
                 {
                     // Silently skip — not a valid target
                     OnValueAssigned?.Invoke(_session.CurrentValue);

@@ -320,12 +320,16 @@ namespace BIMPills.Revit.Commands.ExportFamilies
                     // Merge project information parameters
                     try
                     {
-                        foreach (Parameter p in doc.ProjectInformation.Parameters)
+                        var projInfo = doc.ProjectInformation;
+                        if (projInfo != null)
                         {
-                            if (p.Definition?.Name == null || !p.HasValue) continue;
-                            var val = p.AsValueString() ?? p.AsString() ?? "";
-                            if (!string.IsNullOrEmpty(val) && !paramValues.ContainsKey(p.Definition.Name))
-                                paramValues[p.Definition.Name] = val;
+                            foreach (Parameter p in projInfo.Parameters)
+                            {
+                                if (p.Definition?.Name == null || !p.HasValue) continue;
+                                var val = p.AsValueString() ?? p.AsString() ?? "";
+                                if (!string.IsNullOrEmpty(val) && !paramValues.ContainsKey(p.Definition.Name))
+                                    paramValues[p.Definition.Name] = val;
+                            }
                         }
                     }
                     catch { }

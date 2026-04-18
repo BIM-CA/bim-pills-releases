@@ -6,8 +6,8 @@ namespace BIMPills.Core.Models
     public class ScheduleInfo
     {
         public long   Id           { get; set; }
-        public string Name         { get; set; }
-        public string CategoryName { get; set; }
+        public string Name         { get; set; } = "";
+        public string CategoryName { get; set; } = "";
         public int    RowCount     { get; set; }
         public int    ColumnCount  { get; set; }
         /// <summary>UI selection state for multi-export.</summary>
@@ -17,16 +17,16 @@ namespace BIMPills.Core.Models
     /// <summary>Info about a single field/column in a schedule.</summary>
     public class ScheduleColumnInfo
     {
-        public string Name          { get; set; }
-        public string ParameterName { get; set; }
+        public string Name          { get; set; } = "";
+        public string ParameterName { get; set; } = "";
         public bool   IsReadOnly    { get; set; }
-        public string StorageType   { get; set; }  // "String", "Integer", "Double"
+        public string StorageType   { get; set; } = "";  // "String", "Integer", "Double"
     }
 
     /// <summary>Full data snapshot of a schedule — schedule info + columns + rows.</summary>
     public class ScheduleData
     {
-        public ScheduleInfo             Schedule   { get; set; }
+        public ScheduleInfo             Schedule   { get; set; } = new ScheduleInfo();
         public List<ScheduleColumnInfo> Columns    { get; set; } = new List<ScheduleColumnInfo>();
         /// <summary>Element IDs — parallel array to Rows.</summary>
         public List<long>               ElementIds { get; set; } = new List<long>();
@@ -38,8 +38,8 @@ namespace BIMPills.Core.Models
     public class ParameterUpdateRequest
     {
         public long   ElementId     { get; set; }
-        public string ParameterName { get; set; }
-        public string NewValue      { get; set; }
+        public string ParameterName { get; set; } = "";
+        public string NewValue      { get; set; } = "";
     }
 
     /// <summary>Result of a batch parameter update operation.</summary>
