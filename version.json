@@ -1,5 +1,7 @@
 {
-  "version": "1.0.0-beta.3.4",
-  "notes": "- UI: botón Importar movido al panel Datos, junto a Exportar\n- Auto-update: ventana de actualización rediseñada conectada correctamente\n- Calidad: eliminado código de diagnóstico innecesario en disco",
-  "installer_url": "https://github.com/BIM-CA/bim-pills-releases/releases/download/v1.0.0-beta.3.4/BIMPills-beta-3.4-Setup.exe"
+  "version": "1.0.0-beta.4.0",
+  "notes": "- Soporte integrado: chat directo con el equipo BIM-CA (Intercom) desde el panel Información
+- Usuario identificado automáticamente con nombre de licencia
+- 30 diálogos migrados al estilo visual de BIM Pills",
+  "installer_url": "https://github.com/BIM-CA/bim-pills-releases/releases/download/v1.0.0-beta.4.0/BIMPills-beta-4.0-Setup.exe"
 }
