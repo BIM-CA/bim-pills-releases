@@ -66,6 +66,43 @@ foreach ($version in $Versions) {
         Write-Warning "Microsoft.Win32.Registry.dll no encontrada en NuGet cache ($registrySubPath). Puede causar errores en Revit $version."
     }
 
+    # Copiar WebView2Loader.dll (win-x64 nativa) al directorio plano.
+    # WebView2 la busca junto a Microsoft.Web.WebView2.Core.dll — no en subdirectorios.
+    $wv2LoaderSrc = Join-Path $binDir "runtimes\win-x64\native\WebView2Loader.dll"
+    if (Test-Path $wv2LoaderSrc) {
+        foreach ($dest in @("$binDir\WebView2Loader.dll", "$outDir\WebView2Loader.dll")) {
+            Copy-Item $wv2LoaderSrc $dest -Force
+        }
+        Write-Host "  Copiada WebView2Loader.dll (win-x64) a directorio plano" -ForegroundColor Yellow
+    } else {
+        Write-Warning "WebView2Loader.dll no encontrada en $wv2LoaderSrc. El chat de Soporte puede no funcionar."
+    }
+
+    # Copiar Microsoft.Web.WebView2 managed DLLs explícitamente.
+    # En builds incrementales, MSBuild puede no re-copiar estas DLLs al binDir si los proyectos
+    # están "up-to-date". Se buscan primero en binDir y luego en NuGet cache como fallback.
+    $wv2NugetBase = Join-Path $env:USERPROFILE ".nuget\packages\microsoft.web.webview2"
+    $wv2Version   = Get-ChildItem $wv2NugetBase -Directory -ErrorAction SilentlyContinue |
+                    Sort-Object Name -Descending | Select-Object -First 1 -ExpandProperty Name
+    foreach ($wv2Dll in @("Microsoft.Web.WebView2.Core.dll", "Microsoft.Web.WebView2.Wpf.dll")) {
+        $wv2Dest = Join-Path $outDir $wv2Dll
+        $wv2Src  = Join-Path $binDir $wv2Dll
+        if (Test-Path $wv2Src) {
+            Copy-Item $wv2Src $wv2Dest -Force
+        } elseif ($wv2Version) {
+            # Fallback: buscar en NuGet cache. El paquete microsoft.web.webview2 solo tiene lib/net462/
+            # (los managed assemblies son los mismos para net48, net8 y net10).
+            $nugetSrc  = Join-Path $wv2NugetBase "$wv2Version\lib\net462\$wv2Dll"
+            if (Test-Path $nugetSrc) {
+                Copy-Item $nugetSrc $wv2Dest -Force
+                Copy-Item $nugetSrc $wv2Src  -Force
+                Write-Host "  Copiada $wv2Dll desde NuGet cache (v$wv2Version)" -ForegroundColor Yellow
+            } else {
+                Write-Warning "$wv2Dll no encontrada en binDir ni NuGet cache. Revit $version puede fallar al abrir Soporte."
+            }
+        }
+    }
+
     # Copy manifest
     $manifestSrc  = Join-Path $solutionDir "manifests\Revit$version\BIMPills.addin"
     $manifestDest = Join-Path $solutionDir "dist\Revit$version\BIMPills.addin"
