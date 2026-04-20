@@ -108,7 +108,7 @@ namespace BIMPills.Revit.Application
                 if (ServiceLocator.IsRegistered<ILogger>())
                     ServiceLocator.Get<ILogger>().Error("Error fatal al iniciar BIMPills", ex);
 
-                TaskDialog.Show("BIMPills — Error de inicio", ex.ToString());
+                TaskDialog.Show("BIM Pills — Error de inicio", ex.ToString());
                 return Result.Failed;
             }
         }
@@ -127,8 +127,8 @@ namespace BIMPills.Revit.Application
                     logger?.Error("Excepción no controlada en hilo UI de BIMPills", e.Exception);
 
                     System.Windows.MessageBox.Show(
-                        $"Ocurrió un error inesperado en BIMPills:\n\n{e.Exception?.Message}\n\nEl error ha sido registrado en el log.",
-                        "BIMPills — Error inesperado",
+                        $"Ocurrió un error inesperado en BIM Pills:\n\n{e.Exception?.Message}\n\nEl error ha sido registrado en el log.",
+                        "BIM Pills — Error inesperado",
                         System.Windows.MessageBoxButton.OK,
                         System.Windows.MessageBoxImage.Error);
                 }
