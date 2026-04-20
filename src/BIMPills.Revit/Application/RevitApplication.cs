@@ -351,8 +351,8 @@ namespace BIMPills.Revit.Application
             yield return new DocumentacionModule();
             yield return new GestionModule();
             // Panel: Información
-            yield return new AboutModule();
             yield return new SupportModule();
+            yield return new AboutModule();
         }
     }
 }

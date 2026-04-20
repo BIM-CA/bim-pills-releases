@@ -180,6 +180,7 @@ namespace BIMPills.Infrastructure.Licensing
                         : ParseDate(fields["Fecha Vencimiento"]?.ToString()),
                     MachineId        = _machineId,
                     HolderName       = ParseStringField(fields["Nombre Completo"]),
+                    Email            = ParseStringField(fields["Email"]),
                     ValidatedAt      = DateTime.UtcNow,
                     AirtableRecordId = recordId ?? ""
                 };
@@ -279,6 +280,7 @@ namespace BIMPills.Infrastructure.Licensing
                     ExpiresAt        = ParseDate(fields["Fecha Vencimiento"]?.ToString()),
                     MachineId        = machineId,
                     HolderName       = ParseStringField(fields["Nombre Completo"]),
+                    Email            = ParseStringField(fields["Email"]),
                     ValidatedAt      = DateTime.UtcNow,
                     AirtableRecordId = recordId ?? ""
                 };

@@ -32,6 +32,13 @@
       <DeployFiles Include="$(OutputPath)*.dll" />
     </ItemGroup>
     <Copy SourceFiles="@(DeployFiles)" DestinationFolder="$(DeployDir)" SkipUnchangedFiles="true" />
+    <!-- WebView2Loader.dll es una DLL nativa (win-x64) que WebView2 busca junto a sus managed DLLs.
+         No se copia como DLL plana por el build normal — hay que copiarla explícitamente. -->
+    <ItemGroup>
+      <WebView2Loader Include="$(OutputPath)runtimes\win-x64\native\WebView2Loader.dll"
+                      Condition="Exists('$(OutputPath)runtimes\win-x64\native\WebView2Loader.dll')" />
+    </ItemGroup>
+    <Copy SourceFiles="@(WebView2Loader)" DestinationFolder="$(DeployDir)" SkipUnchangedFiles="true" />
     <Copy SourceFiles="$(MSBuildThisFileDirectory)..\..\manifests\Revit$(RevitVersion)\BIMPills.addin"
           DestinationFolder="$(AddinDir)" SkipUnchangedFiles="true" />
     <Message Text="BIM Pills deployed to $(DeployDir)" Importance="high" />

@@ -19,6 +19,7 @@ using BIMPills.UI.MCPIntegration;
 using BIMPills.UI.ModelAudit;
 using BIMPills.Core.Updates;
 using BIMPills.UI.Ordering;
+using BIMPills.UI.Support;
 using BIMPills.UI.Updates;
 using System;
 using System.Collections.Generic;
@@ -579,6 +580,35 @@ namespace BIMPills.UI.Sandbox
             catch (Exception ex)
             {
                 MessageBox.Show($"Error detectando impresoras:\n{ex.Message}\n\n{ex.StackTrace}", "Sandbox — Error");
+            }
+        }
+
+        // ── Soporte (chat flotante) ──────────────────────────────────────────────
+
+        private BIMPills.UI.Support.SupportWindow? _supportWindow;
+
+        private void OpenSupport_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (_supportWindow == null || !_supportWindow.IsLoaded)
+                {
+                    _supportWindow = new BIMPills.UI.Support.SupportWindow();
+                    _supportWindow.ShowAnimated();
+                }
+                else if (_supportWindow.IsVisible)
+                {
+                    _supportWindow.Hide();
+                }
+                else
+                {
+                    _supportWindow.ShowAnimated();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error abriendo soporte:\n{ex.Message}\n\n{ex.StackTrace}",
+                                "Sandbox — Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 

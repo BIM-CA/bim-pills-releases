@@ -11,6 +11,7 @@ namespace BIMPills.Core.Licensing
         public DateTime? ExpiresAt { get; set; }
         public string MachineId { get; set; } = "";
         public string HolderName { get; set; } = "";
+        public string Email { get; set; } = "";
         public DateTime ValidatedAt { get; set; }
         public string AirtableRecordId { get; set; } = "";
     }

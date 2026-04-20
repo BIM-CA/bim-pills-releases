@@ -3,119 +3,80 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
         Title="BIM Pills — Soporte"
-        Width="440"
-        Height="620"
-        MinWidth="380"
-        MinHeight="500"
-        ResizeMode="CanResizeWithGrip"
-        WindowStartupLocation="CenterOwner"
-        Background="{DynamicResource BackgroundBrush}"
+        Width="400"
+        Height="640"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        Topmost="True"
+        WindowStartupLocation="Manual"
+        Background="#010203"
         UseLayoutRounding="True"
         SnapsToDevicePixels="True"
-        Loaded="Window_Loaded">
-
-    <Window.Resources>
-        <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="/BIMPills.UI;component/Shared/Styles.xaml"/>
-            </ResourceDictionary.MergedDictionaries>
-        </ResourceDictionary>
-    </Window.Resources>
+        Loaded="Window_Loaded"
+        KeyDown="Window_KeyDown">
 
     <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
 
-        <!-- Header -->
-        <Border Grid.Row="0"
-                Background="{DynamicResource PrimaryBrush}"
-                Padding="20,14,20,14">
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <Image Source="/BIMPills.UI;component/Resources/pill-icon.png"
-                       Width="22" Height="35"
-                       Margin="0,0,12,0"
-                       RenderOptions.BitmapScalingMode="HighQuality"
-                       VerticalAlignment="Center"/>
-                <StackPanel VerticalAlignment="Center">
-                    <TextBlock Text="Soporte BIM Pills"
-                               FontSize="15" FontWeight="SemiBold"
-                               Foreground="White"/>
-                    <TextBlock Text="¿Cómo podemos ayudarte?"
-                               FontSize="11"
-                               Foreground="#CCFFFFFF"/>
-                </StackPanel>
-            </StackPanel>
+        <!-- WebView2: ocupa todo, fondo transparente vía DefaultBackgroundColor en code-behind -->
+        <wv2:WebView2 x:Name="WebView" Visibility="Collapsed"/>
+
+        <!-- Panel de carga: spinner sobre fondo transparente (mismo color clave #010203) -->
+        <Border x:Name="LoadingPanel" Background="#010203">
+            <Ellipse x:Name="SpinnerRing"
+                     Width="52" Height="52"
+                     Stroke="#EF6337" StrokeThickness="3"
+                     StrokeDashArray="8 18"
+                     HorizontalAlignment="Right"
+                     VerticalAlignment="Bottom"
+                     Margin="0,0,22,22"
+                     RenderTransformOrigin="0.5,0.5">
+                <Ellipse.RenderTransform>
+                    <RotateTransform x:Name="SpinnerRotate" Angle="0"/>
+                </Ellipse.RenderTransform>
+                <Ellipse.Triggers>
+                    <EventTrigger RoutedEvent="Loaded">
+                        <BeginStoryboard>
+                            <Storyboard RepeatBehavior="Forever">
+                                <DoubleAnimation
+                                    Storyboard.TargetName="SpinnerRotate"
+                                    Storyboard.TargetProperty="Angle"
+                                    From="0" To="360" Duration="0:0:1"/>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </EventTrigger>
+                </Ellipse.Triggers>
+            </Ellipse>
         </Border>
 
-        <!-- WebView2 / Fallback -->
-        <Grid Grid.Row="1">
-
-            <!-- WebView2 (visible cuando está disponible) -->
-            <wv2:WebView2 x:Name="WebView"
-                          Visibility="Collapsed"/>
-
-            <!-- Loading overlay -->
-            <StackPanel x:Name="LoadingPanel"
-                        VerticalAlignment="Center"
-                        HorizontalAlignment="Center">
-                <TextBlock Text="Cargando soporte..."
-                           FontSize="13"
-                           Foreground="{DynamicResource SecondaryTextBrush}"
-                           HorizontalAlignment="Center"/>
-            </StackPanel>
-
-            <!-- Fallback: WebView2 Runtime no instalado -->
-            <StackPanel x:Name="FallbackPanel"
-                        Visibility="Collapsed"
-                        VerticalAlignment="Center"
+        <!-- Fallback: WebView2 Runtime no instalado -->
+        <Border x:Name="FallbackPanel"
+                Visibility="Collapsed"
+                Background="#f3f4f6"
+                CornerRadius="12"
+                Margin="8">
+            <StackPanel VerticalAlignment="Center"
                         HorizontalAlignment="Center"
                         Margin="32">
-                <TextBlock Text="⚠️"
-                           FontSize="36"
-                           HorizontalAlignment="Center"
-                           Margin="0,0,0,12"/>
-                <TextBlock Text="Se requiere Microsoft WebView2 Runtime"
+                <TextBlock Text="⚠️" FontSize="36"
+                           HorizontalAlignment="Center" Margin="0,0,0,12"/>
+                <TextBlock Text="Se requiere WebView2 Runtime"
                            FontSize="14" FontWeight="SemiBold"
-                           Foreground="{DynamicResource PrimaryTextBrush}"
-                           HorizontalAlignment="Center"
-                           TextAlignment="Center"/>
-                <TextBlock x:Name="FallbackSubtitle"
-                           Text="Para abrir el chat de soporte, instala WebView2 Runtime (gratuito, de Microsoft)."
-                           FontSize="12"
-                           Foreground="{DynamicResource SecondaryTextBrush}"
-                           HorizontalAlignment="Center"
-                           TextAlignment="Center"
-                           TextWrapping="Wrap"
+                           Foreground="#1a1a2e"
+                           HorizontalAlignment="Center" TextAlignment="Center"
+                           FontFamily="Segoe UI"/>
+                <TextBlock Text="Para abrir el chat de soporte, instala WebView2 Runtime (gratuito, de Microsoft)."
+                           FontSize="12" Foreground="#666"
+                           HorizontalAlignment="Center" TextAlignment="Center"
+                           TextWrapping="Wrap" FontFamily="Segoe UI"
                            Margin="0,8,0,20"/>
                 <Button Content="Descargar WebView2 Runtime"
-                        Style="{StaticResource PrimaryButton}"
-                        Click="DownloadWebView2_Click"
-                        HorizontalAlignment="Center"/>
+                        Background="#EF6337" Foreground="White"
+                        BorderThickness="0" Padding="16,8"
+                        FontSize="12" FontFamily="Segoe UI"
+                        Cursor="Hand" HorizontalAlignment="Center"
+                        Click="DownloadWebView2_Click"/>
             </StackPanel>
-
-        </Grid>
-
-        <!-- Footer -->
-        <Border Grid.Row="2"
-                Background="{DynamicResource SurfaceBrush}"
-                BorderBrush="{DynamicResource BorderBrush}"
-                BorderThickness="0,1,0,0"
-                Padding="16,10,16,10">
-            <Grid>
-                <TextBlock x:Name="StatusText"
-                           Text="Conectando con el equipo de BIM-CA..."
-                           FontSize="11"
-                           Foreground="{DynamicResource SecondaryTextBrush}"
-                           VerticalAlignment="Center"/>
-                <Button Content="Cerrar"
-                        Style="{StaticResource SecondaryButton}"
-                        HorizontalAlignment="Right"
-                        Width="80" Height="28"
-                        Click="Close_Click"/>
-            </Grid>
         </Border>
 
     </Grid>

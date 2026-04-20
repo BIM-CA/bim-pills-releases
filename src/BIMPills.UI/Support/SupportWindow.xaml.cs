@@ -1,10 +1,15 @@
 using BIMPills.Core.Services;
 using BIMPills.Infrastructure.DI;
 using BIMPills.Infrastructure.Licensing;
+using BIMPills.UI.Shared;
 using System;
 using System.Diagnostics;
+using System.IO;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows;
+using System.Windows.Interop;
+using System.Windows.Media.Animation;
 
 namespace BIMPills.UI.Support
 {
@@ -12,199 +17,366 @@ namespace BIMPills.UI.Support
     {
         private const string IntercomAppId = "le2ot70e";
 
+        // Dominio virtual para WebView2 — listado en la whitelist de Intercom
+        // (Messenger → Security → Trusted Domains: app.bimpills.com).
+        // WebView2 intercepta estas requests internamente: no requiere DNS ni servidor real.
+        private const string VirtualHost  = "app.bimpills.com";
+        private const string HtmlFileName = "support_chat.html";
+
+        private const double WindowMargin  = 24;
+
+        // Color clave para transparencia Win32 (LWA_COLORKEY).
+        // #010203 = RGB(1,2,3) — casi negro, prácticamente invisible en cualquier UI.
+        // DWM quita del composite todos los píxeles con este color exacto → fondo transparente.
+        // Al ser manual (no AllowsTransparency), WebView2 sigue recibiendo input normalmente.
+        private const uint TransparentKey  = 0x00030201; // COLORREF = 0x00BBGGRR
+
         private readonly ILogger? _logger;
+        private bool _webViewShown = false;
+
+        // ── Win32 P/Invoke ────────────────────────────────────────────────────
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct RECT { public int Left, Top, Right, Bottom; }
+
+        [DllImport("user32.dll")] private static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
+        [DllImport("user32.dll")] private static extern int  GetWindowLong(IntPtr hWnd, int nIndex);
+        [DllImport("user32.dll")] private static extern int  SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
+        [DllImport("user32.dll")] private static extern bool SetLayeredWindowAttributes(IntPtr hWnd, uint crKey, byte bAlpha, uint dwFlags);
+
+        private const int  GWL_EXSTYLE    = -20;
+        private const int  WS_EX_LAYERED  = 0x80000;
+        private const uint LWA_COLORKEY   = 0x1;
+
+        // ─────────────────────────────────────────────────────────────────────
 
         public SupportWindow()
         {
             InitializeComponent();
-            BIMPills.UI.Shared.ThemeHelper.Apply(this);
-
             if (ServiceLocator.IsRegistered<ILogger>())
                 _logger = ServiceLocator.Get<ILogger>();
+
+            // Aplicar color-key transparency después de que el HWND esté listo.
+            // A diferencia de AllowsTransparency="True", este método NO usa UpdateLayeredWindow,
+            // por lo que WebView2 (HwndHost) sigue recibiendo input de mouse y teclado.
+            SourceInitialized += (_, _) => ApplyColorKeyTransparency();
         }
+
+        // ── Transparencia Win32 ───────────────────────────────────────────────
+
+        // ESTRATEGIA ACTIVA: Opción A — LWA_COLORKEY + WebView2 DefaultBackgroundColor alpha=0
+        //
+        // Cómo funciona la cadena completa:
+        //   1. WPF window Background="#010203" (casi negro, indistinguible visualmente)
+        //   2. WebView2.DefaultBackgroundColor = Color.FromArgb(0,1,2,3) → alpha=0 → WebView2
+        //      composita transparentemente, dejando ver el fondo WPF #010203 donde no hay HTML
+        //   3. SetLayeredWindowAttributes(LWA_COLORKEY, #010203) → DWM elimina esos píxeles
+        //      del composite → el contenido de Revit detrás queda visible
+        //   4. WebView2 renderiza por DComp en su propio HWND hijo — NO usa UpdateLayeredWindow
+        //      → recibe input de mouse/teclado normalmente (a diferencia de AllowsTransparency="True")
+        //
+        // ALTERNATIVA: Opción C — DWM Acrylic Blur (sin colorkey, sin AllowsTransparency)
+        //   Ventaja: no requiere color clave; da efecto blur real del contenido detrás
+        //   Desventaja: el contenido de Revit se ve borroso (efecto acrílico), no nítido
+        //   Para activar: descomentar ApplyAcrylicEffect(), llamarla en SourceInitialized
+        //   y cambiar Background="Transparent" en XAML (sin AllowsTransparency).
+
+        private void ApplyColorKeyTransparency()
+        {
+            var hwnd = new WindowInteropHelper(this).Handle;
+            if (hwnd == IntPtr.Zero) return;
+            var ex = GetWindowLong(hwnd, GWL_EXSTYLE);
+            SetWindowLong(hwnd, GWL_EXSTYLE, ex | WS_EX_LAYERED);
+            SetLayeredWindowAttributes(hwnd, TransparentKey, 255, LWA_COLORKEY);
+        }
+
+        // ── Opción C: DWM Acrylic Blur ────────────────────────────────────────
+        // Descomentar para activar. Requiere: Background="Transparent" en XAML (sin AllowsTransparency).
+        // WebView2 funciona con input porque no se usa AllowsTransparency/UpdateLayeredWindow.
+        //
+        // [StructLayout(LayoutKind.Sequential)]
+        // private struct AccentPolicy { public int AccentState; public int AccentFlags; public int GradientColor; public int AnimationId; }
+        // [StructLayout(LayoutKind.Sequential)]
+        // private struct WindowCompositionAttributeData { public int Attribute; public IntPtr Data; public int SizeOfData; }
+        // [DllImport("user32.dll")] static extern int SetWindowCompositionAttribute(IntPtr hwnd, ref WindowCompositionAttributeData data);
+        //
+        // private void ApplyAcrylicEffect()
+        // {
+        //     var hwnd = new WindowInteropHelper(this).Handle;
+        //     if (hwnd == IntPtr.Zero) return;
+        //     // AccentState: 3 = ACCENT_ENABLE_BLURBEHIND (blur puro)
+        //     //              4 = ACCENT_ENABLE_ACRYLICBLURBEHIND (acrylic con tinte)
+        //     // GradientColor: ARGB donde A controla opacidad del tinte
+        //     //   0x40000000 = negro con 25% opacidad (tinte oscuro sutil)
+        //     //   0x00000000 = completamente transparente (máxima visibilidad de Revit)
+        //     var accent = new AccentPolicy { AccentState = 4, GradientColor = 0x40000000 };
+        //     var accentSize = Marshal.SizeOf(accent);
+        //     var accentPtr  = Marshal.AllocHGlobal(accentSize);
+        //     Marshal.StructureToPtr(accent, accentPtr, false);
+        //     var data = new WindowCompositionAttributeData { Attribute = 19, Data = accentPtr, SizeOfData = accentSize };
+        //     SetWindowCompositionAttribute(hwnd, ref data);
+        //     Marshal.FreeHGlobal(accentPtr);
+        // }
+
+        // ── Posición ──────────────────────────────────────────────────────────
+
+        public void PositionBottomRight()
+        {
+            var hwnd = RevitOwnerHelper.CurrentRevitHandle;
+            if (hwnd != IntPtr.Zero && GetWindowRect(hwnd, out RECT rect))
+            {
+                Left = rect.Right  - Width  - WindowMargin;
+                Top  = rect.Bottom - Height - WindowMargin;
+            }
+            else
+            {
+                Left = SystemParameters.PrimaryScreenWidth  - Width  - WindowMargin;
+                Top  = SystemParameters.PrimaryScreenHeight - Height - WindowMargin;
+            }
+        }
+
+        // ── Inicialización ────────────────────────────────────────────────────
 
         private async void Window_Loaded(object sender, RoutedEventArgs e)
         {
+            PositionBottomRight();
+
             try
             {
-                // Inicializa WebView2 — lanza si el Runtime no está instalado
-                await WebView.EnsureCoreWebView2Async(null);
+                var userDataFolder = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "BIMPills", "WebView2");
 
-                WebView.Visibility  = Visibility.Visible;
-                LoadingPanel.Visibility = Visibility.Collapsed;
+                var env = await Microsoft.Web.WebView2.Core.CoreWebView2Environment.CreateAsync(
+                    null, userDataFolder);
 
-                // Obtener datos del usuario desde licencia (pre-identificar en Intercom)
-                var (userName, userEmail) = GetUserIdentity();
+                await WebView.EnsureCoreWebView2Async(env);
 
-                // Cargar HTML local con Intercom JS embebido
-                var html = BuildIntercomHtml(userName, userEmail);
-                WebView.NavigateToString(html);
+                // Fondo WebView2 transparente (Opción A):
+                // alpha=0 → WebView2 composita transparentemente contra el WPF parent.
+                // Los píxeles sin contenido HTML heredan el color clave #010203 (RGB 1,2,3)
+                // del fondo WPF, que DWM elimina via LWA_COLORKEY → transparencia real.
+                // IMPORTANTE: FromArgb(alpha, r, g, b) — alpha=0 es imprescindible.
+                // FromArgb(1,2,3) sin alpha explícito asigna alpha=255 (opaco), que es el bug anterior.
+                WebView.DefaultBackgroundColor = System.Drawing.Color.FromArgb(0, 1, 2, 3);
 
-                StatusText.Text = "Chat de soporte listo.";
-                _logger?.Info("SupportWindow: WebView2 inicializado correctamente.");
+                WebView.CoreWebView2.Settings.IsScriptEnabled              = true;
+                WebView.CoreWebView2.Settings.AreDefaultContextMenusEnabled = false;
+                WebView.CoreWebView2.Settings.AreDevToolsEnabled           = false;
+                WebView.CoreWebView2.Settings.IsStatusBarEnabled           = false;
+                WebView.CoreWebView2.Settings.IsZoomControlEnabled         = false;
+
+                WebView.CoreWebView2.WebMessageReceived  += OnWebMessage;
+                WebView.CoreWebView2.NavigationCompleted += OnNavCompleted;
+
+                var (name, email) = GetUserIdentity();
+                var htmlFolder = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "BIMPills");
+                Directory.CreateDirectory(htmlFolder);
+                File.WriteAllText(
+                    Path.Combine(htmlFolder, HtmlFileName),
+                    BuildHtml(name, email),
+                    Encoding.UTF8);
+
+                WebView.CoreWebView2.SetVirtualHostNameToFolderMapping(
+                    VirtualHost, htmlFolder,
+                    Microsoft.Web.WebView2.Core.CoreWebView2HostResourceAccessKind.Allow);
+
+                WebView.CoreWebView2.Navigate($"https://{VirtualHost}/{HtmlFileName}");
+                Log("Navegación iniciada");
             }
-            catch (Exception ex) when (IsWebView2RuntimeMissing(ex))
+            catch (Exception ex) when (IsWebView2Missing(ex))
             {
-                _logger?.Warning($"SupportWindow: WebView2 Runtime no instalado — {ex.Message}");
+                Log($"WebView2 faltante: {ex.Message}");
                 ShowFallback();
             }
             catch (Exception ex)
             {
-                _logger?.Error("SupportWindow: error al inicializar WebView2", ex);
+                Log($"Error init: {ex.GetType().Name} — {ex.Message}");
                 ShowFallback();
             }
         }
 
-        // ── Identity ─────────────────────────────────────────────────────────
+        // ── Navegación ────────────────────────────────────────────────────────
 
-        private static (string name, string email) GetUserIdentity()
+        private void OnNavCompleted(object? sender,
+            Microsoft.Web.WebView2.Core.CoreWebView2NavigationCompletedEventArgs e)
+        {
+            if (e.IsSuccess)
+            {
+                Log("Nav OK");
+                RevealWebView();
+            }
+            else
+            {
+                Log($"Nav FAIL — {e.WebErrorStatus}");
+            }
+        }
+
+        private void OnWebMessage(object? sender,
+            Microsoft.Web.WebView2.Core.CoreWebView2WebMessageReceivedEventArgs e)
         {
             try
             {
-                var cache   = new LicenseCache();
-                var license = cache.Load();
-                if (license != null)
-                    return (license.HolderName ?? "", "");
+                var msg = e.TryGetWebMessageAsString();
+                if (msg == "[CLOSE]") Dispatcher.InvokeAsync(AnimateAndHide);
             }
-            catch { /* non-critical */ }
-
-            return ("", "");
+            catch { }
         }
 
-        // ── HTML builder ──────────────────────────────────────────────────────
+        // ── Revelar WebView ───────────────────────────────────────────────────
 
-        private static string BuildIntercomHtml(string userName, string userEmail)
+        private void RevealWebView()
         {
-            var sb = new StringBuilder();
-
-            // Sanitize inputs to prevent XSS inside the JS literal
-            var safeName  = EscapeJsString(userName);
-            var safeEmail = EscapeJsString(userEmail);
-
-            sb.Append(@"<!DOCTYPE html>
-<html lang=""es"">
-<head>
-  <meta charset=""UTF-8"">
-  <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
-  <title>Soporte BIM Pills</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { height: 100%; width: 100%; background: #f8f9fa; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
-    .container { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 24px; text-align: center; }
-    .icon { font-size: 48px; margin-bottom: 16px; }
-    h2 { font-size: 18px; font-weight: 600; color: #1a1a2e; margin-bottom: 8px; }
-    p  { font-size: 13px; color: #6c757d; line-height: 1.5; }
-  </style>
-</head>
-<body>
-  <div class=""container"">
-    <div class=""icon"">💬</div>
-    <h2>¿En qué te podemos ayudar?</h2>
-    <p>El chat de soporte se abrirá en un momento.<br>Si no aparece, haz clic en el ícono en la esquina inferior derecha.</p>
-  </div>
-
-  <script>
-    window.intercomSettings = {
-      api_base: 'https://api-iam.intercom.io',
-      app_id: '");
-            sb.Append(IntercomAppId);
-            sb.Append(@"'");
-
-            if (!string.IsNullOrEmpty(safeEmail))
+            if (_webViewShown) return;
+            _webViewShown = true;
+            Dispatcher.InvokeAsync(() =>
             {
-                sb.Append($",\n      email: '{safeEmail}'");
-            }
-            if (!string.IsNullOrEmpty(safeName))
-            {
-                sb.Append($",\n      name: '{safeName}'");
-            }
-
-            sb.Append(@"
-    };
-    (function(){
-      var w=window;
-      var ic=w.Intercom;
-      if(typeof ic==='function'){
-        ic('reattach_activator');
-        ic('update',w.intercomSettings);
-      } else {
-        var d=document;
-        var i=function(){i.c(arguments);};
-        i.q=[];
-        i.c=function(args){i.q.push(args);};
-        w.Intercom=i;
-        var l=function(){
-          var s=d.createElement('script');
-          s.type='text/javascript';
-          s.async=true;
-          s.src='https://widget.intercom.io/widget/");
-            sb.Append(IntercomAppId);
-            sb.Append(@"';
-          var x=d.getElementsByTagName('script')[0];
-          x.parentNode.insertBefore(s,x);
-        };
-        if(document.readyState==='complete'){l();}
-        else if(w.attachEvent){w.attachEvent('onload',l);}
-        else{w.addEventListener('load',l,false);}
-      }
-    })();
-  </script>
-</body>
-</html>");
-
-            return sb.ToString();
+                WebView.Visibility = Visibility.Visible;
+                var fade = new DoubleAnimation(0, TimeSpan.FromMilliseconds(400));
+                fade.Completed += (_, _) => LoadingPanel.Visibility = Visibility.Collapsed;
+                LoadingPanel.BeginAnimation(OpacityProperty, fade);
+            });
         }
 
-        private static string EscapeJsString(string value)
+        // ── Animaciones / toggle ──────────────────────────────────────────────
+
+        private void Window_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
-            if (string.IsNullOrEmpty(value)) return "";
-            return value
-                .Replace("\\", "\\\\")
-                .Replace("'",  "\\'")
-                .Replace("\"", "\\\"")
-                .Replace("\n", "\\n")
-                .Replace("\r", "\\r");
+            if (e.Key == System.Windows.Input.Key.Escape) AnimateAndHide();
         }
 
-        // ── Fallback ──────────────────────────────────────────────────────────
+        private void AnimateAndHide()
+        {
+            // Solo slide (sin animación de Opacity) — la animación de Opacity en una
+            // ventana layered sobreescribiría SetLayeredWindowAttributes y perdería
+            // el color key, dejando el fondo opaco brevemente.
+            var slide = new DoubleAnimation(Top, Top + 20, TimeSpan.FromMilliseconds(200))
+            { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn } };
+            slide.Completed += (_, _) =>
+            {
+                Hide();
+                BeginAnimation(TopProperty, null);
+            };
+            BeginAnimation(TopProperty, slide);
+        }
+
+        public void ShowAnimated()
+        {
+            PositionBottomRight();
+
+            // Si la ventana ya está visible (Intercom en modo launcher),
+            // solo re-abrir el chat sin reanimar la ventana.
+            if (IsVisible)
+            {
+                Activate();
+                try { WebView.CoreWebView2?.ExecuteScriptAsync("try { window.Intercom('show'); } catch(_) {}"); }
+                catch { }
+                return;
+            }
+
+            double targetTop = Top;
+            Top = targetTop + 20;
+            Show();
+            // Re-aplicar color key tras Show() (puede haberse perdido al ocultar la ventana)
+            ApplyColorKeyTransparency();
+            Activate();
+
+            BeginAnimation(TopProperty, new DoubleAnimation(targetTop, TimeSpan.FromMilliseconds(260))
+                { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } });
+        }
+
+        // ── Fallback (WebView2 Runtime no instalado) ──────────────────────────
 
         private void ShowFallback()
         {
             LoadingPanel.Visibility  = Visibility.Collapsed;
             WebView.Visibility       = Visibility.Collapsed;
             FallbackPanel.Visibility = Visibility.Visible;
-            StatusText.Text          = "WebView2 Runtime no disponible.";
         }
-
-        private static bool IsWebView2RuntimeMissing(Exception ex)
-        {
-            // WebView2 lanza WebView2RuntimeNotFoundException o una excepción con este mensaje
-            // cuando el Runtime no está instalado en el sistema.
-            var msg = ex.Message ?? "";
-            return msg.IndexOf("WebView2", StringComparison.OrdinalIgnoreCase) >= 0
-                || msg.IndexOf("Edge", StringComparison.OrdinalIgnoreCase) >= 0
-                || ex.GetType().Name.IndexOf("WebView2", StringComparison.OrdinalIgnoreCase) >= 0;
-        }
-
-        // ── Event handlers ────────────────────────────────────────────────────
 
         private void DownloadWebView2_Click(object sender, RoutedEventArgs e)
         {
-            try
-            {
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName        = "https://developer.microsoft.com/en-us/microsoft-edge/webview2/",
-                    UseShellExecute = true
-                });
-            }
-            catch (Exception ex)
-            {
-                _logger?.Warning($"SupportWindow: no se pudo abrir link de WebView2 — {ex.Message}");
-            }
+            try { Process.Start(new ProcessStartInfo("https://developer.microsoft.com/en-us/microsoft-edge/webview2/") { UseShellExecute = true }); }
+            catch { }
         }
 
-        private void Close_Click(object sender, RoutedEventArgs e)
-            => Close();
+        private static bool IsWebView2Missing(Exception ex)
+        {
+            var m = ex.Message ?? "";
+            return m.Contains("WebView2", StringComparison.OrdinalIgnoreCase)
+                || m.Contains("Edge",     StringComparison.OrdinalIgnoreCase)
+                || ex.GetType().Name.Contains("WebView2", StringComparison.OrdinalIgnoreCase);
+        }
+
+        // ── HTML ──────────────────────────────────────────────────────────────
+
+        private static string BuildHtml(string name, string email)
+        {
+            var safeName  = Js(name);
+            var safeEmail = Js(email);
+            var nameAttr  = string.IsNullOrEmpty(safeName)  ? "" : $"  window.intercomSettings.name  = '{safeName}';";
+            var emailAttr = string.IsNullOrEmpty(safeEmail) ? "" : $"  window.intercomSettings.email = '{safeEmail}';";
+
+            return $@"<!DOCTYPE html>
+<html lang=""es"">
+<head>
+  <meta charset=""UTF-8"">
+  <meta name=""viewport"" content=""width=device-width,initial-scale=1"">
+  <style>
+    * {{ margin:0; padding:0; box-sizing:border-box; }}
+    html, body {{ height:100%; background:transparent; }}
+  </style>
+</head>
+<body>
+<script>
+(function() {{
+  window.intercomSettings = {{ app_id: '{IntercomAppId}', hide_default_launcher: false }};
+{nameAttr}
+{emailAttr}
+
+  (function(){{var w=window;var ic=w.Intercom;if(typeof ic==='function'){{ic('reattach_activator');ic('update',w.intercomSettings);}}else{{var d=document;var i=function(){{i.c(arguments);}};i.q=[];i.c=function(args){{i.q.push(args);}};w.Intercom=i;var l=function(){{var s=d.createElement('script');s.type='text/javascript';s.async=true;s.src='https://widget.intercom.io/widget/{IntercomAppId}';var x=d.getElementsByTagName('script')[0];x.parentNode.insertBefore(s,x);}};if(d.readyState==='complete'){{l();}}else{{w.addEventListener('load',l,false);}}}}}})();
+
+  window.Intercom('onHide', function() {{
+    try {{ window.chrome.webview.postMessage('[CLOSE]'); }} catch(_) {{}}
+  }});
+
+  setTimeout(function() {{
+    try {{ window.Intercom('show'); }} catch(_) {{}}
+  }}, 1500);
+}})();
+</script>
+</body>
+</html>";
+        }
+
+        private static string Js(string v)
+        {
+            if (string.IsNullOrEmpty(v)) return "";
+            return v.Replace("\\","\\\\").Replace("'","\\'")
+                    .Replace("\"","\\\"").Replace("\n","\\n").Replace("\r","\\r");
+        }
+
+        // ── Identidad del usuario ─────────────────────────────────────────────
+
+        private static (string name, string email) GetUserIdentity()
+        {
+            try
+            {
+                var lic = new LicenseCache().Load();
+                if (lic != null) return (lic.HolderName ?? "", lic.Email ?? "");
+            }
+            catch { }
+            return ("", "");
+        }
+
+        // ── Logger ────────────────────────────────────────────────────────────
+
+        private void Log(string msg)
+        {
+            _logger?.Info($"SupportWindow: {msg}");
+            Debug.WriteLine($"[SupportWindow] {msg}");
+        }
     }
 }

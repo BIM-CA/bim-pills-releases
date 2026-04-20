@@ -133,8 +133,13 @@
 
         <Button Content="&#x1F5A8;  Detectar impresoras PDF"
                 Style="{StaticResource SecondaryButton}"
-                HorizontalAlignment="Stretch" Margin="0,0,0,0"
+                HorizontalAlignment="Stretch" Margin="0,0,0,6"
                 Click="OpenPrinterDiag_Click"/>
+
+        <Button Content="&#x1F4AC;  Soporte (chat flotante Intercom)"
+                Style="{StaticResource PrimaryButton}"
+                HorizontalAlignment="Stretch" Margin="0,0,0,0"
+                Click="OpenSupport_Click"/>
 
     </StackPanel>
 </Window>

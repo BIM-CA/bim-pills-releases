@@ -32,6 +32,20 @@
 !endif
 
 ;--------------------------------
+; Optional bundled WebView2 Bootstrapper (for the Soporte chat window).
+; If vendor\MicrosoftEdgeWebview2Setup.exe exists at compile time, the
+; bootstrapper is bundled and installed silently when WebView2 Runtime is
+; not detected on the target machine. If not bundled, the SupportWindow
+; shows a download prompt to the user instead.
+;
+; To fetch the bootstrapper automatically before building, run:
+;   powershell -File installer\download-webview2.ps1
+!define WEBVIEW2_SETUP_PATH "vendor\MicrosoftEdgeWebview2Setup.exe"
+!if /FileExists "${WEBVIEW2_SETUP_PATH}"
+  !define INCLUDE_WEBVIEW2
+!endif
+
+;--------------------------------
 ; Includes
 !include "MUI2.nsh"
 !include "Sections.nsh"
@@ -95,6 +109,9 @@ InstallDir "$APPDATA\Autodesk\Revit\Addins"
   ; la versión 5.0.0.0 de este assembly. En .NET 10 el runtime de Revit no lo resuelve
   ; automáticamente, por lo que debemos incluirlo explícitamente.
   File "${BUILD_NET10}\Microsoft.Win32.Registry.dll"
+  ; WebView2Loader.dll es la DLL nativa (win-x64) que WebView2 necesita para inicializarse.
+  ; Debe estar en el mismo directorio que Microsoft.Web.WebView2.Core.dll.
+  File "${BUILD_NET10}\WebView2Loader.dll"
 !macroend
 
 ;--------------------------------
@@ -120,6 +137,7 @@ InstallDir "$APPDATA\Autodesk\Revit\Addins"
   ; la versión 5.0.0.0 de este assembly. En .NET 8 el runtime de Revit no lo resuelve
   ; automáticamente, por lo que debemos incluirlo explícitamente.
   File "${BUILD_NET8}\Microsoft.Win32.Registry.dll"
+  File "${BUILD_NET8}\WebView2Loader.dll"
 !macroend
 
 ;--------------------------------
@@ -150,6 +168,7 @@ InstallDir "$APPDATA\Autodesk\Revit\Addins"
   ; la versión 5.0.0.0 de este assembly. En .NET Framework 4.8, el runtime de Revit
   ; no resuelve automáticamente esta versión desde el GAC, por lo que debemos incluirla.
   File "${BUILD_NET48}\Microsoft.Win32.Registry.dll"
+  File "${BUILD_NET48}\WebView2Loader.dll"
 !macroend
 
 ;--------------------------------
@@ -225,6 +244,48 @@ Section /o "PDF24 Creator (recomendado para exportar PDF)" SEC_PDF24
   ${EndIf}
 SectionEnd
 !endif
+
+;--------------------------------
+; Required (hidden): Install WebView2 Runtime if not already present.
+; WebView2 is needed for the Soporte chat window (Intercom via WebView2).
+; Silently skipped if the Runtime is already installed (most Win10/11 machines
+; already have it via Windows Update or Edge). Only runs the bootstrapper when
+; the runtime is genuinely missing.
+Section "-InstallWebView2" SEC_WEBVIEW2
+  ; Detect WebView2 Runtime via registry (GUID is fixed for all versions).
+  ; pv = "0.0.0.0" or empty means not installed.
+  SetRegView 64
+  ReadRegStr $0 HKLM "SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}" "pv"
+  ${If} $0 == ""
+    ReadRegStr $0 HKLM "SOFTWARE\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}" "pv"
+  ${EndIf}
+  SetRegView 32
+
+  ${If} $0 != ""
+  ${AndIf} $0 != "0.0.0.0"
+    DetailPrint "WebView2 Runtime ya instalado (v$0) — omitiendo."
+    Goto webview2_done
+  ${EndIf}
+
+  ; Runtime not found — install if bootstrapper was bundled
+  !ifdef INCLUDE_WEBVIEW2
+    DetailPrint "Instalando Microsoft Edge WebView2 Runtime..."
+    SetOutPath "$TEMP"
+    File "/oname=bimpills-webview2-setup.exe" "${WEBVIEW2_SETUP_PATH}"
+    ; /silent /install = sin UI, acepta EULA, instala en background
+    ExecWait '"$TEMP\bimpills-webview2-setup.exe" /silent /install' $0
+    Delete "$TEMP\bimpills-webview2-setup.exe"
+    ${If} $0 = 0
+      DetailPrint "WebView2 Runtime instalado correctamente."
+    ${Else}
+      DetailPrint "WebView2 Runtime: setup retornó $0 (puede requerir reinicio)."
+    ${EndIf}
+  !else
+    DetailPrint "WebView2 Runtime no encontrado. El chat de soporte mostrará un enlace de descarga."
+  !endif
+
+  webview2_done:
+SectionEnd
 
 ;--------------------------------
 ; Required (hidden): Configure "PDF24 (BIMPills)" silent-save printer.
