@@ -220,7 +220,8 @@ namespace BIMPills.UI.Support
             try
             {
                 var msg = e.TryGetWebMessageAsString();
-                if (msg == "[CLOSE]") Dispatcher.InvokeAsync(AnimateAndHide);
+                if (msg == "[CLOSE]")  Dispatcher.InvokeAsync(AnimateAndHide);
+                if (msg == "[SHOWN]")  Dispatcher.InvokeAsync(HideLoadingPanel);
             }
             catch { }
         }
@@ -238,6 +239,20 @@ namespace BIMPills.UI.Support
                 fade.Completed += (_, _) => LoadingPanel.Visibility = Visibility.Collapsed;
                 LoadingPanel.BeginAnimation(OpacityProperty, fade);
             });
+        }
+
+        /// <summary>
+        /// Oculta el LoadingPanel con fade. Llamado cuando Intercom dispara onShow
+        /// (mensaje [SHOWN]) al re-abrir la ventana. También sirve como fallback
+        /// tras timeout si Intercom no responde (CDN offline, etc.).
+        /// </summary>
+        private void HideLoadingPanel()
+        {
+            if (LoadingPanel.Visibility != Visibility.Visible) return;
+            LoadingPanel.BeginAnimation(OpacityProperty, null); // cancelar animación previa
+            var fade = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(300));
+            fade.Completed += (_, _) => LoadingPanel.Visibility = Visibility.Collapsed;
+            LoadingPanel.BeginAnimation(OpacityProperty, fade);
         }
 
         // ── Animaciones / toggle ──────────────────────────────────────────────
@@ -271,9 +286,23 @@ namespace BIMPills.UI.Support
             if (IsVisible)
             {
                 Activate();
-                try { WebView.CoreWebView2?.ExecuteScriptAsync("try { window.Intercom('show'); } catch(_) {}"); }
+                try { _ = WebView.CoreWebView2?.ExecuteScriptAsync("try { window.Intercom('show'); } catch(_) {}"); }
                 catch { }
                 return;
+            }
+
+            // WebView ya cargado pero ventana oculta: re-mostrar LoadingPanel para tapar
+            // el fondo negro de la superficie DComp mientras Intercom se expande.
+            // onShow en el HTML dispara [SHOWN] → HideLoadingPanel().
+            // Fallback: ocultar LoadingPanel tras 3 s si onShow nunca llega (CDN offline, etc.).
+            if (_webViewShown)
+            {
+                LoadingPanel.BeginAnimation(OpacityProperty, null);
+                LoadingPanel.Opacity    = 1;
+                LoadingPanel.Visibility = Visibility.Visible;
+
+                _ = System.Threading.Tasks.Task.Delay(3000)
+                    .ContinueWith(_ => Dispatcher.InvokeAsync(HideLoadingPanel));
             }
 
             double targetTop = Top;
@@ -282,6 +311,14 @@ namespace BIMPills.UI.Support
             // Re-aplicar color key tras Show() (puede haberse perdido al ocultar la ventana)
             ApplyColorKeyTransparency();
             Activate();
+
+            // Llamar Intercom('show') para expandir desde estado launcher.
+            // onShow callback en HTML enviará [SHOWN] para ocultar LoadingPanel.
+            if (_webViewShown)
+            {
+                try { _ = WebView.CoreWebView2?.ExecuteScriptAsync("try { window.Intercom('show'); } catch(_) {}"); }
+                catch { }
+            }
 
             BeginAnimation(TopProperty, new DoubleAnimation(targetTop, TimeSpan.FromMilliseconds(260))
                 { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } });
@@ -304,10 +341,11 @@ namespace BIMPills.UI.Support
 
         private static bool IsWebView2Missing(Exception ex)
         {
-            var m = ex.Message ?? "";
-            return m.Contains("WebView2", StringComparison.OrdinalIgnoreCase)
-                || m.Contains("Edge",     StringComparison.OrdinalIgnoreCase)
-                || ex.GetType().Name.Contains("WebView2", StringComparison.OrdinalIgnoreCase);
+            // string.Contains(string, StringComparison) no existe en .NET Framework 4.8 (Revit 2024).
+            // Usamos ToUpperInvariant() + Contains(string) para compatibilidad cross-framework.
+            var m    = (ex.Message        ?? "").ToUpperInvariant();
+            var type = ex.GetType().Name.ToUpperInvariant();
+            return m.Contains("WEBVIEW2") || m.Contains("EDGE") || type.Contains("WEBVIEW2");
         }
 
         // ── HTML ──────────────────────────────────────────────────────────────
@@ -340,6 +378,10 @@ namespace BIMPills.UI.Support
 
   window.Intercom('onHide', function() {{
     try {{ window.chrome.webview.postMessage('[CLOSE]'); }} catch(_) {{}}
+  }});
+
+  window.Intercom('onShow', function() {{
+    try {{ window.chrome.webview.postMessage('[SHOWN]'); }} catch(_) {{}}
   }});
 
   setTimeout(function() {{

@@ -11,17 +11,16 @@
   ─────────────────────────────────────────────────────────────────
 ```
 
-**Versión**: 1.0.0-beta.3.2 &nbsp;·&nbsp; **Desarrollador**: BIM-CA
+**Versión**: 1.0.0-beta.4.0 &nbsp;·&nbsp; **Desarrollador**: BIM-CA
 
 ---
 
-## Novedades en beta.3.2
+## Novedades en beta.4.0
 
-- **Tamaño de hoja correcto al exportar con PDF24**: los PDFs ahora respetan exactamente las dimensiones del plano (A1, A0, etc.). El motor de exportación detecta PDF24 y redirige automáticamente al motor nativo de Revit para garantizar el tamaño correcto.
-- **Detección de Navisworks mejorada**: la herramienta Exportar Modelo ahora detecta correctamente el plugin NWC en Revit 2024 verificando rutas en disco en lugar de assemblies en memoria.
-- **Ventanas siempre en el monitor correcto**: los diálogos de notificación ahora aparecen en el mismo monitor donde está abierto Revit.
-- **Navegación por pasos con botón "Siguiente"**: en herramientas de múltiples pasos (Planos y Vistas, Modelo), los pasos 1 y 2 muestran el botón **Siguiente →** y el último paso muestra directamente el botón de acción.
-- **Carpeta de destino pre-cargada**: todas las herramientas de exportación inician con el Escritorio como carpeta de salida por defecto.
+- **Chat de soporte en vivo (Intercom)**: nuevo botón **Soporte** en el ribbon abre un chat flotante directamente en Revit. Tu nombre y email se cargan automáticamente desde la licencia activa. Requiere WebView2 Runtime (instalado automáticamente con el installer).
+- **WebView2 incluido en el installer**: el installer detecta si WebView2 Runtime está presente y lo instala automáticamente si falta — sin ventanas emergentes para el usuario.
+- **Diálogos de error mejorados**: todos los mensajes de error usan ahora el diálogo propio de BIM Pills (con icono y estilo consistente) en lugar del diálogo genérico de Windows.
+- **Correcciones de nombre**: el nombre "BIM Pills" (con espacio) ahora es consistente en todos los mensajes, títulos de ventana y diálogos del plugin.
 
 ---
 
@@ -47,6 +46,9 @@ Ventana unificada con tres pestañas:
 - **Subproyectos**: crear y renombrar subproyectos (worksets). Generar vistas 3D por subproyecto con visibilidad automática.
 - **Trasladar Estándares**: transferencia selectiva de estándares desde otros modelos abiertos (estilos de cota, notas de texto, estilos de línea, tipos de muro/piso/techo, patrones de relleno, cotas puntuales).
 
+### Soporte
+Chat en vivo con el equipo de BIM-CA directamente desde Revit. Accede desde **BIM Pills → Soporte** en el ribbon.
+
 ### Conectar (MCP)
 Integración con servidores MCP para conectar Revit con herramientas de IA.
 
@@ -58,10 +60,11 @@ Numeración incremental interactiva de elementos con prefijos, pasos y sufijos c
 ## Instalación
 
 ### Opción 1: Installer (recomendado)
-1. Ejecuta `BIM Pills 1.0.0-beta.3.2 Setup.exe`
+1. Ejecuta `BIM Pills 1.0.0-beta.4.0 Setup.exe`
 2. Selecciona las versiones de Revit a instalar (2024, 2025, 2026, 2027)
 3. Opcionalmente instala **PDF24 Creator** — necesario para exportación PDF silenciosa
-4. Abre Revit y busca la pestaña **BIM Pills** en el ribbon
+4. **WebView2 Runtime** se instala automáticamente si no está presente (necesario para el chat de soporte)
+5. Abre Revit y busca la pestaña **BIM Pills** en el ribbon
 
 > Si ya tienes PDF24 instalado, el installer lo detecta y configura automáticamente.
 
@@ -98,8 +101,10 @@ Adquiere tu licencia en [bim-ca.com](https://bim-ca.com).
 
 ## Soporte
 
+Usa el botón **Soporte** en el ribbon de BIM Pills para abrir el chat en vivo con el equipo de BIM-CA.
+
 - [Reportar un problema o sugerencia](https://bimca.notion.site/33bd89d548c2802a83d6f01c013c6e41?pvs=105)
-- Soporte: support@bim-ca.com
+- Email: support@bim-ca.com
 
 ---
 
