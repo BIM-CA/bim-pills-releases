@@ -109,6 +109,10 @@ InstallDir "$APPDATA\Autodesk\Revit\Addins"
   ; la versión 5.0.0.0 de este assembly. En .NET 10 el runtime de Revit no lo resuelve
   ; automáticamente, por lo que debemos incluirlo explícitamente.
   File "${BUILD_NET10}\Microsoft.Win32.Registry.dll"
+  ; WebView2 managed assemblies: necesarios para SupportWindow (Intercom chat).
+  ; Core = API principal; Wpf = wrapper WPF (WebView2 control).
+  File "${BUILD_NET10}\Microsoft.Web.WebView2.Core.dll"
+  File "${BUILD_NET10}\Microsoft.Web.WebView2.Wpf.dll"
   ; WebView2Loader.dll es la DLL nativa (win-x64) que WebView2 necesita para inicializarse.
   ; Debe estar en el mismo directorio que Microsoft.Web.WebView2.Core.dll.
   File "${BUILD_NET10}\WebView2Loader.dll"
@@ -137,6 +141,9 @@ InstallDir "$APPDATA\Autodesk\Revit\Addins"
   ; la versión 5.0.0.0 de este assembly. En .NET 8 el runtime de Revit no lo resuelve
   ; automáticamente, por lo que debemos incluirlo explícitamente.
   File "${BUILD_NET8}\Microsoft.Win32.Registry.dll"
+  ; WebView2 managed assemblies: necesarios para SupportWindow (Intercom chat).
+  File "${BUILD_NET8}\Microsoft.Web.WebView2.Core.dll"
+  File "${BUILD_NET8}\Microsoft.Web.WebView2.Wpf.dll"
   File "${BUILD_NET8}\WebView2Loader.dll"
 !macroend
 
@@ -164,10 +171,17 @@ InstallDir "$APPDATA\Autodesk\Revit\Addins"
   File "${BUILD_NET48}\System.Numerics.Vectors.dll"
   File "${BUILD_NET48}\System.Runtime.CompilerServices.Unsafe.dll"
   File "${BUILD_NET48}\System.Security.Cryptography.ProtectedData.dll"
+  ; Dependencias de Microsoft.Win32.Registry y System.Drawing no presentes en .NET 4.8 GAC
+  File "${BUILD_NET48}\System.Security.AccessControl.dll"
+  File "${BUILD_NET48}\System.Security.Principal.Windows.dll"
+  File "${BUILD_NET48}\System.Drawing.Common.dll"
   ; Microsoft.Win32.Registry: BIMPills.Infrastructure (netstandard2.0) referencia
   ; la versión 5.0.0.0 de este assembly. En .NET Framework 4.8, el runtime de Revit
   ; no resuelve automáticamente esta versión desde el GAC, por lo que debemos incluirla.
   File "${BUILD_NET48}\Microsoft.Win32.Registry.dll"
+  ; WebView2 managed assemblies: necesarios para SupportWindow (Intercom chat).
+  File "${BUILD_NET48}\Microsoft.Web.WebView2.Core.dll"
+  File "${BUILD_NET48}\Microsoft.Web.WebView2.Wpf.dll"
   File "${BUILD_NET48}\WebView2Loader.dll"
 !macroend
 
