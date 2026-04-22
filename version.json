@@ -1,5 +1,5 @@
 {
-    "installer_url":  "https://github.com/BIM-CA/bim-pills-releases/releases/download/v1.0.0-beta.4.1/BIMPills-beta-4.1-Setup.exe",
-    "version":  "1.0.0-beta.4.1",
-    "notes":  "Fix: enlace de feedback corregido"
+    "installer_url":  "https://github.com/BIM-CA/bim-pills-releases/releases/download/v1.0.0-beta.4.2/BIMPills-beta-4.2-Setup.exe",
+    "version":  "1.0.0-beta.4.2",
+    "notes":  "Fix: exportación a Excel en Revit 2024 (downgrade ClosedXML a 0.104.2)"
 }
