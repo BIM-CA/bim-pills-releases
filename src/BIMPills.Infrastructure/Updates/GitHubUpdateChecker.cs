@@ -138,6 +138,7 @@ namespace BIMPills.Infrastructure.Updates
 
         private static HttpClient BuildApiClient()
         {
+            EnsureTls12();
             var client = new HttpClient();
             client.DefaultRequestHeaders.UserAgent.Add(
                 new ProductInfoHeaderValue("BIMPills-Plugin", "1.0"));
@@ -147,11 +148,34 @@ namespace BIMPills.Infrastructure.Updates
 
         private static HttpClient BuildDownloadClient()
         {
+            EnsureTls12();
             var client = new HttpClient();
             client.DefaultRequestHeaders.UserAgent.Add(
                 new ProductInfoHeaderValue("BIMPills-Plugin", "1.0"));
             client.Timeout = TimeSpan.FromMinutes(30);
             return client;
+        }
+
+        /// <summary>
+        /// En .NET Framework 4.8 (Revit 2024) TLS 1.2 no siempre está habilitado
+        /// por defecto, lo que hace que las peticiones HTTPS a GitHub fallen
+        /// silenciosamente. Esta llamada garantiza TLS 1.2 en todas las versiones.
+        /// En .NET 8+ (Revit 2025+) la propiedad está obsoleta pero es inofensiva.
+        /// </summary>
+        private static void EnsureTls12()
+        {
+            try
+            {
+                const System.Net.SecurityProtocolType Tls12 =
+                    (System.Net.SecurityProtocolType)3072; // 0xC00 — TLS 1.2
+                const System.Net.SecurityProtocolType Tls13 =
+                    (System.Net.SecurityProtocolType)12288; // 0x3000 — TLS 1.3
+                System.Net.ServicePointManager.SecurityProtocol |= Tls12 | Tls13;
+            }
+            catch
+            {
+                // Ignorar — si falla, el sistema usará su protocolo por defecto
+            }
         }
 
         // ── Manifest JSON ──────────────────────────────────────────────────────

@@ -1,0 +1,329 @@
+<UserControl x:Class="BIMPills.UI.Export.Parameters.ParameterExtractorPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:BIMPills.UI.ParameterExtractor">
+
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/BIMPills.UI;component/Shared/Styles.xaml"/>
+                <ResourceDictionary Source="/BIMPills.UI;component/Shared/Icons.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
+
+            <!-- Row style: paired rows (Dual) get subtle blue tint + left accent -->
+            <Style x:Key="PairAwareRow" TargetType="DataGridRow">
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding IsPaired}" Value="True">
+                        <Setter Property="Background" Value="#EEF4FD"/>
+                        <Setter Property="BorderBrush" Value="#1565C0"/>
+                        <Setter Property="BorderThickness" Value="3,0,0,0"/>
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding IsDual}" Value="True">
+                        <Setter Property="Background" Value="#EEF4FD"/>
+                        <Setter Property="BorderBrush" Value="#1565C0"/>
+                        <Setter Property="BorderThickness" Value="3,0,0,0"/>
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <DockPanel Margin="16,14,16,12">
+
+        <!-- Presets bar -->
+        <Border DockPanel.Dock="Top"
+                Background="#FAFAFC"
+                BorderBrush="#E5E5EA" BorderThickness="1"
+                CornerRadius="6"
+                Padding="10,8" Margin="0,0,0,8">
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Left"
+                           Text="Perfil:"
+                           FontSize="11" FontFamily="Segoe UI"
+                           Foreground="#86868B"
+                           VerticalAlignment="Center" Margin="0,0,8,0"/>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Margin="8,0,0,0">
+                    <Button x:Name="SavePresetButton" Content="Guardar"
+                            Style="{StaticResource SecondaryButton}"
+                            Padding="10,0" Height="26" FontSize="11"
+                            ToolTip="Guardar las reglas actuales como un nuevo perfil"
+                            Click="SavePreset_Click"/>
+                    <Button x:Name="UpdatePresetButton" Content="Actualizar"
+                            Style="{StaticResource SecondaryButton}"
+                            Padding="10,0" Height="26" FontSize="11" Margin="4,0,0,0"
+                            IsEnabled="False"
+                            ToolTip="Sobrescribir el perfil seleccionado con las reglas actuales"
+                            Click="UpdatePreset_Click"/>
+                    <Button x:Name="DeletePresetButton" Content="Eliminar"
+                            Style="{StaticResource SecondaryButton}"
+                            Padding="10,0" Height="26" FontSize="11" Margin="4,0,0,0"
+                            IsEnabled="False"
+                            ToolTip="Eliminar el perfil seleccionado"
+                            Click="DeletePreset_Click"/>
+                </StackPanel>
+                <ComboBox x:Name="PresetCombo"
+                          Style="{StaticResource BIMPillsComboBox}"
+                          DisplayMemberPath="Name"
+                          SelectionChanged="Preset_Changed"/>
+            </DockPanel>
+        </Border>
+
+        <!-- Global Units + Decimals bar -->
+        <Border DockPanel.Dock="Top" Margin="0,0,0,10">
+            <DockPanel>
+                <TextBlock x:Name="SelectionSummaryText"
+                           DockPanel.Dock="Left"
+                           Text="0 elementos seleccionados"
+                           FontSize="11" Foreground="#86868B"
+                           FontFamily="Segoe UI"
+                           VerticalAlignment="Center"/>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="Unidades:"
+                               FontSize="11" FontFamily="Segoe UI"
+                               Foreground="#86868B"
+                               VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <ComboBox x:Name="UnitsCombo"
+                              Style="{StaticResource BIMPillsComboBox}"
+                              Width="90" Height="28"
+                              FontSize="11"
+                              ItemsSource="{x:Static local:TargetMappingVM.AllLengthUnits}"
+                              SelectionChanged="Units_Changed"/>
+                    <TextBlock Text="Decimales:"
+                               FontSize="11" FontFamily="Segoe UI"
+                               Foreground="#86868B"
+                               VerticalAlignment="Center" Margin="14,0,6,0"/>
+                    <ComboBox x:Name="DecimalsCombo"
+                              Style="{StaticResource BIMPillsComboBox}"
+                              Width="60" Height="28"
+                              FontSize="11"
+                              ItemsSource="{x:Static local:TargetMappingVM.AllDecimalOptions}"
+                              SelectionChanged="Decimals_Changed"/>
+                </StackPanel>
+                <StackPanel/>
+            </DockPanel>
+        </Border>
+
+        <!-- Mapeo Origen → Destino -->
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"    MinWidth="240"/>
+                <ColumnDefinition Width="36"/>
+                <ColumnDefinition Width="1.5*" MinWidth="440"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- ORIGEN header + toolbar -->
+            <Border Grid.Row="0" Grid.Column="0"
+                    Background="#F4F4F7"
+                    BorderBrush="#E5E5EA" BorderThickness="1,1,1,0"
+                    CornerRadius="6,6,0,0"
+                    Padding="10,6">
+                <DockPanel LastChildFill="True">
+                    <!-- Buttons docked RIGHT first so they always get space -->
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal"
+                                HorizontalAlignment="Right" VerticalAlignment="Center">
+                        <Button x:Name="AddSourceButton"
+                                Content="⊕ Agregar"
+                                Style="{StaticResource SecondaryButton}"
+                                Padding="8,0" Height="22" FontSize="10"
+                                ToolTip="Seleccionar fuentes desde el modelo"
+                                Click="AddSources_Click"/>
+                        <Button x:Name="RemoveSourceButton"
+                                Content="− Quitar"
+                                Style="{StaticResource SecondaryButton}"
+                                Padding="8,0" Height="22" FontSize="10" Margin="4,0,0,0"
+                                ToolTip="Quitar la fuente seleccionada y sus destinos"
+                                Click="RemoveRule_Click"/>
+                    </StackPanel>
+                    <!-- Title fills the remaining space and clips gracefully -->
+                    <TextBlock Text="ORIGEN"
+                               FontSize="10" FontWeight="SemiBold"
+                               FontFamily="Segoe UI"
+                               Foreground="#1565C0"
+                               VerticalAlignment="Center"
+                               TextTrimming="CharacterEllipsis"/>
+                </DockPanel>
+            </Border>
+
+            <!-- DESTINO header + toolbar -->
+            <Border Grid.Row="0" Grid.Column="2"
+                    Background="#F4F4F7"
+                    BorderBrush="#E5E5EA" BorderThickness="1,1,1,0"
+                    CornerRadius="6,6,0,0"
+                    Padding="10,6">
+                <DockPanel LastChildFill="True">
+                    <!-- Buttons docked RIGHT first so they always get space -->
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal"
+                                HorizontalAlignment="Right" VerticalAlignment="Center">
+                        <Button x:Name="RenameTargetButton"
+                                Content="✎ Renombrar"
+                                Style="{StaticResource SecondaryButton}"
+                                Padding="8,0" Height="22" FontSize="10"
+                                ToolTip="Renombrar el parámetro destino de la fila seleccionada"
+                                Click="RenameTarget_Click"/>
+                    </StackPanel>
+                    <!-- Title fills remaining space -->
+                    <TextBlock Text="DESTINO"
+                               FontSize="10" FontWeight="SemiBold"
+                               FontFamily="Segoe UI"
+                               Foreground="#1565C0"
+                               VerticalAlignment="Center"
+                               TextTrimming="CharacterEllipsis"/>
+                </DockPanel>
+            </Border>
+
+            <!-- Arrow indicator column header -->
+            <TextBlock Grid.Row="0" Grid.Column="1"
+                       Text="⇄"
+                       FontSize="14"
+                       Foreground="#86868B"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"/>
+
+            <!-- Source DataGrid -->
+            <DataGrid x:Name="SourceGrid"
+                      Grid.Row="1" Grid.Column="0"
+                      AutoGenerateColumns="False"
+                      CanUserAddRows="False"
+                      CanUserDeleteRows="False"
+                      HeadersVisibility="Column"
+                      GridLinesVisibility="Horizontal"
+                      HorizontalGridLinesBrush="#EFEFF4"
+                      RowBackground="White"
+                      AlternatingRowBackground="#FAFAFA"
+                      Background="White"
+                      BorderBrush="#E5E5EA"
+                      BorderThickness="1,0,1,1"
+                      FontSize="12"
+                      FontFamily="Segoe UI"
+                      RowHeight="30"
+                      SelectionMode="Single"
+                      SelectionUnit="FullRow"
+                      RowStyle="{StaticResource PairAwareRow}"
+                      SelectionChanged="SourceGrid_SelectionChanged">
+                <DataGrid.Columns>
+                    <DataGridTemplateColumn Header="Tag" Width="50" MinWidth="50" IsReadOnly="True">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Border Background="{Binding TagBrush}"
+                                        CornerRadius="3"
+                                        Margin="5,4" Padding="5,1"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding Tag}"
+                                               Foreground="White"
+                                               FontWeight="SemiBold"
+                                               FontSize="10"
+                                               FontFamily="Segoe UI"
+                                               HorizontalAlignment="Center"/>
+                                </Border>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridComboBoxColumn Header="Fuente"
+                                            SelectedItemBinding="{Binding Source, UpdateSourceTrigger=PropertyChanged}"
+                                            ItemsSource="{x:Static local:SourceMappingVM.AllSources}"
+                                            Width="*" MinWidth="90"/>
+                    <DataGridTemplateColumn Header="Parám. fuente" Width="*" MinWidth="80">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding SourceParameterName}"
+                                           FontFamily="Segoe UI" FontSize="12"
+                                           VerticalAlignment="Center" Margin="4,0"
+                                           Visibility="{Binding ShowSourceParameterName,
+                                               Converter={StaticResource BoolToVisibility}}"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                        <DataGridTemplateColumn.CellEditingTemplate>
+                            <DataTemplate>
+                                <TextBox Text="{Binding SourceParameterName, UpdateSourceTrigger=PropertyChanged}"
+                                         FontFamily="Segoe UI" FontSize="12"
+                                         BorderThickness="0" Padding="4,0"
+                                         VerticalAlignment="Center"
+                                         Visibility="{Binding ShowSourceParameterName,
+                                             Converter={StaticResource BoolToVisibility}}"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellEditingTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+
+            <!-- Center arrow strip -->
+            <Border Grid.Row="1" Grid.Column="1"
+                    Background="Transparent">
+                <TextBlock Text="→"
+                           FontSize="16"
+                           Foreground="#1565C0"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Top"
+                           Margin="0,8,0,0"/>
+            </Border>
+
+            <!-- Target DataGrid -->
+            <DataGrid x:Name="TargetGrid"
+                      Grid.Row="1" Grid.Column="2"
+                      AutoGenerateColumns="False"
+                      CanUserAddRows="False"
+                      CanUserDeleteRows="False"
+                      HeadersVisibility="Column"
+                      GridLinesVisibility="Horizontal"
+                      HorizontalGridLinesBrush="#EFEFF4"
+                      RowBackground="White"
+                      AlternatingRowBackground="#FAFAFA"
+                      Background="White"
+                      BorderBrush="#E5E5EA"
+                      BorderThickness="1,0,1,1"
+                      FontSize="12"
+                      FontFamily="Segoe UI"
+                      RowHeight="30"
+                      SelectionMode="Single"
+                      SelectionUnit="FullRow"
+                      RowStyle="{StaticResource PairAwareRow}"
+                      SelectionChanged="TargetGrid_SelectionChanged">
+                <DataGrid.Columns>
+                    <DataGridTemplateColumn Header="Tag" Width="50" MinWidth="50" IsReadOnly="True">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Border Background="{Binding TagBrush}"
+                                        CornerRadius="3"
+                                        Margin="5,4" Padding="5,1"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding Tag}"
+                                               Foreground="White"
+                                               FontWeight="SemiBold"
+                                               FontSize="10"
+                                               FontFamily="Segoe UI"
+                                               HorizontalAlignment="Center"/>
+                                </Border>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTextColumn Header="Parámetro destino"
+                                        Binding="{Binding TargetParameterName}"
+                                        Width="*" MinWidth="100"/>
+                    <DataGridComboBoxColumn Header="Coord."
+                                            SelectedItemBinding="{Binding CoordinateOrigin, UpdateSourceTrigger=PropertyChanged}"
+                                            ItemsSource="{x:Static local:TargetMappingVM.AllOrigins}"
+                                            Width="100" MinWidth="80"/>
+                    <DataGridComboBoxColumn Header="Geo"
+                                            SelectedItemBinding="{Binding GeoFormat, UpdateSourceTrigger=PropertyChanged}"
+                                            ItemsSource="{x:Static local:TargetMappingVM.AllGeoFormats}"
+                                            Width="70" MinWidth="55"/>
+                    <DataGridComboBoxColumn Header="Tipo"
+                                            SelectedItemBinding="{Binding DataType, UpdateSourceTrigger=PropertyChanged}"
+                                            ItemsSource="{x:Static local:TargetMappingVM.AllDataTypes}"
+                                            Width="85" MinWidth="70"/>
+                    <DataGridCheckBoxColumn Header="Crear"
+                                            Binding="{Binding CreateIfMissing}"
+                                            Width="52" MinWidth="44"/>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Grid>
+
+    </DockPanel>
+</UserControl>
