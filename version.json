@@ -1,5 +1,5 @@
 {
-    "installer_url":  "https://github.com/BIM-CA/bim-pills-releases/releases/download/v1.0.0-beta.4.0/BIMPills-beta-4.0-Setup.exe",
-    "version":  "1.0.0-beta.4.0",
-    "notes":  "- Soporte integrado: chat directo con el equipo BIM-CA (Intercom) desde el panel Información\\n- Usuario identificado automáticamente con nombre y email de licencia\\n- Diálogos de error migrados al estilo visual de BIM Pills\\n- Fix: ventana de Soporte ya no muestra fondo negro al reabrirse\\n- Fix compatibilidad Revit 2024 (.NET 4.8)"
+    "installer_url":  "https://github.com/BIM-CA/bim-pills-releases/releases/download/v1.0.0-beta.4.1/BIMPills-beta-4.1-Setup.exe",
+    "version":  "1.0.0-beta.4.1",
+    "notes":  "Fix: enlace de feedback corregido"
 }
