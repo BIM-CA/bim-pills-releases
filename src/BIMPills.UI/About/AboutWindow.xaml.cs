@@ -170,7 +170,7 @@ namespace BIMPills.UI.About
             => ProcessHelper.OpenUrl($"mailto:{_info.SupportEmail}");
 
         private void Feedback_Click(object sender, MouseButtonEventArgs e)
-            => ProcessHelper.OpenUrl("https://bimca.notion.site/33bd89d548c2802a83d6f01c013c6e41?pvs=105");
+            => ProcessHelper.OpenUrl("https://www.notion.so/bimca/33bd89d548c2802a83d6f01c013c6e41?pvs=106");
 
         private void CloseButton_Click(object sender, RoutedEventArgs e) => Close();
     }
