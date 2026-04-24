@@ -262,7 +262,9 @@ namespace BIMPills.Revit.Application
                 {
                     try
                     {
+                        logger.Info($"Verificando actualizaciones (instalada: {currentVersion})...");
                         var update = await _updateChecker.CheckAsync(currentVersion);
+                        logger.Info($"Update check: {_updateChecker.LastDiagnostic}");
                         if (update == null) return;
 
                         logger.Info($"Actualización disponible: {update.DisplayVersion}");

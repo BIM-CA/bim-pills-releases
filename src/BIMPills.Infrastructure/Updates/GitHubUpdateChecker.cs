@@ -31,15 +31,31 @@ namespace BIMPills.Infrastructure.Updates
         /// Comprueba si hay una versión más nueva en el manifest público.
         /// Retorna <see cref="UpdateInfo"/> si hay actualización, null si está al día o falla.
         /// </summary>
+        /// <summary>
+        /// Último diagnóstico del check — disponible para que la capa Revit lo loguee.
+        /// </summary>
+        public string LastDiagnostic { get; private set; } = string.Empty;
+
         public async Task<UpdateInfo?> CheckAsync(string currentVersionRaw)
         {
             try
             {
-                var json     = await _http.GetStringAsync(ManifestUrl);
+                var url  = ManifestUrl;
+                var json = await _http.GetStringAsync(url);
                 var manifest = JsonConvert.DeserializeObject<VersionManifest>(json);
-                if (manifest == null || string.IsNullOrEmpty(manifest.Version)) return null;
+                if (manifest == null || string.IsNullOrEmpty(manifest.Version))
+                {
+                    LastDiagnostic = "Manifest vacío o inválido.";
+                    return null;
+                }
 
-                if (!IsNewer(manifest.Version!, currentVersionRaw)) return null;
+                LastDiagnostic = $"Manifest OK — versión remota: {manifest.Version}";
+
+                if (!IsNewer(manifest.Version!, currentVersionRaw))
+                {
+                    LastDiagnostic += " (sin actualización disponible)";
+                    return null;
+                }
 
                 return new UpdateInfo
                 {
@@ -48,9 +64,10 @@ namespace BIMPills.Infrastructure.Updates
                     InstallerDownloadUrl = manifest.InstallerUrl,
                 };
             }
-            catch
+            catch (Exception ex)
             {
-                return null; // Sin internet, manifest no encontrado, etc. — falla silenciosa
+                LastDiagnostic = $"Error de red: {ex.GetType().Name} — {ex.Message}";
+                return null;
             }
         }
 
