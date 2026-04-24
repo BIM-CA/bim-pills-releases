@@ -17,8 +17,12 @@ namespace BIMPills.Infrastructure.Updates
     /// </summary>
     public sealed class GitHubUpdateChecker
     {
-        private const string ManifestUrl =
-            "https://raw.githubusercontent.com/BIM-CA/bim-pills-releases/main/version.json";
+        // Nota: el parámetro ?t= es un cache-buster para evitar que el CDN de
+        // raw.githubusercontent.com sirva una versión vieja del manifest. Sin él,
+        // el CDN puede cachear el archivo hasta 5 minutos y el check de versión
+        // devolvería un resultado obsoleto.
+        private static string ManifestUrl =>
+            $"https://raw.githubusercontent.com/BIM-CA/bim-pills-releases/main/version.json?t={DateTimeOffset.UtcNow.ToUnixTimeSeconds()}";
 
         private static readonly HttpClient _http         = BuildApiClient();
         private static readonly HttpClient _downloadHttp = BuildDownloadClient();
