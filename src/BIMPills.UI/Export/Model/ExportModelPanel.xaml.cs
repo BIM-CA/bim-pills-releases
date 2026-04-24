@@ -1,5 +1,6 @@
 using BIMPills.Core.Models;
 using BIMPills.Core.Services;
+using BIMPills.UI.Shared;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -258,10 +259,11 @@ namespace BIMPills.UI.Export.Model
             var id = (PresetCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString();
             if (string.IsNullOrEmpty(id)) return;
 
-            var msg = MessageBox.Show("&#x00BF;Eliminar el conjunto seleccionado?",
-                "BIM Pills \u2014 Eliminar conjunto",
-                MessageBoxButton.YesNo, MessageBoxImage.Question);
-            if (msg != MessageBoxResult.Yes) return;
+            bool confirmed = BimPillsDialog.Confirm(
+                "BIM Pills — Eliminar conjunto",
+                "¿Eliminar el conjunto seleccionado?",
+                owner: Window.GetWindow(this));
+            if (!confirmed) return;
 
             _presets.RemoveAll(p => p.Id == id);
             var idx = PresetCombo.SelectedIndex;
@@ -455,18 +457,20 @@ namespace BIMPills.UI.Export.Model
             {
                 if (!_nwcAvailable)
                 {
-                    MessageBox.Show(
-                        "Navisworks NWC Export Utility no est\u00e1 instalado.",
-                        "BIM Pills \u2014 NWC no disponible",
-                        MessageBoxButton.OK, MessageBoxImage.Warning);
+                    BimPillsDialog.Warning(
+                        "BIM Pills — NWC no disponible",
+                        "Navisworks NWC Export Utility no está instalado.",
+                        owner: Window.GetWindow(this));
                     return;
                 }
 
                 var config = GetConfig();
                 if (string.IsNullOrEmpty(config.DestinationFolder) || string.IsNullOrEmpty(config.FileName))
                 {
-                    MessageBox.Show("Selecciona una carpeta destino y define el nombre de archivo.",
-                        "BIM Pills \u2014 Exportar Modelo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    BimPillsDialog.Warning(
+                        "BIM Pills — Exportar Modelo",
+                        "Selecciona una carpeta destino y define el nombre de archivo.",
+                        owner: Window.GetWindow(this));
                     return;
                 }
 
@@ -476,19 +480,16 @@ namespace BIMPills.UI.Export.Model
                 var scopeLabel = config.Scope switch
                 {
                     NwcExportScope.SpecificView => viewName,
-                    NwcExportScope.Selection    => "Selecci\u00f3n",
+                    NwcExportScope.Selection    => "Selección",
                     _                           => "Modelo completo"
                 };
 
-                var confirm = MessageBox.Show(
-                    $"Se exportar\u00e1 el modelo a NWC:\n\n" +
-                    $"\U0001F4C1 {config.DestinationFolder}\\{config.FileName}.nwc\n\n" +
-                    $"Alcance: {scopeLabel}\n\n" +
-                    "\u00bfDesea continuar?",
-                    "BIM Pills \u2014 Confirmar exportaci\u00f3n",
-                    MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.Yes);
+                bool confirm = BimPillsDialog.Confirm(
+                    "BIM Pills — Confirmar exportación",
+                    $"Se exportará el modelo a NWC:\n\n📁 {config.DestinationFolder}\\{config.FileName}.nwc\n\nAlcance: {scopeLabel}",
+                    owner: Window.GetWindow(this));
 
-                if (confirm != MessageBoxResult.Yes) return;
+                if (!confirm) return;
 
                 if (_nwcExportCallback != null)
                 {
@@ -505,27 +506,36 @@ namespace BIMPills.UI.Export.Model
                             : $"{sw.Elapsed.TotalSeconds:F1} seg";
 
                         if (ok)
-                            MessageBox.Show($"Modelo exportado correctamente a NWC.\nTiempo: {elapsedStr}",
-                                "BIM Pills \u2014 Exportaci\u00f3n completada",
-                                MessageBoxButton.OK, MessageBoxImage.Information);
+                            BimPillsDialog.SuccessWithFolder(
+                                "BIM Pills — Exportación completada",
+                                $"Modelo exportado correctamente a NWC.\nTiempo: {elapsedStr}",
+                                null,
+                                config.DestinationFolder,
+                                Window.GetWindow(this));
                         else
-                            MessageBox.Show($"La exportaci\u00f3n NWC fall\u00f3.\nTiempo: {elapsedStr}",
-                                "BIM Pills \u2014 Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                            BimPillsDialog.Error(
+                                "BIM Pills — Error",
+                                $"La exportación NWC falló.\nTiempo: {elapsedStr}",
+                                owner: Window.GetWindow(this));
                     }
                     catch { ProgressOverlay.Visibility = Visibility.Collapsed; throw; }
                 }
                 else
                 {
-                    MessageBox.Show("Callback de exportaci\u00f3n NWC no configurado (sandbox).",
-                        "BIM Pills \u2014 Sandbox", MessageBoxButton.OK, MessageBoxImage.Information);
+                    BimPillsDialog.Info(
+                        "BIM Pills — Sandbox",
+                        "Callback de exportación NWC no configurado (sandbox).",
+                        owner: Window.GetWindow(this));
                 }
             }
             catch (Exception ex)
             {
                 _logger?.Error("Error en NWC export", ex);
                 ProgressOverlay.Visibility = Visibility.Collapsed;
-                MessageBox.Show($"Error inesperado:\n{ex.Message}",
-                    "BIM Pills \u2014 Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                BimPillsDialog.Error(
+                    "BIM Pills — Error",
+                    $"Error inesperado:\n{ex.Message}",
+                    owner: Window.GetWindow(this));
             }
         }
 

@@ -19,6 +19,10 @@ using BIMPills.UI.MCPIntegration;
 using BIMPills.UI.ModelAudit;
 using BIMPills.Core.Updates;
 using BIMPills.UI.Ordering;
+using BIMPills.Core.ParameterExtractor;
+using BIMPills.Infrastructure.Persistence;
+using System.Linq;
+using BIMPills.UI.LegendFromExcel;
 using BIMPills.UI.Support;
 using BIMPills.UI.Updates;
 using System;
@@ -154,6 +158,26 @@ namespace BIMPills.UI.Sandbox
                 win.SetDocumentName("Proyecto_Sandbox_Demo.rvt");
                 win.InitializeExportFamilies(families, documentTitle: "Proyecto_Sandbox_Demo");
                 win.InitializeExportViews(views, projectName: "Proyecto Sandbox Demo");
+                // Parámetros tab — mismos mocks que OpenExtractor_Click
+                var tempDirSandbox = System.IO.Path.Combine(
+                    System.IO.Path.GetTempPath(), "BIMPillsSandbox_Extractor_" + Guid.NewGuid().ToString("N"));
+                System.IO.Directory.CreateDirectory(tempDirSandbox);
+                win.InitializeExtractor(
+                    selectedElementCount: 12,
+                    applyCallback: config =>
+                    {
+                        var rules = string.Join("\n", config.Rules.Select((r, i) =>
+                            $"{i + 1}. {r.Source} → {r.Target.ParameterName}"));
+                        BIMPills.UI.Shared.BimPillsDialog.Info(
+                            header:  "Extractor de Parámetros",
+                            message: $"{config.Rules.Count} reglas aplicadas a 12 elementos (mock)",
+                            detail:  $"Unidades: {config.LengthUnits} · Decimales: {config.Decimals}\n\n{rules}",
+                            owner:   win);
+                        return true;
+                    },
+                    presetRepository: new JsonExtractionPresetRepository(tempDirSandbox),
+                    availableCategories: new[] { "Muros", "Puertas", "Ventanas", "Habitaciones", "Mobiliario" });
+
                 win.InitializeExportModel(
                     "Proyecto_Sandbox_Demo.rvt",
                     activeViewName: "Planta Nivel 1",
@@ -359,6 +383,52 @@ namespace BIMPills.UI.Sandbox
             }
         }
 
+        // ── Dibujar (Leyenda desde Excel) ───────────────────────────────────────
+
+        private void OpenDibujar_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var textStyles = new List<BIMPills.Core.LegendFromExcel.RevitStyleInfo>
+                {
+                    new BIMPills.Core.LegendFromExcel.RevitStyleInfo { Id = 1, Name = "Arial 2.5mm" },
+                    new BIMPills.Core.LegendFromExcel.RevitStyleInfo { Id = 2, Name = "Arial 3.5mm" },
+                    new BIMPills.Core.LegendFromExcel.RevitStyleInfo { Id = 3, Name = "Nota 2.5mm Negrita" },
+                };
+                var lineStyles = new List<BIMPills.Core.LegendFromExcel.RevitStyleInfo>
+                {
+                    new BIMPills.Core.LegendFromExcel.RevitStyleInfo { Id = 10, Name = "<Hidden Lines>" },
+                    new BIMPills.Core.LegendFromExcel.RevitStyleInfo { Id = 11, Name = "Líneas de techo" },
+                    new BIMPills.Core.LegendFromExcel.RevitStyleInfo { Id = 12, Name = "Thin Lines" },
+                };
+                var fillTypes = new List<BIMPills.Core.LegendFromExcel.RevitStyleInfo>
+                {
+                    new BIMPills.Core.LegendFromExcel.RevitStyleInfo { Id = 20, Name = "Diagonal arriba" },
+                    new BIMPills.Core.LegendFromExcel.RevitStyleInfo { Id = 21, Name = "Sólido" },
+                };
+
+                var win = new BIMPills.UI.Documentacion.DocumentacionWindow();
+                win.SetDocumentName("Proyecto_Sandbox_Demo.rvt");
+                win.InitializeDibujar(textStyles, lineStyles, fillTypes,
+                    drawCallback: (filePath, options) =>
+                    {
+                        MessageBox.Show(
+                            $"[Sandbox] Dibujar leyenda\n" +
+                            $"Archivo: {filePath}\n" +
+                            $"Vista: {options.ViewName}\n" +
+                            $"Tamaño celda: {options.CellWidthMm}×{options.CellHeightMm} mm",
+                            "Sandbox — Dibujar mock", MessageBoxButton.OK, MessageBoxImage.Information);
+                        return true;
+                    });
+                win.NavigateToTab("leyenda");
+                win.Show();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error abriendo Dibujar:\n{ex.Message}\n\n{ex.StackTrace}", "Sandbox — Error");
+            }
+        }
+
         // ── Documentar (Acotar) ──────────────────────────────────────────────────
 
         private void OpenDocumentar_Click(object sender, RoutedEventArgs e)
@@ -383,6 +453,21 @@ namespace BIMPills.UI.Sandbox
                 var win = new DocumentacionWindow();
                 win.SetDocumentName("Proyecto_Sandbox_Demo.rvt");
                 win.InitializeAcotado(data, executeCallback: null);
+                win.InitializeDibujar(
+                    new List<BIMPills.Core.LegendFromExcel.RevitStyleInfo>
+                    {
+                        new BIMPills.Core.LegendFromExcel.RevitStyleInfo { Id = 1, Name = "Arial 2.5mm" },
+                        new BIMPills.Core.LegendFromExcel.RevitStyleInfo { Id = 2, Name = "Arial 3.5mm" },
+                    },
+                    new List<BIMPills.Core.LegendFromExcel.RevitStyleInfo>
+                    {
+                        new BIMPills.Core.LegendFromExcel.RevitStyleInfo { Id = 10, Name = "<Hidden Lines>" },
+                        new BIMPills.Core.LegendFromExcel.RevitStyleInfo { Id = 11, Name = "Thin Lines" },
+                    },
+                    new List<BIMPills.Core.LegendFromExcel.RevitStyleInfo>
+                    {
+                        new BIMPills.Core.LegendFromExcel.RevitStyleInfo { Id = 20, Name = "Sólido" },
+                    });
                 win.Show();
             }
             catch (Exception ex)

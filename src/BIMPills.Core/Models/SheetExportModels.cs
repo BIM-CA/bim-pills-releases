@@ -162,8 +162,8 @@ namespace BIMPills.Core.Models
         public bool   IsRevitPreset   { get; set; } = false;
         public string RevitPresetName { get; set; } = "";
         // Extra options (like ProSheets checkboxes)
-        public bool ExportLinkedAsXrefs { get; set; } = false;
-        public bool CleanPcpFiles       { get; set; } = false;
+        public bool ExportLinkedAsXrefs { get; set; } = true;
+        public bool CleanPcpFiles       { get; set; } = true;
         public DateTime CreatedAt { get; set; }
     }
 

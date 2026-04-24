@@ -50,6 +50,9 @@ namespace BIMPills.UI.Export.Sheets
         /// <summary>Export queue built by Export_Click for non-blocking processing.</summary>
         public List<ExportQueueItem>? PendingExportQueue { get; private set; }
 
+        /// <summary>Base destination folder selected by the user for the current export.</summary>
+        public string? PendingExportFolder { get; private set; }
+
         /// <summary>Raised when export availability changes. Arg = canExport.</summary>
         public event EventHandler<bool>? ExportEnabledChanged;
 
@@ -390,7 +393,7 @@ namespace BIMPills.UI.Export.Sheets
             set.FolderOrganization = GetSelectedFolderOrganization();
             set.PdfSettings = GetPdfSettings();
             set.DwgPresetName = (DwgSetupCombo.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "";
-            set.DwgExportLinkedAsXrefs = DwgExportLinkedCheck?.IsChecked == true;
+            set.DwgExportLinkedAsXrefs = true; // governed by Revit export profile
             set.DwgCleanPcpFiles = DwgCleanPcpCheck?.IsChecked == true;
         }
 
@@ -431,7 +434,6 @@ namespace BIMPills.UI.Export.Sheets
                     }
                 }
             }
-            DwgExportLinkedCheck.IsChecked = set.DwgExportLinkedAsXrefs;
             DwgCleanPcpCheck.IsChecked = set.DwgCleanPcpFiles;
 
             // Trigger visibility updates for PDF/DWG sections
@@ -1149,7 +1151,7 @@ namespace BIMPills.UI.Export.Sheets
                 FileVersion       = cfg.FileVersion,
                 ExportOfSolids    = cfg.ExportOfSolids,
                 SharedCoords      = cfg.SharedCoords,
-                ExportLinkedAsXrefs = DwgExportLinkedCheck?.IsChecked == true,
+                ExportLinkedAsXrefs = true, // governed by Revit export profile
                 CleanPcpFiles       = DwgCleanPcpCheck?.IsChecked == true,
             };
         }
@@ -1233,6 +1235,7 @@ namespace BIMPills.UI.Export.Sheets
                 if (!confirmed) return;
 
                 PendingExportQueue = queue;
+                PendingExportFolder = _selectedFolder;
 
                 // Close the parent window — export will be processed by the command via Idling
                 var win = Window.GetWindow(this);
@@ -1684,7 +1687,6 @@ namespace BIMPills.UI.Export.Sheets
                         }
                     }
                 }
-                DwgExportLinkedCheck.IsChecked = preset.DwgConfig.ExportLinkedAsXrefs;
                 DwgCleanPcpCheck.IsChecked = preset.DwgConfig.CleanPcpFiles;
             }
 

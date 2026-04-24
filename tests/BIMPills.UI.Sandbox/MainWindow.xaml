@@ -51,14 +51,14 @@
                 HorizontalAlignment="Stretch" Margin="0,0,0,6"
                 Click="OpenConectar_Click"/>
 
-        <Button Content="&#x1F522;  Ordenar (Numeración)"
+        <Button Content="&#x1F522;  Ordenar (Numerador)"
                 Style="{StaticResource SecondaryButton}"
                 HorizontalAlignment="Stretch" Margin="0,0,0,6"
                 Click="OpenOrdenar_Click"/>
 
         <Button Content="&#x1F5C2;  Gestionar (Tablas)"
                 Style="{StaticResource SecondaryButton}"
-                HorizontalAlignment="Stretch" Margin="0,0,0,16"
+                HorizontalAlignment="Stretch" Margin="0,0,0,6"
                 Click="OpenGestionar_Click"/>
 
         <!-- Panel Procesos -->

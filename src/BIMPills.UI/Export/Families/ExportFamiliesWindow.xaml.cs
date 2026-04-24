@@ -238,10 +238,11 @@ namespace BIMPills.UI.Export.Families
                     summary += $"\n  ... y {errors.Count - 10} m\u00E1s";
             }
 
+            string outputFolder = Path.Combine(_selectedFolder, projectFolder);
             if (failed > 0)
                 BimPillsDialog.Warning("BIMPills — Exportación completada", summary);
             else
-                BimPillsDialog.Info("BIMPills — Exportación completada", summary);
+                BimPillsDialog.SuccessWithFolder("BIMPills — Exportación completada", summary, null, outputFolder);
         }
 
         /// <summary>

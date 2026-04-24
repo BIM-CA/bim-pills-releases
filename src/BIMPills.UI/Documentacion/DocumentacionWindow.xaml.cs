@@ -1,22 +1,28 @@
+using BIMPills.Core.LegendFromExcel;
 using BIMPills.Core.Documentacion;
 using BIMPills.Core.Services;
 using System;
+using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 
 namespace BIMPills.UI.Documentacion
 {
     public partial class DocumentacionWindow : Window
     {
+        private const string TabAcotado = "acotado";
+        private const string TabLeyenda = "leyenda";
+        private string _activeTab = TabAcotado;
+
         public DocumentacionWindow()
         {
             InitializeComponent();
             BIMPills.UI.Shared.ThemeHelper.Apply(this);
         }
 
-        /// <summary>
-        /// Initializes the Acotado de Vanos tab with data, execution callback and optional logger.
-        /// </summary>
+        public void SetDocumentName(string name) => DocumentName.Text = name;
+
         public void InitializeAcotado(
             AcotadoVanosData data,
             Func<AcotadoVanosSettings, AcotadoVanosResult>? executeCallback = null,
@@ -25,12 +31,72 @@ namespace BIMPills.UI.Documentacion
             AcotadoPanel.Initialize(data, executeCallback, logger);
         }
 
-        /// <summary>
-        /// Sets the document name in the header (from Revit).
-        /// </summary>
-        public void SetDocumentName(string name)
+        public void InitializeDibujar(
+            IReadOnlyList<RevitStyleInfo> textStyles,
+            IReadOnlyList<RevitStyleInfo> lineStyles,
+            IReadOnlyList<RevitStyleInfo> fillTypes,
+            Func<string, LegendDrawOptions, bool>? drawCallback = null)
         {
-            DocumentName.Text = name;
+            DibujarPanel.Initialize(textStyles, lineStyles, fillTypes, drawCallback);
+        }
+
+        public void NavigateToTab(string tab)
+        {
+            _activeTab = tab;
+            UpdateTabVisualState();
+        }
+
+        // ── Tab click handlers ──────────────────────────────────────────────
+
+        private void TabAcotado_Click(object sender, MouseButtonEventArgs e)
+        {
+            _activeTab = TabAcotado;
+            UpdateTabVisualState();
+        }
+
+        private void TabLeyenda_Click(object sender, MouseButtonEventArgs e)
+        {
+            _activeTab = TabLeyenda;
+            UpdateTabVisualState();
+        }
+
+        // ── Tab visual state ────────────────────────────────────────────────
+
+        private void UpdateTabVisualState()
+        {
+            var activeTabStyle    = (Style)FindResource("TabHeaderActive");
+            var inactiveTabStyle  = (Style)FindResource("TabHeader");
+            var activeTextStyle   = (Style)FindResource("TabHeaderTextActive");
+            var inactiveTextStyle = (Style)FindResource("TabHeaderText");
+
+            TabAcotadoBorder.Style = inactiveTabStyle;
+            TabAcotadoText.Style   = inactiveTextStyle;
+            TabLeyendaBorder.Style = inactiveTabStyle;
+            TabLeyendaText.Style   = inactiveTextStyle;
+
+            AcotadoPanel.Visibility = Visibility.Collapsed;
+            DibujarPanel.Visibility = Visibility.Collapsed;
+
+            switch (_activeTab)
+            {
+                case TabAcotado:
+                    TabAcotadoBorder.Style  = activeTabStyle;
+                    TabAcotadoText.Style    = activeTextStyle;
+                    AcotadoPanel.Visibility = Visibility.Visible;
+                    ToolHeaderIcon.Text     = "\uE8A5"; // ruler
+                    ToolHeaderTitle.Text    = "Acotado";
+                    ToolHeaderSubtitle.Text = "Acotado automático de elementos";
+                    break;
+
+                case TabLeyenda:
+                    TabLeyendaBorder.Style  = activeTabStyle;
+                    TabLeyendaText.Style    = activeTextStyle;
+                    DibujarPanel.Visibility = Visibility.Visible;
+                    ToolHeaderIcon.Text     = "\uE8A9"; // table
+                    ToolHeaderTitle.Text    = "Leyenda desde Excel";
+                    ToolHeaderSubtitle.Text = "Dibuja tablas y leyendas en vistas de Revit a partir de un .xlsx";
+                    break;
+            }
         }
     }
 }

@@ -56,6 +56,53 @@ namespace BIMPills.UI.Shared
             => ShowDialog(DialogKind.Success, header, message, detail, owner,
                           buttons: new[] { (ButtonRole.Primary, "Listo", DialogResultKind.Ok) });
 
+        /// <summary>
+        /// Show a success dialog with an "Abrir carpeta" button that opens Windows Explorer
+        /// without closing the dialog, plus a "Listo" button to close it.
+        /// </summary>
+        public static void SuccessWithFolder(string header, string message, string? detail, string folderPath, Window? owner = null)
+        {
+            var dlg = new BimPillsDialog();
+
+            if (owner == null)
+                foreach (Window w in Application.Current?.Windows ?? new WindowCollection())
+                    if (w.IsActive) { owner = w; break; }
+            if (owner != null)
+                try { dlg.Owner = owner; } catch { }
+            else
+            {
+                RevitOwnerHelper.SetRevitAsOwner(dlg);
+                if (RevitOwnerHelper.CurrentRevitHandle == IntPtr.Zero)
+                    dlg.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+            }
+
+            dlg.ConfigureContent(DialogKind.Success, header, message, detail);
+            dlg.ButtonsPanel.Children.Clear();
+
+            var openBtn = dlg.BuildButton("Abrir carpeta", ButtonRole.Secondary, margin: new Thickness(0));
+            openBtn.Click += (_, __) =>
+            {
+                try
+                {
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName        = "explorer.exe",
+                        Arguments       = folderPath,
+                        UseShellExecute = true,
+                    });
+                }
+                catch { }
+            };
+            dlg.ButtonsPanel.Children.Add(openBtn);
+
+            var doneBtn = dlg.BuildButton("Listo", ButtonRole.Primary, margin: new Thickness(8, 0, 0, 0));
+            doneBtn.IsDefault = true;
+            doneBtn.Click += (_, __) => { dlg.ResultKind = DialogResultKind.Ok; dlg.Close(); };
+            dlg.ButtonsPanel.Children.Add(doneBtn);
+
+            dlg.ShowDialog();
+        }
+
         /// <summary>Show a warning dialog with a single OK button.</summary>
         public static void Warning(string header, string message, string? detail = null, Window? owner = null)
             => ShowDialog(DialogKind.Warning, header, message, detail, owner,
@@ -190,6 +237,26 @@ namespace BIMPills.UI.Shared
                 _                   => "BIM Pills",
             };
             Title = WindowTitleText.Text;
+        }
+
+        private Button BuildButton(string label, ButtonRole role, Thickness margin)
+        {
+            var btn = new Button
+            {
+                Content     = label,
+                MinWidth    = 100,
+                Height      = 34,
+                Padding     = new Thickness(16, 0, 16, 0),
+                Margin      = margin,
+                FontFamily  = new FontFamily("Segoe UI"),
+                FontSize    = 13,
+                Cursor      = Cursors.Hand,
+            };
+            if (role == ButtonRole.Primary)
+                try { btn.Style = (Style)FindResource("PrimaryButton"); } catch { }
+            else
+                try { btn.Style = (Style)FindResource("SecondaryButton"); } catch { }
+            return btn;
         }
 
         private void ConfigureButtons((ButtonRole Role, string Label, DialogResultKind Result)[] buttons)

@@ -50,7 +50,7 @@
                 <StackPanel Margin="10,0,0,0" VerticalAlignment="Center">
                     <TextBlock Text="Ordenar" FontSize="11" FontWeight="SemiBold"
                                Foreground="{StaticResource AccentBrush}" FontFamily="Segoe UI"/>
-                    <TextBlock Text="Numeración Incremental" FontSize="14" FontWeight="Bold"
+                    <TextBlock Text="Numerador" FontSize="14" FontWeight="Bold"
                                Foreground="#1A1A2E" FontFamily="Segoe UI"/>
                 </StackPanel>
             </StackPanel>
@@ -67,7 +67,7 @@
                     <StackPanel Orientation="Horizontal" Margin="14,0">
                         <Border x:Name="Tab1Border" Style="{StaticResource TabHeaderActive}">
                             <TextBlock x:Name="Tab1Text" Style="{StaticResource TabHeaderTextActive}"
-                                       Text="Numeración Incremental"/>
+                                       Text="Numerador"/>
                         </Border>
                         <Border Padding="12,9,12,8">
                             <TextBlock Text="Pronto..." FontSize="12" FontStyle="Italic"
@@ -87,7 +87,7 @@
                                        Foreground="#1565C0" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <StackPanel VerticalAlignment="Center">
-                            <TextBlock Text="Numeración Incremental" FontSize="14" FontWeight="SemiBold"
+                            <TextBlock Text="Numerador" FontSize="14" FontWeight="SemiBold"
                                        Foreground="{StaticResource PrimaryBrush}" FontFamily="Segoe UI"/>
                             <TextBlock Text="Asigna valores incrementales a elementos del modelo"
                                        FontSize="11" Foreground="#86868B" FontFamily="Segoe UI"/>

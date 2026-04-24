@@ -1,0 +1,330 @@
+<UserControl x:Class="BIMPills.UI.LegendFromExcel.LeyendaExcelPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="White">
+
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/BIMPills.UI;component/Shared/Styles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            <Style x:Key="WizardStepBadge" TargetType="Border">
+                <Setter Property="Width" Value="18"/>
+                <Setter Property="Height" Value="18"/>
+                <Setter Property="CornerRadius" Value="9"/>
+            </Style>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <DockPanel>
+
+        <!-- ── Step indicator bar ───────────────────────────────────────── -->
+        <Border DockPanel.Dock="Top"
+                Background="#F8F9FA"
+                BorderBrush="#E5E5EA" BorderThickness="0,0,0,1"
+                Padding="14,10">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+
+                <!-- Paso 1 -->
+                <Border x:Name="Badge1"
+                        Style="{StaticResource WizardStepBadge}"
+                        Background="{StaticResource AccentBrush}"
+                        Margin="0,0,6,0">
+                    <TextBlock Text="1" FontSize="10" FontWeight="Bold" Foreground="White"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                               FontFamily="Segoe UI"/>
+                </Border>
+                <TextBlock x:Name="StepLabel1"
+                           Text="Datos del archivo"
+                           FontSize="12" FontFamily="Segoe UI"
+                           Foreground="#1D1D1F" FontWeight="SemiBold"
+                           VerticalAlignment="Center"/>
+
+                <!-- Separator arrow -->
+                <TextBlock Text="›" FontSize="16" Foreground="#AEAEB2"
+                           Margin="12,0" VerticalAlignment="Center"/>
+
+                <!-- Paso 2 -->
+                <Border x:Name="Badge2"
+                        Style="{StaticResource WizardStepBadge}"
+                        Background="#AEAEB2"
+                        Margin="0,0,6,0">
+                    <TextBlock Text="2" FontSize="10" FontWeight="Bold" Foreground="White"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                               FontFamily="Segoe UI"/>
+                </Border>
+                <TextBlock x:Name="StepLabel2"
+                           Text="Estilos de Revit"
+                           FontSize="12" FontFamily="Segoe UI"
+                           Foreground="#AEAEB2"
+                           VerticalAlignment="Center"/>
+
+            </StackPanel>
+        </Border>
+
+        <!-- ── Footer ───────────────────────────────────────────────────── -->
+        <Border DockPanel.Dock="Bottom"
+                BorderBrush="#E5E5EA" BorderThickness="0,1,0,0"
+                Padding="14,10">
+            <DockPanel LastChildFill="False">
+                <Button DockPanel.Dock="Left"
+                        Content="Cancelar (ESC)"
+                        Style="{DynamicResource PrimaryButton}"
+                        Width="120"
+                        IsCancel="True"
+                        Click="Cancel_Click"/>
+
+                <!-- Step 2 buttons -->
+                <Button x:Name="DrawButton"
+                        DockPanel.Dock="Right"
+                        Style="{DynamicResource SecondaryButton}"
+                        Width="120"
+                        IsEnabled="False"
+                        Visibility="Collapsed"
+                        Click="Draw_Click">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE8A9;" FontFamily="Segoe MDL2 Assets"
+                                   FontSize="12" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="Dibujar" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Button x:Name="PreviewButton"
+                        DockPanel.Dock="Right"
+                        Style="{DynamicResource SecondaryButton}"
+                        Width="130" Margin="0,0,8,0"
+                        IsEnabled="False"
+                        Visibility="Collapsed"
+                        Click="Preview_Click">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE7C3;" FontFamily="Segoe MDL2 Assets"
+                                   FontSize="12" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="Vista previa" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+
+                <!-- Step 1 button -->
+                <Button x:Name="NextButton"
+                        DockPanel.Dock="Right"
+                        Style="{DynamicResource SecondaryButton}"
+                        Width="130"
+                        IsEnabled="False"
+                        Click="Next_Click">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Siguiente" VerticalAlignment="Center"/>
+                        <TextBlock Text="&#xE970;" FontFamily="Segoe MDL2 Assets"
+                                   FontSize="11" Margin="6,0,0,0" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+            </DockPanel>
+        </Border>
+
+        <!-- ── Content ──────────────────────────────────────────────────── -->
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Margin="20,16,20,16">
+
+                <!-- ════════ Paso 1 content ════════════════════════════════ -->
+                <StackPanel x:Name="Step1Content">
+
+                    <!-- Archivo Excel -->
+                    <TextBlock Text="ARCHIVO EXCEL"
+                               FontSize="10" FontWeight="SemiBold"
+                               Foreground="{StaticResource AccentBrush}"
+                               Margin="0,0,0,8"/>
+                    <Grid Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="8"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox x:Name="FilePathBox" Grid.Column="0"
+                                 Style="{StaticResource BIMPillsTextBox}"
+                                 Height="32" FontSize="12" IsReadOnly="True"
+                                 Tag="Selecciona un archivo .xlsx..."
+                                 VerticalContentAlignment="Center"/>
+                        <Button Grid.Column="2" Content="Explorar..."
+                                Style="{StaticResource SecondaryButton}"
+                                Width="90" Height="32" FontSize="11"
+                                Click="Browse_Click"/>
+                    </Grid>
+
+                    <Border x:Name="TableInfoBorder" Visibility="Collapsed"
+                            Background="#F0F7FF" BorderBrush="#BBDEFB" BorderThickness="1"
+                            CornerRadius="4" Padding="12,8" Margin="0,0,0,16">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE8A9;" FontFamily="Segoe MDL2 Assets"
+                                       FontSize="12" Foreground="#1565C0"
+                                       Margin="0,0,6,0" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="TableInfoText" FontSize="11" Foreground="#1565C0"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Nombre de la vista -->
+                    <TextBlock Text="NOMBRE DE LA VISTA"
+                               FontSize="10" FontWeight="SemiBold"
+                               Foreground="{StaticResource AccentBrush}"
+                               Margin="0,0,0,8"/>
+                    <TextBox x:Name="ViewNameBox"
+                             Style="{StaticResource BIMPillsTextBox}"
+                             Height="32" FontSize="12" Text="Leyenda"
+                             Margin="0,0,0,20" VerticalContentAlignment="Center"
+                             TextChanged="ViewNameBox_TextChanged"/>
+
+                    <!-- Tamaño de celdas -->
+                    <TextBlock Text="TAMAÑO DE CELDAS"
+                               FontSize="10" FontWeight="SemiBold"
+                               Foreground="{StaticResource AccentBrush}"
+                               Margin="0,0,0,8"/>
+                    <Grid Margin="0,0,0,4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="16"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Ancho (mm)" FontSize="11"
+                                       Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                            <TextBox x:Name="CellWidthBox"
+                                     Style="{StaticResource BIMPillsTextBox}"
+                                     Height="32" FontSize="12" Text="50"
+                                     VerticalContentAlignment="Center"
+                                     TextChanged="CellSize_TextChanged"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Alto (mm)" FontSize="11"
+                                       Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                            <TextBox x:Name="CellHeightBox"
+                                     Style="{StaticResource BIMPillsTextBox}"
+                                     Height="32" FontSize="12" Text="8"
+                                     VerticalContentAlignment="Center"
+                                     TextChanged="CellSize_TextChanged"/>
+                        </StackPanel>
+                    </Grid>
+
+                </StackPanel>
+
+                <!-- ════════ Paso 2 content ════════════════════════════════ -->
+                <StackPanel x:Name="Step2Content" Visibility="Collapsed">
+
+                    <!-- Estilos de Revit -->
+                    <TextBlock Text="ESTILOS DE REVIT"
+                               FontSize="10" FontWeight="SemiBold"
+                               Foreground="{StaticResource AccentBrush}"
+                               Margin="0,0,0,12"/>
+
+                    <!-- Línea -->
+                    <StackPanel Margin="0,0,0,12">
+                        <TextBlock Text="Estilo de línea" FontSize="11"
+                                   Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                        <ComboBox x:Name="LineStyleCombo"
+                                  Style="{StaticResource BIMPillsComboBox}"
+                                  Height="32" FontSize="12" DisplayMemberPath="Name"/>
+                    </StackPanel>
+
+                    <!-- Texto valores -->
+                    <StackPanel Margin="0,0,0,16">
+                        <TextBlock Text="Tipo de texto — valores" FontSize="11"
+                                   Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                        <ComboBox x:Name="TextStyleValuesCombo"
+                                  Style="{StaticResource BIMPillsComboBox}"
+                                  Height="32" FontSize="12" DisplayMemberPath="Name"/>
+                    </StackPanel>
+
+                    <!-- Toggle: Personalizar encabezados -->
+                    <CheckBox x:Name="CustomizeHeadersCheck"
+                              Content="Personalizar encabezados"
+                              FontSize="12" Margin="0,0,0,8"
+                              Checked="ToggleSection_Changed"
+                              Unchecked="ToggleSection_Changed"/>
+
+                    <Border x:Name="HeaderSection"
+                            Visibility="Collapsed"
+                            Background="#F8F8F8"
+                            BorderBrush="#E5E5EA" BorderThickness="1"
+                            CornerRadius="4" Padding="12,10"
+                            Margin="0,0,0,4">
+                        <StackPanel>
+
+                            <TextBlock Text="Filas de encabezado" FontSize="11"
+                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                       Margin="0,0,0,6"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                                <RadioButton x:Name="HeaderRows1" Content="1 fila"
+                                             IsChecked="True" FontSize="12"
+                                             Margin="0,0,20,0"
+                                             Checked="ToggleSection_Changed"/>
+                                <RadioButton x:Name="HeaderRows2" Content="2 filas"
+                                             FontSize="12"
+                                             Checked="ToggleSection_Changed"/>
+                            </StackPanel>
+
+                            <Separator Margin="0,0,0,12"/>
+
+                            <CheckBox x:Name="DifferentiateHeaderCheck"
+                                      Content="Tipo de texto diferenciado para encabezados"
+                                      FontSize="11" Margin="0,0,0,8"
+                                      Checked="ToggleSection_Changed"
+                                      Unchecked="ToggleSection_Changed"/>
+
+                            <Border x:Name="HeaderTextSection"
+                                    Visibility="Collapsed"
+                                    Margin="0,0,0,12">
+                                <StackPanel>
+                                    <StackPanel Margin="0,0,0,8">
+                                        <TextBlock Text="Tipo de texto — encabezado fila 1" FontSize="11"
+                                                   Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                                        <ComboBox x:Name="TextStyleHeader1Combo"
+                                                  Style="{StaticResource BIMPillsComboBox}"
+                                                  Height="32" FontSize="12" DisplayMemberPath="Name"/>
+                                    </StackPanel>
+                                    <StackPanel x:Name="Header2TextPanel" Visibility="Collapsed">
+                                        <TextBlock Text="Tipo de texto — encabezado fila 2" FontSize="11"
+                                                   Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                                        <ComboBox x:Name="TextStyleHeader2Combo"
+                                                  Style="{StaticResource BIMPillsComboBox}"
+                                                  Height="32" FontSize="12" DisplayMemberPath="Name"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+
+                            <Separator Margin="0,0,0,12"/>
+
+                            <CheckBox x:Name="ApplyFillCheck"
+                                      Content="Aplicar región rellena a encabezados"
+                                      FontSize="11" Margin="0,0,0,8"
+                                      Checked="ToggleSection_Changed"
+                                      Unchecked="ToggleSection_Changed"/>
+
+                            <Border x:Name="FillSection" Visibility="Collapsed">
+                                <StackPanel>
+                                    <StackPanel Margin="0,0,0,8">
+                                        <TextBlock Text="Región rellena — fila 1" FontSize="11"
+                                                   Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                                        <ComboBox x:Name="FillType1Combo"
+                                                  Style="{StaticResource BIMPillsComboBox}"
+                                                  Height="32" FontSize="12" DisplayMemberPath="Name"/>
+                                    </StackPanel>
+                                    <StackPanel x:Name="FillType2Panel" Visibility="Collapsed">
+                                        <TextBlock Text="Región rellena — fila 2" FontSize="11"
+                                                   Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                                        <ComboBox x:Name="FillType2Combo"
+                                                  Style="{StaticResource BIMPillsComboBox}"
+                                                  Height="32" FontSize="12" DisplayMemberPath="Name"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+
+                        </StackPanel>
+                    </Border>
+
+                    <TextBlock x:Name="FillHintText"
+                               Visibility="Collapsed"
+                               Text="El color del relleno lo define el Tipo de región elegido en Revit."
+                               FontSize="10" Foreground="#AEAEB2" Margin="0,4,0,0"/>
+
+                </StackPanel>
+
+            </StackPanel>
+        </ScrollViewer>
+    </DockPanel>
+</UserControl>

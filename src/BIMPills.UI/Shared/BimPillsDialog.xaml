@@ -46,17 +46,7 @@
                     Height="40"
                     MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
                 <DockPanel>
-                    <TextBlock DockPanel.Dock="Left"
-                               x:Name="WindowTitleText"
-                               Text="BIM Pills"
-                               FontFamily="Segoe UI"
-                               FontSize="12"
-                               FontWeight="SemiBold"
-                               Foreground="{StaticResource TextSecondaryBrush}"
-                               VerticalAlignment="Center"
-                               Margin="18,0,0,0"/>
-
-                    <!-- Close button -->
+                    <!-- Close button docked first so LastChildFill applies to the title text -->
                     <Button DockPanel.Dock="Right"
                             x:Name="CloseButton"
                             Content="&#xE711;"
@@ -91,6 +81,16 @@
                             </Style>
                         </Button.Style>
                     </Button>
+
+                    <TextBlock DockPanel.Dock="Left"
+                               x:Name="WindowTitleText"
+                               Text="BIM Pills"
+                               FontFamily="Segoe UI"
+                               FontSize="12"
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource TextSecondaryBrush}"
+                               VerticalAlignment="Center"
+                               Margin="18,0,0,0"/>
                 </DockPanel>
             </Border>
 

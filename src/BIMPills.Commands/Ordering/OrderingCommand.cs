@@ -4,7 +4,7 @@ using BIMPills.Core.Models;
 namespace BIMPills.Commands.Ordering
 {
     /// <summary>
-    /// Entry point for the Ordenar / Numeración Incremental feature.
+    /// Entry point for the Ordenar / Numerador feature.
     /// Only verifies document access — the config is collected interactively
     /// by the UI layer (OrdenarWindow) before the session starts.
     /// </summary>

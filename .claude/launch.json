@@ -7,13 +7,5 @@
       "runtimeArgs": ["run", "--project", "mockup/mockup.csproj"],
       "port": 3000
     }
-  ],
-  "configurations2": [
-    {
-      "name": "sandbox",
-      "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "3001", "--directory", ".claude/sandbox"],
-      "port": 3001
-    }
   ]
 }

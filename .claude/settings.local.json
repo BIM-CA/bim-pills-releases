@@ -110,7 +110,21 @@
       "Bash(echo \"EXIT:$?\")",
       "Bash(powershell.exe -Command \"& ''C:\\\\Users\\\\guita\\\\AppData\\\\Local\\\\Programs\\\\Inno Setup 6\\\\ISCC.exe'' ''G:\\\\Claude\\\\Code\\\\installer\\\\BIMPills_Setup.iss''; Write-Host ''Exit:'' $LASTEXITCODE\")",
       "Bash(powershell -ExecutionPolicy Bypass -File build/build-all.ps1 -Versions 2024,2025,2026,2027 -Configuration Release)",
-      "Bash(powershell -ExecutionPolicy Bypass -Command \"& '.\\\\build\\\\build-all.ps1' -Versions @\\('2024','2025','2026','2027'\\) -Configuration Release\")"
+      "Bash(powershell -ExecutionPolicy Bypass -Command \"& '.\\\\build\\\\build-all.ps1' -Versions @\\('2024','2025','2026','2027'\\) -Configuration Release\")",
+      "Bash(find src *)",
+      "Bash(awk -F: '$2 > 20 {print}')",
+      "Bash(powershell -NonInteractive -Command \".\\\\build\\\\build-all.ps1 -Configuration Release -Versions 2024,2025,2026,2027\")",
+      "Bash(awk 'NR>=90 && NR<=115 {print NR\": \"$0}' src/BIMPills.Revit/Commands/ExportFamilies/ExportFamiliesRevitCommand.cs)",
+      "Bash(awk 'NR>=60 && NR<=90 {print NR\": \"$0}' src/BIMPills.Revit/Commands/ExportFamilies/ExportFamiliesRevitCommand.cs)",
+      "Bash(awk 'NR>=30 && NR<=60 {print NR\": \"$0}' src/BIMPills.Revit/Commands/ExportFamilies/ExportFamiliesRevitCommand.cs)",
+      "Bash(awk 'NR>=21 && NR<=30 {print NR\": \"$0}' src/BIMPills.Revit/Commands/ExportFamilies/ExportFamiliesRevitCommand.cs)",
+      "Bash(grep -v \"^\\\\s*$\")",
+      "Bash(where makensis *)",
+      "Bash(\"/c/Program Files \\(x86\\)/NSIS/makensis.exe\" BIMPills-Installer.nsi)",
+      "PowerShell($files = @\\('dist/Revit2024/BIMPills/ClosedXML.Parser.dll','dist/Revit2025/BIMPills/ClosedXML.Parser.dll','src/BIMPills.Revit/bin/Release/net48-windows/ClosedXML.Parser.dll'\\); foreach \\($f in $files\\) { if \\(Test-Path $f\\) { $v = \\(Get-Item $f\\).VersionInfo; Write-Output \"$f => FileVer=$\\($v.FileVersion\\) ProdVer=$\\($v.ProductVersion\\)\" } })",
+      "PowerShell([Reflection.AssemblyName]::GetAssemblyName\\(\\(Resolve-Path 'dist/Revit2024/BIMPills/ClosedXML.Parser.dll'\\)\\).Version; [Reflection.AssemblyName]::GetAssemblyName\\(\\(Resolve-Path 'dist/Revit2024/BIMPills/ClosedXML.dll'\\)\\).Version)",
+      "Bash(find . -name \"*.csproj\" -exec grep -l \"ClosedXML.Parser\" {} \\\\;)",
+      "PowerShell($p = \"$env:USERPROFILE\\\\.nuget\\\\packages\\\\closedxml.parser\\\\2.0.0\"; if \\(Test-Path $p\\) { Get-ChildItem -Recurse $p -Filter 'ClosedXML.Parser.dll' | ForEach-Object { $v=[Reflection.AssemblyName]::GetAssemblyName\\($_.FullName\\).Version; Write-Output \"$\\($_.FullName\\) => AsmVer=$v FileVer=$\\(\\(Get-Item $_.FullName\\).VersionInfo.FileVersion\\)\" } } else { Write-Output \"No 2.0.0 cache\"; Get-ChildItem \"$env:USERPROFILE\\\\.nuget\\\\packages\\\\closedxml.parser\" })"
     ]
   }
 }

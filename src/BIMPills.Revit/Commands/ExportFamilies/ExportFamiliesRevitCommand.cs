@@ -5,9 +5,12 @@ using Autodesk.Revit.UI.Events;
 using BIMPills.Commands.ExportFamilies;
 using BIMPills.Core.Commands;
 using BIMPills.Core.Models;
+using BIMPills.Core.ParameterExtractor;
 using BIMPills.Core.Services;
 using BIMPills.Infrastructure.DI;
+using BIMPills.Infrastructure.Persistence;
 using BIMPills.Revit.Commands;
+using BIMPills.Revit.Commands.ParameterExtractor;
 using BIMPills.Revit.Context;
 using BIMPills.UI.Export;
 using BIMPills.UI.Shared;
@@ -201,10 +204,10 @@ namespace BIMPills.Revit.Commands.ExportFamilies
                                 // from a predefined preset in TryLoadDefaultDwgOptions above.
                                 try { opts.HideReferencePlane = true; } catch { }
 
-                                // MergedViews controlled by "Export as xrefs" checkbox:
-                                //   checked  → false → proper paper space + xref files per viewport
-                                //   unchecked → true  → single file, everything in model space
-                                if (dwgConfig != null)
+                                // MergedViews: for Revit presets, the profile owns this setting.
+                                // For custom configs, ExportLinkedAsXrefs=true → MergedViews=false
+                                // (xref mode: paper space + separate xref file per viewport).
+                                if (dwgConfig != null && !fromPreset)
                                     opts.MergedViews = !dwgConfig.ExportLinkedAsXrefs;
 
                                 // Guard rail: if the user picked a Revit preset we don't override
@@ -422,6 +425,49 @@ namespace BIMPills.Revit.Commands.ExportFamilies
                 }
             }
 
+            // ── Pestaña Parámetros ─────────────────────────────────────────
+            try
+            {
+                var activeUidoc = CommandData!.Application.ActiveUIDocument;
+                var (categories, paramsByCategory, hasCurveByCategory, familyTypesByCategory) = ExtractorCategoryResolver.ResolveFromModel(doc!);
+                var currentSelection = activeUidoc.Selection.GetElementIds().ToList();
+
+                window.InitializeExtractor(
+                    selectedElementCount: currentSelection.Count,
+                    applyCallback: config =>
+                    {
+                        IList<ElementId> targets;
+                        switch (config.Scope)
+                        {
+                            case ExtractionScope.WholeModel:
+                                targets = new FilteredElementCollector(doc)
+                                    .WhereElementIsNotElementType()
+                                    .ToElementIds().ToList();
+                                break;
+                            case ExtractionScope.ActiveView:
+                                targets = new FilteredElementCollector(doc, activeUidoc.ActiveView.Id)
+                                    .WhereElementIsNotElementType()
+                                    .ToElementIds().ToList();
+                                break;
+                            default:
+                                targets = currentSelection;
+                                break;
+                        }
+                        var extractResult = ExtractorApplier.Apply(doc!, targets, config);
+                        ShowExtractorResultDialog(extractResult, window);
+                        return extractResult.Errors.Count == 0;
+                    },
+                    presetRepository: new JsonExtractionPresetRepository(),
+                    availableCategories: categories,
+                    paramsByCategory: paramsByCategory,
+                    hasCurveByCategory: hasCurveByCategory,
+                    familyTypesByCategory: familyTypesByCategory);
+            }
+            catch (Exception ex)
+            {
+                logger?.Warning($"[Extractor] No se pudo inicializar la pestaña Parámetros: {ex.Message}");
+            }
+
             window.ShowDialogOverRevit();
 
             // Snapshot the user's PDF engine choice right after the dialog closes.
@@ -434,7 +480,29 @@ namespace BIMPills.Revit.Commands.ExportFamilies
             if (exportQueue != null && exportQueue.Count > 0)
             {
                 var uiApp = CommandData!.Application;
-                StartIdlingExport(uiApp, doc!, exportQueue, pdfCallback, dwgCallback, logger);
+                StartIdlingExport(uiApp, doc!, exportQueue, pdfCallback, dwgCallback, logger, window.PendingExportFolder);
+            }
+        }
+
+        private static void ShowExtractorResultDialog(ExtractionResult result, System.Windows.Window? owner)
+        {
+            var summary =
+                $"Elementos procesados: {result.ElementsProcessed}\n" +
+                $"Parámetros escritos:  {result.ParametersWritten}\n" +
+                $"Parámetros creados:   {result.ParametersCreated}";
+
+            if (result.Errors.Count == 0)
+            {
+                BimPillsDialog.Info("Extractor de Parámetros", "Extracción completada.", detail: summary, owner: owner);
+            }
+            else
+            {
+                var sample = string.Join("\n", result.Errors.Take(5));
+                var more   = result.Errors.Count > 5 ? $"\n(+{result.Errors.Count - 5} más)" : "";
+                BimPillsDialog.Warning("Extractor de Parámetros",
+                    $"Extracción con {result.Errors.Count} errores.",
+                    detail: summary + "\n\nErrores:\n" + sample + more,
+                    owner: owner);
             }
         }
 
@@ -448,6 +516,7 @@ namespace BIMPills.Revit.Commands.ExportFamilies
         private static Func<long, string, string, DwgExportConfig?, bool>? _dwgCb;
         private static ILogger? _idlingLogger;
         private static List<ExportQueueItem>? _exportQueue;
+        private static string? _exportBaseFolder;
         private static int _exportIndex;
         private static int _exported;
         private static int _failed;
@@ -496,12 +565,14 @@ namespace BIMPills.Revit.Commands.ExportFamilies
             List<ExportQueueItem> queue,
             Func<long, string, string, PdfExportSettings, bool>? pdfCb,
             Func<long, string, string, DwgExportConfig?, bool>? dwgCb,
-            ILogger? logger)
+            ILogger? logger,
+            string? baseFolder = null)
         {
             _pdfCb = pdfCb;
             _dwgCb = dwgCb;
             _idlingLogger = logger;
             _exportQueue = queue;
+            _exportBaseFolder = baseFolder;
             _exportIndex = 0;
             _exported = 0;
             _failed = 0;
@@ -611,6 +682,8 @@ namespace BIMPills.Revit.Commands.ExportFamilies
 
                 if (_failed > 0 || wasCancelled)
                     BIMPills.UI.Shared.BimPillsDialog.Warning(header, message, detail);
+                else if (!string.IsNullOrEmpty(_exportBaseFolder))
+                    BIMPills.UI.Shared.BimPillsDialog.SuccessWithFolder(header, message, detail, _exportBaseFolder!);
                 else
                     BIMPills.UI.Shared.BimPillsDialog.Success(header, message, detail);
 
@@ -619,6 +692,7 @@ namespace BIMPills.Revit.Commands.ExportFamilies
                 // Cleanup static refs
                 _exportQueue = null;
                 _exportErrors = null;
+                _exportBaseFolder = null;
                 _pdfCb = null;
                 _dwgCb = null;
                 _progressWindow = null;
