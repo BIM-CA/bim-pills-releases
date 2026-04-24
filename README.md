@@ -3,7 +3,7 @@
   <h1>BIM Pills</h1>
   <p><strong>Píldoras inteligentes para optimizar tu flujo de trabajo en Autodesk Revit</strong></p>
   <p>
-    <img src="https://img.shields.io/badge/versión-beta%203.4-EF6337" alt="beta 3.4"/>
+    <img src="https://img.shields.io/badge/versión-beta%206.0-EF6337" alt="beta 6.0"/>
     <img src="https://img.shields.io/badge/Revit-2024%20%7C%202025%20%7C%202026%20%7C%202027-0696D7" alt="Revit Versions"/>
     <img src="https://img.shields.io/badge/plataforma-Windows-informational" alt="Windows"/>
   </p>
@@ -32,6 +32,7 @@ Exportación profesional de entregables directamente desde Revit:
 - **Planos** — Exporta vistas y planos a PDF, DWG, DGN o imágenes con organización automática de carpetas por disciplina
 - **Modelo** — Exporta el modelo a IFC, NWC/NWD y otros formatos de interoperabilidad
 - **Familias** — Exporta familias del proyecto como archivos `.rfa` organizados por categoría
+- **Parámetros** — Extrae parámetros del modelo (lat/lon, coordenadas, categoría, tipo, nivel, etc.) y los escribe directamente en elementos de Revit
 - **Auditoría** — Genera reportes de calidad del modelo en Excel
 
 ### 📥 Importar
@@ -40,7 +41,7 @@ Importa plantillas, filtros y estándares desde archivos externos para homogenei
 ### 🗝️ Keynotes
 Gestión de notas clave del proyecto: edición, reorganización y sincronización del archivo de keynotes directamente desde Revit.
 
-### 📐 Ordenar
+### 📐 Ordenar / Numerador
 Reordena y renombra elementos del modelo (vistas, planos, familias) con lógica automática basada en parámetros del proyecto.
 
 ### 🔄 Trasladar
@@ -48,6 +49,11 @@ Transfiere estándares entre modelos: plantillas de vista, filtros, tipos de lí
 
 ### 🗂️ Gestionar Datos
 Herramienta de gestión de datos del proyecto: conecta con fuentes externas, actualiza parámetros en masa y mantiene coherencia entre el modelo y la información del proyecto.
+
+### 📋 Documentar
+Herramientas de documentación del modelo:
+- **Acotado** — Acotado automático de elementos (vanos, puertas, ventanas) con esquemas configurables
+- **Leyenda desde Excel** — Dibuja tablas y leyendas en vistas de Revit directamente desde archivos `.xlsx`, con soporte de celdas fusionadas y colores
 
 ### 🔗 Conexión MCP
 Integración experimental con servidores MCP para automatización avanzada del modelo desde herramientas externas.
