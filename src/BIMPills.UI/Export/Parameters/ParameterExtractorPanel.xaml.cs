@@ -88,7 +88,7 @@ namespace BIMPills.UI.Export.Parameters
         public List<ParamTreeNode> Children { get; } = new();
         public bool IsLeaf    => Children.Count == 0;
         public bool IsGroup   => !IsLeaf;
-        public bool IsGeoGroup => IsGroup && Label.Contains("Geogr", StringComparison.OrdinalIgnoreCase);
+        public bool IsGeoGroup => IsGroup && Label.IndexOf("Geogr", StringComparison.OrdinalIgnoreCase) >= 0;
 
         // Leaf-only properties
         public ExtractionSourceKind? Source   { get; init; }
@@ -272,11 +272,15 @@ namespace BIMPills.UI.Export.Parameters
             IReadOnlyDictionary<string, IReadOnlyDictionary<string, IReadOnlyList<string>>> familyTypesByCategory)
         {
             var roots = new List<FilterTreeNode>();
-            foreach (var (catName, famDict) in familyTypesByCategory.OrderBy(kv => kv.Key))
+            foreach (var catKvp in familyTypesByCategory.OrderBy(kv => kv.Key))
             {
+                var catName = catKvp.Key;
+                var famDict = catKvp.Value;
                 var catNode = new FilterTreeNode { Label = catName, Level = FilterNodeLevel.Category };
-                foreach (var (famName, types) in famDict.OrderBy(kv => kv.Key))
+                foreach (var famKvp in famDict.OrderBy(kv => kv.Key))
                 {
+                    var famName = famKvp.Key;
+                    var types   = famKvp.Value;
                     var famNode = new FilterTreeNode { Label = famName, Level = FilterNodeLevel.Family };
                     foreach (var typeName in types.OrderBy(t => t))
                         famNode.AddChild(new FilterTreeNode { Label = typeName, Level = FilterNodeLevel.Type });
