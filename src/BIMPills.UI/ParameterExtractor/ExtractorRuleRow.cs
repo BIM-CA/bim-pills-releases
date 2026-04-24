@@ -7,9 +7,9 @@ using BIMPills.Core.ParameterExtractor;
 namespace BIMPills.UI.ParameterExtractor
 {
     /// <summary>
-    /// View-model de una fila en el panel ORIGEN. Un origen produce 1 destino
-    /// (simple) o 2 destinos (dual: crudo + convertido). El tag es una letra
-    /// (A, B, C, ...) que identifica el grupo.
+    /// View-model de una fila en el panel ORIGEN.
+    /// IsConversionEnabled genera una fila convertida adicional en DESTINO.
+    /// Los settings de conversión viven aquí — no en el DESTINO.
     /// </summary>
     public class SourceMappingVM : INotifyPropertyChanged
     {
@@ -44,19 +44,51 @@ namespace BIMPills.UI.ParameterExtractor
             set { if (_sourceParameterName != value) { _sourceParameterName = value; OnPropertyChanged(nameof(SourceParameterName)); } }
         }
 
-        private bool _isDual;
-        public bool IsDual
+        // ── Conversión ───────────────────────────────────────────────────────────
+
+        private bool _isConversionEnabled;
+        public bool IsConversionEnabled
         {
-            get => _isDual;
+            get => _isConversionEnabled;
             set
             {
-                if (_isDual != value)
+                if (_isConversionEnabled != value)
                 {
-                    _isDual = value;
-                    OnPropertyChanged(nameof(IsDual));
+                    _isConversionEnabled = value;
+                    OnPropertyChanged(nameof(IsConversionEnabled));
+                    OnPropertyChanged(nameof(ConversionSummary));
                 }
             }
         }
+
+        /// <summary>Origen de coord. para la salida CONVERTIDA.</summary>
+        public CoordinateOrigin ConversionOrigin { get; set; } = CoordinateOrigin.Survey;
+
+        /// <summary>Formato geográfico de la salida convertida.</summary>
+        public GeoFormat ConversionGeoFormat { get; set; } = GeoFormat.Dms;
+
+        /// <summary>Método de conversión (equirectangular o UTM).</summary>
+        public GeoConversionMethod ConversionMethod { get; set; } = GeoConversionMethod.RevitProjectLocation;
+
+        /// <summary>Zona UTM (1–60), solo relevante si ConversionMethod = UTM.</summary>
+        public int ConversionUtmZone { get; set; } = 19;
+
+        /// <summary>True = hemisferio norte, false = sur.</summary>
+        public bool ConversionUtmIsNorth { get; set; } = false;
+
+        public string ConversionSummary
+        {
+            get
+            {
+                if (!IsConversionEnabled) return "Sin conversión";
+                string method = ConversionMethod == GeoConversionMethod.UTM
+                    ? $"UTM Z{ConversionUtmZone}{(ConversionUtmIsNorth ? "N" : "S")}"
+                    : "RevitGeo";
+                return $"{ConversionOrigin} · {ConversionGeoFormat} · {method}";
+            }
+        }
+
+        // ── Apariencia ───────────────────────────────────────────────────────────
 
         private Brush _tagBrush = Brushes.Gray;
         public Brush TagBrush
@@ -89,9 +121,9 @@ namespace BIMPills.UI.ParameterExtractor
     }
 
     /// <summary>
-    /// View-model de una fila en el panel DESTINO. Referencia el grupo origen
-    /// por GroupId. Tag es letra sola (origen simple) o letra+número
-    /// (origen dual: "B1" = crudo, "B2" = convertido).
+    /// View-model de una fila en el panel DESTINO.
+    /// DualRole: "Single" | "Raw" | "Converted".
+    /// Los settings de conversión los lee BuildConfig() desde el SourceMappingVM padre.
     /// </summary>
     public class TargetMappingVM : INotifyPropertyChanged
     {
@@ -104,7 +136,6 @@ namespace BIMPills.UI.ParameterExtractor
             set { if (_tag != value) { _tag = value; OnPropertyChanged(nameof(Tag)); } }
         }
 
-        /// <summary>"Single", "Raw" (dual crudo), "Converted" (dual convertido).</summary>
         public string DualRole { get; set; } = "Single";
 
         public bool IsPaired => DualRole != "Single";
@@ -130,26 +161,10 @@ namespace BIMPills.UI.ParameterExtractor
             set { if (_dataType != value) { _dataType = value; OnPropertyChanged(nameof(DataType)); } }
         }
 
-        private CoordinateOrigin _coordinateOrigin = CoordinateOrigin.Internal;
-        public CoordinateOrigin CoordinateOrigin
-        {
-            get => _coordinateOrigin;
-            set { if (_coordinateOrigin != value) { _coordinateOrigin = value; OnPropertyChanged(nameof(CoordinateOrigin)); } }
-        }
-
-        private GeoFormat _geoFormat = GeoFormat.Decimal;
-        public GeoFormat GeoFormat
-        {
-            get => _geoFormat;
-            set
-            {
-                if (_geoFormat != value)
-                {
-                    _geoFormat = value;
-                    OnPropertyChanged(nameof(GeoFormat));
-                }
-            }
-        }
+        // Mantenidos para que BuildConfig/ApplyConfigToGrid sigan funcionando
+        // y como fallback para filas Single/Raw.
+        public CoordinateOrigin CoordinateOrigin { get; set; } = CoordinateOrigin.Internal;
+        public GeoFormat GeoFormat { get; set; } = GeoFormat.Decimal;
 
         private bool _createIfMissing = true;
         public bool CreateIfMissing
@@ -181,6 +196,12 @@ namespace BIMPills.UI.ParameterExtractor
         {
             GeoFormat.Decimal,
             GeoFormat.Dms,
+        };
+
+        public static IReadOnlyList<GeoConversionMethod> AllConversionMethods => new[]
+        {
+            GeoConversionMethod.RevitProjectLocation,
+            GeoConversionMethod.UTM,
         };
 
         public static IReadOnlyList<ExtractionLengthUnits> AllLengthUnits => new[]

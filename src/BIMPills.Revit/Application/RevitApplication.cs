@@ -10,6 +10,7 @@ using BIMPills.Commands.Gestion;
 using BIMPills.Commands.MCPIntegration;
 using BIMPills.Commands.ModelAudit;
 using BIMPills.Commands.Ordering;
+using BIMPills.Commands.ParameterExtractor;
 using BIMPills.Core.About;
 using BIMPills.Core.Licensing;
 using BIMPills.Core.Modules;
@@ -342,13 +343,14 @@ namespace BIMPills.Revit.Application
             yield return new ModelAuditModule();
             yield return new ExportFamiliesModule();
             yield return new TransferModule(); // Importar — justo después de Exportar
+            // ParameterExtractorModule: acceso solo desde tab Parámetros en ExportarWindow
             // CustomDimensionSchemesModule — se accede desde Documentar → Acotar
             // ExportAudit — se accede desde la ventana de Auditoría (sin módulo propio)
             yield return new MCPIntegrationModule();
             yield return new OrderingModule();
             yield return new DataManagerModule();
             // Panel: Procesos
-            yield return new DocumentacionModule();
+            yield return new DocumentacionModule(); // Incluye tab "Leyenda Excel"
             yield return new GestionModule();
             // Panel: Información
             yield return new SupportModule();

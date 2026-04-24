@@ -89,6 +89,18 @@ namespace BIMPills.UI.Export.Parameters
         /// <summary>Tipo de dato del destino secundario. Si null, hereda DefaultDataType.</summary>
         public ExtractionDataType? SecondaryDataType { get; set; }
 
+        // ── Opciones de conversión geo (RAW) ─────────────────────────────────────
+
+        public GeoConversionMethod GeoConversionMethod { get; set; } = GeoConversionMethod.RevitProjectLocation;
+        public int  UtmZone              { get; set; } = 19;
+        public bool UtmIsNorthHemisphere { get; set; } = false;
+
+        // ── Opciones de conversión geo (Convertido) ───────────────────────────────
+
+        public GeoConversionMethod SecondaryConversionMethod  { get; set; } = GeoConversionMethod.RevitProjectLocation;
+        public int  SecondaryUtmZone              { get; set; } = 19;
+        public bool SecondaryUtmIsNorthHemisphere { get; set; } = false;
+
         // ── INotifyPropertyChanged ────────────────────────────────────────────────
 
         public event PropertyChangedEventHandler? PropertyChanged;

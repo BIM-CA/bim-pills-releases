@@ -1,0 +1,79 @@
+<Window x:Class="BIMPills.UI.Export.Parameters.ConversionConfigModal"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:BIMPills.UI.ParameterExtractor"
+        Title="Configurar conversión"
+        Width="360" SizeToContent="Height"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner"
+        WindowStyle="ToolWindow"
+        ShowInTaskbar="False"
+        Background="White"
+        FontFamily="Segoe UI">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/BIMPills.UI;component/Shared/Styles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <StackPanel Margin="20,16,20,20">
+
+        <!-- Base de coordenadas -->
+        <TextBlock Text="Base de coordenadas"
+                   FontSize="11" Foreground="#86868B" Margin="0,0,0,4"/>
+        <ComboBox x:Name="OriginCombo"
+                  Style="{StaticResource BIMPillsComboBox}"
+                  ItemsSource="{x:Static vm:TargetMappingVM.AllOrigins}"
+                  Height="30" FontSize="12" Margin="0,0,0,14"/>
+
+        <!-- Formato geográfico -->
+        <TextBlock Text="Formato geográfico"
+                   FontSize="11" Foreground="#86868B" Margin="0,0,0,4"/>
+        <ComboBox x:Name="GeoFormatCombo"
+                  Style="{StaticResource BIMPillsComboBox}"
+                  ItemsSource="{x:Static vm:TargetMappingVM.AllGeoFormats}"
+                  Height="30" FontSize="12" Margin="0,0,0,14"/>
+
+        <!-- Método de conversión -->
+        <TextBlock Text="Método de conversión"
+                   FontSize="11" Foreground="#86868B" Margin="0,0,0,4"/>
+        <ComboBox x:Name="ConvMethodCombo"
+                  Style="{StaticResource BIMPillsComboBox}"
+                  ItemsSource="{x:Static vm:TargetMappingVM.AllConversionMethods}"
+                  Height="30" FontSize="12" Margin="0,0,0,14"
+                  SelectionChanged="ConvMethod_Changed"/>
+
+        <!-- UTM: visible solo cuando método = UTM -->
+        <StackPanel x:Name="UtmPanel" Visibility="Collapsed">
+            <TextBlock Text="Zona UTM (1 – 60)"
+                       FontSize="11" Foreground="#86868B" Margin="0,0,0,4"/>
+            <TextBox x:Name="UtmZoneBox"
+                     Style="{StaticResource BIMPillsTextBox}"
+                     Height="30" FontSize="12" Margin="0,0,0,10"/>
+            <CheckBox x:Name="UtmNorthCheck"
+                      Content="Hemisferio norte"
+                      FontSize="12"
+                      VerticalContentAlignment="Center"
+                      Margin="2,0,0,14"/>
+        </StackPanel>
+
+        <!-- Botones -->
+        <Border BorderBrush="#E5E5EA" BorderThickness="0,1,0,0" Padding="0,12,0,0">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="Cancelar"
+                        Style="{StaticResource SecondaryButton}"
+                        Width="88" Height="30" FontSize="11"
+                        Margin="0,0,8,0"
+                        Click="Cancel_Click"/>
+                <Button Content="Aplicar"
+                        Style="{StaticResource PrimaryButton}"
+                        Width="88" Height="30" FontSize="11"
+                        Click="Apply_Click"/>
+            </StackPanel>
+        </Border>
+
+    </StackPanel>
+</Window>

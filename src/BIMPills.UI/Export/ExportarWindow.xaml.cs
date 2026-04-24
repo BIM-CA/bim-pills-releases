@@ -1,6 +1,8 @@
 using BIMPills.Core.Audit;
 using BIMPills.Core.Models;
+using BIMPills.Core.ParameterExtractor;
 using BIMPills.Core.Services;
+using BIMPills.Infrastructure.Persistence;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,22 +12,28 @@ namespace BIMPills.UI.Export
 {
     public partial class ExportarWindow : Window
     {
-        // Tab indexes (new order): 0 = Planos y Vistas, 1 = Modelo, 2 = Familias
-        private const int TabPlanos = 0;
-        private const int TabModelo = 1;
-        private const int TabFamilias = 2;
+        // Tab indexes: 0 = Planos y Vistas, 1 = Modelo, 2 = Familias, 3 = Parámetros
+        private const int TabPlanos    = 0;
+        private const int TabModelo    = 1;
+        private const int TabFamilias  = 2;
+        private const int TabParametros = 3;
 
-        private string _familiesSubtitle = "";
-        private string _sheetsSubtitle = "";
-        private string _modelSubtitle = "";
+        private string _familiesSubtitle  = "";
+        private string _sheetsSubtitle    = "";
+        private string _modelSubtitle     = "";
+        private string _extractorSubtitle = "";
         private int _activeTab = TabPlanos;
 
         private bool _familiesCanExport;
         private bool _sheetsCanExport;
         private bool _modelCanExport;
+        private bool _extractorCanApply;
 
         /// <summary>Export queue built by SheetsPanel for non-blocking processing by the command.</summary>
         public List<ExportQueueItem>? PendingExportQueue => SheetsPanel.PendingExportQueue;
+
+        /// <summary>Base destination folder for the pending export queue.</summary>
+        public string? PendingExportFolder => SheetsPanel.PendingExportFolder;
 
         /// <summary>
         /// Global PDF engine settings (Native vs SystemPrinter) chosen by the user.
@@ -65,6 +73,16 @@ namespace BIMPills.UI.Export
             {
                 if (_activeTab == TabModelo) UpdateFooterButtons();
             };
+
+            ExtractorPanel.ExportEnabledChanged += (_, canApply) =>
+            {
+                _extractorCanApply = canApply;
+                if (_activeTab == TabParametros) UpdateActionButton();
+            };
+            ExtractorPanel.StepChanged += (_, step) =>
+            {
+                if (_activeTab == TabParametros) UpdateFooterButtons();
+            };
         }
 
         private void UpdateActionButton()
@@ -82,6 +100,10 @@ namespace BIMPills.UI.Export
                 case TabFamilias:
                     ActionButton.IsEnabled = _familiesCanExport;
                     ActionButton.Content = ExportPanel.ExportLabel;
+                    break;
+                case TabParametros:
+                    ActionButton.IsEnabled = _extractorCanApply;
+                    ActionButton.Content = ExtractorPanel.ExportLabel;
                     break;
             }
             UpdateFooterButtons();
@@ -102,6 +124,9 @@ namespace BIMPills.UI.Export
                 case TabModelo:
                     onLastStep = ModelPanel.CurrentStep >= ModelPanel.StepCount;
                     break;
+                case TabParametros:
+                    onLastStep = ExtractorPanel.CurrentStep >= ExtractorPanel.StepCount;
+                    break;
                 default: // TabFamilias — single step, always show action button
                     onLastStep = true;
                     break;
@@ -115,8 +140,9 @@ namespace BIMPills.UI.Export
         {
             switch (_activeTab)
             {
-                case TabPlanos:  SheetsPanel.NextStep(); break;
-                case TabModelo:  ModelPanel.NextStep();  break;
+                case TabPlanos:     SheetsPanel.NextStep();    break;
+                case TabModelo:     ModelPanel.NextStep();     break;
+                case TabParametros: ExtractorPanel.NextStep(); break;
             }
         }
 
@@ -126,7 +152,8 @@ namespace BIMPills.UI.Export
             {
                 case TabPlanos:   SheetsPanel.TriggerExport(); break;
                 case TabModelo:   ModelPanel.TriggerExport(); break;
-                case TabFamilias: ExportPanel.TriggerExport(); break;
+                case TabFamilias:  ExportPanel.TriggerExport();  break;
+                case TabParametros: ExtractorPanel.TriggerExport(); break;
             }
         }
 
@@ -229,6 +256,13 @@ namespace BIMPills.UI.Export
             UpdateTabVisualState();
         }
 
+        private void TabParametros_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            if (_activeTab == TabParametros) return;
+            _activeTab = TabParametros;
+            UpdateTabVisualState();
+        }
+
         private void UpdateTabVisualState()
         {
             var activeTabStyle    = (Style)FindResource("TabHeaderActive");
@@ -237,16 +271,19 @@ namespace BIMPills.UI.Export
             var inactiveTextStyle = (Style)FindResource("TabHeaderText");
 
             // Reset all tabs to inactive
-            TabFamiliasBorder.Style = inactiveTabStyle;
-            TabFamiliasText.Style   = inactiveTextStyle;
-            TabPlanosBorder.Style   = inactiveTabStyle;
-            TabPlanosText.Style     = inactiveTextStyle;
-            TabModeloBorder.Style   = inactiveTabStyle;
-            TabModeloText.Style     = inactiveTextStyle;
+            TabFamiliasBorder.Style  = inactiveTabStyle;
+            TabFamiliasText.Style    = inactiveTextStyle;
+            TabPlanosBorder.Style    = inactiveTabStyle;
+            TabPlanosText.Style      = inactiveTextStyle;
+            TabModeloBorder.Style    = inactiveTabStyle;
+            TabModeloText.Style      = inactiveTextStyle;
+            TabParametrosBorder.Style = inactiveTabStyle;
+            TabParametrosText.Style   = inactiveTextStyle;
 
-            ExportPanel.Visibility  = Visibility.Collapsed;
-            SheetsPanel.Visibility  = Visibility.Collapsed;
-            ModelPanel.Visibility   = Visibility.Collapsed;
+            ExportPanel.Visibility    = Visibility.Collapsed;
+            SheetsPanel.Visibility    = Visibility.Collapsed;
+            ModelPanel.Visibility     = Visibility.Collapsed;
+            ExtractorPanel.Visibility = Visibility.Collapsed;
 
             switch (_activeTab)
             {
@@ -274,20 +311,44 @@ namespace BIMPills.UI.Export
                     ToolHeaderSubtitle.Text = "Exporta familias del modelo a carpeta local";
                     SubtitleText.Text       = _familiesSubtitle;
                     break;
+                case TabParametros:
+                    TabParametrosBorder.Style  = activeTabStyle;
+                    TabParametrosText.Style    = activeTextStyle;
+                    ExtractorPanel.Visibility  = Visibility.Visible;
+                    ToolHeaderTitle.Text       = "Extractor de Parámetros";
+                    ToolHeaderSubtitle.Text    = "Pobla parámetros de los elementos con sus propios datos (coordenadas, categoría, ID…)";
+                    SubtitleText.Text          = _extractorSubtitle;
+                    break;
             }
 
             UpdateActionButton();
             UpdateFooterButtons();
         }
 
+        public void InitializeExtractor(
+            int selectedElementCount,
+            Func<ExtractionConfig, bool>? applyCallback = null,
+            JsonExtractionPresetRepository? presetRepository = null,
+            IReadOnlyList<string>? availableCategories = null,
+            IReadOnlyDictionary<string, IReadOnlyList<string>>? paramsByCategory = null,
+            IReadOnlyDictionary<string, bool>? hasCurveByCategory = null,
+            IReadOnlyDictionary<string, IReadOnlyDictionary<string, IReadOnlyList<string>>>? familyTypesByCategory = null)
+        {
+            ExtractorPanel.Initialize(selectedElementCount, applyCallback, presetRepository,
+                availableCategories, paramsByCategory, hasCurveByCategory, familyTypesByCategory);
+            _extractorSubtitle = "Pobla parámetros con datos del modelo";
+            if (_activeTab == TabParametros)
+                SubtitleText.Text = _extractorSubtitle;
+        }
+
+        public void ShowExtractorTab()
+        {
+            _activeTab = TabParametros;
+            UpdateTabVisualState();
+        }
+
         private void Close_Click(object sender, RoutedEventArgs e) => Close();
 
-        /// <summary>
-        /// Sets the document name in the header (from Revit).
-        /// </summary>
-        public void SetDocumentName(string name)
-        {
-            DocumentName.Text = name;
-        }
+        public void SetDocumentName(string name) => DocumentName.Text = name;
     }
 }

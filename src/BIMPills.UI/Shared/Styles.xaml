@@ -28,6 +28,21 @@
     <SolidColorBrush x:Key="SeparatorBrush" Color="{StaticResource SeparatorColor}"/>
     <SolidColorBrush x:Key="TextPrimaryBrush" Color="{StaticResource PrimaryColor}"/>
 
+    <!-- Colores de acento adicionales (Extractor + paneles de info) -->
+    <Color x:Key="HeadingAccentColor">#1565C0</Color>
+    <Color x:Key="FamilyTextColor">#3C3C43</Color>
+    <Color x:Key="SectionHeaderColor">#F2F2F7</Color>
+    <Color x:Key="InfoPanelBackgroundColor">#F0F5FF</Color>
+    <Color x:Key="InfoPanelBorderColor">#B3C8EF</Color>
+    <Color x:Key="PlaceholderTextColor">#AEAEB2</Color>
+
+    <SolidColorBrush x:Key="HeadingAccentBrush"      Color="{StaticResource HeadingAccentColor}"/>
+    <SolidColorBrush x:Key="FamilyTextBrush"          Color="{StaticResource FamilyTextColor}"/>
+    <SolidColorBrush x:Key="SectionHeaderBrush"       Color="{StaticResource SectionHeaderColor}"/>
+    <SolidColorBrush x:Key="InfoPanelBackgroundBrush" Color="{StaticResource InfoPanelBackgroundColor}"/>
+    <SolidColorBrush x:Key="InfoPanelBorderBrush"     Color="{StaticResource InfoPanelBorderColor}"/>
+    <SolidColorBrush x:Key="PlaceholderTextBrush"     Color="{StaticResource PlaceholderTextColor}"/>
+
     <!-- ══════════════════════════════════════════════
          Tipografía — macOS-inspired (Segoe UI as SF Pro substitute)
          ══════════════════════════════════════════════ -->
@@ -184,6 +199,14 @@
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+    </Style>
+
+    <!-- Boton compacto — versión pequeña de SecondaryButton para acciones internas de panel -->
+    <Style x:Key="CompactButton" TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
+        <Setter Property="Height" Value="20"/>
+        <Setter Property="MinWidth" Value="0"/>
+        <Setter Property="Padding" Value="5,0"/>
+        <Setter Property="FontSize" Value="9"/>
     </Style>
 
     <!-- Boton terciario — borde azul fino, acciones menores -->
@@ -534,7 +557,7 @@
                         <Popup x:Name="Popup"
                                Placement="Bottom"
                                IsOpen="{TemplateBinding IsDropDownOpen}"
-                               AllowsTransparency="True"
+                               AllowsTransparency="False"
                                Focusable="False"
                                PopupAnimation="Slide">
                             <Grid x:Name="DropDown"

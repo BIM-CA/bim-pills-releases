@@ -26,6 +26,7 @@ namespace BIMPills.Revit.Application
                 ["datamanager"]   = RibbonIconFactory.CreateDataManagerIcon,
                 ["transfer"]      = RibbonIconFactory.CreateTransferIcon,
                 ["support"]       = RibbonIconFactory.CreateSupportIcon,
+                ["extractor"]     = RibbonIconFactory.CreateExtractorIcon,
             };
 
         public RibbonBuilder(UIControlledApplication app)

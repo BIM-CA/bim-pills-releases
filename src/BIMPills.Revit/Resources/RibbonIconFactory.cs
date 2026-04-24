@@ -305,6 +305,69 @@ namespace BIMPills.Revit.Resources
             });
         }
 
+        public static BitmapSource CreateExtractorIcon()
+        {
+            return RenderIcon(ctx =>
+            {
+                var elemPen  = Stroke(Navy, 1.5);
+                var arrowPen = RoundStroke(Orange, 2.0);
+                var tagPen   = Stroke(Navy, 1.5);
+
+                // Elemento origen: rectángulo "modelo" (izq)
+                ctx.DrawRoundedRectangle(Brushes.White, elemPen,
+                    new Rect(4, 9, 10, 14), 2, 2);
+                var lineP = RoundStroke(Navy, 1.0);
+                ctx.DrawLine(lineP, new Point(6, 13), new Point(12, 13));
+                ctx.DrawLine(lineP, new Point(6, 16), new Point(12, 16));
+                ctx.DrawLine(lineP, new Point(6, 19), new Point(10, 19));
+
+                // Flecha extractora — naranja
+                ctx.DrawLine(arrowPen, new Point(14, 16), new Point(22, 16));
+                ctx.DrawLine(arrowPen, new Point(19, 13), new Point(22, 16));
+                ctx.DrawLine(arrowPen, new Point(19, 19), new Point(22, 16));
+
+                // Etiqueta destino "P" (parámetro) — amarillo con borde navy
+                ctx.DrawRoundedRectangle(Brush(Yellow), tagPen,
+                    new Rect(22, 10, 8, 12), 2, 2);
+                var pText = CreateText("P", Navy, 8.5);
+                ctx.DrawText(pText, new Point(24, 11.5));
+            });
+        }
+
+        public static BitmapSource CreateDibujarIcon()
+        {
+            return RenderIcon(ctx =>
+            {
+                var navyPen   = Stroke(Navy, 1.5);
+                var orangePen = RoundStroke(Orange, 2.0);
+                var thinPen   = Stroke(Navy, 1.0);
+
+                // ── Tablero de dibujo — rectángulo con bordes redondeados ──
+                // Marco exterior (tablero) con relleno crema
+                var boardFill = new SolidColorBrush(Color.FromRgb(0xF8, 0xF4, 0xEC));
+                ctx.DrawRoundedRectangle(boardFill, navyPen,
+                    new Rect(4, 8, 22, 18), 1.5, 1.5);
+
+                // Papel encima del tablero — ligeramente más pequeño
+                ctx.DrawRoundedRectangle(Brushes.White, thinPen,
+                    new Rect(6, 10, 18, 14), 1, 1);
+
+                // Líneas de contenido en el papel (simulan texto/tabla)
+                ctx.DrawLine(thinPen, new Point(8, 13.5), new Point(22, 13.5));
+                ctx.DrawLine(thinPen, new Point(8, 16.5), new Point(22, 16.5));
+                ctx.DrawLine(thinPen, new Point(8, 19.5), new Point(20, 19.5));
+
+                // ── Regla T — palo vertical (naranja) ──
+                // Barra horizontal de la T (en la parte superior del tablero)
+                ctx.DrawRoundedRectangle(Brush(Orange), null,
+                    new Rect(2, 6, 28, 3), 1, 1);
+
+                // Vástago vertical de la regla T
+                ctx.DrawRoundedRectangle(Brush(Orange), null,
+                    new Rect(5.5, 6, 2.5, 20), 0.5, 0.5);
+            });
+        }
+
         public static BitmapSource CreateSupportIcon()
         {
             return RenderIcon(ctx =>

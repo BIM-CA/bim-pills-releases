@@ -26,6 +26,27 @@ namespace BIMPills.Core.ParameterExtractor
     }
 
     /// <summary>
+    /// Método de conversión de coordenadas internas Revit a Latitud/Longitud.
+    /// </summary>
+    public enum GeoConversionMethod
+    {
+        /// <summary>
+        /// Usa la API nativa de Revit (ProjectLocation.GetProjectPosition).
+        /// Requiere que el modelo esté correctamente georeferenciado.
+        /// Maneja automáticamente la rotación de Norte Verdadero.
+        /// </summary>
+        RevitProjectLocation,
+
+        /// <summary>
+        /// Proyección UTM inversa manual (Transverse Mercator WGS84).
+        /// Útil cuando el Survey Point tiene coordenadas UTM conocidas
+        /// pero la georeferenciación de Revit no está configurada.
+        /// Requiere zona UTM y hemisferio.
+        /// </summary>
+        UTM
+    }
+
+    /// <summary>
     /// Tipo de dato esperado del destino. Se mapea a SpecTypeId en la capa Revit.
     /// </summary>
     public enum ExtractionDataType
@@ -42,9 +63,15 @@ namespace BIMPills.Core.ParameterExtractor
     public enum ExtractionSourceKind
     {
         ElementProperty,   // parámetro existente del elemento
-        LocationX,
+        LocationX,         // punto / centroide
         LocationY,
         LocationZ,
+        StartX,            // punto de inicio de curva (muros, tuberías…)
+        StartY,
+        StartZ,
+        EndX,              // punto de fin de curva
+        EndY,
+        EndZ,
         Latitude,
         Longitude,
         Category,
@@ -91,6 +118,22 @@ namespace BIMPills.Core.ParameterExtractor
         /// Opcional: formato para sources Latitude/Longitude.
         /// </summary>
         public GeoFormat GeoFormat { get; set; } = GeoFormat.Decimal;
+
+        /// <summary>
+        /// Método de conversión para sources Latitude/Longitude.
+        /// </summary>
+        public GeoConversionMethod GeoConversionMethod { get; set; } = GeoConversionMethod.RevitProjectLocation;
+
+        /// <summary>
+        /// Zona UTM (1–60). Aplica solo cuando GeoConversionMethod = UTM.
+        /// </summary>
+        public int UtmZone { get; set; } = 19;
+
+        /// <summary>
+        /// True = hemisferio Norte, False = hemisferio Sur.
+        /// Aplica solo cuando GeoConversionMethod = UTM.
+        /// </summary>
+        public bool UtmIsNorthHemisphere { get; set; } = false;
     }
 
     /// <summary>
@@ -118,6 +161,13 @@ namespace BIMPills.Core.ParameterExtractor
         Feet
     }
 
+    public enum ExtractionScope
+    {
+        CurrentSelection,
+        WholeModel,
+        ActiveView
+    }
+
     /// <summary>
     /// Configuración completa de una extracción.
     /// </summary>
@@ -131,6 +181,17 @@ namespace BIMPills.Core.ParameterExtractor
 
         /// <summary>Número de decimales para Length y Latitud/Longitud decimal. 0-6.</summary>
         public int Decimals { get; set; } = 3;
+
+        public ExtractionScope Scope { get; set; } = ExtractionScope.WholeModel;
+
+        /// <summary>Categorías incluidas. Vacío = todas.</summary>
+        public List<string> CategoryFilter { get; set; } = new();
+
+        /// <summary>Familias incluidas. Vacío = todas (dentro de las categorías activas).</summary>
+        public List<string> FamilyFilter { get; set; } = new();
+
+        /// <summary>Tipos incluidos. Vacío = todos (dentro de las familias activas).</summary>
+        public List<string> TypeFilter { get; set; } = new();
     }
 
     /// <summary>

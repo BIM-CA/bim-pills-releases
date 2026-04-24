@@ -4,9 +4,10 @@
         xmlns:fam="clr-namespace:BIMPills.UI.Export.Families"
         xmlns:sheets="clr-namespace:BIMPills.UI.Export.Sheets"
         xmlns:model="clr-namespace:BIMPills.UI.Export.Model"
+        xmlns:params="clr-namespace:BIMPills.UI.Export.Parameters"
         Title="BIM Pills — Exportar"
-        Width="880" Height="720"
-        MinWidth="700" MinHeight="520"
+        Width="1100" Height="720"
+        MinWidth="960" MinHeight="520"
         ResizeMode="CanResizeWithGrip"
         WindowStartupLocation="CenterOwner"
         Background="{DynamicResource BackgroundBrush}"
@@ -71,6 +72,11 @@
                             <TextBlock x:Name="TabFamiliasText" Style="{StaticResource TabHeaderText}"
                                        Text="Familias"/>
                         </Border>
+                        <Border x:Name="TabParametrosBorder" Style="{StaticResource TabHeader}"
+                                MouseLeftButtonDown="TabParametros_Click">
+                            <TextBlock x:Name="TabParametrosText" Style="{StaticResource TabHeaderText}"
+                                       Text="Parámetros"/>
+                        </Border>
                     </StackPanel>
                 </Border>
 
@@ -126,6 +132,7 @@
                     <sheets:ExportSheetsPanel x:Name="SheetsPanel"/>
                     <model:ExportModelPanel x:Name="ModelPanel" Visibility="Collapsed"/>
                     <fam:ExportPanel x:Name="ExportPanel" Visibility="Collapsed"/>
+                    <params:ParameterExtractorPanel x:Name="ExtractorPanel" Visibility="Collapsed"/>
                 </Grid>
 
             </DockPanel>
