@@ -20,8 +20,23 @@
     <ProjectReference Include="..\BIMPills.UI\BIMPills.UI.csproj" />
   </ItemGroup>
 
+  <!-- Copy BIM Pills icon set (PNG 32 + 256) next to the built DLL.
+       Loaded at runtime by BimPillsIcons.GetImage() for ribbon buttons. -->
+  <Target Name="CopyBimPillsIcons" AfterTargets="Build">
+    <ItemGroup>
+      <BimPillsIcon32 Include="$(MSBuildThisFileDirectory)..\..\assets\icons\new\png\32\*.png" />
+      <BimPillsIcon256 Include="$(MSBuildThisFileDirectory)..\..\assets\icons\new\png\256\*.png" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BimPillsIcon32)"
+          DestinationFolder="$(OutputPath)icons\png\32"
+          SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(BimPillsIcon256)"
+          DestinationFolder="$(OutputPath)icons\png\256"
+          SkipUnchangedFiles="true" />
+  </Target>
+
   <!-- Post-build: deploy to Revit Addins folder (Debug only) -->
-  <Target Name="DeployToRevit" AfterTargets="Build" Condition="'$(Configuration)' == 'Debug'">
+  <Target Name="DeployToRevit" AfterTargets="CopyBimPillsIcons" Condition="'$(Configuration)' == 'Debug'">
     <PropertyGroup>
       <AddinDir>$(APPDATA)\Autodesk\Revit\Addins\$(RevitVersion)</AddinDir>
       <DeployDir>$(AddinDir)\BIMPills</DeployDir>
@@ -39,6 +54,13 @@
                       Condition="Exists('$(OutputPath)runtimes\win-x64\native\WebView2Loader.dll')" />
     </ItemGroup>
     <Copy SourceFiles="@(WebView2Loader)" DestinationFolder="$(DeployDir)" SkipUnchangedFiles="true" />
+    <!-- Copy icon set to deploy dir -->
+    <ItemGroup>
+      <DeployIcon32 Include="$(OutputPath)icons\png\32\*.png" />
+      <DeployIcon256 Include="$(OutputPath)icons\png\256\*.png" />
+    </ItemGroup>
+    <Copy SourceFiles="@(DeployIcon32)" DestinationFolder="$(DeployDir)\icons\png\32" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(DeployIcon256)" DestinationFolder="$(DeployDir)\icons\png\256" SkipUnchangedFiles="true" />
     <Copy SourceFiles="$(MSBuildThisFileDirectory)..\..\manifests\Revit$(RevitVersion)\BIMPills.addin"
           DestinationFolder="$(AddinDir)" SkipUnchangedFiles="true" />
     <Message Text="BIM Pills deployed to $(DeployDir)" Importance="high" />

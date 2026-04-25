@@ -1,6 +1,7 @@
 <Window x:Class="BIMPills.UI.ViewTemplates.ConflictResolutionDialog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:bimca="clr-namespace:BIMPills.UI.Resources"
         Title="BIM Pills — Resolver conflictos"
         Width="580" Height="460"
         MinWidth="480" MinHeight="360"
@@ -28,10 +29,9 @@
                 BorderBrush="#FFE082" BorderThickness="1"
                 Padding="12,10" Margin="0,0,0,12">
             <DockPanel>
-                <TextBlock DockPanel.Dock="Left"
-                           Text="&#xE7BA;" FontFamily="Segoe MDL2 Assets"
-                           FontSize="18" Foreground="#F57F17"
-                           VerticalAlignment="Center" Margin="0,0,10,0"/>
+                <bimca:Icon DockPanel.Dock="Left"
+                            Slug="reportwarning" Size="20"
+                            VerticalAlignment="Center" Margin="0,0,10,0"/>
                 <StackPanel VerticalAlignment="Center">
                     <TextBlock x:Name="HeaderTitle"
                                FontSize="13" FontWeight="SemiBold"

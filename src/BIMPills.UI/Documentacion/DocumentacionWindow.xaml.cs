@@ -83,7 +83,7 @@ namespace BIMPills.UI.Documentacion
                     TabAcotadoBorder.Style  = activeTabStyle;
                     TabAcotadoText.Style    = activeTextStyle;
                     AcotadoPanel.Visibility = Visibility.Visible;
-                    ToolHeaderIcon.Text     = "\uE8A5"; // ruler
+                    ToolHeaderIcon.Slug     = "ruler";
                     ToolHeaderTitle.Text    = "Acotado";
                     ToolHeaderSubtitle.Text = "Acotado automático de elementos";
                     break;
@@ -92,7 +92,7 @@ namespace BIMPills.UI.Documentacion
                     TabLeyendaBorder.Style  = activeTabStyle;
                     TabLeyendaText.Style    = activeTextStyle;
                     DibujarPanel.Visibility = Visibility.Visible;
-                    ToolHeaderIcon.Text     = "\uE8A9"; // table
+                    ToolHeaderIcon.Slug     = "attach-excel";
                     ToolHeaderTitle.Text    = "Leyenda desde Excel";
                     ToolHeaderSubtitle.Text = "Dibuja tablas y leyendas en vistas de Revit a partir de un .xlsx";
                     break;

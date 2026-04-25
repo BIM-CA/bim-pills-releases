@@ -1,6 +1,7 @@
 <UserControl x:Class="BIMPills.UI.Documentacion.AcotadoVanosPanel"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:bimca="clr-namespace:BIMPills.UI.Resources">
 
     <UserControl.Resources>
         <ResourceDictionary>
@@ -281,10 +282,8 @@
                 <Border Background="#F0F7FF" CornerRadius="8" Padding="12,10" Margin="0,4,0,0"
                         BorderBrush="#D0E3F7" BorderThickness="1">
                     <DockPanel>
-                        <TextBlock DockPanel.Dock="Left" Text="&#xE946;"
-                                   FontFamily="Segoe MDL2 Assets" FontSize="14"
-                                   Foreground="#1565C0" Margin="0,0,10,0"
-                                   VerticalAlignment="Top"/>
+                        <bimca:Icon DockPanel.Dock="Left" Slug="search-zoom" Size="16"
+                                    Margin="0,0,10,0" VerticalAlignment="Top"/>
                         <TextBlock x:Name="InfoText" TextWrapping="Wrap"
                                    FontSize="12" FontFamily="Segoe UI"
                                    Foreground="#1565C0" LineHeight="18">

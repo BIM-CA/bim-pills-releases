@@ -1,33 +1,15 @@
 using Autodesk.Revit.UI;
 using BIMPills.Core.Modules;
+using BIMPills.Core.Services;
+using BIMPills.Infrastructure.DI;
 using BIMPills.Revit.Resources;
 using System;
-using System.Collections.Generic;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
 
 namespace BIMPills.Revit.Application
 {
     internal sealed class RibbonBuilder : IRibbonBuilder
     {
         private readonly UIControlledApplication _app;
-
-        private static readonly Dictionary<string, Func<BitmapSource>> _iconFactories
-            = new Dictionary<string, Func<BitmapSource>>
-            {
-                ["audit"]         = RibbonIconFactory.CreateAuditIcon,
-                ["about"]         = RibbonIconFactory.CreateAboutIcon,
-                ["export"]        = RibbonIconFactory.CreateExportIcon,
-                ["documentacion"] = RibbonIconFactory.CreateDocumentacionIcon,
-                ["gestion"]       = RibbonIconFactory.CreateGestionIcon,
-                ["dimension"]     = RibbonIconFactory.CreateDimensionIcon,
-                ["connect"]       = RibbonIconFactory.CreateConnectIcon,
-                ["ordering"]      = RibbonIconFactory.CreateOrderingIcon,
-                ["datamanager"]   = RibbonIconFactory.CreateDataManagerIcon,
-                ["transfer"]      = RibbonIconFactory.CreateTransferIcon,
-                ["support"]       = RibbonIconFactory.CreateSupportIcon,
-                ["extractor"]     = RibbonIconFactory.CreateExtractorIcon,
-            };
 
         public RibbonBuilder(UIControlledApplication app)
         {
@@ -73,16 +55,18 @@ namespace BIMPills.Revit.Application
                 ToolTip = tooltip
             };
 
-            // Load icon from factory
-            if (!string.IsNullOrEmpty(iconKey) && _iconFactories.TryGetValue(iconKey, out var factory))
+            if (!string.IsNullOrEmpty(iconKey))
             {
                 try
                 {
-                    data.LargeImage = factory();
+                    data.LargeImage = BimPillsIcons.Large(iconKey);
+                    data.Image      = BimPillsIcons.Small(iconKey);
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // Icon failure should not block plugin startup
+                    if (ServiceLocator.IsRegistered<ILogger>())
+                        ServiceLocator.Get<ILogger>().Error(
+                            $"[Ribbon] Falló ícono '{iconKey}' (IconRoot='{BimPillsIcons.IconRoot}')", ex);
                 }
             }
 

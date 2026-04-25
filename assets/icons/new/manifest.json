@@ -1,0 +1,905 @@
+{
+  "set": "BIM Pills Icon Set",
+  "version": "1.0.0",
+  "brand": {
+    "primary": "#EF6337",
+    "ink": "#212B37",
+    "yellow": "#FECA29",
+    "green": "#1E8A4F",
+    "paper": "#FFFFFF"
+  },
+  "geometry": {
+    "grid": 32,
+    "keyline": 28,
+    "strokeWidth": 1.6,
+    "accentStrokeWidth": 2,
+    "cornerRadius": 1.5
+  },
+  "sizes": [
+    32,
+    64,
+    128,
+    256
+  ],
+  "groups": {
+    "datos": "Ribbon — Datos",
+    "procesos": "Ribbon — Procesos",
+    "informacion": "Ribbon — Información",
+    "marca": "UI — Marca / Logo",
+    "headers": "UI — Tool ID Header",
+    "tabs": "UI — Tabs",
+    "actions": "UI — Action Buttons",
+    "state": "UI — Status",
+    "scroll": "UI — Scroll"
+  },
+  "count": 51,
+  "icons": [
+    {
+      "n": 1,
+      "slug": "audit",
+      "name": "Auditar",
+      "kind": "ribbon",
+      "group": "datos",
+      "role": "RIBBON",
+      "ribbonLarge": true,
+      "segoeRef": null,
+      "files": {
+        "svg": "svg/audit.svg",
+        "png32": "png/32/audit.png",
+        "png64": "png/64/audit.png",
+        "png128": "png/128/audit.png",
+        "png256": "png/256/audit.png"
+      }
+    },
+    {
+      "n": 2,
+      "slug": "export",
+      "name": "Exportar",
+      "kind": "ribbon",
+      "group": "datos",
+      "role": "RIBBON",
+      "ribbonLarge": true,
+      "segoeRef": null,
+      "files": {
+        "svg": "svg/export.svg",
+        "png32": "png/32/export.png",
+        "png64": "png/64/export.png",
+        "png128": "png/128/export.png",
+        "png256": "png/256/export.png"
+      }
+    },
+    {
+      "n": 3,
+      "slug": "transfer",
+      "name": "Importar",
+      "kind": "ribbon",
+      "group": "datos",
+      "role": "RIBBON",
+      "ribbonLarge": true,
+      "segoeRef": null,
+      "files": {
+        "svg": "svg/transfer.svg",
+        "png32": "png/32/transfer.png",
+        "png64": "png/64/transfer.png",
+        "png128": "png/128/transfer.png",
+        "png256": "png/256/transfer.png"
+      }
+    },
+    {
+      "n": 4,
+      "slug": "datamanager",
+      "name": "Gestionar",
+      "kind": "ribbon",
+      "group": "datos",
+      "role": "RIBBON",
+      "ribbonLarge": true,
+      "segoeRef": null,
+      "files": {
+        "svg": "svg/datamanager.svg",
+        "png32": "png/32/datamanager.png",
+        "png64": "png/64/datamanager.png",
+        "png128": "png/128/datamanager.png",
+        "png256": "png/256/datamanager.png"
+      }
+    },
+    {
+      "n": 5,
+      "slug": "dimension",
+      "name": "Esquemas",
+      "kind": "ribbon",
+      "group": "datos",
+      "role": "RIBBON",
+      "ribbonLarge": false,
+      "segoeRef": null,
+      "files": {
+        "svg": "svg/dimension.svg",
+        "png32": "png/32/dimension.png",
+        "png64": "png/64/dimension.png",
+        "png128": "png/128/dimension.png",
+        "png256": "png/256/dimension.png"
+      }
+    },
+    {
+      "n": 6,
+      "slug": "connect",
+      "name": "Conectar",
+      "kind": "ribbon",
+      "group": "datos",
+      "role": "RIBBON",
+      "ribbonLarge": true,
+      "segoeRef": null,
+      "files": {
+        "svg": "svg/connect.svg",
+        "png32": "png/32/connect.png",
+        "png64": "png/64/connect.png",
+        "png128": "png/128/connect.png",
+        "png256": "png/256/connect.png"
+      }
+    },
+    {
+      "n": 7,
+      "slug": "ordering",
+      "name": "Ordenar",
+      "kind": "ribbon",
+      "group": "datos",
+      "role": "RIBBON",
+      "ribbonLarge": true,
+      "segoeRef": null,
+      "files": {
+        "svg": "svg/ordering.svg",
+        "png32": "png/32/ordering.png",
+        "png64": "png/64/ordering.png",
+        "png128": "png/128/ordering.png",
+        "png256": "png/256/ordering.png"
+      }
+    },
+    {
+      "n": 8,
+      "slug": "extractor",
+      "name": "Extractor",
+      "kind": "ribbon",
+      "group": "datos",
+      "role": "RIBBON",
+      "ribbonLarge": false,
+      "segoeRef": null,
+      "files": {
+        "svg": "svg/extractor.svg",
+        "png32": "png/32/extractor.png",
+        "png64": "png/64/extractor.png",
+        "png128": "png/128/extractor.png",
+        "png256": "png/256/extractor.png"
+      }
+    },
+    {
+      "n": 9,
+      "slug": "documentacion",
+      "name": "Documentar",
+      "kind": "ribbon",
+      "group": "procesos",
+      "role": "RIBBON",
+      "ribbonLarge": true,
+      "segoeRef": null,
+      "files": {
+        "svg": "svg/documentacion.svg",
+        "png32": "png/32/documentacion.png",
+        "png64": "png/64/documentacion.png",
+        "png128": "png/128/documentacion.png",
+        "png256": "png/256/documentacion.png"
+      }
+    },
+    {
+      "n": 10,
+      "slug": "gestion",
+      "name": "Estandarizar",
+      "kind": "ribbon",
+      "group": "procesos",
+      "role": "RIBBON",
+      "ribbonLarge": true,
+      "segoeRef": null,
+      "files": {
+        "svg": "svg/gestion.svg",
+        "png32": "png/32/gestion.png",
+        "png64": "png/64/gestion.png",
+        "png128": "png/128/gestion.png",
+        "png256": "png/256/gestion.png"
+      }
+    },
+    {
+      "n": 11,
+      "slug": "dibujar",
+      "name": "Dibujar",
+      "kind": "ribbon",
+      "group": "procesos",
+      "role": "RIBBON",
+      "ribbonLarge": false,
+      "segoeRef": null,
+      "files": {
+        "svg": "svg/dibujar.svg",
+        "png32": "png/32/dibujar.png",
+        "png64": "png/64/dibujar.png",
+        "png128": "png/128/dibujar.png",
+        "png256": "png/256/dibujar.png"
+      }
+    },
+    {
+      "n": 12,
+      "slug": "about",
+      "name": "Acerca de",
+      "kind": "ribbon",
+      "group": "informacion",
+      "role": "RIBBON",
+      "ribbonLarge": true,
+      "segoeRef": null,
+      "files": {
+        "svg": "svg/about.svg",
+        "png32": "png/32/about.png",
+        "png64": "png/64/about.png",
+        "png128": "png/128/about.png",
+        "png256": "png/256/about.png"
+      }
+    },
+    {
+      "n": 13,
+      "slug": "support",
+      "name": "Soporte",
+      "kind": "ribbon",
+      "group": "informacion",
+      "role": "RIBBON",
+      "ribbonLarge": true,
+      "segoeRef": null,
+      "files": {
+        "svg": "svg/support.svg",
+        "png32": "png/32/support.png",
+        "png64": "png/64/support.png",
+        "png128": "png/128/support.png",
+        "png256": "png/256/support.png"
+      }
+    },
+    {
+      "n": 14,
+      "slug": "logo-bim-pills",
+      "name": "Logo BIM Pills",
+      "kind": "ui",
+      "group": "marca",
+      "role": "MARCA",
+      "ribbonLarge": false,
+      "segoeRef": "pill-icon.png",
+      "files": {
+        "svg": "svg/logo-bim-pills.svg",
+        "png32": "png/32/logo-bim-pills.png",
+        "png64": "png/64/logo-bim-pills.png",
+        "png128": "png/128/logo-bim-pills.png",
+        "png256": "png/256/logo-bim-pills.png"
+      }
+    },
+    {
+      "n": 15,
+      "slug": "upload-arrow",
+      "name": "Upload Arrow",
+      "kind": "ui",
+      "group": "headers",
+      "role": "ID HERRAMIENTA",
+      "ribbonLarge": false,
+      "segoeRef": "E8B7",
+      "files": {
+        "svg": "svg/upload-arrow.svg",
+        "png32": "png/32/upload-arrow.png",
+        "png64": "png/64/upload-arrow.png",
+        "png128": "png/128/upload-arrow.png",
+        "png256": "png/256/upload-arrow.png"
+      }
+    },
+    {
+      "n": 16,
+      "slug": "table",
+      "name": "Table",
+      "kind": "ui",
+      "group": "headers",
+      "role": "ID HERRAMIENTA",
+      "ribbonLarge": false,
+      "segoeRef": "E9F9",
+      "files": {
+        "svg": "svg/table.svg",
+        "png32": "png/32/table.png",
+        "png64": "png/64/table.png",
+        "png128": "png/128/table.png",
+        "png256": "png/256/table.png"
+      }
+    },
+    {
+      "n": 17,
+      "slug": "filter",
+      "name": "Filter",
+      "kind": "ui",
+      "group": "headers",
+      "role": "ID HERRAMIENTA",
+      "ribbonLarge": false,
+      "segoeRef": "E8AB",
+      "files": {
+        "svg": "svg/filter.svg",
+        "png32": "png/32/filter.png",
+        "png64": "png/64/filter.png",
+        "png128": "png/128/filter.png",
+        "png256": "png/256/filter.png"
+      }
+    },
+    {
+      "n": 18,
+      "slug": "pageright",
+      "name": "PageRight",
+      "kind": "ui",
+      "group": "headers",
+      "role": "ID HERRAMIENTA",
+      "ribbonLarge": false,
+      "segoeRef": "E8A5",
+      "files": {
+        "svg": "svg/pageright.svg",
+        "png32": "png/32/pageright.png",
+        "png64": "png/64/pageright.png",
+        "png128": "png/128/pageright.png",
+        "png256": "png/256/pageright.png"
+      }
+    },
+    {
+      "n": 19,
+      "slug": "barchart",
+      "name": "BarChart",
+      "kind": "ui",
+      "group": "headers",
+      "role": "ID HERRAMIENTA",
+      "ribbonLarge": false,
+      "segoeRef": "E9D9",
+      "files": {
+        "svg": "svg/barchart.svg",
+        "png32": "png/32/barchart.png",
+        "png64": "png/64/barchart.png",
+        "png128": "png/128/barchart.png",
+        "png256": "png/256/barchart.png"
+      }
+    },
+    {
+      "n": 20,
+      "slug": "numberedlist",
+      "name": "NumberedList",
+      "kind": "ui",
+      "group": "headers",
+      "role": "ID HERRAMIENTA",
+      "ribbonLarge": false,
+      "segoeRef": "EA42",
+      "files": {
+        "svg": "svg/numberedlist.svg",
+        "png32": "png/32/numberedlist.png",
+        "png64": "png/64/numberedlist.png",
+        "png128": "png/128/numberedlist.png",
+        "png256": "png/256/numberedlist.png"
+      }
+    },
+    {
+      "n": 21,
+      "slug": "3d-cube",
+      "name": "3D Cube",
+      "kind": "ui",
+      "group": "headers",
+      "role": "ID HERRAMIENTA",
+      "ribbonLarge": false,
+      "segoeRef": "E8F1",
+      "files": {
+        "svg": "svg/3d-cube.svg",
+        "png32": "png/32/3d-cube.png",
+        "png64": "png/64/3d-cube.png",
+        "png128": "png/128/3d-cube.png",
+        "png256": "png/256/3d-cube.png"
+      }
+    },
+    {
+      "n": 22,
+      "slug": "ruler",
+      "name": "Ruler",
+      "kind": "ui",
+      "group": "tabs",
+      "role": "TAB",
+      "ribbonLarge": false,
+      "segoeRef": "E8B9",
+      "files": {
+        "svg": "svg/ruler.svg",
+        "png32": "png/32/ruler.png",
+        "png64": "png/64/ruler.png",
+        "png128": "png/128/ruler.png",
+        "png256": "png/256/ruler.png"
+      }
+    },
+    {
+      "n": 23,
+      "slug": "sort",
+      "name": "Sort",
+      "kind": "ui",
+      "group": "tabs",
+      "role": "TAB",
+      "ribbonLarge": false,
+      "segoeRef": "E81E",
+      "files": {
+        "svg": "svg/sort.svg",
+        "png32": "png/32/sort.png",
+        "png64": "png/64/sort.png",
+        "png128": "png/128/sort.png",
+        "png256": "png/256/sort.png"
+      }
+    },
+    {
+      "n": 24,
+      "slug": "sync",
+      "name": "Sync",
+      "kind": "ui",
+      "group": "tabs",
+      "role": "TAB",
+      "ribbonLarge": false,
+      "segoeRef": "E81C",
+      "files": {
+        "svg": "svg/sync.svg",
+        "png32": "png/32/sync.png",
+        "png64": "png/64/sync.png",
+        "png128": "png/128/sync.png",
+        "png256": "png/256/sync.png"
+      }
+    },
+    {
+      "n": 25,
+      "slug": "location-pin",
+      "name": "Location / Pin",
+      "kind": "ui",
+      "group": "tabs",
+      "role": "TAB",
+      "ribbonLarge": false,
+      "segoeRef": "E909",
+      "files": {
+        "svg": "svg/location-pin.svg",
+        "png32": "png/32/location-pin.png",
+        "png64": "png/64/location-pin.png",
+        "png128": "png/128/location-pin.png",
+        "png256": "png/256/location-pin.png"
+      }
+    },
+    {
+      "n": 26,
+      "slug": "person",
+      "name": "Person",
+      "kind": "ui",
+      "group": "tabs",
+      "role": "TAB",
+      "ribbonLarge": false,
+      "segoeRef": "E710",
+      "files": {
+        "svg": "svg/person.svg",
+        "png32": "png/32/person.png",
+        "png64": "png/64/person.png",
+        "png128": "png/128/person.png",
+        "png256": "png/256/person.png"
+      }
+    },
+    {
+      "n": 27,
+      "slug": "statuscircleinfo",
+      "name": "StatusCircleInfo",
+      "kind": "ui",
+      "group": "tabs",
+      "role": "TAB",
+      "ribbonLarge": false,
+      "segoeRef": "ECC6",
+      "files": {
+        "svg": "svg/statuscircleinfo.svg",
+        "png32": "png/32/statuscircleinfo.png",
+        "png64": "png/64/statuscircleinfo.png",
+        "png128": "png/128/statuscircleinfo.png",
+        "png256": "png/256/statuscircleinfo.png"
+      }
+    },
+    {
+      "n": 28,
+      "slug": "attach-excel",
+      "name": "Attach Excel",
+      "kind": "ui",
+      "group": "tabs",
+      "role": "TAB",
+      "ribbonLarge": false,
+      "segoeRef": "E8A9",
+      "files": {
+        "svg": "svg/attach-excel.svg",
+        "png32": "png/32/attach-excel.png",
+        "png64": "png/64/attach-excel.png",
+        "png128": "png/128/attach-excel.png",
+        "png256": "png/256/attach-excel.png"
+      }
+    },
+    {
+      "n": 29,
+      "slug": "page-sheet",
+      "name": "Page / Sheet",
+      "kind": "ui",
+      "group": "tabs",
+      "role": "TAB",
+      "ribbonLarge": false,
+      "segoeRef": "E7C3",
+      "files": {
+        "svg": "svg/page-sheet.svg",
+        "png32": "png/32/page-sheet.png",
+        "png64": "png/64/page-sheet.png",
+        "png128": "png/128/page-sheet.png",
+        "png256": "png/256/page-sheet.png"
+      }
+    },
+    {
+      "n": 30,
+      "slug": "link-range",
+      "name": "Link / Range",
+      "kind": "ui",
+      "group": "tabs",
+      "role": "TAB",
+      "ribbonLarge": false,
+      "segoeRef": "E970",
+      "files": {
+        "svg": "svg/link-range.svg",
+        "png32": "png/32/link-range.png",
+        "png64": "png/64/link-range.png",
+        "png128": "png/128/link-range.png",
+        "png256": "png/256/link-range.png"
+      }
+    },
+    {
+      "n": 31,
+      "slug": "view-eye",
+      "name": "View / Eye",
+      "kind": "ui",
+      "group": "tabs",
+      "role": "TAB",
+      "ribbonLarge": false,
+      "segoeRef": "E8A1",
+      "files": {
+        "svg": "svg/view-eye.svg",
+        "png32": "png/32/view-eye.png",
+        "png64": "png/64/view-eye.png",
+        "png128": "png/128/view-eye.png",
+        "png256": "png/256/view-eye.png"
+      }
+    },
+    {
+      "n": 32,
+      "slug": "accept",
+      "name": "Accept",
+      "kind": "ui",
+      "group": "actions",
+      "role": "BOTÓN",
+      "ribbonLarge": false,
+      "segoeRef": "E73E",
+      "files": {
+        "svg": "svg/accept.svg",
+        "png32": "png/32/accept.png",
+        "png64": "png/64/accept.png",
+        "png128": "png/128/accept.png",
+        "png256": "png/256/accept.png"
+      }
+    },
+    {
+      "n": 33,
+      "slug": "delete-x",
+      "name": "Delete X",
+      "kind": "ui",
+      "group": "actions",
+      "role": "BOTÓN",
+      "ribbonLarge": false,
+      "segoeRef": "E74C",
+      "files": {
+        "svg": "svg/delete-x.svg",
+        "png32": "png/32/delete-x.png",
+        "png64": "png/64/delete-x.png",
+        "png128": "png/128/delete-x.png",
+        "png256": "png/256/delete-x.png"
+      }
+    },
+    {
+      "n": 34,
+      "slug": "backspace",
+      "name": "Backspace",
+      "kind": "ui",
+      "group": "actions",
+      "role": "BOTÓN",
+      "ribbonLarge": false,
+      "segoeRef": "E74D",
+      "files": {
+        "svg": "svg/backspace.svg",
+        "png32": "png/32/backspace.png",
+        "png64": "png/64/backspace.png",
+        "png128": "png/128/backspace.png",
+        "png256": "png/256/backspace.png"
+      }
+    },
+    {
+      "n": 35,
+      "slug": "add-new",
+      "name": "Add / New",
+      "kind": "ui",
+      "group": "actions",
+      "role": "BOTÓN",
+      "ribbonLarge": false,
+      "segoeRef": "E8F4",
+      "files": {
+        "svg": "svg/add-new.svg",
+        "png32": "png/32/add-new.png",
+        "png64": "png/64/add-new.png",
+        "png128": "png/128/add-new.png",
+        "png256": "png/256/add-new.png"
+      }
+    },
+    {
+      "n": 36,
+      "slug": "trash",
+      "name": "Trash",
+      "kind": "ui",
+      "group": "actions",
+      "role": "BOTÓN",
+      "ribbonLarge": false,
+      "segoeRef": "E8DA",
+      "files": {
+        "svg": "svg/trash.svg",
+        "png32": "png/32/trash.png",
+        "png64": "png/64/trash.png",
+        "png128": "png/128/trash.png",
+        "png256": "png/256/trash.png"
+      }
+    },
+    {
+      "n": 37,
+      "slug": "refresh",
+      "name": "Refresh",
+      "kind": "ui",
+      "group": "actions",
+      "role": "BOTÓN",
+      "ribbonLarge": false,
+      "segoeRef": "E971",
+      "files": {
+        "svg": "svg/refresh.svg",
+        "png32": "png/32/refresh.png",
+        "png64": "png/64/refresh.png",
+        "png128": "png/128/refresh.png",
+        "png256": "png/256/refresh.png"
+      }
+    },
+    {
+      "n": 38,
+      "slug": "rotate-sync",
+      "name": "Rotate / Sync",
+      "kind": "ui",
+      "group": "actions",
+      "role": "BOTÓN",
+      "ribbonLarge": false,
+      "segoeRef": "E972",
+      "files": {
+        "svg": "svg/rotate-sync.svg",
+        "png32": "png/32/rotate-sync.png",
+        "png64": "png/64/rotate-sync.png",
+        "png128": "png/128/rotate-sync.png",
+        "png256": "png/256/rotate-sync.png"
+      }
+    },
+    {
+      "n": 39,
+      "slug": "settings",
+      "name": "Settings",
+      "kind": "ui",
+      "group": "actions",
+      "role": "BOTÓN",
+      "ribbonLarge": false,
+      "segoeRef": "E895",
+      "files": {
+        "svg": "svg/settings.svg",
+        "png32": "png/32/settings.png",
+        "png64": "png/64/settings.png",
+        "png128": "png/128/settings.png",
+        "png256": "png/256/settings.png"
+      }
+    },
+    {
+      "n": 40,
+      "slug": "open-folder",
+      "name": "Open Folder",
+      "kind": "ui",
+      "group": "actions",
+      "role": "BOTÓN",
+      "ribbonLarge": false,
+      "segoeRef": "E711",
+      "files": {
+        "svg": "svg/open-folder.svg",
+        "png32": "png/32/open-folder.png",
+        "png64": "png/64/open-folder.png",
+        "png128": "png/128/open-folder.png",
+        "png256": "png/256/open-folder.png"
+      }
+    },
+    {
+      "n": 41,
+      "slug": "search-zoom",
+      "name": "Search / Zoom",
+      "kind": "ui",
+      "group": "actions",
+      "role": "BOTÓN",
+      "ribbonLarge": false,
+      "segoeRef": "E946",
+      "files": {
+        "svg": "svg/search-zoom.svg",
+        "png32": "png/32/search-zoom.png",
+        "png64": "png/64/search-zoom.png",
+        "png128": "png/128/search-zoom.png",
+        "png256": "png/256/search-zoom.png"
+      }
+    },
+    {
+      "n": 42,
+      "slug": "feedbackapp",
+      "name": "FeedbackApp",
+      "kind": "ui",
+      "group": "actions",
+      "role": "BOTÓN",
+      "ribbonLarge": false,
+      "segoeRef": "ED15",
+      "files": {
+        "svg": "svg/feedbackapp.svg",
+        "png32": "png/32/feedbackapp.png",
+        "png64": "png/64/feedbackapp.png",
+        "png128": "png/128/feedbackapp.png",
+        "png256": "png/256/feedbackapp.png"
+      }
+    },
+    {
+      "n": 43,
+      "slug": "handle",
+      "name": "Handle",
+      "kind": "ui",
+      "group": "actions",
+      "role": "BOTÓN",
+      "ribbonLarge": false,
+      "segoeRef": "☰",
+      "files": {
+        "svg": "svg/handle.svg",
+        "png32": "png/32/handle.png",
+        "png64": "png/64/handle.png",
+        "png128": "png/128/handle.png",
+        "png256": "png/256/handle.png"
+      }
+    },
+    {
+      "n": 44,
+      "slug": "arrow-up",
+      "name": "Arrow Up",
+      "kind": "ui",
+      "group": "actions",
+      "role": "BOTÓN",
+      "ribbonLarge": false,
+      "segoeRef": "⬆",
+      "files": {
+        "svg": "svg/arrow-up.svg",
+        "png32": "png/32/arrow-up.png",
+        "png64": "png/64/arrow-up.png",
+        "png128": "png/128/arrow-up.png",
+        "png256": "png/256/arrow-up.png"
+      }
+    },
+    {
+      "n": 45,
+      "slug": "play-expand",
+      "name": "Play / Expand",
+      "kind": "ui",
+      "group": "actions",
+      "role": "BOTÓN",
+      "ribbonLarge": false,
+      "segoeRef": "▶",
+      "files": {
+        "svg": "svg/play-expand.svg",
+        "png32": "png/32/play-expand.png",
+        "png64": "png/64/play-expand.png",
+        "png128": "png/128/play-expand.png",
+        "png256": "png/256/play-expand.png"
+      }
+    },
+    {
+      "n": 46,
+      "slug": "check-ok",
+      "name": "Check OK",
+      "kind": "ui",
+      "group": "state",
+      "role": "ESTADO",
+      "ribbonLarge": false,
+      "segoeRef": "✔",
+      "files": {
+        "svg": "svg/check-ok.svg",
+        "png32": "png/32/check-ok.png",
+        "png64": "png/64/check-ok.png",
+        "png128": "png/128/check-ok.png",
+        "png256": "png/256/check-ok.png"
+      }
+    },
+    {
+      "n": 47,
+      "slug": "warning",
+      "name": "Warning",
+      "kind": "ui",
+      "group": "state",
+      "role": "ESTADO",
+      "ribbonLarge": false,
+      "segoeRef": "⚠",
+      "files": {
+        "svg": "svg/warning.svg",
+        "png32": "png/32/warning.png",
+        "png64": "png/64/warning.png",
+        "png128": "png/128/warning.png",
+        "png256": "png/256/warning.png"
+      }
+    },
+    {
+      "n": 48,
+      "slug": "reportwarning",
+      "name": "ReportWarning",
+      "kind": "ui",
+      "group": "state",
+      "role": "ESTADO",
+      "ribbonLarge": false,
+      "segoeRef": "E7BA",
+      "files": {
+        "svg": "svg/reportwarning.svg",
+        "png32": "png/32/reportwarning.png",
+        "png64": "png/64/reportwarning.png",
+        "png128": "png/128/reportwarning.png",
+        "png256": "png/256/reportwarning.png"
+      }
+    },
+    {
+      "n": 49,
+      "slug": "scroll-up",
+      "name": "Scroll Up",
+      "kind": "ui",
+      "group": "scroll",
+      "role": "SCROLL",
+      "ribbonLarge": false,
+      "segoeRef": "▲",
+      "files": {
+        "svg": "svg/scroll-up.svg",
+        "png32": "png/32/scroll-up.png",
+        "png64": "png/64/scroll-up.png",
+        "png128": "png/128/scroll-up.png",
+        "png256": "png/256/scroll-up.png"
+      }
+    },
+    {
+      "n": 50,
+      "slug": "scroll-down",
+      "name": "Scroll Down",
+      "kind": "ui",
+      "group": "scroll",
+      "role": "SCROLL",
+      "ribbonLarge": false,
+      "segoeRef": "▼",
+      "files": {
+        "svg": "svg/scroll-down.svg",
+        "png32": "png/32/scroll-down.png",
+        "png64": "png/64/scroll-down.png",
+        "png128": "png/128/scroll-down.png",
+        "png256": "png/256/scroll-down.png"
+      }
+    },
+    {
+      "n": 51,
+      "slug": "arrows-up-down",
+      "name": "Arrows Up/Down",
+      "kind": "ui",
+      "group": "scroll",
+      "role": "SCROLL",
+      "ribbonLarge": false,
+      "segoeRef": "↑↓",
+      "files": {
+        "svg": "svg/arrows-up-down.svg",
+        "png32": "png/32/arrows-up-down.png",
+        "png64": "png/64/arrows-up-down.png",
+        "png128": "png/128/arrows-up-down.png",
+        "png256": "png/256/arrows-up-down.png"
+      }
+    }
+  ]
+}

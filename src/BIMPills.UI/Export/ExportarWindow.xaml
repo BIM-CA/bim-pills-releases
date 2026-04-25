@@ -5,6 +5,7 @@
         xmlns:sheets="clr-namespace:BIMPills.UI.Export.Sheets"
         xmlns:model="clr-namespace:BIMPills.UI.Export.Model"
         xmlns:params="clr-namespace:BIMPills.UI.Export.Parameters"
+        xmlns:bimca="clr-namespace:BIMPills.UI.Resources"
         Title="BIM Pills — Exportar"
         Width="1100" Height="720"
         MinWidth="960" MinHeight="520"
@@ -85,9 +86,8 @@
                     <StackPanel Orientation="Horizontal">
                         <Border Width="30" Height="30" CornerRadius="7" Background="#E3F2FD"
                                 Margin="0,0,10,0" VerticalAlignment="Center">
-                            <TextBlock x:Name="ToolHeaderIcon" Text="&#xE8B7;" FontFamily="Segoe MDL2 Assets"
-                                       FontSize="14" Foreground="#1565C0"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <bimca:Icon x:Name="ToolHeaderIcon" Slug="upload-arrow" Size="16"
+                                        HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <StackPanel VerticalAlignment="Center">
                             <TextBlock x:Name="ToolHeaderTitle" Text="Exportar Planos y Vistas" FontSize="14"

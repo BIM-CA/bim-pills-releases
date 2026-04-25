@@ -95,22 +95,19 @@ namespace BIMPills.UI.Transfer
             {
                 case 0:
                     ToolHeaderIconBorder.Background = HexBrush("#E3F2FD");
-                    ToolHeaderIcon.Text             = "\uE8A1";
-                    ToolHeaderIcon.Foreground       = HexBrush("#1565C0");
+                    ToolHeaderIcon.Slug             = "view-eye";
                     ToolHeaderTitle.Text            = "Plantillas de Vista";
                     ToolHeaderSubtitle.Text         = "Importa plantillas de vista desde otros proyectos abiertos";
                     break;
                 case 1:
                     ToolHeaderIconBorder.Background = HexBrush("#F3E5F5");
-                    ToolHeaderIcon.Text             = "\uE74C";
-                    ToolHeaderIcon.Foreground       = HexBrush("#6A1B9A");
+                    ToolHeaderIcon.Slug             = "delete-x";
                     ToolHeaderTitle.Text            = "Filtros de Vista";
                     ToolHeaderSubtitle.Text         = "Importa filtros de vista desde otros proyectos abiertos";
                     break;
                 case 2:
                     ToolHeaderIconBorder.Background = HexBrush("#E8F5E9");
-                    ToolHeaderIcon.Text             = "\uE8AB";
-                    ToolHeaderIcon.Foreground       = HexBrush("#2E7D32");
+                    ToolHeaderIcon.Slug             = "filter";
                     ToolHeaderTitle.Text            = "Otros Est\u00e1ndares";
                     ToolHeaderSubtitle.Text         = "Importa tipos, estilos y configuraciones desde otro proyecto abierto";
                     break;

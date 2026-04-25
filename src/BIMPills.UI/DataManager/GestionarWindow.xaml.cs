@@ -100,9 +100,7 @@ namespace BIMPills.UI.DataManager
             // Tool header
             if (tab == 0)
             {
-                ToolHeaderIcon.Text       = "\uE9F9";
-                ToolHeaderIcon.Foreground = new System.Windows.Media.SolidColorBrush(
-                    (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#1565C0"));
+                ToolHeaderIcon.Slug       = "table";
                 ToolHeaderTitle.Text      = "Tablas de planificaci\u00f3n";
                 ToolHeaderSubtitle.Text   = "Exporta e importa datos de tablas de planificaci\u00f3n al modelo";
                 ToolHeaderIconBorder.Background = new System.Windows.Media.SolidColorBrush(
@@ -110,9 +108,7 @@ namespace BIMPills.UI.DataManager
             }
             else
             {
-                ToolHeaderIcon.Text       = "\uE8D2";
-                ToolHeaderIcon.Foreground = new System.Windows.Media.SolidColorBrush(
-                    (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#2E7D32"));
+                ToolHeaderIcon.Slug       = "page-sheet";
                 ToolHeaderTitle.Text      = "Notas Clave";
                 ToolHeaderSubtitle.Text   = "Edita, importa y exporta el archivo de notas clave del proyecto";
                 ToolHeaderIconBorder.Background = new System.Windows.Media.SolidColorBrush(

@@ -213,19 +213,18 @@ namespace BIMPills.UI.Shared
                 DetailBorder.Visibility = Visibility.Visible;
             }
 
-            // Configure status badge (color + MDL2 icon) based on kind
-            (string icon, Color color) = kind switch
+            // Los íconos ya traen su propio color/forma. Warning lleva fondo blanco
+            // ajustado al interior del borde azul del ícono.
+            StatusBadgeIcon.Slug = kind switch
             {
-                DialogKind.Success  => ("\uE930", (Color)ColorConverter.ConvertFromString("#27AE60")),  // Checkmark
-                DialogKind.Warning  => ("\uE7BA", (Color)ColorConverter.ConvertFromString("#F57F17")),  // Warning triangle
-                DialogKind.Error    => ("\uE783", (Color)ColorConverter.ConvertFromString("#D32F2F")),  // Error X
-                DialogKind.Question => ("\uE9CE", (Color)ColorConverter.ConvertFromString("#1565C0")),  // Question mark
-                _                   => ("\uE946", (Color)ColorConverter.ConvertFromString("#1565C0")),  // Info "i"
+                DialogKind.Success  => "accept",
+                DialogKind.Warning  => "reportwarning",
+                DialogKind.Error    => "delete-x",
+                DialogKind.Question => "statuscircleinfo",
+                _                   => "statuscircleinfo",
             };
-
-            StatusBadgeIcon.Text = icon;
-            StatusBadge.Background = new SolidColorBrush(color);
-            StatusBadge.Visibility = Visibility.Visible;
+            StatusBadge.Background = kind == DialogKind.Warning ? Brushes.White : Brushes.Transparent;
+            StatusBadgeContainer.Visibility = Visibility.Visible;
 
             // Window title reflects kind for accessibility
             WindowTitleText.Text = kind switch

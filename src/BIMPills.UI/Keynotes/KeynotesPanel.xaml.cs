@@ -26,11 +26,11 @@ namespace BIMPills.UI.Keynotes
         public object ConvertBack(object v, Type t, object p, CultureInfo c) => 0;
     }
 
-    /// <summary>bool IsGroup → Segoe MDL2 glyph: folder or document.</summary>
+    /// <summary>bool IsGroup → BIM Pills icon slug: folder or page.</summary>
     public sealed class BoolToFolderIconConverter : IValueConverter
     {
         public object Convert(object value, Type t, object p, CultureInfo c)
-            => (value is true) ? "\uE8B7" : "\uE8A5"; // Folder : Page
+            => (value is true) ? "open-folder" : "page-sheet";
         public object ConvertBack(object v, Type t, object p, CultureInfo c) => false;
     }
 
@@ -44,11 +44,11 @@ namespace BIMPills.UI.Keynotes
         public object ConvertBack(object v, Type t, object p, CultureInfo c) => false;
     }
 
-    /// <summary>bool IsExpanded → chevron glyph (▼ expanded / ▶ collapsed).</summary>
+    /// <summary>bool IsExpanded → BIM Pills icon slug: chevron down (expanded) or play arrow (collapsed).</summary>
     public sealed class BoolToExpandIconConverter : IValueConverter
     {
         public object Convert(object value, Type t, object p, CultureInfo c)
-            => (value is true) ? "\uE70D" : "\uE76C"; // ChevronDown : ChevronRight
+            => (value is true) ? "scroll-down" : "play-expand";
         public object ConvertBack(object v, Type t, object p, CultureInfo c) => true;
     }
 

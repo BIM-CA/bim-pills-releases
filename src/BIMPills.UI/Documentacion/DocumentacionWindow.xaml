@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:BIMPills.UI.Documentacion"
         xmlns:leyenda="clr-namespace:BIMPills.UI.LegendFromExcel"
+        xmlns:bimca="clr-namespace:BIMPills.UI.Resources"
         Title="BIM Pills — Documentar"
         Width="540" Height="780"
         MinWidth="480" MinHeight="600"
@@ -81,10 +82,9 @@
                         <Border x:Name="ToolHeaderIconBorder"
                                 Width="30" Height="30" CornerRadius="7"
                                 Background="#E3F2FD" Margin="0,0,10,0">
-                            <TextBlock x:Name="ToolHeaderIcon"
-                                       Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets"
-                                       FontSize="14" Foreground="#1565C0"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <bimca:Icon x:Name="ToolHeaderIcon"
+                                        Slug="ruler" Size="16"
+                                        HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <StackPanel>
                             <TextBlock x:Name="ToolHeaderTitle"

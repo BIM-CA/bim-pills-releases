@@ -10,14 +10,14 @@ namespace BIMPills.UI.Documentacion
         public string? SelectedSchemeId { get; private set; }
 
         private Border? _selectedCard;
-        private readonly (Border card, TextBlock check)[] _cards;
+        private readonly (Border card, FrameworkElement check)[] _cards;
 
         public SchemePickerWindow(string currentSchemeId)
         {
             InitializeComponent();
             BIMPills.UI.Shared.ThemeHelper.Apply(this);
 
-            _cards = new[]
+            _cards = new (Border, FrameworkElement)[]
             {
                 (CardOpeningWidth,   CheckOpeningWidth),
                 (CardGridCombined,   CheckGridCombined),

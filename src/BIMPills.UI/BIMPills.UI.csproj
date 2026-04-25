@@ -21,6 +21,10 @@
   <!-- Imágenes embebidas como Resource (accesibles via pack URI) -->
   <ItemGroup>
     <Resource Include="Resources\pill-icon.png" />
+    <!-- BIM Pills icon set (PNG 32) — embebido para usar via <bimca:Icon Slug="..."/> -->
+    <Resource Include="..\..\assets\icons\new\png\32\*.png">
+      <Link>Resources\Icons\%(Filename)%(Extension)</Link>
+    </Resource>
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="ClosedXML" Version="0.104.2" />

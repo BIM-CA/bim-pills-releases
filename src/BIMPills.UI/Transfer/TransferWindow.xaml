@@ -4,6 +4,7 @@
         xmlns:vt="clr-namespace:BIMPills.UI.ViewTemplates"
         xmlns:vf="clr-namespace:BIMPills.UI.ViewFilters"
         xmlns:ps="clr-namespace:BIMPills.UI.ProjectStandards"
+        xmlns:bimca="clr-namespace:BIMPills.UI.Resources"
         Title="BIM Pills — Importar"
         Width="960" Height="700"
         MinWidth="800" MinHeight="560"
@@ -63,8 +64,7 @@
                                 IsEnabled="False"
                                 Click="Transfer_Click">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="&#xE8AB;" FontFamily="Segoe MDL2 Assets"
-                                           FontSize="13" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                <bimca:Icon Slug="filter" Size="14" Margin="0,0,6,0" VerticalAlignment="Center"/>
                                 <TextBlock x:Name="TransferButtonLabel" Text="Importar" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
@@ -101,10 +101,8 @@
                     <StackPanel Orientation="Horizontal">
                         <Border x:Name="ToolHeaderIconBorder" Width="30" Height="30" CornerRadius="7"
                                 Background="#E3F2FD" Margin="0,0,10,0" VerticalAlignment="Center">
-                            <TextBlock x:Name="ToolHeaderIcon" Text="&#xE8A1;"
-                                       FontFamily="Segoe MDL2 Assets" FontSize="14"
-                                       Foreground="#1565C0"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <bimca:Icon x:Name="ToolHeaderIcon" Slug="view-eye" Size="16"
+                                        HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <StackPanel VerticalAlignment="Center">
                             <TextBlock x:Name="ToolHeaderTitle" Text="Plantillas de Vista"

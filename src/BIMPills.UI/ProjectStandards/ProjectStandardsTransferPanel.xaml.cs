@@ -39,17 +39,17 @@ namespace BIMPills.UI.ProjectStandards
             = new List<ProjectStandardCategoryInfo>
         {
             // Anotación
-            new ProjectStandardCategoryInfo { Key = ProjectStandardKeys.DimensionTypes, DisplayName = "Estilos de cota",        Icon = "\uE8EF", Group = "Anotaci\u00f3n" },
-            new ProjectStandardCategoryInfo { Key = ProjectStandardKeys.SpotDimTypes,   DisplayName = "Cotas puntuales",        Icon = "\uE8EF", Group = "Anotaci\u00f3n" },
-            new ProjectStandardCategoryInfo { Key = ProjectStandardKeys.TextNoteTypes,  DisplayName = "Estilos de texto",       Icon = "\uE8D2", Group = "Anotaci\u00f3n" },
+            new ProjectStandardCategoryInfo { Key = ProjectStandardKeys.DimensionTypes, DisplayName = "Estilos de cota",     Icon = "ruler",            Group = "Anotaci\u00f3n" },
+            new ProjectStandardCategoryInfo { Key = ProjectStandardKeys.SpotDimTypes,   DisplayName = "Cotas puntuales",     Icon = "ruler",            Group = "Anotaci\u00f3n" },
+            new ProjectStandardCategoryInfo { Key = ProjectStandardKeys.TextNoteTypes,  DisplayName = "Estilos de texto",    Icon = "page-sheet",       Group = "Anotaci\u00f3n" },
             // Gráficos
-            new ProjectStandardCategoryInfo { Key = ProjectStandardKeys.LineStyles,     DisplayName = "Estilos de l\u00ednea", Icon = "\uECC6", Group = "Gr\u00e1ficos" },
-            new ProjectStandardCategoryInfo { Key = ProjectStandardKeys.FillPatterns,   DisplayName = "Patrones de relleno", Icon = "\uE9D9", Group = "Gr\u00e1ficos" },
+            new ProjectStandardCategoryInfo { Key = ProjectStandardKeys.LineStyles,     DisplayName = "Estilos de l\u00ednea", Icon = "statuscircleinfo", Group = "Gr\u00e1ficos" },
+            new ProjectStandardCategoryInfo { Key = ProjectStandardKeys.FillPatterns,   DisplayName = "Patrones de relleno", Icon = "barchart",         Group = "Gr\u00e1ficos" },
             // Construcción
-            new ProjectStandardCategoryInfo { Key = ProjectStandardKeys.WallTypes,      DisplayName = "Tipos de muros",     Icon = "\uE8CB", Group = "Construcci\u00f3n" },
-            new ProjectStandardCategoryInfo { Key = ProjectStandardKeys.FloorTypes,     DisplayName = "Tipos de suelos",  Icon = "\uE81E", Group = "Construcci\u00f3n" },
-            new ProjectStandardCategoryInfo { Key = ProjectStandardKeys.CeilingTypes,   DisplayName = "Tipos de techos",    Icon = "\uE8A1", Group = "Construcci\u00f3n" },
-            new ProjectStandardCategoryInfo { Key = ProjectStandardKeys.RoofTypes,      DisplayName = "Tipos de cubierta",  Icon = "\uE80F", Group = "Construcci\u00f3n" },
+            new ProjectStandardCategoryInfo { Key = ProjectStandardKeys.WallTypes,      DisplayName = "Tipos de muros",      Icon = "3d-cube",          Group = "Construcci\u00f3n" },
+            new ProjectStandardCategoryInfo { Key = ProjectStandardKeys.FloorTypes,     DisplayName = "Tipos de suelos",     Icon = "sort",             Group = "Construcci\u00f3n" },
+            new ProjectStandardCategoryInfo { Key = ProjectStandardKeys.CeilingTypes,   DisplayName = "Tipos de techos",     Icon = "view-eye",         Group = "Construcci\u00f3n" },
+            new ProjectStandardCategoryInfo { Key = ProjectStandardKeys.RoofTypes,      DisplayName = "Tipos de cubierta",   Icon = "page-sheet",       Group = "Construcci\u00f3n" },
         };
 
         // ── Constructor ──────────────────────────────────────────────────────

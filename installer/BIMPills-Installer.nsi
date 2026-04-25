@@ -1,4 +1,4 @@
-; BIMPills v1.0.0-beta.5.0 Installer
+; BIMPills v1.0.0-beta.6.0 Installer
 ; NSIS Installer Script — Revit 2024, 2025, 2026 y 2027
 ;
 ; Build: cd installer && makensis BIMPills-Installer.nsi
@@ -54,7 +54,7 @@
 ;--------------------------------
 ; Attributes
 Name "BIM Pills"
-OutFile "BIMPills-beta-5.0-Setup.exe"
+OutFile "BIMPills-beta-6.0-Setup.exe"
 RequestExecutionLevel admin
 InstallDir "$APPDATA\Autodesk\Revit\Addins"
 
@@ -116,6 +116,11 @@ InstallDir "$APPDATA\Autodesk\Revit\Addins"
   ; WebView2Loader.dll es la DLL nativa (win-x64) que WebView2 necesita para inicializarse.
   ; Debe estar en el mismo directorio que Microsoft.Web.WebView2.Core.dll.
   File "${BUILD_NET10}\WebView2Loader.dll"
+  ; Carpeta de íconos PNG (BIMPills.Revit.Resources.BimPillsIcons los carga en runtime).
+  SetOutPath "${DEST_DIR}\icons\png\32"
+  File "${BUILD_NET10}\icons\png\32\*.png"
+  SetOutPath "${DEST_DIR}\icons\png\256"
+  File "${BUILD_NET10}\icons\png\256\*.png"
 !macroend
 
 ;--------------------------------
@@ -145,6 +150,11 @@ InstallDir "$APPDATA\Autodesk\Revit\Addins"
   File "${BUILD_NET8}\Microsoft.Web.WebView2.Core.dll"
   File "${BUILD_NET8}\Microsoft.Web.WebView2.Wpf.dll"
   File "${BUILD_NET8}\WebView2Loader.dll"
+  ; Carpeta de íconos PNG.
+  SetOutPath "${DEST_DIR}\icons\png\32"
+  File "${BUILD_NET8}\icons\png\32\*.png"
+  SetOutPath "${DEST_DIR}\icons\png\256"
+  File "${BUILD_NET8}\icons\png\256\*.png"
 !macroend
 
 ;--------------------------------
@@ -183,6 +193,11 @@ InstallDir "$APPDATA\Autodesk\Revit\Addins"
   File "${BUILD_NET48}\Microsoft.Web.WebView2.Core.dll"
   File "${BUILD_NET48}\Microsoft.Web.WebView2.Wpf.dll"
   File "${BUILD_NET48}\WebView2Loader.dll"
+  ; Carpeta de íconos PNG.
+  SetOutPath "${DEST_DIR}\icons\png\32"
+  File "${BUILD_NET48}\icons\png\32\*.png"
+  SetOutPath "${DEST_DIR}\icons\png\256"
+  File "${BUILD_NET48}\icons\png\256\*.png"
 !macroend
 
 ;--------------------------------

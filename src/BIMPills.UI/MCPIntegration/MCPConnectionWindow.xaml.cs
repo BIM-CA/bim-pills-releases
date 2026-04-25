@@ -98,16 +98,14 @@ namespace BIMPills.UI.MCPIntegration
                 StatusBadge.Background   = new SolidColorBrush(Color.FromRgb(0xE8, 0xF5, 0xE9));
                 StatusBadge.BorderBrush  = new SolidColorBrush(Color.FromRgb(0x81, 0xC7, 0x84));
                 StatusText.Foreground    = new SolidColorBrush(Color.FromRgb(0x1B, 0x5E, 0x20));
-                StatusIcon.Text          = "\uE73E"; // CheckMark
-                StatusIcon.Foreground    = new SolidColorBrush(Color.FromRgb(0x1B, 0x5E, 0x20));
+                StatusIcon.Slug          = "accept";
             }
             else
             {
                 StatusBadge.Background   = new SolidColorBrush(Color.FromRgb(0xFF, 0xF3, 0xE0));
                 StatusBadge.BorderBrush  = new SolidColorBrush(Color.FromRgb(0xFF, 0xB7, 0x4D));
                 StatusText.Foreground    = new SolidColorBrush(Color.FromRgb(0xE6, 0x51, 0x00));
-                StatusIcon.Text          = "\uE7BA"; // Info
-                StatusIcon.Foreground    = new SolidColorBrush(Color.FromRgb(0xE6, 0x51, 0x00));
+                StatusIcon.Slug          = "reportwarning";
             }
         }
 
