@@ -258,6 +258,12 @@ namespace BIMPills.Revit.Application
 
                 var currentVersion = new AboutInfo().Version; // "beta 1.0"
 
+                // Capturamos el Dispatcher del hilo UI de Revit ANTES de saltar al
+                // thread pool. No usamos Application.Current.Dispatcher porque en
+                // Revit la WPF Application puede ser null hasta que se muestre la
+                // primera ventana WPF — y nuestro check corre antes que cualquier UI.
+                var uiDispatcher = System.Windows.Threading.Dispatcher.CurrentDispatcher;
+
                 Task.Run(async () =>
                 {
                     try
@@ -269,10 +275,13 @@ namespace BIMPills.Revit.Application
 
                         logger.Info($"Actualización disponible: {update.DisplayVersion}");
 
-                        // Volver al hilo UI de WPF para mostrar el diálogo
-                        System.Windows.Application.Current?.Dispatcher.BeginInvoke(
+                        uiDispatcher.BeginInvoke(
                             System.Windows.Threading.DispatcherPriority.Background,
-                            new Action(() => ShowUpdateDialog(update, logger)));
+                            new Action(() =>
+                            {
+                                logger.Info("Mostrando diálogo de actualización…");
+                                ShowUpdateDialog(update, logger);
+                            }));
                     }
                     catch (Exception ex)
                     {
