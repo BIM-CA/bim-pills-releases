@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mockup — Soporte BIM Pills</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #2b2b2b;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Simulación Revit ── */
+    .revit-titlebar {
+      height: 32px;
+      background: #1a1a1a;
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .revit-titlebar-dot { width: 12px; height: 12px; border-radius: 50%; }
+    .revit-titlebar-title {
+      color: #aaa;
+      font-size: 12px;
+      margin-left: 8px;
+    }
+    .revit-ribbon {
+      height: 90px;
+      background: linear-gradient(180deg, #2d4a7a 0%, #1e3a6e 100%);
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      gap: 4px;
+      flex-shrink: 0;
+      border-bottom: 2px solid #EF6337;
+    }
+    .ribbon-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      gap: 4px;
+      min-width: 52px;
+    }
+    .ribbon-btn:hover { background: rgba(255,255,255,0.1); }
+    .ribbon-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+    .ribbon-label { color: white; font-size: 10px; text-align: center; }
+
+    .ribbon-separator {
+      width: 1px;
+      height: 60px;
+      background: rgba(255,255,255,0.2);
+      margin: 0 4px;
+    }
+
+    .revit-viewport {
+      flex: 1;
+      background: #3c3c3c;
+      position: relative;
+      overflow: hidden;
+    }
+    .viewport-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+    /* Fake floor plan lines */
+    .floor-plan {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      opacity: 0.15;
+    }
+
+    /* ── Botón flotante "Soporte" en esquina ── */
+    .support-launcher {
+      position: absolute;
+      bottom: 28px;
+      right: 28px;
+      width: 52px;
+      height: 52px;
+      background: #EF6337;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(239,99,55,0.5);
+      transition: transform 0.2s, box-shadow 0.2s;
+      z-index: 100;
+    }
+    .support-launcher:hover {
+      transform: scale(1.08);
+      box-shadow: 0 6px 20px rgba(239,99,55,0.6);
+    }
+    .support-launcher svg { width: 26px; height: 26px; fill: white; }
+
+    /* ── Ventana flotante del chat ── */
+    .chat-window {
+      position: absolute;
+      bottom: 90px;
+      right: 28px;
+      width: 360px;
+      height: 500px;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.35);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      z-index: 99;
+      animation: slideUp 0.25s ease;
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0)   scale(1); }
+    }
+
+    .chat-header {
+      background: linear-gradient(135deg, #212B37 0%, #2d3d50 100%);
+      padding: 18px 16px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+    .chat-header-logo {
+      width: 36px;
+      height: 36px;
+      background: white;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+    .chat-header-text { flex: 1; }
+    .chat-header-title { color: white; font-size: 14px; font-weight: 600; }
+    .chat-header-sub   { color: rgba(255,255,255,0.65); font-size: 11px; margin-top: 1px; }
+    .chat-close {
+      width: 28px; height: 28px;
+      background: rgba(255,255,255,0.12);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; color: white; font-size: 14px;
+    }
+    .chat-close:hover { background: rgba(255,255,255,0.22); }
+
+    /* Intercom messenger simulado */
+    .chat-body {
+      flex: 1;
+      background: #f3f4f6;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Home screen de Intercom */
+    .intercom-home {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 20px 16px;
+      gap: 12px;
+      overflow-y: auto;
+    }
+    .intercom-greeting {
+      font-size: 22px;
+      font-weight: 700;
+      color: #111;
+      line-height: 1.3;
+    }
+    .intercom-sub {
+      font-size: 13px;
+      color: #666;
+      line-height: 1.5;
+    }
+
+    .intercom-card {
+      background: white;
+      border-radius: 12px;
+      padding: 14px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      cursor: pointer;
+      transition: box-shadow 0.15s;
+    }
+    .intercom-card:hover { box-shadow: 0 3px 12px rgba(0,0,0,0.12); }
+    .intercom-card-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #111;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .intercom-card-desc { font-size: 12px; color: #777; line-height: 1.4; }
+
+    .intercom-new-msg {
+      background: white;
+      border-radius: 12px;
+      padding: 12px 14px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      border: 1.5px solid transparent;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .intercom-new-msg:hover {
+      border-color: #EF6337;
+      box-shadow: 0 3px 12px rgba(239,99,55,0.12);
+    }
+    .intercom-new-msg-icon {
+      width: 36px; height: 36px;
+      background: #EF6337;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .intercom-new-msg-text { font-size: 13px; font-weight: 500; color: #111; }
+    .intercom-new-msg-sub  { font-size: 11px; color: #999; }
+
+    .team-avatars {
+      display: flex;
+      gap: -4px;
+      margin-bottom: 4px;
+    }
+    .avatar {
+      width: 28px; height: 28px; border-radius: 50%;
+      border: 2px solid white;
+      margin-right: -6px;
+      font-size: 13px;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* Estado "sin chat" */
+    .revit-status {
+      height: 24px;
+      background: #1a1a1a;
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      gap: 16px;
+      flex-shrink: 0;
+    }
+    .revit-status span { color: #666; font-size: 10px; }
+
+    /* Toggle demo */
+    .demo-controls {
+      position: absolute;
+      top: 110px;
+      left: 16px;
+      background: rgba(0,0,0,0.7);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: white;
+      font-size: 11px;
+      z-index: 200;
+    }
+    .demo-controls p { margin-bottom: 6px; color: #aaa; }
+    .demo-btn {
+      background: #EF6337;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 5px 10px;
+      font-size: 11px;
+      cursor: pointer;
+      width: 100%;
+    }
+    .demo-btn:hover { background: #d4522a; }
+  </style>
+</head>
+<body>
+
+  <!-- Revit titlebar -->
+  <div class="revit-titlebar">
+    <div class="revit-titlebar-dot" style="background:#ff5f57"></div>
+    <div class="revit-titlebar-dot" style="background:#febc2e"></div>
+    <div class="revit-titlebar-dot" style="background:#28c840"></div>
+    <span class="revit-titlebar-title">Autodesk Revit 2024 — Proyecto_Torre_A.rvt</span>
+  </div>
+
+  <!-- Revit ribbon -->
+  <div class="revit-ribbon">
+    <div class="ribbon-btn">
+      <div class="ribbon-icon">📋</div>
+      <span class="ribbon-label">Auditoría</span>
+    </div>
+    <div class="ribbon-btn">
+      <div class="ribbon-icon">📤</div>
+      <span class="ribbon-label">Exportar</span>
+    </div>
+    <div class="ribbon-btn">
+      <div class="ribbon-icon">📥</div>
+      <span class="ribbon-label">Importar</span>
+    </div>
+    <div class="ribbon-separator"></div>
+    <div class="ribbon-btn" onclick="toggleChat()" style="cursor:pointer;">
+      <div class="ribbon-icon" style="background:rgba(239,99,55,0.15);">💬</div>
+      <span class="ribbon-label" style="color:#EF6337; font-weight:600;">Soporte</span>
+    </div>
+    <div class="ribbon-btn">
+      <div class="ribbon-icon">ℹ️</div>
+      <span class="ribbon-label">Acerca de</span>
+    </div>
+  </div>
+
+  <!-- Viewport -->
+  <div class="revit-viewport" id="viewport">
+    <div class="viewport-grid"></div>
+
+    <!-- Floor plan sketch -->
+    <svg class="floor-plan" width="600" height="400" viewBox="0 0 600 400">
+      <rect x="50" y="50" width="500" height="300" fill="none" stroke="white" stroke-width="3"/>
+      <line x1="200" y1="50" x2="200" y2="350" stroke="white" stroke-width="2"/>
+      <line x1="400" y1="50" x2="400" y2="350" stroke="white" stroke-width="2"/>
+      <line x1="50" y1="200" x2="550" y2="200" stroke="white" stroke-width="2"/>
+      <rect x="80" y="80" width="90" height="90" fill="none" stroke="white" stroke-width="1.5"/>
+      <rect x="230" y="80" width="140" height="90" fill="none" stroke="white" stroke-width="1.5"/>
+      <rect x="420" y="80" width="100" height="90" fill="none" stroke="white" stroke-width="1.5"/>
+    </svg>
+
+    <!-- Demo controls -->
+    <div class="demo-controls">
+      <p>Haz clic en <strong>Soporte</strong><br>en el ribbon ↑ o aquí:</p>
+      <button class="demo-btn" onclick="toggleChat()">Abrir / Cerrar chat</button>
+    </div>
+
+    <!-- Launcher bubble -->
+    <div class="support-launcher" id="launcher" onclick="toggleChat()">
+      <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/></svg>
+    </div>
+
+    <!-- Chat window -->
+    <div class="chat-window" id="chatWindow">
+      <div class="chat-header">
+        <div class="chat-header-logo">💊</div>
+        <div class="chat-header-text">
+          <div class="chat-header-title">BIM Pills — Soporte</div>
+          <div class="chat-header-sub">Equipo de BIM-CA · Respuesta en minutos</div>
+        </div>
+        <div class="chat-close" onclick="toggleChat()">✕</div>
+      </div>
+
+      <div class="chat-body">
+        <div class="intercom-home">
+
+          <div class="team-avatars">
+            <div class="avatar" style="background:#EF6337">R</div>
+            <div class="avatar" style="background:#212B37; color:white">B</div>
+          </div>
+
+          <div class="intercom-greeting">¡Hola! ¿En qué te podemos ayudar?</div>
+          <div class="intercom-sub">Somos el equipo de BIM-CA. Escríbenos y te respondemos.</div>
+
+          <!-- Nuevo mensaje -->
+          <div class="intercom-new-msg">
+            <div class="intercom-new-msg-icon">✏️</div>
+            <div>
+              <div class="intercom-new-msg-text">Enviar un mensaje</div>
+              <div class="intercom-new-msg-sub">Respuesta típica en unos minutos</div>
+            </div>
+          </div>
+
+          <!-- Cards de ayuda rápida -->
+          <div class="intercom-card">
+            <div class="intercom-card-title">📖 Documentación</div>
+            <div class="intercom-card-desc">Guías de uso, tutoriales y referencia del plugin.</div>
+          </div>
+
+          <div class="intercom-card">
+            <div class="intercom-card-title">🔑 Licencia y activación</div>
+            <div class="intercom-card-desc">Problemas para activar tu licencia o cambiar de equipo.</div>
+          </div>
+
+          <div class="intercom-card">
+            <div class="intercom-card-title">🐛 Reportar un problema</div>
+            <div class="intercom-card-desc">¿Algo no funciona como esperabas? Cuéntanos.</div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Status bar -->
+  <div class="revit-status">
+    <span>📐 Modelo listo</span>
+    <span>Revit 2024.2</span>
+    <span>BIM Pills beta 4.0</span>
+  </div>
+
+  <script>
+    let isOpen = true;
+    function toggleChat() {
+      const win = document.getElementById('chatWindow');
+      const launcher = document.getElementById('launcher');
+      if (isOpen) {
+        win.style.display = 'none';
+        launcher.style.background = '#212B37';
+      } else {
+        win.style.display = 'flex';
+        win.style.animation = 'none';
+        win.offsetHeight; // reflow
+        win.style.animation = 'slideUp 0.25s ease';
+        launcher.style.background = '#EF6337';
+      }
+      isOpen = !isOpen;
+    }
+  </script>
+</body>
+</html>

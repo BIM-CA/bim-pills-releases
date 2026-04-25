@@ -1,0 +1,513 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<title>BIM Pills Beta 5 — Render</title>
+<link rel="stylesheet" href="assets/colors_and_type.css" />
+<style>
+  @font-face {
+    font-family: "Montserrat";
+    src: url("assets/fonts/Montserrat-Regular.ttf") format("truetype");
+    font-weight: 400; font-style: normal; font-display: block;
+  }
+  @font-face {
+    font-family: "Montserrat";
+    src: url("assets/fonts/Montserrat-ExtraBold.ttf") format("truetype");
+    font-weight: 800; font-style: normal; font-display: block;
+  }
+  html, body {
+    margin: 0; padding: 0;
+    font-family: "Montserrat", sans-serif;
+    background: #FBFAF8;
+    width: 1080px; height: 1080px; overflow: hidden;
+  }
+  #root { width: 1080px; height: 1080px; position: absolute; top: 0; left: 0; }
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const C = {
+  negro: "#212B37",
+  naranja: "#ED6441",
+  amarillo: "#FECA28",
+  crema: "#FBFAF8",
+  blanco: "#FFFFFF",
+  hair: "rgba(32,43,55,0.12)",
+  soft: "rgba(32,43,55,0.22)",
+  ink2: "rgba(32,43,55,0.55)"
+};
+
+function CadGrid({ size = 24, stroke = "rgba(32,43,55,0.08)", dots = true, style }) {
+  const bg = dots ?
+    `radial-gradient(circle, ${stroke} 1px, transparent 1px)` :
+    `linear-gradient(${stroke} 1px, transparent 1px), linear-gradient(90deg, ${stroke} 1px, transparent 1px)`;
+  return (
+    <div style={{ position: "absolute", inset: 0, backgroundImage: bg, backgroundSize: `${size}px ${size}px`, backgroundPosition: "0 0", ...style }} />
+  );
+}
+
+function TopoBackground({ stroke = "rgba(32,43,55,0.28)", weak = "rgba(32,43,55,0.07)", accent = "#ED6441", children }) {
+  const { lines, peaks } = React.useMemo(() => {
+    const W = 1080, H = 1080;
+    const cellSize = 16;
+    const cols = Math.ceil(W / cellSize) + 1;
+    const rows = Math.ceil(H / cellSize) + 1;
+    const peaksDef = [
+      { x: 220, y: 340, h: 2.6, s: 240 },
+      { x: 820, y: 700, h: 2.9, s: 280 },
+      { x: 640, y: 180, h: 1.6, s: 200 },
+      { x: 340, y: 860, h: 1.4, s: 220 },
+      { x: 540, y: 540, h: 0.9, s: 360 },
+      { x: 780, y: 320, h: -1.1, s: 180 },
+      { x: 180, y: 620, h: -0.8, s: 200 }
+    ];
+    const field = new Float32Array(cols * rows);
+    let hmin = Infinity, hmax = -Infinity;
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const x = c * cellSize, y = r * cellSize;
+        let h = 0;
+        for (const p of peaksDef) {
+          const dx = x - p.x, dy = y - p.y;
+          h += p.h * Math.exp(-(dx * dx + dy * dy) / (2 * p.s * p.s));
+        }
+        field[r * cols + c] = h;
+        if (h < hmin) hmin = h;
+        if (h > hmax) hmax = h;
+      }
+    }
+    const N = 22;
+    const isoValues = [];
+    for (let i = 1; i < N; i++) isoValues.push(hmin + (hmax - hmin) * i / N);
+    const interp = (_a, _b, va, vb, iso) => (iso - va) / (vb - va);
+    const lines = isoValues.map((iso, idx) => {
+      const segs = [];
+      for (let r = 0; r < rows - 1; r++) {
+        for (let c = 0; c < cols - 1; c++) {
+          const v0 = field[r * cols + c];
+          const v1 = field[r * cols + c + 1];
+          const v2 = field[(r + 1) * cols + c + 1];
+          const v3 = field[(r + 1) * cols + c];
+          let code = 0;
+          if (v0 > iso) code |= 1;
+          if (v1 > iso) code |= 2;
+          if (v2 > iso) code |= 4;
+          if (v3 > iso) code |= 8;
+          if (code === 0 || code === 15) continue;
+          const x0 = c * cellSize, y0 = r * cellSize;
+          const x1 = x0 + cellSize, y1 = y0 + cellSize;
+          const eTop = () => [x0 + cellSize * interp(null, null, v0, v1, iso), y0];
+          const eRight = () => [x1, y0 + cellSize * interp(null, null, v1, v2, iso)];
+          const eBottom = () => [x0 + cellSize * interp(null, null, v3, v2, iso), y1];
+          const eLeft = () => [x0, y0 + cellSize * interp(null, null, v0, v3, iso)];
+          let pairs;
+          switch (code) {
+            case 1: case 14: pairs = [[eLeft(), eTop()]]; break;
+            case 2: case 13: pairs = [[eTop(), eRight()]]; break;
+            case 3: case 12: pairs = [[eLeft(), eRight()]]; break;
+            case 4: case 11: pairs = [[eRight(), eBottom()]]; break;
+            case 5: pairs = [[eLeft(), eTop()], [eRight(), eBottom()]]; break;
+            case 6: case 9: pairs = [[eTop(), eBottom()]]; break;
+            case 7: case 8: pairs = [[eLeft(), eBottom()]]; break;
+            case 10: pairs = [[eTop(), eRight()], [eLeft(), eBottom()]]; break;
+            default: pairs = [];
+          }
+          for (const [a, b] of pairs) segs.push(a[0], a[1], b[0], b[1]);
+        }
+      }
+      const EPS = 0.5;
+      const segments = [];
+      for (let i = 0; i < segs.length; i += 4) {
+        segments.push({ a: [segs[i], segs[i + 1]], b: [segs[i + 2], segs[i + 3]], used: false });
+      }
+      const paths = [];
+      for (const s of segments) {
+        if (s.used) continue;
+        s.used = true;
+        const chain = [s.a, s.b];
+        let changed = true;
+        while (changed) {
+          changed = false;
+          const tail = chain[chain.length - 1];
+          for (const t of segments) {
+            if (t.used) continue;
+            if (Math.abs(t.a[0] - tail[0]) < EPS && Math.abs(t.a[1] - tail[1]) < EPS) { chain.push(t.b); t.used = true; changed = true; break; }
+            if (Math.abs(t.b[0] - tail[0]) < EPS && Math.abs(t.b[1] - tail[1]) < EPS) { chain.push(t.a); t.used = true; changed = true; break; }
+          }
+        }
+        changed = true;
+        while (changed) {
+          changed = false;
+          const head = chain[0];
+          for (const t of segments) {
+            if (t.used) continue;
+            if (Math.abs(t.a[0] - head[0]) < EPS && Math.abs(t.a[1] - head[1]) < EPS) { chain.unshift(t.b); t.used = true; changed = true; break; }
+            if (Math.abs(t.b[0] - head[0]) < EPS && Math.abs(t.b[1] - head[1]) < EPS) { chain.unshift(t.a); t.used = true; changed = true; break; }
+          }
+        }
+        if (chain.length > 3) paths.push(chain);
+      }
+      const d = paths.map((pts) =>
+        pts.map((p, i) => i === 0 ? `M ${p[0].toFixed(1)} ${p[1].toFixed(1)}` : `L ${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(" ")
+      ).join(" ");
+      return { d, idx, iso, isIndex: idx % 5 === 0 };
+    });
+    const summits = peaksDef.filter((p) => p.h > 1.5).map((p) => ({ x: p.x, y: p.y }));
+    return { lines, peaks: summits };
+  }, []);
+
+  return (
+    <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
+      <div style={{ position: "absolute", inset: 0,
+        backgroundImage: `linear-gradient(${weak} 1px, transparent 1px), linear-gradient(90deg, ${weak} 1px, transparent 1px)`,
+        backgroundSize: "48px 48px" }} />
+      <svg viewBox="0 0 1080 1080" style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} preserveAspectRatio="none">
+        <g fill="none" stroke={stroke} strokeLinecap="round" strokeLinejoin="round">
+          {lines.map((ln) => (
+            <path key={ln.idx} d={ln.d} strokeWidth={ln.isIndex ? 1.4 : 0.8} opacity={ln.isIndex ? 0.9 : 0.55} />
+          ))}
+        </g>
+        <g stroke={accent} strokeWidth={1.2}>
+          {peaks.map((p, i) => (
+            <React.Fragment key={i}>
+              <line x1={p.x - 7} y1={p.y} x2={p.x + 7} y2={p.y} />
+              <line x1={p.x} y1={p.y - 7} x2={p.x} y2={p.y + 7} />
+            </React.Fragment>
+          ))}
+        </g>
+      </svg>
+      {children}
+    </div>
+  );
+}
+
+function CornerTick({ x, y, size = 28, color = C.negro, weight = 1.5 }) {
+  return (
+    <svg width={size} height={size} style={{ position: "absolute", left: x, top: y }}>
+      <line x1={0} y1={size / 2} x2={size} y2={size / 2} stroke={color} strokeWidth={weight} />
+      <line x1={size / 2} y1={0} x2={size / 2} y2={size} stroke={color} strokeWidth={weight} />
+    </svg>
+  );
+}
+
+function Eyebrow({ children, color = C.naranja, style }) {
+  return (
+    <div style={{
+      fontFamily: "Montserrat, sans-serif",
+      fontWeight: 800, fontSize: 14, letterSpacing: "0.14em",
+      textTransform: "uppercase", color, ...style
+    }}>{children}</div>
+  );
+}
+
+function Frame({ bg = C.crema, children, style }) {
+  return (
+    <div style={{
+      width: 1080, height: 1080, background: bg,
+      position: "relative", overflow: "hidden",
+      fontFamily: "Montserrat, sans-serif", color: C.negro, ...style
+    }}>{children}</div>
+  );
+}
+
+function V1_Editorial({ t }) {
+  const bg = t.v1Bg;
+  const ink = bg === C.negro ? C.crema : C.negro;
+  const ink2 = bg === C.negro ? "rgba(251,250,248,0.55)" : C.ink2;
+  return (
+    <Frame bg={bg}>
+      <TopoBackground
+        stroke={bg === C.negro ? "rgba(251,250,248,0.22)" : "rgba(32,43,55,0.22)"}
+        weak={bg === C.negro ? "rgba(251,250,248,0.05)" : "rgba(32,43,55,0.06)"}
+        accent={C.naranja} />
+      <CornerTick x={40} y={40} color={ink} />
+      <CornerTick x={1080 - 40 - 28} y={40} color={ink} />
+      <CornerTick x={40} y={1080 - 40 - 28} color={ink} />
+      <CornerTick x={1080 - 40 - 28} y={1080 - 40 - 28} color={ink} />
+      <div style={{ position: "absolute", top: 92, left: 96, right: 96, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          <img src="assets/logos/pill.png" alt="" style={{ height: 28 }} />
+          <div style={{ fontWeight: 800, fontSize: 14, letterSpacing: "0.22em", color: ink }}>BIM·PILLS</div>
+        </div>
+        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+          <span style={{ display: "inline-block", width: 8, height: 8, borderRadius: 999, background: C.naranja }} />
+          <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: "0.18em", textTransform: "uppercase", color: ink }}>RELEASE · ABR 2026</div>
+        </div>
+      </div>
+      <div style={{ position: "absolute", top: 140, left: 96, right: 96, height: 1, background: ink }} />
+      <div style={{ position: "absolute", top: 188, left: 96, display: "flex", flexDirection: "column", gap: 6 }}>
+        <Eyebrow color={ink2} style={{ fontSize: 11 }}>N 04°42'13.8"</Eyebrow>
+        <Eyebrow color={ink2} style={{ fontSize: 11 }}>W 074°03'52.1"</Eyebrow>
+      </div>
+      <div style={{ position: "absolute", top: 188, right: 96, textAlign: "right", display: "flex", flexDirection: "column", gap: 6 }}>
+        <Eyebrow color={ink2} style={{ fontSize: 11 }}>SPRINT 09</Eyebrow>
+        <Eyebrow color={ink2} style={{ fontSize: 11 }}>v5.0.0</Eyebrow>
+      </div>
+      <div style={{
+        position: "absolute", top: 250, left: 60, right: 60, height: 560,
+        background: bg === C.negro
+          ? "radial-gradient(ellipse at center, rgba(33,43,55,0.75) 0%, rgba(33,43,55,0.4) 55%, rgba(33,43,55,0) 85%)"
+          : "radial-gradient(ellipse at center, rgba(251,250,248,0.85) 0%, rgba(251,250,248,0.55) 55%, rgba(251,250,248,0) 85%)",
+        pointerEvents: "none"
+      }} />
+      <div style={{ position: "absolute", top: 280, left: 96, right: 96 }}>
+        <Eyebrow style={{ marginBottom: 24, color: C.naranja }}>Novedades · Beta 5.0</Eyebrow>
+        <div style={{ fontWeight: 800, fontSize: t.v1Hero, lineHeight: 0.92, letterSpacing: "-0.035em", color: ink }}>Extrae.</div>
+        <div style={{ fontWeight: 800, fontSize: t.v1Hero, lineHeight: 0.92, letterSpacing: "-0.035em", color: ink }}>Geolocaliza.</div>
+        <div style={{ fontWeight: 800, fontSize: t.v1Hero, lineHeight: 0.92, letterSpacing: "-0.035em", color: C.naranja }}>
+          Tabula<span style={{ color: ink }}>.</span>
+        </div>
+      </div>
+      <div style={{
+        position: "absolute", left: 96, right: 96, bottom: 196,
+        display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 28,
+        borderTop: `1px solid ${ink}`, paddingTop: 24
+      }}>
+        {[
+          { n: "01", t: "Extractor de Parámetros", d: "Datos del elemento → parámetros compartidos del modelo." },
+          { n: "02", t: "Coordenadas Geográficas", d: "Lat/Long real de cada elemento (decimal o GMS)." },
+          { n: "03", t: "Tablas desde Excel", d: "Leyendas en Vistas de Diseño a partir de un XLS." }
+        ].map((f) => (
+          <div key={f.n} style={{ display: "flex", flexDirection: "column", minHeight: 140 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+              <span style={{ fontWeight: 800, fontSize: 11, letterSpacing: "0.2em", color: C.naranja }}>{f.n}</span>
+              <span style={{ width: 28, height: 2, background: C.naranja, borderRadius: 2 }} />
+            </div>
+            <div style={{ fontWeight: 800, fontSize: 17, lineHeight: 1.2, marginBottom: 10, letterSpacing: "-0.01em", color: ink, minHeight: 40 }}>{f.t}</div>
+            <div style={{ fontSize: 13, lineHeight: 1.5, color: ink2, flex: 1 }}>{f.d}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{ position: "absolute", left: 96, right: 96, bottom: 92, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{
+          background: ink, color: bg === C.negro ? C.negro : C.crema,
+          padding: "18px 34px", borderRadius: 999,
+          fontWeight: 800, fontSize: 18, letterSpacing: "0.04em",
+          display: "inline-flex", alignItems: "center", gap: 14
+        }}>
+          <span style={{ display: "inline-block", width: 10, height: 10, borderRadius: 999, background: C.naranja }} />
+          {t.cta}
+        </div>
+        <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: "0.18em", textTransform: "uppercase", color: ink2 }}>
+          Revit 2024 · 2025 · 2026 · 2027
+        </div>
+      </div>
+    </Frame>
+  );
+}
+
+function V2_Dossier({ t }) {
+  return (
+    <Frame>
+      <CadGrid size={30} stroke="rgba(32,43,55,0.06)" dots={false} />
+      <div style={{ position: "absolute", inset: 56, border: `1px solid ${C.negro}`, pointerEvents: "none" }} />
+      <div style={{ position: "absolute", inset: 68, border: `1px solid ${C.negro}`, pointerEvents: "none" }} />
+      <div style={{
+        position: "absolute", top: 68, left: 68, right: 68, height: 96,
+        borderBottom: `1px solid ${C.negro}`,
+        display: "grid", gridTemplateColumns: "1.6fr 1fr 1fr 1fr", alignItems: "stretch"
+      }}>
+        <div style={{ padding: "20px 24px", borderRight: `1px solid ${C.negro}`, display: "flex", alignItems: "center", gap: 14 }}>
+          <img src="assets/logos/pill.png" alt="" style={{ height: 32 }} />
+          <div>
+            <div style={{ fontWeight: 800, fontSize: 11, letterSpacing: "0.2em", color: C.ink2 }}>PROYECTO</div>
+            <div style={{ fontWeight: 800, fontSize: 18, letterSpacing: "0.14em" }}>BIM·PILLS</div>
+          </div>
+        </div>
+        <div style={{ padding: "20px 24px", borderRight: `1px solid ${C.negro}` }}>
+          <div style={{ fontWeight: 800, fontSize: 10, letterSpacing: "0.2em", color: C.ink2, marginBottom: 6 }}>VERSIÓN</div>
+          <div style={{ fontWeight: 800, fontSize: 20, letterSpacing: "-0.01em" }}>BETA 5.0</div>
+        </div>
+        <div style={{ padding: "20px 24px", borderRight: `1px solid ${C.negro}` }}>
+          <div style={{ fontWeight: 800, fontSize: 10, letterSpacing: "0.2em", color: C.ink2, marginBottom: 6 }}>SPRINT</div>
+          <div style={{ fontWeight: 800, fontSize: 20, letterSpacing: "-0.01em" }}>09</div>
+        </div>
+        <div style={{ padding: "20px 24px" }}>
+          <div style={{ fontWeight: 800, fontSize: 10, letterSpacing: "0.2em", color: C.ink2, marginBottom: 6 }}>REVIT</div>
+          <div style={{ fontWeight: 800, fontSize: 20, letterSpacing: "-0.01em" }}>2024–2027</div>
+        </div>
+      </div>
+      <div style={{ position: "absolute", top: 196, left: 96, right: 96 }}>
+        <Eyebrow>Release notes · Usuarios Beta</Eyebrow>
+        <div style={{ fontWeight: 800, fontSize: 88, lineHeight: 0.98, letterSpacing: "-0.035em", color: C.negro, marginTop: 14 }}>Tres herramientas</div>
+        <div style={{ fontWeight: 800, fontSize: 88, lineHeight: 0.98, letterSpacing: "-0.035em", color: C.negro }}>
+          nuevas. <span style={{ color: C.naranja }}>★</span>
+        </div>
+      </div>
+      <div style={{
+        position: "absolute", top: 464, left: 68, right: 68, bottom: 188,
+        borderTop: `1px solid ${C.negro}`, display: "flex", flexDirection: "column"
+      }}>
+        {[
+          { n: "01", tag: "TOOL", t: "Extractor de Parámetros", d: "Extrae datos de elementos seleccionados y los escribe directamente en parámetros compartidos del modelo.", chips: ["Categoría", "Familia", "Tipo", "Nivel", "ElementId"] },
+          { n: "02", tag: "GEO", t: "Coordenadas Geográficas", d: "Convierte la ubicación de cada elemento a Lat/Long real usando la georreferenciación del modelo.", chips: ["Decimal", "GMS", "Interno", "Base", "Survey"] },
+          { n: "03", tag: "DATA", t: "Tablas desde Excel", d: "Crea leyendas y tablas en Vistas de Diseño a partir de un archivo Excel.", chips: [".xlsx", "Vista de Diseño", "Leyendas"] }
+        ].map((f) => (
+          <div key={f.n} style={{
+            flex: 1, display: "grid",
+            gridTemplateColumns: "68px 96px 1fr",
+            borderBottom: `1px solid ${C.negro}`,
+            padding: "18px 24px", alignItems: "start", gap: 18, minHeight: 0
+          }}>
+            <div style={{ fontWeight: 800, fontSize: 26, letterSpacing: "-0.02em", color: C.naranja, lineHeight: 1 }}>{f.n}</div>
+            <div style={{ paddingTop: 4 }}>
+              <span style={{ display: "inline-block", padding: "4px 10px", border: `1px solid ${C.negro}`, borderRadius: 999, fontWeight: 800, fontSize: 10, letterSpacing: "0.2em" }}>{f.tag}</span>
+            </div>
+            <div>
+              <div style={{ fontWeight: 800, fontSize: 24, letterSpacing: "-0.02em", marginBottom: 6, lineHeight: 1.1 }}>{f.t}</div>
+              <div style={{ fontSize: 13.5, lineHeight: 1.5, color: C.ink2, marginBottom: 10, maxWidth: 720 }}>{f.d}</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                {f.chips.map((c) => (
+                  <span key={c} style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: "0.12em", textTransform: "uppercase", padding: "4px 10px", background: C.blanco, border: `1px solid ${C.hair}`, borderRadius: 999 }}>{c}</span>
+                ))}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div style={{
+        position: "absolute", left: 68, right: 68, bottom: 68, height: 88,
+        display: "grid", gridTemplateColumns: "1.2fr 1fr 1fr",
+        borderTop: `1px solid ${C.negro}`, alignItems: "center"
+      }}>
+        <div style={{ padding: "0 24px", borderRight: `1px solid ${C.negro}`, height: "100%", display: "flex", alignItems: "center" }}>
+          <div style={{
+            background: C.naranja, color: C.negro, padding: "14px 26px",
+            borderRadius: 999, fontWeight: 800, fontSize: 16, letterSpacing: "0.04em",
+            display: "inline-flex", alignItems: "center", gap: 10
+          }}>
+            {t.cta}
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M5 12h14M13 6l6 6-6 6" />
+            </svg>
+          </div>
+        </div>
+        <div style={{ padding: "0 24px", borderRight: `1px solid ${C.negro}` }}>
+          <div style={{ fontWeight: 800, fontSize: 10, letterSpacing: "0.2em", color: C.ink2 }}>LAT</div>
+          <div style={{ fontWeight: 800, fontSize: 18, letterSpacing: "-0.01em", fontFamily: "ui-monospace, Menlo, monospace" }}>04.70383</div>
+        </div>
+        <div style={{ padding: "0 24px" }}>
+          <div style={{ fontWeight: 800, fontSize: 10, letterSpacing: "0.2em", color: C.ink2 }}>LONG</div>
+          <div style={{ fontWeight: 800, fontSize: 18, letterSpacing: "-0.01em", fontFamily: "ui-monospace, Menlo, monospace" }}>−74.06447</div>
+        </div>
+      </div>
+    </Frame>
+  );
+}
+
+function V3_Pill({ t }) {
+  const IconExtractor = () => (
+    <svg width="84" height="84" viewBox="0 0 120 120" fill="none" stroke={C.negro} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M60 18 L96 36 L96 78 L60 96 L24 78 L24 36 Z" />
+      <path d="M60 18 L60 60" />
+      <path d="M60 60 L24 36 M60 60 L96 36" />
+      <circle cx="60" cy="60" r="4" fill={C.naranja} stroke="none" />
+      <path d="M60 60 L100 94" stroke={C.naranja} />
+      <path d="M94 86 L100 94 L92 96" stroke={C.naranja} />
+    </svg>
+  );
+  const IconGeo = () => (
+    <svg width="84" height="84" viewBox="0 0 120 120" fill="none" stroke={C.negro} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="60" cy="60" r="40" />
+      <ellipse cx="60" cy="60" rx="40" ry="16" />
+      <ellipse cx="60" cy="60" rx="16" ry="40" />
+      <path d="M20 60 H100" />
+      <circle cx="74" cy="44" r="5" fill={C.naranja} stroke={C.naranja} />
+    </svg>
+  );
+  const IconTable = () => (
+    <svg width="84" height="84" viewBox="0 0 120 120" fill="none" stroke={C.negro} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="22" y="22" width="76" height="76" rx="4" />
+      <path d="M22 44 H98 M22 66 H98 M22 88 H98" />
+      <path d="M48 22 V98 M74 22 V98" />
+      <path d="M22 22 H98 V44 H22 Z" fill={C.naranja} stroke="none" opacity="0.9" />
+    </svg>
+  );
+  return (
+    <Frame>
+      <CadGrid size={24} stroke="rgba(32,43,55,0.06)" dots />
+      <CornerTick x={44} y={44} />
+      <CornerTick x={1080 - 44 - 28} y={44} />
+      <CornerTick x={44} y={1080 - 44 - 28} />
+      <CornerTick x={1080 - 44 - 28} y={1080 - 44 - 28} />
+      <div style={{ position: "absolute", top: 96, left: 96, right: 96, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <img src="assets/logos/bimpills-wordmark-negro.png" alt="BIM PILLS" style={{ height: 24 }} />
+        <Eyebrow color={C.negro} style={{ fontSize: 12 }}>Beta 5.0 · Sprint 09</Eyebrow>
+      </div>
+      <div style={{
+        position: "absolute", top: 168, left: 96, right: 96, height: 320,
+        background: `linear-gradient(90deg, ${C.crema} 0%, ${C.crema} 50%, ${C.naranja} 50%, ${C.naranja} 100%)`,
+        border: `2px solid ${C.negro}`, borderRadius: 999,
+        display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden"
+      }}>
+        <div style={{ position: "absolute", inset: 14, border: `1.5px solid ${C.negro}`, borderRadius: 999, opacity: "0.53" }} />
+        <div style={{ position: "absolute", top: 28, bottom: 28, left: "50%", width: 2, background: C.negro, opacity: "0.42" }} />
+        <div style={{ textAlign: "center", zIndex: 2, padding: "0 40px" }}>
+          <div style={{ fontWeight: 800, fontSize: 22, letterSpacing: "0.22em", color: C.negro, marginBottom: 6 }}>DOSIS · BETA 5.0</div>
+          <div style={{ fontWeight: 800, fontSize: 140, lineHeight: 0.9, letterSpacing: "-0.04em", color: C.negro }}>3 nuevas</div>
+          <div style={{ fontWeight: 800, fontSize: 38, letterSpacing: "-0.02em", color: C.negro, marginTop: 4 }}>herramientas para Revit</div>
+        </div>
+      </div>
+      <div style={{
+        position: "absolute", top: 536, left: 96, right: 96,
+        display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 20
+      }}>
+        {[
+          { Icon: IconExtractor, n: "01", t: "Extractor de Parámetros", d: "Extrae datos de los elementos seleccionados y los escribe en parámetros compartidos." },
+          { Icon: IconGeo, n: "02", t: "Coordenadas Geográficas ★", d: "Convierte cada elemento a Lat/Long real desde la georreferenciación del modelo." },
+          { Icon: IconTable, n: "03", t: "Tablas desde Excel", d: "Crea leyendas en Vistas de Diseño a partir de un archivo Excel." }
+        ].map((f) => (
+          <div key={f.n} style={{
+            background: C.blanco, border: `1px solid ${C.hair}`, borderRadius: 20,
+            padding: 24, position: "relative", display: "flex", flexDirection: "column", gap: 12, height: 296
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+              <f.Icon />
+              <div style={{ padding: "6px 12px", border: `1px solid ${C.negro}`, borderRadius: 999, fontWeight: 800, fontSize: 11, letterSpacing: "0.18em" }}>{f.n}</div>
+            </div>
+            <div style={{ fontWeight: 800, fontSize: 21, letterSpacing: "-0.02em", lineHeight: 1.15 }}>{f.t}</div>
+            <div style={{ fontSize: 13.5, lineHeight: 1.55, color: C.ink2 }}>{f.d}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{
+        position: "absolute", left: 96, right: 96, bottom: 92,
+        display: "flex", justifyContent: "space-between", alignItems: "center"
+      }}>
+        <div style={{
+          background: C.negro, color: C.crema, padding: "20px 38px", borderRadius: 999,
+          fontWeight: 800, fontSize: 20, letterSpacing: "0.04em",
+          display: "inline-flex", alignItems: "center", gap: 14
+        }}>
+          {t.cta}
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 3v14M5 10l7 7 7-7" />
+          </svg>
+        </div>
+        <div style={{ textAlign: "right" }}>
+          <Eyebrow color={C.ink2} style={{ fontSize: 11, marginBottom: 4 }}>Compatible</Eyebrow>
+          <div style={{ fontWeight: 800, fontSize: 16, letterSpacing: "0.04em" }}>Revit 2024 · 25 · 26 · 27</div>
+        </div>
+      </div>
+    </Frame>
+  );
+}
+
+function App() {
+  const t = { cta: "Actualízalo ya", v1Hero: 138, v1Bg: "#FBFAF8" };
+  const which = (window.location.hash || "#v1").toLowerCase();
+  let content;
+  if (which.includes("v2")) content = <V2_Dossier t={t} />;
+  else if (which.includes("v3")) content = <V3_Pill t={t} />;
+  else content = <V1_Editorial t={t} />;
+  return content;
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>

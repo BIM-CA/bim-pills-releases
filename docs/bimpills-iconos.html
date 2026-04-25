@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BIM Pills — Inventario Completo de Íconos</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', 'Segoe UI', sans-serif;
+      background: #E8EAED; padding: 32px 20px; font-size: 13px; color: #1a1a2e;
+    }
+    .page { max-width: 880px; margin: 0 auto; background: white; border-radius: 12px;
+            overflow: hidden; box-shadow: 0 4px 28px rgba(0,0,0,0.10); }
+
+    /* HEADER */
+    .header { background: #212B37; color: white; padding: 26px 40px 22px; }
+    .header-top { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+    .pill-badge { background: #EF6337; color: white; font-size: 10px; font-weight: 700;
+                  letter-spacing: 1.5px; text-transform: uppercase; padding: 3px 9px; border-radius: 20px; }
+    .header h1 { font-size: 19px; font-weight: 700; }
+    .header-sub { font-size: 11px; color: rgba(255,255,255,0.45); margin-top: 4px; }
+    .palette-row { display: flex; gap: 16px; margin-top: 14px; align-items: center; flex-wrap: wrap; }
+    .swatch { display: flex; align-items: center; gap: 6px; font-size: 11px; color: rgba(255,255,255,0.65); }
+    .swatch-dot { width: 12px; height: 12px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.2); }
+    .palette-note { margin-left: auto; font-size: 10px; color: rgba(255,255,255,0.3); }
+
+    /* LEYENDA */
+    .legend-bar { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 40px;
+                  background: #F8F9FA; border-bottom: 1px solid #EAECEF; }
+    .legend-bar span { font-size: 9.5px; color: #777; font-weight: 600; margin-right: 2px; }
+
+    /* TYPE TAGS */
+    .tt { display: inline-block; font-size: 9px; font-weight: 700; letter-spacing: 0.7px;
+          text-transform: uppercase; padding: 2px 6px; border-radius: 10px; white-space: nowrap; }
+    .tt-ribbon  { background: #212B37; color: white; }
+    .tt-brand   { background: #ECEFF1; color: #455A64; }
+    .tt-toolid  { background: #E3F2FD; color: #0D47A1; }
+    .tt-tab     { background: #EDE7F6; color: #4527A0; }
+    .tt-btn     { background: #FFF3E0; color: #BF360C; }
+    .tt-status  { background: #FCE4EC; color: #880E4F; }
+    .tt-scroll  { background: #F1F8E9; color: #33691E; }
+    .tt-inactive { background: #FFF8E1; color: #E65100; border: 1px dashed #FFB74D; }
+
+    /* SECTION HEADER */
+    .sec-header {
+      padding: 16px 40px 12px;
+      display: flex; align-items: flex-start; gap: 14px;
+      border-top: 3px solid #ccc;
+    }
+    .sec-num {
+      width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700; margin-top: 2px;
+    }
+    .sec-header h2 { font-size: 14px; font-weight: 700; margin-bottom: 3px; }
+    .sec-header p  { font-size: 11px; color: #666; line-height: 1.5; }
+    .sec-header code { font-family: monospace; font-size: 10.5px; background: #F0F2F4;
+                       padding: 1px 5px; border-radius: 3px; }
+
+    .sec-ribbon  { border-top-color: #212B37; background: #F5F6F8; }
+    .sec-ribbon  .sec-num { background: #212B37; color: white; }
+    .sec-tools   { border-top-color: #1565C0; background: #EEF4FD; }
+    .sec-tools   .sec-num { background: #1565C0; color: white; }
+
+    /* SUBSECCIÓN */
+    .sub { padding: 12px 40px 0; }
+    .sub-title {
+      font-size: 9.5px; font-weight: 700; letter-spacing: 1.8px; text-transform: uppercase;
+      color: #999; border-bottom: 1px solid #EAECEF; padding-bottom: 5px; margin-bottom: 10px;
+    }
+    .sub-title em { font-style: normal; color: #1565C0; font-size: 9px; margin-left: 6px;
+                    background: #E3F2FD; padding: 1px 5px; border-radius: 8px; font-weight: 600; }
+
+    /* TABLA */
+    table { width: 100%; border-collapse: collapse; }
+    thead th { background: #F8F9FA; color: #555; font-size: 9px; font-weight: 700;
+               letter-spacing: 1px; text-transform: uppercase; padding: 7px 10px; text-align: left; }
+    thead th:first-child { border-radius: 5px 0 0 5px; }
+    thead th:last-child  { border-radius: 0 5px 5px 0; }
+    tbody tr { border-bottom: 1px solid #F3F4F6; }
+    tbody tr:last-child { border-bottom: none; }
+    td { padding: 9px 10px; vertical-align: middle; }
+    .num { font-size: 10px; color: #ccc; font-weight: 700; width: 22px; }
+
+    .icon-box {
+      width: 36px; height: 36px; border-radius: 7px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 15px;
+    }
+    .ib-ribbon  { background: #F0F2F4; border: 1.5px dashed #C8CAD0; }
+    .ib-glyph   { font-family: 'Segoe MDL2 Assets','Segoe UI Symbol',sans-serif;
+                  font-size: 17px; color: #1565C0; background: #EEF4FD;
+                  border: 1.5px solid #BBCFE8; }
+    .ib-unicode { background: #F3F4F6; border: 1.5px solid #DDD; }
+    .ib-img     { background: #FFF8F0; border: 1.5px solid #FFCC99; font-size: 20px; }
+    .ib-inactive { background: #FFF9E6; border: 1.5px dashed #FFB74D; font-size: 15px; opacity: .7; }
+
+    .btn-name  { font-weight: 600; font-size: 12.5px; color: #1a1a2e; }
+    .btn-where { font-size: 10px; color: #999; margin-top: 1px; }
+    .key-badge { display: inline-block; background: #F0F2F4; color: #555;
+                 font-size: 9px; font-family: monospace; padding: 1px 5px;
+                 border-radius: 3px; margin-top: 2px; }
+    .key-badge.b { background: #DDEEFF; color: #1565C0; }
+
+    .desc { font-size: 11px; color: #555; line-height: 1.5; }
+    .n { color: #212B37; font-weight: 600; }
+    .o { color: #C0440A; font-weight: 600; }
+    .y { background: #FECA29; color: #212B37; font-weight: 600;
+         padding: 0 3px; border-radius: 3px; font-size: 10px; }
+    .bl { color: #1565C0; font-weight: 600; }
+
+    /* ACCESS PATH */
+    .path {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 10px; background: #F0F2F4; border-radius: 20px;
+      padding: 2px 8px; color: #555; margin-top: 3px;
+    }
+    .path .arrow { color: #bbb; }
+
+    /* NOTE BOX */
+    .note { margin: 0 40px 0; padding: 11px 15px; border-radius: 7px;
+            font-size: 11px; line-height: 1.6; }
+    .note-warn { background: #FFFBF0; border: 1px solid #FFE0A0; color: #7A5C00; }
+    .note-info { background: #EEF4FD; border: 1px solid #BBCFE8; color: #0D47A1; }
+
+    .spacer { height: 18px; }
+    .footer { padding: 14px 40px; display: flex; justify-content: space-between;
+              align-items: center; font-size: 10px; color: #aaa;
+              border-top: 1px solid #F0F2F4; margin-top: 20px; }
+    .footer strong { color: #EF6337; }
+
+    @media print {
+      body { background: white; padding: 0; }
+      .page { box-shadow: none; border-radius: 0; }
+      tr, .sec-header { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-top"><span class="pill-badge">BIM Pills</span></div>
+    <h1>Inventario Completo de Íconos</h1>
+    <div class="header-sub">v1.0.0-beta.5.0 · BIM-CA · 2026 · Ribbon + UI interna</div>
+    <div class="palette-row">
+      <div class="swatch"><div class="swatch-dot" style="background:#212B37"></div>Navy #212B37</div>
+      <div class="swatch"><div class="swatch-dot" style="background:#EF6337"></div>Naranja #EF6337</div>
+      <div class="swatch"><div class="swatch-dot" style="background:#FECA29"></div>Amarillo #FECA29</div>
+      <div class="swatch"><div class="swatch-dot" style="background:#1565C0"></div>Azul UI #1565C0</div>
+      <div class="palette-note">Ribbon: 10 botones · Sub-herramientas: 3 · UI interna: 35+ glifos</div>
+    </div>
+  </div>
+
+  <!-- LEYENDA -->
+  <div class="legend-bar">
+    <span>Tipo:</span>
+    <span class="tt tt-ribbon">Ribbon</span> Botón activo en ribbon Revit &nbsp;
+    <span class="tt tt-inactive">No en ribbon</span> Herramienta sub-tab &nbsp;
+    <span class="tt tt-brand">Marca</span> Logo/imagen &nbsp;
+    <span class="tt tt-toolid">ID herramienta</span> Identifica la tool activa &nbsp;
+    <span class="tt tt-tab">Tab</span> Pestaña/sección &nbsp;
+    <span class="tt tt-btn">Botón</span> Acción dentro de UI &nbsp;
+    <span class="tt tt-status">Estado</span> Banner/badge &nbsp;
+    <span class="tt tt-scroll">Scroll</span> Ayuda de scroll
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- GRUPO 1 — RIBBON                          -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="spacer"></div>
+  <div class="sec-header sec-ribbon">
+    <div class="sec-num">1</div>
+    <div>
+      <h2>Ribbon de Revit — 10 botones registrados</h2>
+      <p>Íconos 32×32 px generados en C# con <code>DrawingVisual</code> (RibbonIconFactory.cs). Paleta BIM-CA Navy/Naranja/Amarillo.<br>
+         Módulos activos registrados en <code>RevitApplication.GetModules()</code>.</p>
+    </div>
+  </div>
+
+  <div class="sub">
+    <div class="sub-title">Panel — Datos</div>
+    <table>
+      <thead><tr><th>#</th><th style="width:46px">Ícono</th><th>Botón en ribbon</th><th>Tipo</th><th>Descripción visual</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="num">1</td>
+          <td><div class="icon-box ib-ribbon">📋</div></td>
+          <td>
+            <div class="btn-name">Auditar</div>
+            <div class="btn-where">ModelAuditModule</div>
+            <span class="key-badge">audit</span>
+          </td>
+          <td><span class="tt tt-ribbon">Ribbon</span></td>
+          <td class="desc">Clipboard <span class="n">navy</span> con clip y check <span class="o">naranja</span></td>
+        </tr>
+        <tr>
+          <td class="num">2</td>
+          <td><div class="icon-box ib-ribbon">📤</div></td>
+          <td>
+            <div class="btn-name">Exportar</div>
+            <div class="btn-where">ExportFamiliesModule</div>
+            <span class="key-badge">export</span>
+          </td>
+          <td><span class="tt tt-ribbon">Ribbon</span></td>
+          <td class="desc">Caja abierta <span class="n">navy</span> · flecha <span class="o">naranja</span> saliendo ↑</td>
+        </tr>
+        <tr>
+          <td class="num">3</td>
+          <td><div class="icon-box ib-ribbon">📥</div></td>
+          <td>
+            <div class="btn-name">Importar</div>
+            <div class="btn-where">TransferModule</div>
+            <span class="key-badge">transfer</span>
+          </td>
+          <td><span class="tt tt-ribbon">Ribbon</span></td>
+          <td class="desc">Caja abierta <span class="n">navy</span> · flecha <span class="o">naranja</span> entrando ↓</td>
+        </tr>
+        <tr>
+          <td class="num">4</td>
+          <td><div class="icon-box ib-ribbon">🔗</div></td>
+          <td>
+            <div class="btn-name">Conectar</div>
+            <div class="btn-where">MCPIntegrationModule</div>
+            <span class="key-badge">connect</span>
+          </td>
+          <td><span class="tt tt-ribbon">Ribbon</span></td>
+          <td class="desc">Dos nodos <span class="n">navy</span> · puntos <span class="o">naranja</span> · línea punteada</td>
+        </tr>
+        <tr>
+          <td class="num">5</td>
+          <td><div class="icon-box ib-ribbon">🔢</div></td>
+          <td>
+            <div class="btn-name">Ordenar</div>
+            <div class="btn-where">OrderingModule</div>
+            <span class="key-badge">ordering</span>
+          </td>
+          <td><span class="tt tt-ribbon">Ribbon</span></td>
+          <td class="desc">3 filas · números <span class="o">1 · 2 · 3</span> + líneas <span class="n">navy</span></td>
+        </tr>
+        <tr>
+          <td class="num">6</td>
+          <td><div class="icon-box ib-ribbon">📊</div></td>
+          <td>
+            <div class="btn-name">Gestionar</div>
+            <div class="btn-where">DataManagerModule</div>
+            <span class="key-badge">datamanager</span>
+          </td>
+          <td><span class="tt tt-ribbon">Ribbon</span></td>
+          <td class="desc">Tabla <span class="n">navy</span> · flechas intercambio <span class="o">naranja</span> (↔)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="sub" style="margin-top:14px;">
+    <div class="sub-title">Panel — Procesos</div>
+    <table>
+      <thead><tr><th>#</th><th style="width:46px">Ícono</th><th>Botón en ribbon</th><th>Tipo</th><th>Descripción visual</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="num">7</td>
+          <td><div class="icon-box ib-ribbon">📄</div></td>
+          <td>
+            <div class="btn-name">Documentar</div>
+            <div class="btn-where">DocumentacionModule</div>
+            <span class="key-badge">documentacion</span>
+          </td>
+          <td><span class="tt tt-ribbon">Ribbon</span></td>
+          <td class="desc">3 páginas apiladas · cajetín <span class="o">naranja</span> en esquina inferior</td>
+        </tr>
+        <tr>
+          <td class="num">8</td>
+          <td><div class="icon-box ib-ribbon">⊞</div></td>
+          <td>
+            <div class="btn-name">Estandarizar</div>
+            <div class="btn-where">GestionModule</div>
+            <span class="key-badge">gestion</span>
+          </td>
+          <td><span class="tt tt-ribbon">Ribbon</span></td>
+          <td class="desc">Cuadrícula 2×2 · celda activa <span class="o">naranja</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="sub" style="margin-top:14px;">
+    <div class="sub-title">Panel — Información</div>
+    <table>
+      <thead><tr><th>#</th><th style="width:46px">Ícono</th><th>Botón en ribbon</th><th>Tipo</th><th>Descripción visual</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="num">9</td>
+          <td><div class="icon-box ib-ribbon">💬</div></td>
+          <td>
+            <div class="btn-name">Soporte</div>
+            <div class="btn-where">SupportModule</div>
+            <span class="key-badge">support</span>
+          </td>
+          <td><span class="tt tt-ribbon">Ribbon</span></td>
+          <td class="desc">Globo de chat <span class="n">navy</span> · 3 puntos <span class="o">naranja</span> · cola inferior</td>
+        </tr>
+        <tr>
+          <td class="num">10</td>
+          <td><div class="icon-box ib-ribbon">ℹ️</div></td>
+          <td>
+            <div class="btn-name">Acerca de</div>
+            <div class="btn-where">AboutModule</div>
+            <span class="key-badge">about</span>
+          </td>
+          <td><span class="tt tt-ribbon">Ribbon</span></td>
+          <td class="desc">Círculo <span class="n">navy</span> · "i" con punto <span class="o">naranja</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- HERRAMIENTAS NO EN RIBBON -->
+  <div class="spacer"></div>
+  <div class="note note-warn" style="margin-top:0">
+    ⚠ <strong>Las siguientes 3 herramientas NO tienen botón propio en el ribbon.</strong>
+    Se acceden como <strong>tabs (pestañas) dentro</strong> de otras herramientas.
+    Sus íconos de ribbon existen en el código pero <strong>no están registrados</strong> en <code>GetModules()</code>.
+  </div>
+  <div class="spacer"></div>
+
+  <div class="sub">
+    <div class="sub-title">Herramientas sin botón de ribbon <em>Sub-herramientas (tabs)</em></div>
+    <table>
+      <thead><tr><th>#</th><th style="width:46px">Ícono</th><th>Herramienta</th><th>Tipo</th><th>Cómo se accede</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="num">11</td>
+          <td><div class="icon-box ib-inactive">⬡</div></td>
+          <td>
+            <div class="btn-name">Extractor de Parámetros</div>
+            <div class="btn-where">ParameterExtractorModule (comentado)</div>
+            <span class="key-badge">extractor</span>
+          </td>
+          <td><span class="tt tt-inactive">No en ribbon</span></td>
+          <td class="desc">
+            <div class="path"><strong>Exportar</strong> <span class="arrow">›</span> tab <span class="bl">"Parámetros"</span></div><br>
+            El ícono de ribbon existe en código pero el módulo no está registrado. Se accede desde la ventana de Exportar.
+          </td>
+        </tr>
+        <tr>
+          <td class="num">12</td>
+          <td><div class="icon-box ib-inactive">📐</div></td>
+          <td>
+            <div class="btn-name">Esquemas de Cotas</div>
+            <div class="btn-where">CustomDimensionSchemesModule (comentado)</div>
+            <span class="key-badge">dimension</span>
+          </td>
+          <td><span class="tt tt-inactive">No en ribbon</span></td>
+          <td class="desc">
+            <div class="path"><strong>Documentar</strong> <span class="arrow">›</span> tab <span class="bl">"Acotar"</span> <span class="arrow">›</span> botón dentro del panel</div><br>
+            Accesible desde la tab Acotar dentro de la ventana de Documentar.
+          </td>
+        </tr>
+        <tr>
+          <td class="num">13</td>
+          <td><div class="icon-box ib-inactive">✏️</div></td>
+          <td>
+            <div class="btn-name">Leyenda Excel (Dibujar)</div>
+            <div class="btn-where">DibujarModule (comentado)</div>
+            <span class="key-badge">dibujar</span>
+          </td>
+          <td><span class="tt tt-inactive">No en ribbon</span></td>
+          <td class="desc">
+            <div class="path"><strong>Documentar</strong> <span class="arrow">›</span> tab <span class="bl">"Leyenda Excel"</span></div><br>
+            Segunda tab de la ventana Documentar. Ícono de ribbon creado en código, no expuesto.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- GRUPO 2 — UI INTERNA                      -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="spacer"></div>
+  <div class="sec-header sec-tools">
+    <div class="sec-num">2</div>
+    <div>
+      <h2>UI Interna — Ventanas, tabs y componentes</h2>
+      <p>Glifos de <code>Segoe MDL2 Assets</code> (fuente Windows), Unicode estándar y <code>pill-icon.png</code>.<br>
+         Aparecen dentro de las ventanas de cada herramienta, no en el ribbon.</p>
+    </div>
+  </div>
+
+  <!-- LOGO -->
+  <div class="sub">
+    <div class="sub-title">Marca — Logo BIM Pills</div>
+    <table>
+      <thead><tr><th>#</th><th style="width:46px">Ícono</th><th>Recurso</th><th>Tipo</th><th>Dónde aparece</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="num">14</td>
+          <td><div class="icon-box ib-img">💊</div></td>
+          <td>
+            <div class="btn-name">Logo BIM Pills</div>
+            <span class="key-badge">pill-icon.png</span>
+          </td>
+          <td><span class="tt tt-brand">Marca</span></td>
+          <td class="desc">Header de <strong>todas las ventanas</strong> (20×32 px) · Acerca de (44×70 px, centrado) · Licencias · Progreso · Actualización</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- IDENTIFICADORES DE HERRAMIENTA -->
+  <div class="sub" style="margin-top:14px;">
+    <div class="sub-title">Identificadores de herramienta activa (Tool Header Icon) <em>Segoe MDL2 Assets</em></div>
+    <div class="note note-info" style="margin: 0 0 10px; font-size:11px;">
+      Cada ventana muestra un glifo de identidad debajo del logo. Cambia dinámicamente según la tab activa.
+    </div>
+    <table>
+      <thead><tr><th>#</th><th style="width:46px">Glifo</th><th>Código / Nombre</th><th>Tipo</th><th>Ventana y posición</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="num">15</td>
+          <td><div class="icon-box ib-glyph">&#xE8B7;</div></td>
+          <td><div class="btn-name">Upload Arrow</div><span class="key-badge b">E8B7</span></td>
+          <td><span class="tt tt-toolid">ID herramienta</span></td>
+          <td class="desc"><strong>Exportar</strong> — tab Planos / Modelo / Familias · <strong>Keynotes</strong> (tab exportar)</td>
+        </tr>
+        <tr>
+          <td class="num">16</td>
+          <td><div class="icon-box ib-glyph">&#xE9F9;</div></td>
+          <td><div class="btn-name">Table / Spreadsheet</div><span class="key-badge b">E9F9</span></td>
+          <td><span class="tt tt-toolid">ID herramienta</span></td>
+          <td class="desc"><strong>Gestionar</strong> (DataManager) — header y tab de schedules/tablas</td>
+        </tr>
+        <tr>
+          <td class="num">17</td>
+          <td><div class="icon-box ib-glyph">&#xE8AB;</div></td>
+          <td><div class="btn-name">Filter</div><span class="key-badge b">E8AB</span></td>
+          <td><span class="tt tt-toolid">ID herramienta</span></td>
+          <td class="desc"><strong>Extractor</strong> — header · <strong>Importar</strong> (Transfer) · <strong>Estandarizar</strong> (ProjectStandards)</td>
+        </tr>
+        <tr>
+          <td class="num">18</td>
+          <td><div class="icon-box ib-glyph">&#xE8A5;</div></td>
+          <td><div class="btn-name">Open / PageRight</div><span class="key-badge b">E8A5</span></td>
+          <td><span class="tt tt-toolid">ID herramienta</span></td>
+          <td class="desc"><strong>Documentar</strong> — tab Acotar · <strong>Keynotes</strong> (tab importar/abrir)</td>
+        </tr>
+        <tr>
+          <td class="num">19</td>
+          <td><div class="icon-box ib-glyph">&#xE9D9;</div></td>
+          <td><div class="btn-name">BarChart / Analytics</div><span class="key-badge b">E9D9</span></td>
+          <td><span class="tt tt-toolid">ID herramienta</span></td>
+          <td class="desc"><strong>Auditar</strong> (ModelAudit) — header principal</td>
+        </tr>
+        <tr>
+          <td class="num">20</td>
+          <td><div class="icon-box ib-glyph">&#xEA42;</div></td>
+          <td><div class="btn-name">NumberedList</div><span class="key-badge b">EA42</span></td>
+          <td><span class="tt tt-toolid">ID herramienta</span></td>
+          <td class="desc"><strong>Ordenar</strong> — header de ventana</td>
+        </tr>
+        <tr>
+          <td class="num">21</td>
+          <td><div class="icon-box ib-glyph">&#xE8F1;</div></td>
+          <td><div class="btn-name">3D / Cube</div><span class="key-badge b">E8F1</span></td>
+          <td><span class="tt tt-toolid">ID herramienta</span></td>
+          <td class="desc"><strong>Crear Vistas 3D</strong> — header + tab · <strong>ProjectStandards</strong> · <strong>ViewFilters</strong> · <strong>ViewTemplates</strong></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- TABS DE SECCIÓN -->
+  <div class="sub" style="margin-top:14px;">
+    <div class="sub-title">Tabs e identificadores de sección <em>Segoe MDL2 Assets</em></div>
+    <table>
+      <thead><tr><th>#</th><th style="width:46px">Glifo</th><th>Código / Nombre</th><th>Tipo</th><th>Herramienta — sección</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="num">22</td>
+          <td><div class="icon-box ib-glyph">&#xE8B9;</div></td>
+          <td><div class="btn-name">Ruler</div><span class="key-badge b">E8B9</span></td>
+          <td><span class="tt tt-tab">Tab</span></td>
+          <td class="desc"><strong>SchemePicker</strong> — opción "esquema de cotas"</td>
+        </tr>
+        <tr>
+          <td class="num">23</td>
+          <td><div class="icon-box ib-glyph">&#xE81E;</div></td>
+          <td><div class="btn-name">Sort</div><span class="key-badge b">E81E</span></td>
+          <td><span class="tt tt-tab">Tab</span></td>
+          <td class="desc"><strong>SchemePicker</strong> — opción "ordenar/filtrar"</td>
+        </tr>
+        <tr>
+          <td class="num">24</td>
+          <td><div class="icon-box ib-glyph">&#xE81C;</div></td>
+          <td><div class="btn-name">Sync</div><span class="key-badge b">E81C</span></td>
+          <td><span class="tt tt-tab">Tab</span></td>
+          <td class="desc"><strong>SchemePicker</strong> — opción "sincronizar"</td>
+        </tr>
+        <tr>
+          <td class="num">25</td>
+          <td><div class="icon-box ib-glyph">&#xE909;</div></td>
+          <td><div class="btn-name">Location / Pin</div><span class="key-badge b">E909</span></td>
+          <td><span class="tt tt-tab">Tab</span></td>
+          <td class="desc"><strong>SchemePicker</strong> — opción de ubicación/lugar</td>
+        </tr>
+        <tr>
+          <td class="num">26</td>
+          <td><div class="icon-box ib-glyph">&#xE710;</div></td>
+          <td><div class="btn-name">Contact / Person</div><span class="key-badge b">E710</span></td>
+          <td><span class="tt tt-tab">Tab</span></td>
+          <td class="desc"><strong>SchemePicker</strong> — opción de tipo "usuario" · <strong>BimCaWindow</strong> — header</td>
+        </tr>
+        <tr>
+          <td class="num">27</td>
+          <td><div class="icon-box ib-glyph">&#xECC6;</div></td>
+          <td><div class="btn-name">StatusCircleInfo</div><span class="key-badge b">ECC6</span></td>
+          <td><span class="tt tt-tab">Tab</span></td>
+          <td class="desc"><strong>Esquemas de Cotas</strong> (CustomDimensionSchemes) — tab de información</td>
+        </tr>
+        <tr>
+          <td class="num">28</td>
+          <td><div class="icon-box ib-glyph">&#xE8A9;</div></td>
+          <td><div class="btn-name">Attach / Excel file</div><span class="key-badge b">E8A9</span></td>
+          <td><span class="tt tt-tab">Tab</span></td>
+          <td class="desc"><strong>Leyenda Excel</strong> — selector de archivo Excel</td>
+        </tr>
+        <tr>
+          <td class="num">29</td>
+          <td><div class="icon-box ib-glyph">&#xE7C3;</div></td>
+          <td><div class="btn-name">Page / Sheet</div><span class="key-badge b">E7C3</span></td>
+          <td><span class="tt tt-tab">Tab</span></td>
+          <td class="desc"><strong>Leyenda Excel</strong> — selector de hoja del Excel</td>
+        </tr>
+        <tr>
+          <td class="num">30</td>
+          <td><div class="icon-box ib-glyph">&#xE970;</div></td>
+          <td><div class="btn-name">Link / Range</div><span class="key-badge b">E970</span></td>
+          <td><span class="tt tt-tab">Tab</span></td>
+          <td class="desc"><strong>Leyenda Excel</strong> — selector de rango de celdas</td>
+        </tr>
+        <tr>
+          <td class="num">31</td>
+          <td><div class="icon-box ib-glyph">&#xE8A1;</div></td>
+          <td><div class="btn-name">View / Eye</div><span class="key-badge b">E8A1</span></td>
+          <td><span class="tt tt-tab">Tab</span></td>
+          <td class="desc"><strong>ViewTemplates</strong> — tab de vista/plantilla de vista</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- BOTONES DE ACCIÓN -->
+  <div class="sub" style="margin-top:14px;">
+    <div class="sub-title">Botones de acción dentro de herramientas</div>
+    <table>
+      <thead><tr><th>#</th><th style="width:46px">Glifo</th><th>Código / Nombre</th><th>Tipo</th><th>Herramienta — función</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="num">32</td>
+          <td><div class="icon-box ib-glyph">&#xE73E;</div></td>
+          <td><div class="btn-name">Accept / Checkmark</div><span class="key-badge b">E73E</span></td>
+          <td><span class="tt tt-btn">Botón</span></td>
+          <td class="desc"><strong>SchemePicker</strong> — indicador visual de opción seleccionada</td>
+        </tr>
+        <tr>
+          <td class="num">33</td>
+          <td><div class="icon-box ib-glyph">&#xE74C;</div></td>
+          <td><div class="btn-name">Delete / X</div><span class="key-badge b">E74C</span></td>
+          <td><span class="tt tt-btn">Botón</span></td>
+          <td class="desc"><strong>DataManager</strong> · <strong>ProjectStandards</strong> · <strong>ViewFilters</strong> — eliminar ítem</td>
+        </tr>
+        <tr>
+          <td class="num">34</td>
+          <td><div class="icon-box ib-glyph">&#xE74D;</div></td>
+          <td><div class="btn-name">Backspace / Remove</div><span class="key-badge b">E74D</span></td>
+          <td><span class="tt tt-btn">Botón</span></td>
+          <td class="desc"><strong>DataManager</strong> — limpiar/borrar celda individual</td>
+        </tr>
+        <tr>
+          <td class="num">35</td>
+          <td><div class="icon-box ib-glyph">&#xE8F4;</div></td>
+          <td><div class="btn-name">Add / New</div><span class="key-badge b">E8F4</span></td>
+          <td><span class="tt tt-btn">Botón</span></td>
+          <td class="desc"><strong>Keynotes</strong> — agregar nueva nota de clave</td>
+        </tr>
+        <tr>
+          <td class="num">36</td>
+          <td><div class="icon-box ib-glyph">&#xE8DA;</div></td>
+          <td><div class="btn-name">Delete / Trash</div><span class="key-badge b">E8DA</span></td>
+          <td><span class="tt tt-btn">Botón</span></td>
+          <td class="desc"><strong>Keynotes</strong> — eliminar nota de clave</td>
+        </tr>
+        <tr>
+          <td class="num">37</td>
+          <td><div class="icon-box ib-glyph">&#xE971;</div></td>
+          <td><div class="btn-name">Refresh</div><span class="key-badge b">E971</span></td>
+          <td><span class="tt tt-btn">Botón</span></td>
+          <td class="desc"><strong>Keynotes</strong> — recargar archivo de keynotes del disco</td>
+        </tr>
+        <tr>
+          <td class="num">38</td>
+          <td><div class="icon-box ib-glyph">&#xE972;</div></td>
+          <td><div class="btn-name">Rotate / Sync</div><span class="key-badge b">E972</span></td>
+          <td><span class="tt tt-btn">Botón</span></td>
+          <td class="desc"><strong>Keynotes</strong> — sincronizar cambios con el modelo</td>
+        </tr>
+        <tr>
+          <td class="num">39</td>
+          <td><div class="icon-box ib-glyph">&#xE895;</div></td>
+          <td><div class="btn-name">Manage / Settings</div><span class="key-badge b">E895</span></td>
+          <td><span class="tt tt-btn">Botón</span></td>
+          <td class="desc"><strong>ProjectStandards</strong> — gestionar estándares · <strong>BimPillsProgress</strong> — completado</td>
+        </tr>
+        <tr>
+          <td class="num">40</td>
+          <td><div class="icon-box ib-glyph">&#xE711;</div></td>
+          <td><div class="btn-name">OpenFolder</div><span class="key-badge b">E711</span></td>
+          <td><span class="tt tt-btn">Botón</span></td>
+          <td class="desc"><strong>BimPillsDialog</strong> — botón "Abrir carpeta" (variante SuccessWithFolder)</td>
+        </tr>
+        <tr>
+          <td class="num">41</td>
+          <td><div class="icon-box ib-glyph">&#xE946;</div></td>
+          <td><div class="btn-name">Search / Zoom</div><span class="key-badge b">E946</span></td>
+          <td><span class="tt tt-btn">Botón</span></td>
+          <td class="desc"><strong>BimPillsDialog</strong> — lupa/búsqueda en variante de búsqueda</td>
+        </tr>
+        <tr>
+          <td class="num">42</td>
+          <td><div class="icon-box ib-glyph">&#xED15;</div></td>
+          <td><div class="btn-name">FeedbackApp</div><span class="key-badge b">ED15</span></td>
+          <td><span class="tt tt-btn">Botón</span></td>
+          <td class="desc"><strong>Acerca de</strong> — link "Reportar bug, sugerencia o comentario"</td>
+        </tr>
+        <tr>
+          <td class="num">43</td>
+          <td><div class="icon-box ib-unicode" style="font-size:18px;">☰</div></td>
+          <td><div class="btn-name">Hamburger / Handle</div><span class="key-badge">&#x2630;</span></td>
+          <td><span class="tt tt-btn">Botón</span></td>
+          <td class="desc"><strong>Ordenar</strong> — handle de arrastre para reordenar filas</td>
+        </tr>
+        <tr>
+          <td class="num">44</td>
+          <td><div class="icon-box ib-unicode" style="font-size:18px;">⬆</div></td>
+          <td><div class="btn-name">Arrow Up</div><span class="key-badge">&#x2B06;</span></td>
+          <td><span class="tt tt-btn">Botón</span></td>
+          <td class="desc"><strong>Actualización disponible</strong> — botón de instalar nueva versión</td>
+        </tr>
+        <tr>
+          <td class="num">45</td>
+          <td><div class="icon-box ib-unicode" style="font-size:16px;">▶</div></td>
+          <td><div class="btn-name">Play / Expand</div><span class="key-badge">&#x25B6;</span></td>
+          <td><span class="tt tt-btn">Botón</span></td>
+          <td class="desc">Varios paneles — expandir sección colapsada o ejecutar acción</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ESTADOS -->
+  <div class="sub" style="margin-top:14px;">
+    <div class="sub-title">Indicadores de estado (banners y badges)</div>
+    <table>
+      <thead><tr><th>#</th><th style="width:46px">Glifo</th><th>Código / Nombre</th><th>Tipo</th><th>Herramienta — significado</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="num">46</td>
+          <td><div class="icon-box ib-unicode" style="font-size:18px;color:#2E7D32;">✔</div></td>
+          <td><div class="btn-name">Checkmark / OK</div><span class="key-badge">&#x2714;</span></td>
+          <td><span class="tt tt-status">Estado</span></td>
+          <td class="desc"><strong>Estandarizar</strong> — banner verde "Worksharing habilitado" · diálogos de éxito</td>
+        </tr>
+        <tr>
+          <td class="num">47</td>
+          <td><div class="icon-box ib-unicode" style="font-size:18px;color:#E65100;">⚠</div></td>
+          <td><div class="btn-name">Warning / Alert</div><span class="key-badge">&#x26A0;</span></td>
+          <td><span class="tt tt-status">Estado</span></td>
+          <td class="desc"><strong>Estandarizar</strong> — banner "Worksharing deshabilitado" · <strong>Actualización disponible</strong> · <strong>Conflictos</strong></td>
+        </tr>
+        <tr>
+          <td class="num">48</td>
+          <td><div class="icon-box ib-glyph">&#xE7BA;</div></td>
+          <td><div class="btn-name">ReportWarning</div><span class="key-badge b">E7BA</span></td>
+          <td><span class="tt tt-status">Estado</span></td>
+          <td class="desc"><strong>ConflictResolutionDialog</strong> — advertencia de conflicto de nombres</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- SCROLL HINTS -->
+  <div class="sub" style="margin-top:14px; padding-bottom:6px;">
+    <div class="sub-title">Ayudas de scroll</div>
+    <table>
+      <thead><tr><th>#</th><th style="width:46px">Glifo</th><th>Código / Nombre</th><th>Tipo</th><th>Herramienta — posición</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="num">49</td>
+          <td><div class="icon-box ib-unicode" style="font-size:14px;">▲</div></td>
+          <td><div class="btn-name">▲ más … arriba</div><span class="key-badge">&#x25B2;</span></td>
+          <td><span class="tt tt-scroll">Scroll</span></td>
+          <td class="desc"><strong>Estandarizar</strong> · <strong>Exportar Familias</strong> · <strong>Auditar</strong> — contenido scrolleable arriba</td>
+        </tr>
+        <tr>
+          <td class="num">50</td>
+          <td><div class="icon-box ib-unicode" style="font-size:14px;">▼</div></td>
+          <td><div class="btn-name">▼ más … abajo</div><span class="key-badge">&#x25BC;</span></td>
+          <td><span class="tt tt-scroll">Scroll</span></td>
+          <td class="desc"><strong>Estandarizar</strong> · <strong>Exportar Familias</strong> · <strong>Auditar</strong> — contenido scrolleable abajo</td>
+        </tr>
+        <tr>
+          <td class="num">51</td>
+          <td><div class="icon-box ib-unicode" style="font-size:18px;">↑↓</div></td>
+          <td><div class="btn-name">↑ / ↓ Flechas</div><span class="key-badge">&#x2191; &#x2193;</span></td>
+          <td><span class="tt tt-scroll">Scroll</span></td>
+          <td class="desc">Varios paneles — navegación anterior / siguiente entre ítems</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- NOTA FINAL -->
+  <div class="spacer"></div>
+  <div class="note note-warn">
+    <strong>Tecnología de íconos:</strong><br>
+    • <strong>Ribbon (Grupo 1):</strong> C# DrawingVisual en <code>RibbonIconFactory.cs</code> — para cambiar hay que editar el código.<br>
+    • <strong>UI interna (Grupo 2):</strong> <code>Segoe MDL2 Assets</code> (fuente del sistema Windows) en los XAML — para cambiar, reemplazar el código hex del glifo en el XAML correspondiente.<br>
+    • <strong>Logo:</strong> <code>pill-icon.png</code> — única imagen de archivo. Se encuentra en <code>src/BIMPills.UI/Resources/</code>.
+  </div>
+
+  <div class="footer">
+    <span>BIM Pills — Inventario de Íconos · 51 elementos · Ribbon: 10 · Sub-tools: 3 · UI: 38 · Generado 2026-04-24</span>
+    <span><strong>BIM-CA</strong> · v1.0.0-beta.5.0</span>
+  </div>
+
+</div>
+</body>
+</html>

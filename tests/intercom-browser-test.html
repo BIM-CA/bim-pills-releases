@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Intercom Browser Test</title>
+</head>
+<body style="padding:20px;font-family:sans-serif;">
+<h2>Intercom Test — abrir consola (F12)</h2>
+<div id="log" style="font-family:monospace;font-size:12px;white-space:pre-wrap;"></div>
+<script>
+  const logEl = document.getElementById('log');
+  const log = m => { logEl.textContent += m + '\n'; console.log(m); };
+
+  new MutationObserver(muts => {
+    muts.forEach(m => m.addedNodes.forEach(n => {
+      if (n.nodeType !== 1) return;
+      const tag = n.tagName?.toLowerCase();
+      const id = n.id || '';
+      const cls = (n.className && n.className.toString) ? n.className.toString() : '';
+      if (tag === 'iframe' || id.includes('intercom') || cls.includes('intercom')) {
+        log('[DOM+] <' + tag + '> id=' + id + ' class=' + cls.slice(0,60) + ' w=' + (n.offsetWidth||0) + 'x' + (n.offsetHeight||0));
+      }
+    }));
+  }).observe(document.documentElement, { childList:true, subtree:true });
+
+  window.intercomSettings = {
+    app_id: 'le2ot70e',
+    hide_default_launcher: false,
+    name: 'Rodrigo Flores (browser test)'
+  };
+
+  (function(){var w=window;var ic=w.Intercom;if(typeof ic==='function'){ic('reattach_activator');ic('update',w.intercomSettings);}else{var d=document;var i=function(){i.c(arguments);};i.q=[];i.c=function(args){i.q.push(args);};w.Intercom=i;var l=function(){var s=d.createElement('script');s.type='text/javascript';s.async=true;s.src='https://widget.intercom.io/widget/le2ot70e';s.onload=function(){log('widget.js cargado');};s.onerror=function(){log('widget.js ERROR');};var x=d.getElementsByTagName('script')[0];x.parentNode.insertBefore(s,x);};if(document.readyState==='complete'){l();}else{w.addEventListener('load',l,false);}}})();
+
+  log('snippet inyectado');
+  window.Intercom('onShow', () => log('onShow'));
+  window.Intercom('onUnreadCountChange', c => log('unread=' + c));
+
+  setTimeout(() => {
+    log('--- 5s ---');
+    log('launcher=' + !!document.querySelector('.intercom-lightweight-app-launcher'));
+    log('iframes=' + document.querySelectorAll('iframe').length);
+    log('bigFrames=' + [...document.querySelectorAll('iframe')].filter(f=>f.offsetWidth>100).length);
+    try { Intercom('show'); log('show() ok'); } catch(e) { log('show err: ' + e.message); }
+  }, 5000);
+
+  setTimeout(() => {
+    log('--- 10s ---');
+    log('launcher=' + !!document.querySelector('.intercom-lightweight-app-launcher'));
+    log('iframes=' + document.querySelectorAll('iframe').length);
+    log('bigFrames=' + [...document.querySelectorAll('iframe')].filter(f=>f.offsetWidth>100).length);
+  }, 10000);
+</script>
+</body>
+</html>

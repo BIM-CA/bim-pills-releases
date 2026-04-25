@@ -1,0 +1,222 @@
+/* ============================================================
+   BIMCA — Colors & Type
+   Sampled directly from BIMCA brand assets.
+   ============================================================ */
+
+@font-face {
+  font-family: "Montserrat";
+  src: url("fonts/Montserrat-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Montserrat";
+  src: url("fonts/Montserrat-ExtraBold.ttf") format("truetype");
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ------------------------------------------------------------
+   COLOR TOKENS — Brand palette
+   The BIMCA palette is intentionally tight: one deep ink,
+   one orange accent, one yellow accent, and a warm cream.
+   "Negro" is never pure black — it's a desaturated navy ink.
+   ------------------------------------------------------------ */
+:root {
+  /* Brand — pulled from the identity files.
+     Names use the original Spanish so copy/handoff matches. */
+  --bimca-black:   #000000; /* Pure black — maximum-contrast ink, wordmark, print use */
+  --bimca-negro:   #212B37; /* Navy ink — primary text, strokes, the "soft black" of the brand. Default dark-surface background. */
+  --bimca-naranja: #ED6441; /* Signature accent — the "pill" orange */
+  --bimca-amarillo:#FECA28; /* Secondary accent — sparingly, for energy */
+  --bimca-crema:   #FBFAF8; /* Off-white paper — default page background, subtle warm tint */
+  --bimca-blanco:  #FFFFFF;
+
+  /* Legacy alias — keep pointing at pure black. */
+  --bimca-tinta:   #000000;
+
+  /* ---- Neutrals — cool grays, true-neutral (no cream tint) ---- */
+  --neutral-50:  #FAFAFA;
+  --neutral-100: #F3F3F4;
+  --neutral-200: #E4E4E7;
+  --neutral-300: #C7C7CC;
+  --neutral-400: #9A9AA0;
+  --neutral-500: #6B6B72;
+  --neutral-600: #484C57;  /* sampled */
+  --neutral-700: #30384A;
+  --neutral-800: #202B37;  /* == bimca-negro */
+  --neutral-900: #131A24;
+
+  /* ---- Semantic foreground / background ---- */
+  --fg-1: var(--bimca-negro);       /* primary text */
+  --fg-2: var(--neutral-600);       /* secondary text */
+  --fg-3: var(--neutral-500);       /* meta / captions */
+  --fg-inverse: var(--bimca-crema); /* text on dark */
+  --fg-accent: var(--bimca-naranja);
+
+  --bg-page: var(--bimca-crema);         /* default — off-white #FBFAF8 */
+  --bg-page-ink: var(--bimca-negro);     /* secondary background — dark mode surfaces, hero strips, section breaks */
+  --bg-surface: var(--bimca-blanco);     /* cards on top of the page */
+  --bg-ink: var(--bimca-negro);
+  --bg-subtle: var(--neutral-100);
+
+  --border-hairline: rgba(32, 43, 55, 0.12);
+  --border-soft:     rgba(32, 43, 55, 0.22);
+  --border-strong:   var(--bimca-negro);
+
+  /* ---- Semantic status ---- */
+  --status-success: #4CA273;
+  --status-warning: var(--bimca-amarillo);
+  --status-danger:  #C94A34; /* darkened naranja for contrast */
+  --status-info:    #4D7C9B;
+
+  /* ---- Type stack ----
+     The brand uses Montserrat for everything. Wordmark is set
+     in an outlined display weight; body uses Regular/ExtraBold. */
+  --font-display: "Montserrat", "Helvetica Neue", Arial, sans-serif;
+  --font-body:    "Montserrat", "Helvetica Neue", Arial, sans-serif;
+  --font-mono:    ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  /* ---- Type scale (desktop) ---- */
+  --fs-display: 72px;
+  --fs-h1:      48px;
+  --fs-h2:      36px;
+  --fs-h3:      24px;
+  --fs-h4:      20px;
+  --fs-body:    16px;
+  --fs-small:   14px;
+  --fs-micro:   12px;
+
+  --lh-tight:   1.05;
+  --lh-heading: 1.15;
+  --lh-body:    1.55;
+  --lh-relaxed: 1.7;
+
+  --tracking-tight:  -0.02em;
+  --tracking-normal: 0;
+  --tracking-wide:   0.08em;  /* for ALL-CAPS eyebrows */
+  --tracking-xwide:  0.18em;  /* BIMCA wordmark spacing */
+
+  /* ---- Spacing scale ---- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --space-9: 96px;
+  --space-10: 128px;
+
+  /* ---- Radii ----
+     The brand's core motif is the pill (fully rounded capsule).
+     Use --radius-pill for primary CTAs, tags, and "pill cards". */
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --radius-pill: 999px;
+
+  /* ---- Shadows — very restrained; brand is line-forward ---- */
+  --shadow-xs: 0 1px 2px rgba(32, 43, 55, 0.06);
+  --shadow-sm: 0 2px 6px rgba(32, 43, 55, 0.08);
+  --shadow-md: 0 8px 20px rgba(32, 43, 55, 0.10);
+  --shadow-lg: 0 18px 40px rgba(32, 43, 55, 0.14);
+
+  /* ---- Stroke widths ---- */
+  --stroke-hairline: 1px;
+  --stroke-regular:  1.5px;
+  --stroke-bold:     2px;
+  --stroke-display:  3px;  /* matches outlined wordmark weight */
+
+  /* ---- Motion ---- */
+  --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-fast: 120ms;
+  --dur-base: 200ms;
+  --dur-slow: 400ms;
+}
+
+/* ------------------------------------------------------------
+   SEMANTIC TYPOGRAPHY
+   ------------------------------------------------------------ */
+html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
+body {
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--fg-1);
+  background: var(--bg-page);
+}
+
+.display {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--fs-display);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tracking-tight);
+}
+
+h1, .h1 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--fs-h1);
+  line-height: var(--lh-heading);
+  letter-spacing: var(--tracking-tight);
+  margin: 0 0 var(--space-4);
+}
+h2, .h2 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--fs-h2);
+  line-height: var(--lh-heading);
+  letter-spacing: var(--tracking-tight);
+  margin: 0 0 var(--space-3);
+}
+h3, .h3 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-heading);
+  margin: 0 0 var(--space-3);
+}
+h4, .h4 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--fs-h4);
+  line-height: var(--lh-heading);
+  margin: 0 0 var(--space-2);
+}
+
+p, .body { font-size: var(--fs-body); line-height: var(--lh-body); margin: 0 0 var(--space-4); }
+.small  { font-size: var(--fs-small); line-height: var(--lh-body); }
+.micro  { font-size: var(--fs-micro); line-height: 1.4; }
+
+/* Eyebrow — the all-caps "label above a title" used throughout BIMCA copy. */
+.eyebrow {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--fs-small);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--fg-accent);
+}
+
+/* Wordmark — the BIMCA lockup is a SOLID display setting, not outlined.
+   Montserrat ExtraBold at tight tracking with the middle-dot separator. */
+.display-wordmark {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--fs-display);
+  line-height: 0.95;
+  letter-spacing: var(--tracking-xwide);
+  text-transform: uppercase;
+  color: var(--bimca-negro);
+}
+
+code, pre, .mono { font-family: var(--font-mono); font-size: 0.9em; }
