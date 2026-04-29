@@ -111,15 +111,40 @@ namespace BIMPills.Infrastructure.Persistence
         }
 
         /// <summary>
-        /// Returns a directory scoped to a specific model name.
-        /// Sanitizes the model name for use as a folder name.
+        /// Returns a directory scoped to a specific model.
+        /// <para>
+        /// El identificador puede ser una ruta de archivo larga (Document.PathName) o un
+        /// nombre corto. Se sanitiza el último segmento como prefijo legible y se anexa
+        /// un hash SHA1 corto del identificador completo para garantizar unicidad y
+        /// nombres de carpeta razonables aunque la ruta sea larga.
+        /// </para>
         /// </summary>
-        public static string GetDirectoryForModel(string modelName)
+        public static string GetDirectoryForModel(string modelKey)
         {
-            var safeName = string.Join("_", modelName.Split(Path.GetInvalidFileNameChars()));
-            if (string.IsNullOrWhiteSpace(safeName)) safeName = "_default";
+            if (string.IsNullOrWhiteSpace(modelKey)) modelKey = "_default";
+
+            // Tomamos solo el último segmento (filename) como prefijo legible
+            var lastSeg = modelKey;
+            var slashIdx = modelKey.LastIndexOfAny(new[] { '\\', '/' });
+            if (slashIdx >= 0 && slashIdx < modelKey.Length - 1)
+                lastSeg = modelKey.Substring(slashIdx + 1);
+
+            var safeName = string.Join("_", lastSeg.Split(Path.GetInvalidFileNameChars()));
+            if (string.IsNullOrWhiteSpace(safeName)) safeName = "model";
+            if (safeName.Length > 40) safeName = safeName.Substring(0, 40);
+
+            // Hash corto del identificador completo → unicidad incluso si distintos
+            // modelos tienen el mismo filename en carpetas distintas.
+            string hash;
+            using (var sha = System.Security.Cryptography.SHA1.Create())
+            {
+                var bytes = sha.ComputeHash(System.Text.Encoding.UTF8.GetBytes(modelKey));
+                hash = BitConverter.ToString(bytes).Replace("-", "").Substring(0, 8).ToLowerInvariant();
+            }
+
+            var folder = $"{safeName}_{hash}";
             var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-            return Path.Combine(appDataPath, "Autodesk", "Revit", "Addins", "BIMPills", "PublicationSets", safeName);
+            return Path.Combine(appDataPath, "Autodesk", "Revit", "Addins", "BIMPills", "PublicationSets", folder);
         }
     }
 }

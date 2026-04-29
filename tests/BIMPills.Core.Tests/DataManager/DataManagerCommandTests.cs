@@ -94,6 +94,7 @@ namespace BIMPills.Core.Tests.DataManager
         public IReadOnlyList<Models.SheetExportInfo> GetSheets()             => new List<Models.SheetExportInfo>();
         public IReadOnlyList<Models.ExportableViewInfo> GetExportableViews() => new List<Models.ExportableViewInfo>();
         public string GetProjectName()                                       => "TestProject";
+        public string GetModelIdentifier()                                   => "TestModel.rvt";
         public IReadOnlyList<ScheduleInfo> GetSchedules()                    => Schedules;
         public ScheduleData GetScheduleData(long scheduleId)                 => new ScheduleData();
         public ParameterUpdateResult ApplyParameterUpdates(IReadOnlyList<ParameterUpdateRequest> u)
@@ -129,6 +130,7 @@ namespace BIMPills.Core.Tests.DataManager
         public IReadOnlyList<Models.SheetExportInfo> GetSheets()             => new List<Models.SheetExportInfo>();
         public IReadOnlyList<Models.ExportableViewInfo> GetExportableViews() => new List<Models.ExportableViewInfo>();
         public string GetProjectName()                                       => "";
+        public string GetModelIdentifier()                                   => "";
         public IReadOnlyList<ScheduleInfo> GetSchedules()                    => null!;  // triggers failure branch
         public ScheduleData GetScheduleData(long scheduleId)                 => null!;
         public ParameterUpdateResult ApplyParameterUpdates(IReadOnlyList<ParameterUpdateRequest> u)

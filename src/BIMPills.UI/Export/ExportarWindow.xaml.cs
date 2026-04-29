@@ -189,9 +189,10 @@ namespace BIMPills.UI.Export
             string projectName = "",
             ILogger? logger = null,
             IReadOnlyList<string>? availableParameters = null,
-            IReadOnlyList<string>? dwgPresetNames = null)
+            IReadOnlyList<string>? dwgPresetNames = null,
+            string modelKey = "")
         {
-            SheetsPanel.Initialize(sheets, pdfExportCallback, dwgExportCallback, projectName, logger, availableParameters, dwgPresetNames);
+            SheetsPanel.Initialize(sheets, pdfExportCallback, dwgExportCallback, projectName, logger, availableParameters, dwgPresetNames, modelKey);
             _sheetsSubtitle = $"{sheets.Count} planos disponibles para exportar";
         }
 
@@ -205,9 +206,10 @@ namespace BIMPills.UI.Export
             string projectName = "",
             ILogger? logger = null,
             IReadOnlyList<string>? availableParameters = null,
-            IReadOnlyList<string>? dwgPresetNames = null)
+            IReadOnlyList<string>? dwgPresetNames = null,
+            string modelKey = "")
         {
-            SheetsPanel.InitializeViews(items, pdfExportCallback, dwgExportCallback, projectName, logger, availableParameters, dwgPresetNames);
+            SheetsPanel.InitializeViews(items, pdfExportCallback, dwgExportCallback, projectName, logger, availableParameters, dwgPresetNames, modelKey);
             var sheetCount = items.Count(i => i.ItemType == ExportableItemType.Sheet);
             var viewCount = items.Count - sheetCount;
             _sheetsSubtitle = $"{sheetCount} planos + {viewCount} vistas disponibles";

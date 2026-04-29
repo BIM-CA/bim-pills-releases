@@ -81,6 +81,14 @@ namespace BIMPills.Core.Services
         /// <summary>Obtiene el nombre del proyecto desde ProjectInformation.</summary>
         string GetProjectName();
 
+        /// <summary>
+        /// Obtiene un identificador único del modelo para almacenamiento por-modelo
+        /// (presets, conjuntos guardados, etc). Usa la ruta completa del archivo
+        /// cuando está disponible — distinta de <see cref="GetProjectName"/> que
+        /// puede repetirse entre modelos por usar el valor de ProjectInformation.Name.
+        /// </summary>
+        string GetModelIdentifier();
+
         // ── Gestionar: SheetLink ──
 
         /// <summary>Obtiene todas las tablas de planificación (ViewSchedules) del modelo.</summary>

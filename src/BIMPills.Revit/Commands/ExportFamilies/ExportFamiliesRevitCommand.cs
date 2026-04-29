@@ -116,7 +116,8 @@ namespace BIMPills.Revit.Commands.ExportFamilies
                 {
                     var docServices = new RevitDocumentServices(doc);
                     var exportableViews = docServices.GetExportableViews();
-                    var projectName = docServices.GetProjectName();
+                    var projectName    = docServices.GetProjectName();
+                    var modelKey       = docServices.GetModelIdentifier();
 
                     if (exportableViews.Count > 0)
                     {
@@ -252,7 +253,8 @@ namespace BIMPills.Revit.Commands.ExportFamilies
                             projectName,
                             logger,
                             paramNames,
-                            dwgPresetNames);
+                            dwgPresetNames,
+                            modelKey);
                     }
                 }
                 catch (Exception ex)

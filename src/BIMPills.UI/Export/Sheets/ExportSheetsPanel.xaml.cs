@@ -20,6 +20,7 @@ namespace BIMPills.UI.Export.Sheets
         private Func<long, string, string, PdfExportSettings, bool>? _pdfExportCallback;
         private Func<long, string, string, DwgExportConfig?, bool>? _dwgExportCallback;
         private string _projectName = "";
+        private string _modelKey = ""; // Identificador único del modelo para scope de almacenamiento (Document.PathName)
         private string? _selectedFolder;
         private ILogger? _logger;
         private List<string> _availableParameters = new List<string>();
@@ -93,12 +94,16 @@ namespace BIMPills.UI.Export.Sheets
             string projectName = "",
             ILogger? logger = null,
             IReadOnlyList<string>? availableParameters = null,
-            IReadOnlyList<string>? dwgPresetNames = null)
+            IReadOnlyList<string>? dwgPresetNames = null,
+            string modelKey = "")
         {
             _allItems = items;
             _pdfExportCallback = pdfExportCallback;
             _dwgExportCallback = dwgExportCallback;
             _projectName = projectName;
+            // Scope de almacenamiento: si no nos pasan modelKey, caemos a projectName
+            // (back-compat). Idealmente el caller pasa Document.PathName.
+            _modelKey = string.IsNullOrEmpty(modelKey) ? projectName : modelKey;
             _logger = logger;
 
             // Populate Revit parameter ComboBox
@@ -154,14 +159,15 @@ namespace BIMPills.UI.Export.Sheets
             string projectName = "",
             ILogger? logger = null,
             IReadOnlyList<string>? availableParameters = null,
-            IReadOnlyList<string>? dwgPresetNames = null)
+            IReadOnlyList<string>? dwgPresetNames = null,
+            string modelKey = "")
         {
             var items = sheets.Select(s => new ExportableViewInfo(
                 s.Id, "", s.SheetName, ExportableItemType.Sheet,
                 s.SheetNumber, s.Revision, s.Discipline, s.ParameterValues
             )).ToList();
 
-            InitializeViews(items, pdfExportCallback, dwgExportCallback, projectName, logger, availableParameters, dwgPresetNames);
+            InitializeViews(items, pdfExportCallback, dwgExportCallback, projectName, logger, availableParameters, dwgPresetNames, modelKey);
         }
 
         private void Populate()
@@ -482,9 +488,9 @@ namespace BIMPills.UI.Export.Sheets
         {
             try
             {
-                var repoPath = string.IsNullOrEmpty(_projectName)
+                var repoPath = string.IsNullOrEmpty(_modelKey)
                     ? null
-                    : JsonPublicationSetRepository.GetDirectoryForModel(_projectName);
+                    : JsonPublicationSetRepository.GetDirectoryForModel(_modelKey);
                 _publicationSetRepo = new JsonPublicationSetRepository(repoPath);
                 _publicationSets = _publicationSetRepo.GetAll();
 

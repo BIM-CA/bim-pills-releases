@@ -975,6 +975,26 @@ namespace BIMPills.Revit.Context
             catch { return _doc.Title; }
         }
 
+        public string GetModelIdentifier()
+        {
+            // Document.PathName es única por archivo (ruta completa en disco
+            // o cloud path para modelos workshared). ProjectInformation.Name
+            // suele compartirse entre modelos (valor del template) y NO sirve
+            // para diferenciar conjuntos por modelo.
+            try
+            {
+                var path = _doc.PathName;
+                if (!string.IsNullOrWhiteSpace(path)) return path;
+                // Modelo no guardado — caemos al Title (suele ser "Project1" etc.)
+                return _doc.Title ?? string.Empty;
+            }
+            catch
+            {
+                try { return _doc.Title ?? string.Empty; }
+                catch { return string.Empty; }
+            }
+        }
+
         // ── Gestionar: SheetLink ──
 
         public IReadOnlyList<ScheduleInfo> GetSchedules()

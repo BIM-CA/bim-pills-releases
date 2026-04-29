@@ -94,6 +94,7 @@ namespace BIMPills.Core.Tests.About
         public System.Collections.Generic.IReadOnlyList<Models.ExportableViewInfo> GetExportableViews()
             => new System.Collections.Generic.List<Models.ExportableViewInfo>();
         public string GetProjectName() => "TestProject";
+        public string GetModelIdentifier() => "TestModel.rvt";
         public System.Collections.Generic.IReadOnlyList<Models.ScheduleInfo> GetSchedules()                             => new System.Collections.Generic.List<Models.ScheduleInfo>();
         public Models.ScheduleData GetScheduleData(long scheduleId)                                                     => new Models.ScheduleData();
         public Models.ParameterUpdateResult ApplyParameterUpdates(System.Collections.Generic.IReadOnlyList<Models.ParameterUpdateRequest> u) => new Models.ParameterUpdateResult();

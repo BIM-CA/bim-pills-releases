@@ -148,6 +148,7 @@ namespace BIMPills.Core.Tests.ModelAudit
         public IReadOnlyList<Models.SheetExportInfo> GetSheets()           => new List<Models.SheetExportInfo>();
         public IReadOnlyList<Models.ExportableViewInfo> GetExportableViews() => new List<Models.ExportableViewInfo>();
         public string GetProjectName()                                     => "TestProject";
+        public string GetModelIdentifier()                                 => "TestModel.rvt";
         // SheetLink
         public IReadOnlyList<Models.ScheduleInfo> GetSchedules()                                               => new List<Models.ScheduleInfo>();
         public Models.ScheduleData GetScheduleData(long scheduleId)                                           => new Models.ScheduleData();

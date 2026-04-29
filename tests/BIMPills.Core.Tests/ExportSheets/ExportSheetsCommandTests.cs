@@ -73,6 +73,7 @@ namespace BIMPills.Core.Tests.ExportSheets
         public IReadOnlyList<Models.SheetExportInfo> GetSheets() => new List<Models.SheetExportInfo>();
         public IReadOnlyList<Models.ExportableViewInfo> GetExportableViews() => new List<Models.ExportableViewInfo>();
         public string GetProjectName() => "TestProject";
+        public string GetModelIdentifier() => "TestModel.rvt";
         public IReadOnlyList<Models.ScheduleInfo> GetSchedules() => new List<Models.ScheduleInfo>();
         public Models.ScheduleData GetScheduleData(long scheduleId) => new Models.ScheduleData();
         public Models.ParameterUpdateResult ApplyParameterUpdates(IReadOnlyList<Models.ParameterUpdateRequest> u)
