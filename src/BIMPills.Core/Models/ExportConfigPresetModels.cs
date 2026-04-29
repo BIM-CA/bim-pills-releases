@@ -22,6 +22,10 @@ namespace BIMPills.Core.Models
         public string NamingPattern { get; set; } = "";
         public FolderOrganization FolderOrganization { get; set; } = FolderOrganization.ByFormat;
 
+        // ── Destination ──
+        /// <summary>Carpeta de destino guardada en el Paso 3. Vacío = no guardado.</summary>
+        public string DestinationFolder { get; set; } = "";
+
         // ── PDF engine ──
         public PdfEngineKind PdfEngine { get; set; } = PdfEngineKind.Native;
         /// <summary>Windows printer name when PdfEngine = SystemPrinter.</summary>

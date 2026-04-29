@@ -71,20 +71,30 @@ namespace BIMPills.Infrastructure.Persistence
         }
 
         /// <summary>
-        /// Serialize a single preset to a portable JSON string for export to file.
+        /// Serializes a single preset to a portable XML string for sharing between users.
         /// </summary>
         public static string SerializeForExport(ExportConfigPreset preset)
-            => JsonConvert.SerializeObject(preset, _jsonSettings);
+        {
+            var serializer = new System.Xml.Serialization.XmlSerializer(typeof(ExportConfigPreset));
+            using var sw = new System.IO.StringWriter();
+            serializer.Serialize(sw, preset);
+            return sw.ToString();
+        }
 
         /// <summary>
-        /// Deserialize a preset from a portable JSON string (imported from file).
+        /// Deserializes a preset from a portable XML string (shared between users).
         /// Assigns a new Id and timestamps so it is treated as a fresh entry.
         /// </summary>
-        public static ExportConfigPreset? DeserializeFromImport(string json)
+        public static ExportConfigPreset? DeserializeFromImport(string xml)
         {
-            if (string.IsNullOrWhiteSpace(json)) return null;
+            if (string.IsNullOrWhiteSpace(xml)) return null;
             ExportConfigPreset? preset;
-            try { preset = JsonConvert.DeserializeObject<ExportConfigPreset>(json, _jsonSettings); }
+            try
+            {
+                var serializer = new System.Xml.Serialization.XmlSerializer(typeof(ExportConfigPreset));
+                using var sr = new System.IO.StringReader(xml);
+                preset = serializer.Deserialize(sr) as ExportConfigPreset;
+            }
             catch { return null; }
             if (preset == null) return null;
             preset.Id         = Guid.NewGuid().ToString();

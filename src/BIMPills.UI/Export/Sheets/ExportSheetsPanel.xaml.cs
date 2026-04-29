@@ -28,6 +28,8 @@ namespace BIMPills.UI.Export.Sheets
         // Publication sets
         private JsonPublicationSetRepository? _publicationSetRepo;
         private List<PublicationSet> _publicationSets = new List<PublicationSet>();
+        /// <summary>IDs de los conjuntos actualmente seleccionados (puede ser más de uno).</summary>
+        private readonly HashSet<string> _selectedSetIds = new HashSet<string>();
 
         // Export config presets
         private JsonExportConfigPresetRepository? _exportConfigPresetRepo;
@@ -146,6 +148,7 @@ namespace BIMPills.UI.Export.Sheets
             UpdateNamingPreview();
             LoadPublicationSets();
             LoadExportConfigPresets();
+            LoadDestinationPresets();
             LoadPdfEngineSettings();
         }
 
@@ -494,12 +497,31 @@ namespace BIMPills.UI.Export.Sheets
                 _publicationSetRepo = new JsonPublicationSetRepository(repoPath);
                 _publicationSets = _publicationSetRepo.GetAll();
 
-                PublicationSetCombo.Items.Clear();
-                PublicationSetCombo.Items.Add(new ComboBoxItem { Content = "(ninguno)", Tag = "" });
-                foreach (var set in _publicationSets)
-                    PublicationSetCombo.Items.Add(new ComboBoxItem { Content = $"{set.Name} ({set.Items.Count} items)", Tag = set.Id });
+                // Preserve which sets were checked before reload
+                var previouslyChecked = new HashSet<string>(_selectedSetIds);
 
-                PublicationSetCombo.SelectedIndex = 0;
+                SetListPanel.Children.Clear();
+                _selectedSetIds.Clear();
+
+                foreach (var set in _publicationSets)
+                {
+                    var cb = new CheckBox
+                    {
+                        Content = $"{set.Name} ({set.Items.Count} items)",
+                        Tag = set.Id,
+                        Padding = new Thickness(6, 3, 6, 3),
+                        FontSize = 11,
+                        IsChecked = previouslyChecked.Contains(set.Id)
+                    };
+                    cb.Checked   += SetCheckbox_Changed;
+                    cb.Unchecked += SetCheckbox_Changed;
+                    SetListPanel.Children.Add(cb);
+
+                    if (cb.IsChecked == true)
+                        _selectedSetIds.Add(set.Id);
+                }
+
+                UpdateSetActionButtons();
             }
             catch (Exception ex)
             {
@@ -507,54 +529,128 @@ namespace BIMPills.UI.Export.Sheets
             }
         }
 
-        private void PublicationSet_Changed(object sender, SelectionChangedEventArgs e)
+        private void SetCheckbox_Changed(object sender, RoutedEventArgs e)
         {
             try
             {
-                var selectedItem = PublicationSetCombo.SelectedItem as ComboBoxItem;
-                var setId = selectedItem?.Tag?.ToString() ?? "";
-                bool hasActiveSet = !string.IsNullOrEmpty(setId);
-                DeleteSetBtn.IsEnabled = hasActiveSet;
-                RenameSetBtn.IsEnabled = hasActiveSet;
-
-                if (string.IsNullOrEmpty(setId)) return;
-
-                var set = _publicationSets.FirstOrDefault(s => s.Id == setId);
-                if (set == null) return;
-
-                // Deselect all first
-                foreach (var row in _rows)
-                    row.IsSelected = false;
-
-                // Select items by UniqueId
-                int found = 0;
-                foreach (var item in set.Items)
+                // Rebuild selected IDs from checkboxes
+                _selectedSetIds.Clear();
+                foreach (CheckBox cb in SetListPanel.Children)
                 {
-                    var row = _rows.FirstOrDefault(r => r.Item.UniqueId == item.UniqueId);
-                    if (row != null)
-                    {
-                        row.IsSelected = true;
-                        found++;
-                    }
+                    if (cb.IsChecked == true && cb.Tag is string id && !string.IsNullOrEmpty(id))
+                        _selectedSetIds.Add(id);
                 }
 
-                SheetsGrid.Items.Refresh();
-                UpdateSelection();
+                UpdateSetActionButtons();
+                ApplyCombinedSets();
+            }
+            catch (Exception ex) { _logger?.Error("Error en SetCheckbox_Changed", ex); }
+        }
 
-                // Restore export settings saved with the set
-                RestoreExportSettings(set);
+        /// <summary>
+        /// Aplica la uni\u00f3n de todos los conjuntos seleccionados: activa todas las filas
+        /// cuyos UniqueId aparezcan en al menos uno de los conjuntos marcados.
+        /// Si no hay ning\u00fan conjunto seleccionado, no modifica la selecci\u00f3n actual.
+        /// </summary>
+        private void ApplyCombinedSets()
+        {
+            if (_selectedSetIds.Count == 0) return;
 
-                int notFound = set.Items.Count - found;
-                if (notFound > 0)
+            var activeSets = _publicationSets.Where(s => _selectedSetIds.Contains(s.Id)).ToList();
+            if (activeSets.Count == 0) return;
+
+            // Build union of UniqueIds
+            var unionIds = new HashSet<string>(activeSets.SelectMany(s => s.Items.Select(i => i.UniqueId)));
+
+            // Deselect all, then select union
+            foreach (var row in _rows)
+                row.IsSelected = false;
+
+            int found = 0;
+            foreach (var row in _rows)
+            {
+                if (unionIds.Contains(row.Item.UniqueId))
                 {
-                    BimPillsDialog.Info(
-                        header: "Conjunto de publicaci\u00f3n cargado",
-                        message: $"Se seleccionaron {found} de {set.Items.Count} items.",
-                        detail: $"{notFound} items no se encontraron en el modelo actual. Es posible que hayan sido eliminados o que el conjunto provenga de otra versi\u00f3n del proyecto.",
-                        owner: Window.GetWindow(this));
+                    row.IsSelected = true;
+                    found++;
                 }
             }
-            catch (Exception ex) { _logger?.Error("Error en PublicationSet_Changed", ex); }
+
+            SheetsGrid.Items.Refresh();
+            UpdateSelection();
+
+            // Restore export settings from the first (or only) selected set
+            var primarySet = activeSets[0];
+            RestoreExportSettings(primarySet);
+
+            int totalItems = unionIds.Count;
+            int notFound = totalItems - found;
+            if (notFound > 0)
+            {
+                BimPillsDialog.Info(
+                    header: "Conjuntos de publicaci\u00f3n cargados",
+                    message: $"Se seleccionaron {found} de {totalItems} items \u00fanicos.",
+                    detail: $"{notFound} items no se encontraron en el modelo actual.",
+                    owner: Window.GetWindow(this));
+            }
+        }
+
+        /// <summary>Returns the single checked set ID, or null if 0 or 2+ are checked.</summary>
+        private string? GetSingleSelectedSetId()
+        {
+            if (_selectedSetIds.Count != 1) return null;
+            return _selectedSetIds.First();
+        }
+
+        private void UpdateSetActionButtons()
+        {
+            bool singleSelected = _selectedSetIds.Count == 1;
+            DeleteSetBtn.IsEnabled  = singleSelected;
+            RenameSetBtn.IsEnabled  = singleSelected;
+            ExportSetBtn.IsEnabled  = singleSelected;
+        }
+
+        private void UpdateDestPresetActionButtons(bool hasSelection)
+        {
+            DestDeletePresetBtn.IsEnabled  = hasSelection;
+            DestRenamePresetBtn.IsEnabled  = hasSelection;
+            DestExportPresetBtn.IsEnabled  = hasSelection;
+        }
+
+        /// <summary>
+        /// Silently selects the item with the given setId in a ComboBox
+        /// without firing a cross-sync loop (uses a flag guard).
+        /// </summary>
+        private bool _syncingPresetCombos = false;
+        private void SyncPresetCombo(ComboBox target, string presetId)
+        {
+            if (_syncingPresetCombos) return;
+            _syncingPresetCombos = true;
+            try
+            {
+                for (int i = 0; i < target.Items.Count; i++)
+                {
+                    if (target.Items[i] is ComboBoxItem ci && (ci.Tag?.ToString() ?? "") == presetId)
+                    {
+                        target.SelectedIndex = i;
+                        return;
+                    }
+                }
+                target.SelectedIndex = 0; // "(ninguno)"
+            }
+            finally { _syncingPresetCombos = false; }
+        }
+
+        /// <summary>Reloads both preset combos and selects the given preset in both.</summary>
+        private void ReloadBothPresetCombos(string? selectId)
+        {
+            LoadExportConfigPresets();
+            LoadDestinationPresets();
+            if (selectId != null)
+            {
+                SyncPresetCombo(ExportPresetCombo, selectId);
+                SyncPresetCombo(DestPresetCombo, selectId);
+            }
         }
 
         private void SaveSet_Click(object sender, RoutedEventArgs e)
@@ -571,7 +667,7 @@ namespace BIMPills.UI.Export.Sheets
                     return;
                 }
 
-                var activeSetId = (PublicationSetCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "";
+                var activeSetId = GetSingleSelectedSetId() ?? "";
                 var activeSet = string.IsNullOrEmpty(activeSetId) ? null : _publicationSets.FirstOrDefault(s => s.Id == activeSetId);
 
                 var items = selectedItems.Select(r => new PublicationSetItem
@@ -588,7 +684,7 @@ namespace BIMPills.UI.Export.Sheets
                     CaptureExportSettings(activeSet);
                     _publicationSetRepo?.Update(activeSet);
                     LoadPublicationSets();
-                    SelectSetInCombo(activeSet.Id);
+                    SelectSetById(activeSet.Id);
                     BimPillsDialog.Success(
                         header: "Conjunto actualizado",
                         message: $"\u00ab{activeSet.Name}\u00bb actualizado con {items.Count} items.",
@@ -659,7 +755,7 @@ namespace BIMPills.UI.Export.Sheets
 
             _publicationSetRepo?.Create(set);
             LoadPublicationSets();
-            SelectSetInCombo(set.Id);
+            SelectSetById(set.Id);
 
             BimPillsDialog.Success(
                 header: "Conjunto creado",
@@ -667,13 +763,13 @@ namespace BIMPills.UI.Export.Sheets
                 owner: Window.GetWindow(this));
         }
 
-        private void SelectSetInCombo(string setId)
+        private void SelectSetById(string setId)
         {
-            for (int i = 0; i < PublicationSetCombo.Items.Count; i++)
+            foreach (CheckBox cb in SetListPanel.Children)
             {
-                if (PublicationSetCombo.Items[i] is ComboBoxItem ci && ci.Tag?.ToString() == setId)
+                if (cb.Tag?.ToString() == setId)
                 {
-                    PublicationSetCombo.SelectedIndex = i;
+                    cb.IsChecked = true; // triggers SetCheckbox_Changed
                     break;
                 }
             }
@@ -683,8 +779,7 @@ namespace BIMPills.UI.Export.Sheets
         {
             try
             {
-                var selectedItem = PublicationSetCombo.SelectedItem as ComboBoxItem;
-                var setId = selectedItem?.Tag?.ToString() ?? "";
+                var setId = GetSingleSelectedSetId() ?? "";
                 if (string.IsNullOrEmpty(setId)) return;
 
                 var set = _publicationSets.FirstOrDefault(s => s.Id == setId);
@@ -718,8 +813,7 @@ namespace BIMPills.UI.Export.Sheets
         {
             try
             {
-                var selectedItem = PublicationSetCombo.SelectedItem as ComboBoxItem;
-                var setId = selectedItem?.Tag?.ToString() ?? "";
+                var setId = GetSingleSelectedSetId() ?? "";
                 if (string.IsNullOrEmpty(setId)) return;
 
                 var set = _publicationSets.FirstOrDefault(s => s.Id == setId);
@@ -731,7 +825,7 @@ namespace BIMPills.UI.Export.Sheets
                 set.Name = newName.Trim();
                 _publicationSetRepo?.Update(set);
                 LoadPublicationSets();
-                SelectSetInCombo(set.Id);
+                SelectSetById(set.Id);
             }
             catch (Exception ex)
             {
@@ -804,6 +898,20 @@ namespace BIMPills.UI.Export.Sheets
                 UpdateSelection();
             }
             catch (Exception ex) { _logger?.Error("Error en DeselectAll_Click", ex); }
+        }
+
+        private void SelectAll_HeaderClick(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var cb = sender as CheckBox;
+                bool selectAll = cb?.IsChecked == true;
+                foreach (var row in _filteredRows)
+                    row.IsSelected = selectAll;
+                SheetsGrid.Items.Refresh();
+                UpdateSelection();
+            }
+            catch (Exception ex) { _logger?.Error("Error en SelectAll_HeaderClick", ex); }
         }
 
         private void RowCheckBox_Click(object sender, RoutedEventArgs e)
@@ -1296,8 +1404,7 @@ namespace BIMPills.UI.Export.Sheets
         {
             try
             {
-                var selectedItem = PublicationSetCombo.SelectedItem as ComboBoxItem;
-                var setId = selectedItem?.Tag?.ToString() ?? "";
+                var setId = GetSingleSelectedSetId() ?? "";
                 if (string.IsNullOrEmpty(setId)) return;
 
                 var set = _publicationSets.FirstOrDefault(s => s.Id == setId);
@@ -1347,7 +1454,7 @@ namespace BIMPills.UI.Export.Sheets
 
                 _publicationSetRepo?.Create(set);
                 LoadPublicationSets();
-                SelectSetInCombo(set.Id);
+                SelectSetById(set.Id);
                 BimPillsDialog.Success(
                     header: "Conjunto importado",
                     message: $"«{set.Name}» importado con {set.Items.Count} items.",
@@ -1357,6 +1464,241 @@ namespace BIMPills.UI.Export.Sheets
             {
                 _logger?.Error("Error en ImportSet_Click", ex);
                 BimPillsDialog.Error("No se pudo importar", "Error al importar el conjunto.", ex.Message, Window.GetWindow(this));
+            }
+        }
+
+        // ── Preset de Exportación (Step 3 — carpeta + nombramiento) ──────────
+
+        private void LoadDestinationPresets()
+        {
+            try
+            {
+                if (_exportConfigPresetRepo == null) return;
+                _exportConfigPresets = _exportConfigPresetRepo.GetAll();
+
+                DestPresetCombo.Items.Clear();
+                DestPresetCombo.Items.Add(new ComboBoxItem { Content = "(ninguno)", Tag = "" });
+                foreach (var preset in _exportConfigPresets)
+                    DestPresetCombo.Items.Add(new ComboBoxItem { Content = preset.Name, Tag = preset.Id });
+
+                DestPresetCombo.SelectedIndex = 0;
+            }
+            catch (Exception ex) { _logger?.Error("Error en LoadDestinationPresets", ex); }
+        }
+
+        private void DestPreset_Changed(object sender, SelectionChangedEventArgs e)
+        {
+            try
+            {
+                var selectedItem = DestPresetCombo.SelectedItem as ComboBoxItem;
+                var presetId = selectedItem?.Tag?.ToString() ?? "";
+                UpdateDestPresetActionButtons(!string.IsNullOrEmpty(presetId));
+
+                // Sync Step 2 combo without re-triggering full restore
+                SyncPresetCombo(ExportPresetCombo, presetId);
+
+                if (string.IsNullOrEmpty(presetId)) return;
+                var preset = _exportConfigPresets.FirstOrDefault(p => p.Id == presetId);
+                if (preset == null) return;
+                RestoreDestinationSettings(preset);
+            }
+            catch (Exception ex) { _logger?.Error("Error en DestPreset_Changed", ex); }
+        }
+
+        private void DestSavePreset_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var activePresetId = (DestPresetCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "";
+                var activePreset = string.IsNullOrEmpty(activePresetId) ? null
+                    : _exportConfigPresets.FirstOrDefault(p => p.Id == activePresetId);
+
+                if (activePreset != null)
+                {
+                    CaptureFormatSettings(activePreset);
+                    _exportConfigPresetRepo?.Update(activePreset);
+                    ReloadBothPresetCombos(activePreset.Id);
+                    BimPillsDialog.Success(
+                        header: "Preset actualizado",
+                        message: $"«{activePreset.Name}» actualizado correctamente.",
+                        owner: Window.GetWindow(this));
+                }
+                else
+                {
+                    DestSaveNewPreset();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger?.Error("Error en DestSavePreset_Click", ex);
+                BimPillsDialog.Error("No se pudo guardar", "Error al guardar el preset.", ex.Message, Window.GetWindow(this));
+            }
+        }
+
+        private void DestSaveAsPreset_Click(object sender, RoutedEventArgs e)
+        {
+            try { DestSaveNewPreset(); }
+            catch (Exception ex)
+            {
+                _logger?.Error("Error en DestSaveAsPreset_Click", ex);
+                BimPillsDialog.Error("No se pudo guardar", "Error al guardar el preset.", ex.Message, Window.GetWindow(this));
+            }
+        }
+
+        private void DestSaveNewPreset()
+        {
+            var name = PromptForName(
+                title: "BIM Pills — Preset de Exportación",
+                label: "Nombre del preset:",
+                defaultValue: $"Preset {DateTime.Now:yyyy-MM-dd}");
+            if (string.IsNullOrWhiteSpace(name)) return;
+
+            var preset = new ExportConfigPreset { Name = name.Trim() };
+            CaptureFormatSettings(preset);
+            _exportConfigPresetRepo?.Create(preset);
+            ReloadBothPresetCombos(preset.Id);
+            BimPillsDialog.Success(
+                header: "Preset guardado",
+                message: $"«{preset.Name}» guardado correctamente.",
+                owner: Window.GetWindow(this));
+        }
+
+        private void DestRenamePreset_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var selectedItem = DestPresetCombo.SelectedItem as ComboBoxItem;
+                var presetId = selectedItem?.Tag?.ToString() ?? "";
+                if (string.IsNullOrEmpty(presetId)) return;
+
+                var preset = _exportConfigPresets.FirstOrDefault(p => p.Id == presetId);
+                if (preset == null) return;
+
+                var newName = PromptForName(
+                    title: "BIM Pills — Renombrar preset",
+                    label: "Nombre del preset:",
+                    defaultValue: preset.Name);
+                if (string.IsNullOrWhiteSpace(newName)) return;
+
+                preset.Name = newName.Trim();
+                _exportConfigPresetRepo?.Update(preset);
+                ReloadBothPresetCombos(preset.Id);
+            }
+            catch (Exception ex)
+            {
+                _logger?.Error("Error en DestRenamePreset_Click", ex);
+                BimPillsDialog.Error("No se pudo renombrar", "Error al renombrar el preset.", ex.Message, Window.GetWindow(this));
+            }
+        }
+
+        private void DestDeletePreset_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var selectedItem = DestPresetCombo.SelectedItem as ComboBoxItem;
+                var presetId = selectedItem?.Tag?.ToString() ?? "";
+                if (string.IsNullOrEmpty(presetId)) return;
+
+                var preset = _exportConfigPresets.FirstOrDefault(p => p.Id == presetId);
+                if (preset == null) return;
+
+                var confirm = BimPillsDialog.Confirm(
+                    header: "¿Eliminar preset?",
+                    message: $"El preset «{preset.Name}» se eliminará permanentemente.",
+                    detail: "Esta acción no se puede deshacer.",
+                    owner: Window.GetWindow(this),
+                    yesText: "Eliminar",
+                    noText: "Cancelar",
+                    kind: BimPillsDialog.DialogKind.Warning);
+                if (!confirm) return;
+
+                _exportConfigPresetRepo?.Delete(presetId);
+                ReloadBothPresetCombos(null);
+            }
+            catch (Exception ex)
+            {
+                _logger?.Error("Error en DestDeletePreset_Click", ex);
+                BimPillsDialog.Error("No se pudo eliminar", "Error al eliminar el preset.", ex.Message, Window.GetWindow(this));
+            }
+        }
+
+        private void DestExportPreset_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var selectedItem = DestPresetCombo.SelectedItem as ComboBoxItem;
+                var presetId = selectedItem?.Tag?.ToString() ?? "";
+                if (string.IsNullOrEmpty(presetId)) return;
+
+                var preset = _exportConfigPresets.FirstOrDefault(p => p.Id == presetId);
+                if (preset == null) return;
+
+                var dlg = new Microsoft.Win32.SaveFileDialog
+                {
+                    Title = "Exportar Preset de Exportación",
+                    FileName = preset.Name,
+                    DefaultExt = ".xml",
+                    Filter = "XML (*.xml)|*.xml"
+                };
+                if (dlg.ShowDialog() != true) return;
+
+                File.WriteAllText(dlg.FileName, JsonExportConfigPresetRepository.SerializeForExport(preset), System.Text.Encoding.UTF8);
+                BimPillsDialog.Success(
+                    header: "Preset exportado",
+                    message: $"«{preset.Name}» exportado correctamente.",
+                    detail: "Comparte el archivo .xml con otros usuarios para que lo importen.",
+                    owner: Window.GetWindow(this));
+            }
+            catch (Exception ex)
+            {
+                _logger?.Error("Error en DestExportPreset_Click", ex);
+                BimPillsDialog.Error("No se pudo exportar", "Error al exportar el preset.", ex.Message, Window.GetWindow(this));
+            }
+        }
+
+        private void DestImportPreset_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var dlg = new Microsoft.Win32.OpenFileDialog
+                {
+                    Title = "Importar Preset de Exportación",
+                    DefaultExt = ".xml",
+                    Filter = "XML (*.xml)|*.xml"
+                };
+                if (dlg.ShowDialog() != true) return;
+
+                var json = File.ReadAllText(dlg.FileName, System.Text.Encoding.UTF8);
+                var preset = JsonExportConfigPresetRepository.DeserializeFromImport(json);
+                if (preset == null)
+                {
+                    BimPillsDialog.Error("No se pudo importar", "El archivo no contiene un preset válido.", owner: Window.GetWindow(this));
+                    return;
+                }
+
+                _exportConfigPresetRepo?.Create(preset);
+                LoadExportConfigPresets();
+                LoadDestinationPresets();
+
+                // Seleccionar el preset importado
+                for (int i = 0; i < DestPresetCombo.Items.Count; i++)
+                {
+                    if (DestPresetCombo.Items[i] is ComboBoxItem ci && ci.Tag?.ToString() == preset.Id)
+                    {
+                        DestPresetCombo.SelectedIndex = i;
+                        break;
+                    }
+                }
+
+                BimPillsDialog.Success(
+                    header: "Preset importado",
+                    message: $"«{preset.Name}» importado correctamente.",
+                    owner: Window.GetWindow(this));
+            }
+            catch (Exception ex)
+            {
+                _logger?.Error("Error en DestImportPreset_Click", ex);
+                BimPillsDialog.Error("No se pudo importar", "Error al importar el preset.", ex.Message, Window.GetWindow(this));
             }
         }
 
@@ -1392,6 +1734,9 @@ namespace BIMPills.UI.Export.Sheets
                 DeletePresetBtn.IsEnabled = hasActivePreset;
                 RenamePresetBtn.IsEnabled = hasActivePreset;
                 ExportPresetBtn.IsEnabled = hasActivePreset;
+
+                // Sync Step 3 combo
+                SyncPresetCombo(DestPresetCombo, presetId);
 
                 if (string.IsNullOrEmpty(presetId)) return;
 
@@ -1540,8 +1885,8 @@ namespace BIMPills.UI.Export.Sheets
                 {
                     Title = "Exportar preset de configuración",
                     FileName = preset.Name,
-                    DefaultExt = ".json",
-                    Filter = "JSON (*.json)|*.json"
+                    DefaultExt = ".xml",
+                    Filter = "XML (*.xml)|*.xml"
                 };
                 if (dlg.ShowDialog() != true) return;
 
@@ -1565,8 +1910,8 @@ namespace BIMPills.UI.Export.Sheets
                 var dlg = new Microsoft.Win32.OpenFileDialog
                 {
                     Title = "Importar preset de configuración",
-                    DefaultExt = ".json",
-                    Filter = "JSON (*.json)|*.json"
+                    DefaultExt = ".xml",
+                    Filter = "XML (*.xml)|*.xml"
                 };
                 if (dlg.ShowDialog() != true) return;
 
@@ -1605,7 +1950,7 @@ namespace BIMPills.UI.Export.Sheets
             }
         }
 
-        /// <summary>Captures current Tab 2 (Formato) state into an ExportConfigPreset.</summary>
+        /// <summary>Captures current Tab 2 (Formato) + Tab 3 (Exportar) state into an ExportConfigPreset.</summary>
         private void CaptureFormatSettings(ExportConfigPreset preset)
         {
             preset.ExportPdf = PdfCheck.IsChecked == true;
@@ -1616,6 +1961,7 @@ namespace BIMPills.UI.Export.Sheets
             preset.PrinterName = _pdfEngine.PrinterName;
             preset.PdfSettings = GetPdfSettings();
             preset.DwgConfig = GetSelectedDwgConfig();
+            preset.DestinationFolder = DestinationBox?.Text ?? "";
         }
 
         /// <summary>Restores an ExportConfigPreset into the Tab 2 (Formato) UI controls.</summary>
@@ -1699,6 +2045,25 @@ namespace BIMPills.UI.Export.Sheets
             // Trigger visibility and preview updates
             FormatCheck_Changed(this, new RoutedEventArgs());
             UpdatePdfEngineUi();
+        }
+
+        /// <summary>
+        /// Restores only the Step-3 fields (destination folder + naming pattern) from a preset.
+        /// Used by the Preset de Exportación bar in Step 3.
+        /// </summary>
+        private void RestoreDestinationSettings(ExportConfigPreset preset)
+        {
+            if (!string.IsNullOrWhiteSpace(preset.DestinationFolder) && DestinationBox != null)
+            {
+                DestinationBox.Text = preset.DestinationFolder;
+                _selectedFolder = preset.DestinationFolder;
+            }
+
+            if (!string.IsNullOrEmpty(preset.NamingPattern) && NamingPatternBox != null)
+                NamingPatternBox.Text = preset.NamingPattern;
+
+            UpdateNamingPreview();
+            UpdateSelection();
         }
 
         /// <summary>
