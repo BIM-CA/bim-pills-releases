@@ -275,7 +275,7 @@ namespace BIMPills.Revit.Application
 
                         logger.Info($"Actualización disponible: {update.DisplayVersion}");
 
-                        uiDispatcher.BeginInvoke(
+                        _ = uiDispatcher.BeginInvoke(
                             System.Windows.Threading.DispatcherPriority.Background,
                             new Action(() =>
                             {

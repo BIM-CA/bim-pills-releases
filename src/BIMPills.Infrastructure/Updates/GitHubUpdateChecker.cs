@@ -59,7 +59,7 @@ namespace BIMPills.Infrastructure.Updates
 
                 return new UpdateInfo
                 {
-                    TagName              = manifest.Version,
+                    TagName              = manifest.Version!,
                     ReleaseNotes         = TrimReleaseNotes(manifest.Notes ?? string.Empty),
                     InstallerDownloadUrl = manifest.InstallerUrl,
                 };
