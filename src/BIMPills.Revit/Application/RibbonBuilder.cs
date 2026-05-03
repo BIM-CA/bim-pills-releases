@@ -59,8 +59,8 @@ namespace BIMPills.Revit.Application
             {
                 try
                 {
-                    data.LargeImage = BimPillsIcons.Large(iconKey);
-                    data.Image      = BimPillsIcons.Small(iconKey);
+                    data.LargeImage = BimPillsIcons.Large(iconKey!);
+                    data.Image      = BimPillsIcons.Small(iconKey!);
                 }
                 catch (Exception ex)
                 {

@@ -1,0 +1,126 @@
+<Window x:Class="BIMPills.UI.Seleccionar.SeleccionarGalleryWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="BIM Pills — Organizar"
+        Width="356" SizeToContent="Height"
+        ResizeMode="NoResize"
+        WindowStartupLocation="Manual"
+        Topmost="False"
+        Background="{DynamicResource BackgroundBrush}"
+        WindowStyle="ToolWindow"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True"
+        Closing="Window_Closing">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/BIMPills.UI;component/Shared/Styles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <StackPanel Margin="10">
+
+        <!-- Header card -->
+        <Border Style="{StaticResource CardBorder}" Margin="0,0,0,10">
+            <StackPanel Orientation="Horizontal">
+                <Image Source="/BIMPills.UI;component/Resources/Icons/organize.png"
+                       Width="24" Height="24" Margin="0,0,10,0"
+                       RenderOptions.BitmapScalingMode="HighQuality"
+                       VerticalAlignment="Center"/>
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="Organizar"
+                               FontSize="11" FontWeight="Medium"
+                               Foreground="{StaticResource AccentBrush}"
+                               FontFamily="Segoe UI"/>
+                    <TextBlock Text="Herramientas de organización"
+                               FontSize="13" FontWeight="SemiBold"
+                               Foreground="{StaticResource PrimaryBrush}"
+                               FontFamily="Segoe UI"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- Tool grid — 2 columnas, scroll cuando haya más herramientas -->
+        <Border Style="{StaticResource CardBorder}" Margin="0,0,0,0">
+            <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="380">
+                <UniformGrid x:Name="ToolGrid" Columns="2" Margin="2">
+
+                    <!-- Buscar y Seleccionar -->
+                    <Border x:Name="FilterCard" Height="96" Margin="4"
+                            BorderBrush="{StaticResource SeparatorBrush}" BorderThickness="1"
+                            CornerRadius="8" Background="White" Cursor="Hand"
+                            MouseLeftButtonDown="FilterCard_Click"
+                            MouseEnter="Card_MouseEnter" MouseLeave="Card_MouseLeave">
+                        <Border.ToolTip>
+                            <ToolTip Content="Busca elementos por categoría, parámetros y condiciones. Soporta conjuntos de criterios guardados."/>
+                        </Border.ToolTip>
+                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Image Source="/BIMPills.UI;component/Resources/Icons/find-select.png"
+                                   Width="28" Height="28"
+                                   RenderOptions.BitmapScalingMode="HighQuality"
+                                   HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                            <TextBlock Text="Buscar y Seleccionar"
+                                       FontSize="11" FontFamily="Segoe UI"
+                                       Foreground="{StaticResource PrimaryBrush}"
+                                       TextWrapping="Wrap" TextAlignment="Center"
+                                       MaxWidth="110" LineHeight="15"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Ordenar -->
+                    <Border x:Name="OrdenarCard" Height="96" Margin="4"
+                            BorderBrush="{StaticResource SeparatorBrush}" BorderThickness="1"
+                            CornerRadius="8" Background="White" Cursor="Hand"
+                            MouseLeftButtonDown="OrdenarCard_Click"
+                            MouseEnter="Card_MouseEnter" MouseLeave="Card_MouseLeave">
+                        <Border.ToolTip>
+                            <ToolTip Content="Asigna valores incrementales a parámetros de elementos seleccionándolos uno a uno en la vista."/>
+                        </Border.ToolTip>
+                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Image Source="/BIMPills.UI;component/Resources/Icons/ordering.png"
+                                   Width="28" Height="28"
+                                   RenderOptions.BitmapScalingMode="HighQuality"
+                                   HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                            <TextBlock Text="Secuenciador"
+                                       FontSize="11" FontFamily="Segoe UI"
+                                       Foreground="{StaticResource PrimaryBrush}"
+                                       TextWrapping="Wrap" TextAlignment="Center"
+                                       MaxWidth="110" LineHeight="15"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Asignar valores -->
+                    <Border x:Name="AssignCard" Height="96" Margin="4"
+                            BorderBrush="{StaticResource SeparatorBrush}" BorderThickness="1"
+                            CornerRadius="8" Background="White" Cursor="Hand"
+                            MouseLeftButtonDown="AssignCard_Click"
+                            MouseEnter="Card_MouseEnter" MouseLeave="Card_MouseLeave">
+                        <Border.ToolTip>
+                            <ToolTip Content="Asigna workset y valores en parámetros a la selección activa."/>
+                        </Border.ToolTip>
+                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Image Source="/BIMPills.UI;component/Resources/Icons/assign-values.png"
+                                   Width="28" Height="28"
+                                   RenderOptions.BitmapScalingMode="HighQuality"
+                                   HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                            <TextBlock Text="Asignar valores"
+                                       FontSize="11" FontFamily="Segoe UI"
+                                       Foreground="{StaticResource PrimaryBrush}"
+                                       TextWrapping="Wrap" TextAlignment="Center"
+                                       MaxWidth="110" LineHeight="15"/>
+                        </StackPanel>
+                    </Border>
+
+                </UniformGrid>
+            </ScrollViewer>
+        </Border>
+
+        <!-- Footer hint -->
+        <TextBlock Text="Las herramientas interactúan con la vista activa de Revit"
+                   FontSize="10" Foreground="{StaticResource TextSecondaryBrush}" FontFamily="Segoe UI"
+                   HorizontalAlignment="Center" FontStyle="Italic" Margin="0,8,0,2"/>
+
+    </StackPanel>
+</Window>

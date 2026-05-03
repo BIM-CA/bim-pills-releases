@@ -300,6 +300,130 @@ namespace BIMPills.UI.Shared
         }
 
         // ─────────────────────────────────────────────────────────────
+        //  Input prompt (replaces Microsoft.VisualBasic.Interaction.InputBox)
+        // ─────────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Shows a simple text-input dialog. Returns the entered text or
+        /// <c>null</c> if the user cancelled.
+        /// </summary>
+        public static string? Prompt(
+            string prompt,
+            string title        = "BIM Pills",
+            string defaultValue = "",
+            Window? owner       = null)
+        {
+            // ── build window in code ──────────────────────────────────
+            var win = new Window
+            {
+                Title                 = title,
+                Width                 = 380,
+                SizeToContent         = SizeToContent.Height,
+                ResizeMode            = ResizeMode.NoResize,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                FontFamily            = new FontFamily("Segoe UI"),
+                Background            = Brushes.White,
+                BorderThickness       = new Thickness(1),
+                BorderBrush           = new SolidColorBrush(Color.FromRgb(220, 220, 224)),
+                AllowsTransparency    = false,
+                WindowStyle           = WindowStyle.SingleBorderWindow,
+            };
+
+            // resolve owner
+            if (owner == null)
+                foreach (Window w in Application.Current?.Windows ?? new WindowCollection())
+                    if (w.IsActive) { owner = w; break; }
+            if (owner != null)
+                try { win.Owner = owner; } catch { }
+
+            // ── layout ───────────────────────────────────────────────
+            var root = new StackPanel { Margin = new Thickness(20) };
+
+            var promptTb = new TextBlock
+            {
+                Text         = prompt,
+                FontSize     = 13,
+                Foreground   = new SolidColorBrush(Color.FromRgb(51, 51, 51)),
+                TextWrapping = TextWrapping.Wrap,
+                Margin       = new Thickness(0, 0, 0, 10),
+            };
+            root.Children.Add(promptTb);
+
+            var input = new TextBox
+            {
+                Text              = defaultValue,
+                FontSize          = 13,
+                Padding           = new Thickness(8, 6, 8, 6),
+                BorderBrush       = new SolidColorBrush(Color.FromRgb(180, 180, 188)),
+                BorderThickness   = new Thickness(1),
+                Margin            = new Thickness(0, 0, 0, 16),
+                SelectionStart    = 0,
+                SelectionLength   = defaultValue.Length,
+            };
+            root.Children.Add(input);
+
+            var btnsPanel = new StackPanel
+            {
+                Orientation       = Orientation.Horizontal,
+                HorizontalAlignment = HorizontalAlignment.Right,
+            };
+
+            string? result = null;
+
+            var cancelBtn = new Button
+            {
+                Content    = "Cancelar",
+                MinWidth   = 90,
+                Height     = 32,
+                Padding    = new Thickness(14, 0, 14, 0),
+                FontSize   = 13,
+                Margin     = new Thickness(0, 0, 8, 0),
+                IsCancel   = true,
+                Cursor     = Cursors.Hand,
+            };
+            cancelBtn.Click += (_, __) => win.Close();
+            btnsPanel.Children.Add(cancelBtn);
+
+            var okBtn = new Button
+            {
+                Content    = "Guardar",
+                MinWidth   = 90,
+                Height     = 32,
+                Padding    = new Thickness(14, 0, 14, 0),
+                FontSize   = 13,
+                IsDefault  = true,
+                Cursor     = Cursors.Hand,
+            };
+            okBtn.Click += (_, __) =>
+            {
+                result = input.Text;
+                win.Close();
+            };
+            btnsPanel.Children.Add(okBtn);
+
+            root.Children.Add(btnsPanel);
+            win.Content = root;
+
+            // apply primary button style if resources available
+            win.Loaded += (_, __) =>
+            {
+                try
+                {
+                    var primaryStyle = Application.Current?.TryFindResource("PrimaryButton") as Style;
+                    if (primaryStyle != null) okBtn.Style = primaryStyle;
+                    var secondaryStyle = Application.Current?.TryFindResource("SecondaryButton") as Style;
+                    if (secondaryStyle != null) cancelBtn.Style = secondaryStyle;
+                }
+                catch { }
+                input.Focus();
+                input.SelectAll();
+            };
+
+            win.ShowDialog();
+            return result;
+        }
+
+        // ─────────────────────────────────────────────────────────────
         //  Window chrome — drag + close
         // ─────────────────────────────────────────────────────────────
 

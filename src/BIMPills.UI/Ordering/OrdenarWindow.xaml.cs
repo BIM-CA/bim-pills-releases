@@ -88,7 +88,7 @@ namespace BIMPills.UI.Ordering
             if (string.IsNullOrEmpty(cat)) return;
 
             ParameterCombo.Items.Clear();
-            var parameters = _getParameters(cat);
+            var parameters = _getParameters(cat!);
             foreach (var p in parameters)
                 ParameterCombo.Items.Add(p);
 

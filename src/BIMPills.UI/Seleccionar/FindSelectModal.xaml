@@ -1,0 +1,394 @@
+<Window x:Class="BIMPills.UI.Seleccionar.FindSelectModal"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:shared="clr-namespace:BIMPills.UI.Shared"
+        Title="BIM Pills — Buscar y Seleccionar"
+        Width="600" Height="580"
+        MinHeight="440"
+        ResizeMode="CanResizeWithGrip"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource BackgroundBrush}"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/BIMPills.UI;component/Shared/Styles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            <shared:BoolToVisibilityConverter x:Key="BoolToVis"/>
+            <shared:InverseBoolToVisibilityConverter x:Key="InverseBoolToVis"/>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <DockPanel Margin="16,14,16,14">
+
+        <!-- ──── Header card ─────────────────────────────────────────── -->
+        <Border DockPanel.Dock="Top" Style="{StaticResource CardBorder}" Margin="0,0,0,10">
+            <StackPanel Orientation="Horizontal">
+                <Image Source="/BIMPills.UI;component/Resources/Icons/find-select.png"
+                       Width="28" Height="28" Margin="0,0,12,0"
+                       RenderOptions.BitmapScalingMode="HighQuality"
+                       VerticalAlignment="Center"/>
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="Organizar"
+                               FontSize="12" FontWeight="Medium"
+                               Foreground="{StaticResource AccentBrush}"
+                               FontFamily="Segoe UI"/>
+                    <TextBlock Text="Buscar y Seleccionar"
+                               FontSize="15" FontWeight="SemiBold"
+                               Foreground="{StaticResource PrimaryBrush}"
+                               FontFamily="Segoe UI"/>
+                    <TextBlock Text="Define criterios para buscar y seleccionar elementos en el modelo"
+                               FontSize="11"
+                               Foreground="{StaticResource TextSecondaryBrush}"
+                               FontFamily="Segoe UI"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- ──── Main card ───────────────────────────────────────────── -->
+        <Border Style="{StaticResource CardBorder}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Body -->
+                <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Margin="0,4,0,8">
+
+                        <!-- Preset bar -->
+                        <Border Background="#FFF0E6" CornerRadius="4" Padding="10,7" Margin="0,0,0,8">
+                            <TextBlock Text="CONJUNTO DE CRITERIOS"
+                                       FontSize="10" FontWeight="SemiBold"
+                                       Foreground="{StaticResource AccentBrush}"
+                                       FontFamily="Segoe UI"/>
+                        </Border>
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="6"/>
+                                <ColumnDefinition Width="32"/>
+                            </Grid.ColumnDefinitions>
+                            <ComboBox x:Name="PresetCombo" Grid.Column="0"
+                                      Style="{StaticResource BIMPillsComboBox}"
+                                      Height="32" FontSize="12"
+                                      DisplayMemberPath="Name"
+                                      SelectionChanged="PresetCombo_SelectionChanged"/>
+                            <Button Grid.Column="2" x:Name="PresetMenuBtn"
+                                    Width="32" Height="32" Cursor="Hand"
+                                    ToolTip="Guardar / gestionar conjuntos de criterios"
+                                    Click="PresetMenuBtn_Click">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border x:Name="Bd"
+                                                Background="White"
+                                                BorderBrush="#D1D1D6" BorderThickness="1"
+                                                CornerRadius="7">
+                                            <ContentPresenter HorizontalAlignment="Center"
+                                                              VerticalAlignment="Center"/>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="Bd" Property="Background" Value="#F5F5F7"/>
+                                                <Setter TargetName="Bd" Property="BorderBrush" Value="#AEAEB2"/>
+                                            </Trigger>
+                                            <Trigger Property="IsPressed" Value="True">
+                                                <Setter TargetName="Bd" Property="Background" Value="#EBEBED"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Button.Template>
+                                <TextBlock Text="▶" FontSize="11"
+                                           Foreground="{StaticResource PrimaryBrush}"/>
+                            </Button>
+                        </Grid>
+
+                        <!-- Logic -->
+                        <Border Background="{StaticResource BackgroundBrush}"
+                                CornerRadius="6" Padding="10,8" Margin="0,0,0,12">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="Criterios que deben cumplirse:"
+                                           FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"
+                                           FontFamily="Segoe UI"
+                                           VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                <RadioButton x:Name="AndRadio" Content="Todos (Y)"
+                                             IsChecked="True" FontSize="11" FontFamily="Segoe UI"
+                                             Margin="0,0,16,0" VerticalAlignment="Center"/>
+                                <RadioButton x:Name="OrRadio" Content="Al menos uno (O)"
+                                             FontSize="11" FontFamily="Segoe UI"
+                                             VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Criteria table header -->
+                        <Border BorderBrush="{StaticResource SeparatorBrush}"
+                                BorderThickness="1,1,1,0" CornerRadius="6,6,0,0">
+                            <Grid Background="{StaticResource SectionHeaderBrush}" Height="30">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="165"/>
+                                    <ColumnDefinition Width="140"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="32"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Criterio"
+                                           FontSize="10" FontWeight="SemiBold"
+                                           Foreground="{StaticResource AccentBrush}"
+                                           FontFamily="Segoe UI"
+                                           VerticalAlignment="Center" Margin="8,0,0,0"/>
+                                <TextBlock Grid.Column="1" Text="Operador"
+                                           FontSize="10" FontWeight="SemiBold"
+                                           Foreground="{StaticResource AccentBrush}"
+                                           FontFamily="Segoe UI"
+                                           VerticalAlignment="Center" Margin="4,0,0,0"/>
+                                <TextBlock Grid.Column="2" Text="Valor"
+                                           FontSize="10" FontWeight="SemiBold"
+                                           Foreground="{StaticResource AccentBrush}"
+                                           FontFamily="Segoe UI"
+                                           VerticalAlignment="Center" Margin="4,0,0,0"/>
+                            </Grid>
+                        </Border>
+
+                        <!-- Criteria rows -->
+                        <Border BorderBrush="{StaticResource SeparatorBrush}"
+                                BorderThickness="1,0,1,1" CornerRadius="0,0,6,6" ClipToBounds="True">
+                            <StackPanel>
+                                <ItemsControl x:Name="CriteriaList">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border BorderBrush="{StaticResource SeparatorBrush}"
+                                                    BorderThickness="0,0,0,1" Background="White">
+                                                <Grid Height="34">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="165"/>
+                                                        <ColumnDefinition Width="140"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="32"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <!-- Criterio: two overlapping ComboBoxes — category or param -->
+                                                    <Grid Grid.Column="0" Margin="3,0,2,0" VerticalAlignment="Center">
+                                                        <!-- Category row: plain string items -->
+                                                        <ComboBox IsEditable="True" StaysOpenOnEdit="True"
+                                                                  ItemsSource="{Binding CriterioItems}"
+                                                                  Text="{Binding Criterio, UpdateSourceTrigger=PropertyChanged}"
+                                                                  Height="28" FontSize="11" FontFamily="Segoe UI"
+                                                                  BorderBrush="{StaticResource SeparatorBrush}"
+                                                                  Visibility="{Binding IsCategory, Converter={StaticResource BoolToVis}}"/>
+                                                        <!-- Param row: grouped ParamInfo items -->
+                                                        <ComboBox IsEditable="True" StaysOpenOnEdit="True"
+                                                                  ItemsSource="{Binding CriterioParamView}"
+                                                                  Text="{Binding Criterio, UpdateSourceTrigger=PropertyChanged}"
+                                                                  TextSearch.TextPath="Name"
+                                                                  Height="28" FontSize="11" FontFamily="Segoe UI"
+                                                                  BorderBrush="{StaticResource SeparatorBrush}"
+                                                                  Visibility="{Binding IsCategory, Converter={StaticResource InverseBoolToVis}}">
+                                                            <ComboBox.ItemTemplate>
+                                                                <DataTemplate>
+                                                                    <Grid>
+                                                                        <Grid.ColumnDefinitions>
+                                                                            <ColumnDefinition Width="*"/>
+                                                                            <ColumnDefinition Width="Auto"/>
+                                                                        </Grid.ColumnDefinitions>
+                                                                        <TextBlock Grid.Column="0"
+                                                                                   Text="{Binding Name}"
+                                                                                   FontSize="11" FontFamily="Segoe UI"
+                                                                                   VerticalAlignment="Center"
+                                                                                   TextTrimming="CharacterEllipsis"/>
+                                                                        <Border Grid.Column="1"
+                                                                                x:Name="TypeBadge"
+                                                                                Margin="6,0,0,0"
+                                                                                CornerRadius="3" Padding="4,1"
+                                                                                VerticalAlignment="Center"
+                                                                                Background="#EBF4FF">
+                                                                            <TextBlock x:Name="TypeLabel"
+                                                                                       Text="T"
+                                                                                       FontSize="9" FontWeight="SemiBold"
+                                                                                       FontFamily="Segoe UI"
+                                                                                       Foreground="#1565C0"/>
+                                                                        </Border>
+                                                                        </Grid>
+                                                                    <DataTemplate.Triggers>
+                                                                        <DataTrigger Binding="{Binding IsTypeParam}" Value="False">
+                                                                            <Setter TargetName="TypeBadge" Property="Background" Value="#F0F0F5"/>
+                                                                            <Setter TargetName="TypeLabel" Property="Text" Value="E"/>
+                                                                            <Setter TargetName="TypeLabel" Property="Foreground" Value="#6B7280"/>
+                                                                        </DataTrigger>
+                                                                    </DataTemplate.Triggers>
+                                                                </DataTemplate>
+                                                            </ComboBox.ItemTemplate>
+                                                            <ComboBox.GroupStyle>
+                                                                <GroupStyle>
+                                                                    <GroupStyle.HeaderTemplate>
+                                                                        <DataTemplate>
+                                                                            <Border Background="#EFF2F7" Padding="6,3">
+                                                                                <TextBlock Text="{Binding Name}"
+                                                                                           FontSize="10" FontWeight="SemiBold"
+                                                                                           Foreground="#5E6C84"
+                                                                                           FontFamily="Segoe UI"/>
+                                                                            </Border>
+                                                                        </DataTemplate>
+                                                                    </GroupStyle.HeaderTemplate>
+                                                                </GroupStyle>
+                                                            </ComboBox.GroupStyle>
+                                                        </ComboBox>
+                                                    </Grid>
+                                                    <ComboBox Grid.Column="1"
+                                                              ItemsSource="{Binding OperatorLabels}"
+                                                              SelectedItem="{Binding SelectedOperatorLabel}"
+                                                              Height="28" FontSize="11" FontFamily="Segoe UI"
+                                                              Margin="2,0,2,0" VerticalAlignment="Center"
+                                                              BorderBrush="{StaticResource SeparatorBrush}"/>
+                                                    <ComboBox Grid.Column="2"
+                                                              IsEditable="True" StaysOpenOnEdit="True"
+                                                              ItemsSource="{Binding ValueItems}"
+                                                              Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}"
+                                                              Height="28" FontSize="11" FontFamily="Segoe UI"
+                                                              Margin="2,0,2,0" VerticalAlignment="Center"
+                                                              BorderBrush="{StaticResource SeparatorBrush}"/>
+                                                    <Button Grid.Column="3"
+                                                            Content="✕" Width="24" Height="24"
+                                                            FontSize="10" Foreground="{StaticResource TextSecondaryBrush}"
+                                                            VerticalAlignment="Center" HorizontalAlignment="Center"
+                                                            Background="Transparent" BorderThickness="0"
+                                                            Cursor="Hand" Tag="{Binding}"
+                                                            Click="RemoveCriterion_Click"/>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                                <!-- Empty state -->
+                                <Border x:Name="EmptyPlaceholder" Padding="12,16" Background="White">
+                                    <TextBlock Text="Pulsa '＋ Añadir' para agregar criterios de búsqueda"
+                                               FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"
+                                               FontFamily="Segoe UI"
+                                               HorizontalAlignment="Center" FontStyle="Italic"/>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Toolbar -->
+                        <Grid Margin="0,8,0,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="6"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="6"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Button Grid.Column="0" x:Name="AddBtn" Height="30" Padding="10,0"
+                                    Style="{StaticResource SecondaryButton}"
+                                    Click="AddBtn_Click">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="＋ Añadir" FontSize="11" VerticalAlignment="Center"/>
+                                    <TextBlock Text=" ▾" FontSize="9" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+
+                            <Button Grid.Column="2" x:Name="DeleteRowBtn" Height="30" Padding="10,0"
+                                    Style="{StaticResource TertiaryButton}"
+                                    ToolTip="Eliminar último criterio"
+                                    Click="DeleteRowBtn_Click">
+                                <TextBlock Text="Borrar" FontSize="11"/>
+                            </Button>
+
+                            <Button Grid.Column="4" Height="30" Width="34"
+                                    Style="{StaticResource TertiaryButton}"
+                                    ToolTip="Recoger valores de un elemento (cuentagotas)"
+                                    Click="EyedropperBtn_Click">
+                                <TextBlock Text="💧" FontSize="13"/>
+                            </Button>
+
+                            <Button Grid.Column="6" Height="30" Width="34"
+                                    Style="{StaticResource TertiaryButton}"
+                                    ToolTip="Importar categorías de los elementos seleccionados en Revit (selecciona en Revit primero)"
+                                    Click="RectSelectBtn_Click">
+                                <TextBlock Text="⬚" FontSize="15"/>
+                            </Button>
+                        </Grid>
+
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- Footer inside card -->
+                <Border Grid.Row="1"
+                        BorderBrush="{StaticResource SeparatorBrush}" BorderThickness="0,1,0,0"
+                        Padding="14,10">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="8"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="2"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Resumen de selección -->
+                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="Seleccionados:" FontSize="11" FontWeight="SemiBold"
+                                           Foreground="{StaticResource PrimaryBrush}"
+                                           FontFamily="Segoe UI" Margin="0,0,6,0"/>
+                                <TextBlock x:Name="SelectedCountLabel" Text="0" FontSize="11"
+                                           Foreground="{StaticResource PrimaryBrush}"
+                                           FontFamily="Segoe UI"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="Editables:" FontSize="11"
+                                           Foreground="{StaticResource TextSecondaryBrush}"
+                                           FontFamily="Segoe UI" Margin="0,0,6,0"/>
+                                <TextBlock x:Name="EditableCountLabel" Text="0" FontSize="11"
+                                           Foreground="{StaticResource TextSecondaryBrush}"
+                                           FontFamily="Segoe UI"/>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <Button Grid.Column="1" Height="34" Padding="14,0"
+                                Style="{StaticResource TertiaryButton}"
+                                IsCancel="True"
+                                Click="Cancel_Click">
+                            <TextBlock Text="Cancelar" FontSize="12"/>
+                        </Button>
+
+                        <!-- [−] Quitar de selección -->
+                        <Button Grid.Column="3" Height="34" Width="36"
+                                ToolTip="Quitar de la selección los elementos que cumplan los criterios"
+                                Click="Deselect_Click">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource TertiaryButton}">
+                                    <Setter Property="MinWidth" Value="0"/>
+                                    <Setter Property="Padding" Value="0"/>
+                                </Style>
+                            </Button.Style>
+                            <TextBlock Text="−" FontSize="18" FontWeight="Bold"
+                                       Foreground="{StaticResource PrimaryBrush}"/>
+                        </Button>
+
+                        <!-- [＋] Añadir a selección -->
+                        <Button Grid.Column="5" Height="34" Width="36"
+                                ToolTip="Seleccionar los elementos que cumplan los criterios"
+                                Click="AddToSelection_Click">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
+                                    <Setter Property="MinWidth" Value="0"/>
+                                    <Setter Property="Padding" Value="0"/>
+                                </Style>
+                            </Button.Style>
+                            <TextBlock Text="＋" FontSize="14"/>
+                        </Button>
+                    </Grid>
+                </Border>
+
+            </Grid>
+        </Border>
+
+    </DockPanel>
+</Window>

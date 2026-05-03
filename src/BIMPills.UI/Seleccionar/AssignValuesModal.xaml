@@ -1,0 +1,370 @@
+<Window x:Class="BIMPills.UI.Seleccionar.AssignValuesModal"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:shared="clr-namespace:BIMPills.UI.Shared"
+        Title="BIM Pills — Asignar valores"
+        Width="480" Height="600"
+        MinHeight="460"
+        ResizeMode="CanResizeWithGrip"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource BackgroundBrush}"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/BIMPills.UI;component/Shared/Styles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+            <shared:BoolToVisibilityConverter        x:Key="BoolToVis"/>
+            <shared:InverseBoolToVisibilityConverter x:Key="InverseBoolToVis"/>
+
+            <Style x:Key="StepCircle" TargetType="Border">
+                <Setter Property="Width"        Value="24"/>
+                <Setter Property="Height"       Value="24"/>
+                <Setter Property="CornerRadius" Value="12"/>
+                <Setter Property="Background"   Value="{StaticResource AccentBrush}"/>
+                <Setter Property="Margin"       Value="0,0,10,0"/>
+            </Style>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <DockPanel Margin="16,14,16,14">
+
+        <!-- ──── Header card ─────────────────────────────────────────── -->
+        <Border DockPanel.Dock="Top" Style="{StaticResource CardBorder}" Margin="0,0,0,10">
+            <StackPanel Orientation="Horizontal">
+                <Image Source="/BIMPills.UI;component/Resources/Icons/assign-values.png"
+                       Width="28" Height="28" Margin="0,0,12,0"
+                       RenderOptions.BitmapScalingMode="HighQuality"
+                       VerticalAlignment="Center"/>
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="Organizar"
+                               FontSize="12" FontWeight="Medium"
+                               Foreground="{StaticResource AccentBrush}"
+                               FontFamily="Segoe UI"/>
+                    <TextBlock Text="Asignar valores"
+                               FontSize="15" FontWeight="SemiBold"
+                               Foreground="{StaticResource PrimaryBrush}"
+                               FontFamily="Segoe UI"/>
+                    <TextBlock Text="Asigna workset y valores en parámetros a la selección"
+                               FontSize="11"
+                               Foreground="{StaticResource TextSecondaryBrush}"
+                               FontFamily="Segoe UI"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- ──── Footer (always anchored to bottom) ──────────────────── -->
+        <Border DockPanel.Dock="Bottom" Style="{StaticResource CardBorder}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="8"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Resumen de selección + botón refresh -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock x:Name="FooterTotalLabel"
+                                   FontSize="12" FontWeight="SemiBold"
+                                   Foreground="{StaticResource PrimaryBrush}"
+                                   FontFamily="Segoe UI" Text="—"/>
+                        <TextBlock x:Name="FooterEditableLabel"
+                                   FontSize="10"
+                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                   FontFamily="Segoe UI" Text=""/>
+                    </StackPanel>
+                </StackPanel>
+
+                <Button Grid.Column="1" Height="34" Padding="16,0"
+                        Style="{StaticResource TertiaryButton}"
+                        IsCancel="True"
+                        Click="Cancel_Click">
+                    <TextBlock Text="Cancelar" FontSize="12"/>
+                </Button>
+
+                <Button Grid.Column="3" Height="34" Padding="16,0"
+                        Style="{StaticResource PrimaryButton}"
+                        Click="Apply_Click">
+                    <TextBlock Text="Aplicar" FontSize="12"/>
+                </Button>
+            </Grid>
+        </Border>
+
+        <!-- ──── Scrollable content (fills remaining space) ──────────── -->
+        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Margin="0,0,0,0">
+
+                <!-- Section 1: Subproyecto (colapsable) -->
+                <Border Style="{StaticResource CardBorder}" Margin="0,0,0,8">
+                    <StackPanel>
+                        <Grid Cursor="Hand" MouseLeftButtonDown="Sec1Header_Click">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Orientation="Horizontal" Grid.Column="0">
+                                <Border Style="{StaticResource StepCircle}">
+                                    <TextBlock Text="1" Foreground="White" FontSize="11" FontWeight="Bold"
+                                               FontFamily="Segoe UI"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <TextBlock Text="Subproyecto"
+                                           FontSize="13" FontWeight="SemiBold"
+                                           Foreground="{StaticResource PrimaryBrush}"
+                                           FontFamily="Segoe UI" VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <TextBlock x:Name="Sec1Chevron" Grid.Column="1"
+                                       Text="▼" FontSize="10"
+                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                       VerticalAlignment="Center"/>
+                        </Grid>
+                        <StackPanel x:Name="Sec1Content" Margin="0,12,0,0">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="10"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <CheckBox x:Name="AssignWorksetCheck" Grid.Column="0"
+                                          Content="Asignar workset:"
+                                          FontSize="12" FontFamily="Segoe UI"
+                                          VerticalAlignment="Center"
+                                          Checked="AssignWorksetCheck_Changed"
+                                          Unchecked="AssignWorksetCheck_Changed"/>
+                                <ComboBox x:Name="WorksetCombo" Grid.Column="2"
+                                          Style="{StaticResource BIMPillsComboBox}"
+                                          Height="30" FontSize="12"
+                                          IsEnabled="False"/>
+                            </Grid>
+                            <TextBlock x:Name="NoWorksetsLabel"
+                                       Text="Este modelo no tiene worksets definidos"
+                                       FontSize="10" Foreground="{StaticResource TextSecondaryBrush}"
+                                       FontFamily="Segoe UI" Margin="0,6,0,0" Visibility="Collapsed"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- Section 2: Parámetros (colapsable) -->
+                <Border Style="{StaticResource CardBorder}" Margin="0,0,0,8">
+                    <StackPanel>
+                        <Grid Cursor="Hand" MouseLeftButtonDown="Sec2Header_Click">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Orientation="Horizontal" Grid.Column="0">
+                                <Border Style="{StaticResource StepCircle}">
+                                    <TextBlock Text="2" Foreground="White" FontSize="11" FontWeight="Bold"
+                                               FontFamily="Segoe UI"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <TextBlock Text="Valores de parámetros"
+                                           FontSize="13" FontWeight="SemiBold"
+                                           Foreground="{StaticResource PrimaryBrush}"
+                                           FontFamily="Segoe UI" VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <TextBlock x:Name="Sec2Chevron" Grid.Column="1"
+                                       Text="▼" FontSize="10"
+                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                       VerticalAlignment="Center"/>
+                        </Grid>
+                        <StackPanel x:Name="Sec2Content" Margin="0,12,0,0">
+                            <TextBox x:Name="ParamSearchBox"
+                                     Height="28" FontSize="11"
+                                     Padding="6,0" VerticalContentAlignment="Center"
+                                     FontFamily="Segoe UI"
+                                     Tag="Buscar parámetro…"
+                                     Margin="0,0,0,6"
+                                     TextChanged="ParamSearch_TextChanged">
+                                <TextBox.Style>
+                                    <Style TargetType="TextBox">
+                                        <Setter Property="Foreground" Value="#333333"/>
+                                        <Setter Property="BorderBrush" Value="#D0D0D8"/>
+                                        <Setter Property="BorderThickness" Value="1"/>
+                                        <Style.Triggers>
+                                            <Trigger Property="Text" Value="">
+                                                <Setter Property="Background">
+                                                    <Setter.Value>
+                                                        <VisualBrush AlignmentX="Left" Stretch="None">
+                                                            <VisualBrush.Visual>
+                                                                <TextBlock Text="Buscar parámetro…"
+                                                                           Foreground="#AAAAAA" FontSize="11"
+                                                                           FontFamily="Segoe UI"
+                                                                           Margin="7,0,0,0"
+                                                                           VerticalAlignment="Center"/>
+                                                            </VisualBrush.Visual>
+                                                        </VisualBrush>
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBox.Style>
+                            </TextBox>
+                            <DataGrid x:Name="ParamGrid"
+                                      Style="{StaticResource BIMPillsDataGrid}"
+                                      IsReadOnly="False"
+                                      AutoGenerateColumns="False"
+                                      CanUserAddRows="False" CanUserDeleteRows="False"
+                                      CanUserReorderColumns="False" CanUserResizeRows="False"
+                                      MaxHeight="240" SelectionMode="Single">
+                                <DataGrid.GroupStyle>
+                                    <GroupStyle>
+                                        <GroupStyle.HeaderTemplate>
+                                            <DataTemplate>
+                                                <Border Background="#F5F0FF" Padding="6,3">
+                                                    <TextBlock Text="{Binding Name}"
+                                                               FontSize="10" FontWeight="SemiBold"
+                                                               Foreground="{StaticResource AccentBrush}"
+                                                               FontFamily="Segoe UI"/>
+                                                </Border>
+                                            </DataTemplate>
+                                        </GroupStyle.HeaderTemplate>
+                                        <GroupStyle.ContainerStyle>
+                                            <Style TargetType="GroupItem">
+                                                <Setter Property="Template">
+                                                    <Setter.Value>
+                                                        <ControlTemplate TargetType="GroupItem">
+                                                            <StackPanel>
+                                                                <ContentPresenter/>
+                                                                <ItemsPresenter/>
+                                                            </StackPanel>
+                                                        </ControlTemplate>
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </Style>
+                                        </GroupStyle.ContainerStyle>
+                                    </GroupStyle>
+                                </DataGrid.GroupStyle>
+                                <DataGrid.Columns>
+                                    <DataGridTemplateColumn Header="Parámetro" IsReadOnly="True" Width="*" MinWidth="100">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding ParameterName}"
+                                                           FontSize="11" FontFamily="Segoe UI"
+                                                           VerticalAlignment="Center"
+                                                           TextTrimming="CharacterEllipsis"
+                                                           Margin="2,0"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <!-- Template column: ComboBox si el param tiene valores definidos, TextBox si no -->
+                                    <DataGridTemplateColumn Header="Nuevo valor" Width="*" MinWidth="100">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding NewValue}"
+                                                           VerticalAlignment="Center"
+                                                           Padding="4,0"
+                                                           FontFamily="Segoe UI" FontSize="11"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                        <DataGridTemplateColumn.CellEditingTemplate>
+                                            <DataTemplate>
+                                                <Grid>
+                                                    <TextBox Text="{Binding NewValue, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                                                             Visibility="{Binding HasAllowedValues, Converter={StaticResource InverseBoolToVis}}"
+                                                             FontFamily="Segoe UI" FontSize="11"
+                                                             BorderThickness="0" Padding="2,0"
+                                                             VerticalAlignment="Center"/>
+                                                    <ComboBox ItemsSource="{Binding AllowedValues}"
+                                                              SelectedItem="{Binding NewValue, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                                                              Visibility="{Binding HasAllowedValues, Converter={StaticResource BoolToVis}}"
+                                                              FontFamily="Segoe UI" FontSize="11"
+                                                              VerticalAlignment="Center"/>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellEditingTemplate>
+                                    </DataGridTemplateColumn>
+                                    <!-- Columna T/E — badge tipo/instancia al extremo derecho de la fila -->
+                                    <DataGridTemplateColumn Header="" IsReadOnly="True" Width="36">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Border Background="{Binding TypeLabelBg}"
+                                                        CornerRadius="3" Padding="4,1"
+                                                        HorizontalAlignment="Center"
+                                                        VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding TypeLabel}"
+                                                               FontSize="9" FontWeight="Bold"
+                                                               Foreground="{Binding TypeLabelColor}"
+                                                               FontFamily="Segoe UI"/>
+                                                </Border>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                            <TextBlock x:Name="NoParamsLabel"
+                                       Text="No se encontraron parámetros comunes en la selección actual"
+                                       FontSize="10" Foreground="{StaticResource TextSecondaryBrush}"
+                                       FontFamily="Segoe UI" Margin="0,4,0,0" Visibility="Collapsed"/>
+                            <TextBlock Text="Solo parámetros editables y compatibles con todas las categorías seleccionadas."
+                                       FontSize="10" Foreground="{StaticResource TextSecondaryBrush}"
+                                       FontFamily="Segoe UI" Margin="0,6,0,0"
+                                       TextWrapping="Wrap" FontStyle="Italic"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- Section 3: Resumen (colapsable, sin número) -->
+                <Border Style="{StaticResource CardBorder}" Margin="0,0,0,10">
+                    <StackPanel>
+                        <Grid Cursor="Hand" MouseLeftButtonDown="Sec3Header_Click">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Orientation="Horizontal">
+                                <Border Style="{StaticResource StepCircle}">
+                                    <TextBlock Text="i" Foreground="White" FontSize="11" FontWeight="Bold"
+                                               FontFamily="Segoe UI" FontStyle="Italic"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <TextBlock Text="Resumen de la selección"
+                                           FontSize="13" FontWeight="SemiBold"
+                                           Foreground="{StaticResource PrimaryBrush}"
+                                           FontFamily="Segoe UI" VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <TextBlock x:Name="Sec3Chevron" Grid.Column="1"
+                                       Text="▼" FontSize="10"
+                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                       VerticalAlignment="Center"/>
+                        </Grid>
+                        <StackPanel x:Name="Sec3Content" Margin="0,12,0,0">
+                            <DataGrid x:Name="SummaryList"
+                                      Style="{StaticResource BIMPillsDataGrid}"
+                                      AutoGenerateColumns="False"
+                                      IsReadOnly="True"
+                                      CanUserAddRows="False" CanUserDeleteRows="False"
+                                      CanUserReorderColumns="False" CanUserResizeRows="False"
+                                      MaxHeight="140">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Categoría"
+                                                        Binding="{Binding CategoryName}" Width="*"/>
+                                    <DataGridTextColumn Header="Selec."
+                                                        Binding="{Binding TotalCount}" Width="55"/>
+                                    <DataGridTextColumn Header="Edit."
+                                                        Binding="{Binding EditableCount}" Width="55"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                            <Border Background="{StaticResource BackgroundBrush}"
+                                    CornerRadius="4" Padding="10,7" Margin="0,8,0,0">
+                                <TextBlock x:Name="SummaryTotalLabel"
+                                           FontSize="12" FontWeight="SemiBold"
+                                           Foreground="{StaticResource PrimaryBrush}"
+                                           FontFamily="Segoe UI" Text="—"/>
+                            </Border>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+            </StackPanel>
+        </ScrollViewer>
+
+    </DockPanel>
+</Window>

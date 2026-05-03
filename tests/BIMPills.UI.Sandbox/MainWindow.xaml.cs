@@ -1,4 +1,6 @@
 using BIMPills.Commands.Gestion;
+using BIMPills.Core.Seleccionar;
+using BIMPills.UI.Seleccionar;
 using BIMPills.Commands.ModelAudit;
 using BIMPills.Core.About;
 using BIMPills.Core.Audit;
@@ -476,6 +478,95 @@ namespace BIMPills.UI.Sandbox
             }
         }
 
+        // ── Seleccionar ──────────────────────────────────────────────────────────
+
+        private void OpenSeleccionar_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var categories = new List<string>
+                {
+                    "Puertas", "Ventanas", "Muros", "Columnas", "Mobiliario",
+                    "Escaleras", "Pilares", "Suelos", "Techos", "Habitaciones"
+                };
+
+                var worksets = new List<WorksetInfo>
+                {
+                    new WorksetInfo { Id = 1, Name = "ARQ - Arquitectura",  IsOpen = true,  IsDefault = true,  IsEditable = true },
+                    new WorksetInfo { Id = 2, Name = "EST - Estructura",     IsOpen = true,  IsDefault = false, IsEditable = false },
+                    new WorksetInfo { Id = 3, Name = "MEP - Instalaciones",  IsOpen = false, IsDefault = false, IsEditable = false },
+                    new WorksetInfo { Id = 4, Name = "EXT - Exteriores",     IsOpen = true,  IsDefault = false, IsEditable = true  },
+                };
+
+                // sandbox: mock selection counts
+                var tempDir   = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "BIMPillsSandbox_Seleccionar_" + Guid.NewGuid().ToString("N"));
+                System.IO.Directory.CreateDirectory(tempDir);
+                var presetRepo = new JsonFilterPresetRepository(tempDir);
+
+                Action<SelectionFilterConfig> applyFilter = filter =>
+                    MessageBox.Show(
+                        $"[Sandbox] Aplicar filtro:\nCategoría: {(string.IsNullOrEmpty(filter.CategoryName) ? "todas" : filter.CategoryName)}\nCondiciones: {filter.Conditions.Count}\nLógica: {filter.Logic}",
+                        "Sandbox — Seleccionar mock", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                var compatibleParams = new List<string>
+                {
+                    "Comentarios", "Descripción", "Marca", "Referencia BIM", "Subnivel", "Fase creada"
+                };
+
+                var selectionSummary = new List<BIMPills.Core.Seleccionar.CategoryElementSummary>
+                {
+                    new("Muros",     12, 12),
+                    new("Puertas",    5,  3),
+                    new("Ventanas",   8,  8),
+                };
+
+                Action<SubprojectAssignRequest> assignSubproject = req =>
+                {
+                    var paramsSummary = req.ParameterAssignments.Count > 0
+                        ? "\nParámetros: " + string.Join(", ", req.ParameterAssignments.Select(p => $"{p.ParameterName}='{p.NewValue}'"))
+                        : "";
+                    MessageBox.Show(
+                        $"[Sandbox] Asignar valores:\nWorkset: {(req.AssignWorkset ? req.WorksetId.ToString() : "(ninguno)")}{paramsSummary}",
+                        "Sandbox — Asignar valores mock", MessageBoxButton.OK, MessageBoxImage.Information);
+                };
+
+                SeleccionarGalleryWindow? win = null;
+                win = new SeleccionarGalleryWindow(
+                    categories:       categories,
+                    worksets:         worksets,
+                    compatibleParams: compatibleParams,
+                    selectionSummary: selectionSummary,
+                    presetRepo:       presetRepo,
+                    raiseApply:       applyFilter,
+                    raiseAssign:      assignSubproject,
+                    raiseOrdenar:     () =>
+                    {
+                        IReadOnlyList<string> GetCategoriesByType(string type) => type == "Modelo"
+                            ? new List<string> { "Puertas", "Ventanas", "Muros", "Columnas", "Mobiliario", "Escaleras" }
+                            : new List<string> { "Texto", "Cotas", "Etiquetas de puerta", "Etiquetas de habitación" };
+                        IReadOnlyList<string> GetParamsByCategory(string cat) => cat switch
+                        {
+                            "Puertas"  => new List<string> { "Número de puerta", "Marca", "Comentarios" },
+                            "Ventanas" => new List<string> { "Número de ventana", "Marca", "Comentarios" },
+                            _          => new List<string> { "Marca", "Comentarios" }
+                        };
+                        var ordenarWin = new OrdenarWindow(GetCategoriesByType, GetParamsByCategory)
+                        {
+                            Owner = win   // igual que FindSelectModal → ESC por niveles
+                        };
+                        ordenarWin.ShowDialog();
+                    },
+                    onApplyDone:      cb => { /* no-op en sandbox */ },
+                    onAssignDone:     cb => { /* no-op en sandbox */ });
+
+                win.Show();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error abriendo SeleccionarGalleryWindow:\n{ex.Message}\n\n{ex.StackTrace}", "Sandbox — Error");
+            }
+        }
+
         // ── Estandarizar (Worksets / Gestion) ────────────────────────────────────
 
         private void OpenEstandarizar_Click(object sender, RoutedEventArgs e)
@@ -833,6 +924,7 @@ namespace BIMPills.UI.Sandbox
             };
         }
 
+        public string GetModelIdentifier() => "Proyecto_Sandbox_Demo.rvt";
         public bool   ExportFamily(long familyId, string destinationPath) => true;
         public int    PurgeElements(IReadOnlyList<long> elementIds)       => elementIds.Count;
         public bool   CreateWorkset(string name)                          => true;

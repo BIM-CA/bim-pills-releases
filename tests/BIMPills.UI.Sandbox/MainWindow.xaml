@@ -51,11 +51,6 @@
                 HorizontalAlignment="Stretch" Margin="0,0,0,6"
                 Click="OpenConectar_Click"/>
 
-        <Button Content="&#x1F522;  Ordenar (Numerador)"
-                Style="{StaticResource SecondaryButton}"
-                HorizontalAlignment="Stretch" Margin="0,0,0,6"
-                Click="OpenOrdenar_Click"/>
-
         <Button Content="&#x1F5C2;  Gestionar (Tablas)"
                 Style="{StaticResource SecondaryButton}"
                 HorizontalAlignment="Stretch" Margin="0,0,0,6"
@@ -72,8 +67,13 @@
 
         <Button Content="&#x2699;&#xFE0F;  Estandarizar (Worksets)"
                 Style="{StaticResource SecondaryButton}"
-                HorizontalAlignment="Stretch" Margin="0,0,0,16"
+                HorizontalAlignment="Stretch" Margin="0,0,0,6"
                 Click="OpenEstandarizar_Click"/>
+
+        <Button Content="&#x1F9F9;  Organizar (Galería + Filtros + Ordenar + Asignar)"
+                Style="{StaticResource SecondaryButton}"
+                HorizontalAlignment="Stretch" Margin="0,0,0,16"
+                Click="OpenSeleccionar_Click"/>
 
         <!-- Panel Info -->
         <TextBlock Text="OTROS" FontSize="10" FontWeight="SemiBold"

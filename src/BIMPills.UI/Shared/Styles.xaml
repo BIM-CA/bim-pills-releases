@@ -299,7 +299,12 @@
                             <ControlTemplate TargetType="DataGridCell">
                                 <Border Background="{TemplateBinding Background}"
                                         Padding="10,0">
-                                    <ContentPresenter VerticalAlignment="Center"/>
+                                    <!-- Explicit bindings required for DataGridTemplateColumn to render correctly -->
+                                    <ContentPresenter VerticalAlignment="Center"
+                                                      HorizontalAlignment="Stretch"
+                                                      Content="{TemplateBinding Content}"
+                                                      ContentTemplate="{TemplateBinding ContentTemplate}"
+                                                      ContentStringFormat="{TemplateBinding ContentStringFormat}"/>
                                 </Border>
                             </ControlTemplate>
                         </Setter.Value>
@@ -557,13 +562,14 @@
                         <Popup x:Name="Popup"
                                Placement="Bottom"
                                IsOpen="{TemplateBinding IsDropDownOpen}"
-                               AllowsTransparency="False"
+                               AllowsTransparency="True"
                                Focusable="False"
                                PopupAnimation="Slide">
                             <Grid x:Name="DropDown"
                                   MinWidth="{TemplateBinding ActualWidth}"
                                   MaxHeight="{TemplateBinding MaxDropDownHeight}"
-                                  SnapsToDevicePixels="True">
+                                  SnapsToDevicePixels="True"
+                                  Margin="6,0,6,6">
                                 <Border x:Name="DropDownBorder"
                                         Background="White"
                                         BorderBrush="#E5E5EA"
@@ -755,6 +761,135 @@
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsExpanded" Value="True">
                             <Setter TargetName="ExpanderContent" Property="Visibility" Value="Visible"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ══════════════════════════════════════════════
+         ScrollBar — Minimalista, 6px, sin botones
+         ══════════════════════════════════════════════ -->
+
+    <Style x:Key="ScrollBarThumbStyle" TargetType="Thumb">
+        <Setter Property="OverridesDefaultStyle" Value="True"/>
+        <Setter Property="IsTabStop"             Value="False"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Thumb">
+                    <Border x:Name="Bd" CornerRadius="3"
+                            Background="#C7C7CC" Margin="1"/>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="#86868B"/>
+                        </Trigger>
+                        <Trigger Property="IsDragging" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="#636366"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="ScrollBar">
+        <Setter Property="OverridesDefaultStyle"  Value="True"/>
+        <Setter Property="SnapsToDevicePixels"    Value="True"/>
+        <Setter Property="Width"                  Value="6"/>
+        <Setter Property="MinWidth"               Value="6"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ScrollBar">
+                    <Track x:Name="PART_Track" IsDirectionReversed="True">
+                        <Track.DecreaseRepeatButton>
+                            <RepeatButton Command="ScrollBar.PageUpCommand"
+                                          Opacity="0" IsTabStop="False" Focusable="False"/>
+                        </Track.DecreaseRepeatButton>
+                        <Track.Thumb>
+                            <Thumb Style="{StaticResource ScrollBarThumbStyle}"/>
+                        </Track.Thumb>
+                        <Track.IncreaseRepeatButton>
+                            <RepeatButton Command="ScrollBar.PageDownCommand"
+                                          Opacity="0" IsTabStop="False" Focusable="False"/>
+                        </Track.IncreaseRepeatButton>
+                    </Track>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="Orientation" Value="Horizontal">
+                            <Setter Property="Width"     Value="Auto"/>
+                            <Setter Property="MinWidth"  Value="0"/>
+                            <Setter Property="Height"    Value="6"/>
+                            <Setter Property="MinHeight" Value="6"/>
+                            <Setter TargetName="PART_Track" Property="IsDirectionReversed" Value="False"/>
+                            <Setter TargetName="PART_Track" Property="LayoutTransform">
+                                <Setter.Value><RotateTransform Angle="-90"/></Setter.Value>
+                            </Setter>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ══════════════════════════════════════════════
+         ScrollViewer — Overlay, auto-hide, sin restar espacio
+         ══════════════════════════════════════════════ -->
+
+    <Style TargetType="ScrollViewer">
+        <Setter Property="OverridesDefaultStyle" Value="True"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ScrollViewer">
+                    <Grid>
+                        <!-- Contenido ocupa todo el ancho — scrollbar flota encima -->
+                        <ScrollContentPresenter x:Name="PART_ScrollContentPresenter"
+                                                CanContentScroll="{TemplateBinding CanContentScroll}"
+                                                ContentTemplate="{TemplateBinding ContentTemplate}"
+                                                Margin="{TemplateBinding Padding}"/>
+                        <ScrollBar x:Name="PART_VerticalScrollBar"
+                                   HorizontalAlignment="Right"
+                                   Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}"
+                                   Value="{TemplateBinding VerticalOffset}"
+                                   Maximum="{TemplateBinding ScrollableHeight}"
+                                   ViewportSize="{TemplateBinding ViewportHeight}"
+                                   Opacity="0"/>
+                        <ScrollBar x:Name="PART_HorizontalScrollBar"
+                                   Orientation="Horizontal"
+                                   VerticalAlignment="Bottom"
+                                   Visibility="{TemplateBinding ComputedHorizontalScrollBarVisibility}"
+                                   Value="{TemplateBinding HorizontalOffset}"
+                                   Maximum="{TemplateBinding ScrollableWidth}"
+                                   ViewportSize="{TemplateBinding ViewportWidth}"
+                                   Opacity="0"/>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="PART_VerticalScrollBar"
+                                                         Storyboard.TargetProperty="Opacity"
+                                                         To="1" Duration="0:0:0.15"/>
+                                        <DoubleAnimation Storyboard.TargetName="PART_HorizontalScrollBar"
+                                                         Storyboard.TargetProperty="Opacity"
+                                                         To="1" Duration="0:0:0.15"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="PART_VerticalScrollBar"
+                                                         Storyboard.TargetProperty="Opacity"
+                                                         To="0" Duration="0:0:0.35"
+                                                         BeginTime="0:0:0.6"/>
+                                        <DoubleAnimation Storyboard.TargetName="PART_HorizontalScrollBar"
+                                                         Storyboard.TargetProperty="Opacity"
+                                                         To="0" Duration="0:0:0.35"
+                                                         BeginTime="0:0:0.6"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

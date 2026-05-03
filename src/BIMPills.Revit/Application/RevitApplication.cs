@@ -11,6 +11,7 @@ using BIMPills.Commands.MCPIntegration;
 using BIMPills.Commands.ModelAudit;
 using BIMPills.Commands.Ordering;
 using BIMPills.Commands.ParameterExtractor;
+using BIMPills.Commands.Seleccionar;
 using BIMPills.Core.About;
 using BIMPills.Core.Licensing;
 using BIMPills.Core.Modules;
@@ -209,7 +210,7 @@ namespace BIMPills.Revit.Application
                 {
                     var key = cache.Load()?.LicenseKey;
                     if (string.IsNullOrEmpty(key)) return;
-                    await service.ValidateAsync(key, forceRefresh: true);
+                    await service.ValidateAsync(key!, forceRefresh: true);
                     logger.Info($"Licencia revalidada contra Airtable ({trigger}).");
                 }
                 catch (Exception ex)
@@ -358,11 +359,12 @@ namespace BIMPills.Revit.Application
             // CustomDimensionSchemesModule — se accede desde Documentar → Acotar
             // ExportAudit — se accede desde la ventana de Auditoría (sin módulo propio)
             yield return new MCPIntegrationModule();
-            yield return new OrderingModule();
+            // OrderingModule — ahora integrado en Organizar (SeleccionarModule)
             yield return new DataManagerModule();
             // Panel: Procesos
             yield return new DocumentacionModule(); // Incluye tab "Leyenda Excel"
             yield return new GestionModule();
+            yield return new SeleccionarModule();
             // Panel: Información
             yield return new SupportModule();
             yield return new AboutModule();

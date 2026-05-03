@@ -1,0 +1,307 @@
+using Autodesk.Revit.DB;
+using Autodesk.Revit.UI;
+using BIMPills.Core.Seleccionar;
+using BIMPills.Core.Services;
+using BIMPills.Infrastructure.DI;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
+
+namespace BIMPills.Revit.Commands.Seleccionar
+{
+    /// <summary>
+    /// Asigna un workset y/o parámetros a los elementos indicados.
+    /// Se ejecuta en el hilo de Revit vía ExternalEvent.
+    /// </summary>
+    public sealed class SubprojectAssignHandler : IExternalEventHandler
+    {
+        public SubprojectAssignRequest? Request { get; set; }
+        public Action<SubprojectAssignResult>? OnCompleted { get; set; }
+
+        // ── Logger de diagnóstico ─────────────────────────────────────────────
+        // Escribe a %LOCALAPPDATA%\BIMPills\assign_diag_YYYYMMDD.log
+        private static string DiagLogPath =>
+            Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "BIMPills",
+                $"assign_diag_{DateTime.Now:yyyyMMdd}.log");
+
+        private static void DiagLog(StringBuilder sb, string msg)
+        {
+            sb.AppendLine($"[{DateTime.Now:HH:mm:ss.fff}] {msg}");
+        }
+
+        private static void FlushDiag(StringBuilder sb)
+        {
+            try
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(DiagLogPath)!);
+                File.AppendAllText(DiagLogPath, sb.ToString(), Encoding.UTF8);
+            }
+            catch { /* no bloquear la ejecución por fallos de log */ }
+        }
+
+        // ── Execute ───────────────────────────────────────────────────────────
+
+        public void Execute(UIApplication app)
+        {
+            if (Request == null) return;
+
+            var diag   = new StringBuilder();
+            var uiDoc  = app.ActiveUIDocument;
+            var doc    = uiDoc.Document;
+            var result = new SubprojectAssignResult();
+
+            var elementIds = Request.UseCurrentSelection
+                ? uiDoc.Selection.GetElementIds().Select(id =>
+#if REVIT2024
+#pragma warning disable CS0618
+                    (long)id.IntegerValue
+#pragma warning restore CS0618
+#else
+                    id.Value
+#endif
+                  ).ToList()
+                : Request.ElementIds;
+
+            DiagLog(diag, $"=== SubprojectAssignHandler.Execute ===");
+            DiagLog(diag, $"  ElementIds: {elementIds.Count}  |  Assignments: {Request.ParameterAssignments.Count}  |  AssignWorkset: {Request.AssignWorkset}");
+            foreach (var a in Request.ParameterAssignments)
+                DiagLog(diag, $"  Assignment → Param='{a.ParameterName}'  Value='{a.NewValue}'");
+
+            if (elementIds.Count == 0)
+            {
+                DiagLog(diag, "  → No elements, early return.");
+                FlushDiag(diag);
+                OnCompleted?.Invoke(result);
+                return;
+            }
+
+            try
+            {
+                using var tx = new Transaction(doc, "BIM Pills: Asignar subproyecto");
+                tx.Start();
+
+                foreach (var id in elementIds)
+                {
+                    try
+                    {
+                        var elemId  = new ElementId(id);
+                        var element = doc.GetElement(elemId);
+                        if (element == null) { DiagLog(diag, $"  Elem {id}: NULL — skip"); continue; }
+
+                        var catName = element.Category?.Name ?? "?";
+                        DiagLog(diag, $"  Elem {id} ({catName}):");
+
+                        var changed = false;
+
+                        // ── Workset ────────────────────────────────────────────────────
+                        if (Request.AssignWorkset)
+                        {
+                            var worksetParam = element.get_Parameter(BuiltInParameter.ELEM_PARTITION_PARAM);
+                            if (worksetParam == null)
+                            {
+                                DiagLog(diag, $"    Workset: param NULL");
+                            }
+                            else if (worksetParam.IsReadOnly)
+                            {
+                                DiagLog(diag, $"    Workset: IsReadOnly=true — skip");
+                            }
+                            else
+                            {
+                                var ok = worksetParam.Set((int)Request.WorksetId);
+                                DiagLog(diag, $"    Workset={Request.WorksetId}: Set={ok}");
+                                if (ok) changed = true;
+                            }
+                        }
+
+                        // ── Parámetros ─────────────────────────────────────────────────
+                        foreach (var assignment in Request.ParameterAssignments)
+                        {
+                            var param = element.LookupParameter(assignment.ParameterName);
+
+                            if (param == null)
+                            {
+                                DiagLog(diag, $"    '{assignment.ParameterName}': NOT FOUND");
+                                continue;
+                            }
+
+                            DiagLog(diag, $"    '{assignment.ParameterName}': StorageType={param.StorageType}  IsReadOnly={param.IsReadOnly}");
+
+                            if (param.IsReadOnly)
+                            {
+                                DiagLog(diag, $"      → IsReadOnly=true — skip");
+                                continue;
+                            }
+
+                            try
+                            {
+                                bool setOk = false;
+
+                                switch (param.StorageType)
+                                {
+                                    case StorageType.String:
+                                        setOk = param.Set(assignment.NewValue);
+                                        DiagLog(diag, $"      → Set(string '{assignment.NewValue}') = {setOk}");
+                                        break;
+
+                                    case StorageType.Integer:
+                                        if (int.TryParse(assignment.NewValue, out var iv))
+                                        {
+                                            setOk = param.Set(iv);
+                                            DiagLog(diag, $"      → Set(int {iv}) = {setOk}");
+                                        }
+                                        else
+                                        {
+                                            // Fallback: SetValueString para labels/enumerados
+                                            setOk = param.SetValueString(assignment.NewValue);
+                                            DiagLog(diag, $"      → SetValueString('{assignment.NewValue}') = {setOk}");
+                                        }
+                                        break;
+
+                                    case StorageType.Double:
+                                        setOk = param.SetValueString(assignment.NewValue);
+                                        DiagLog(diag, $"      → SetValueString('{assignment.NewValue}') = {setOk}");
+                                        break;
+
+                                    case StorageType.ElementId:
+                                        // Para parámetros ElementId (Fases, Tipos, Niveles…)
+                                        // SetValueString no funciona de forma confiable.
+                                        // Buscamos el elemento por su AsValueString en el documento.
+                                        setOk = TrySetElementIdParam(param, assignment.NewValue, doc, diag);
+                                        break;
+
+                                    default:
+                                        DiagLog(diag, $"      → StorageType desconocido — skip");
+                                        break;
+                                }
+
+                                if (setOk) changed = true;
+                            }
+                            catch (Exception ex)
+                            {
+                                DiagLog(diag, $"      → EXCEPTION: {ex.GetType().Name}: {ex.Message}");
+                            }
+                        }
+
+                        if (changed) result.ElementsAssigned++;
+                        DiagLog(diag, $"    → changed={changed}  ElementsAssigned={result.ElementsAssigned}");
+                    }
+                    catch (Exception ex)
+                    {
+                        var msg = $"ElementId {id}: {ex.Message}";
+                        result.Errors.Add(msg);
+                        DiagLog(diag, $"  Elem {id} EXCEPTION: {ex.GetType().Name}: {ex.Message}");
+                    }
+                }
+
+                tx.Commit();
+                DiagLog(diag, $"  Transaction committed.");
+            }
+            catch (Exception ex)
+            {
+                result.Errors.Add(ex.Message);
+                DiagLog(diag, $"  Transaction EXCEPTION: {ex.GetType().Name}: {ex.Message}");
+            }
+
+            DiagLog(diag, $"=== Result: Assigned={result.ElementsAssigned}  Errors={result.Errors.Count} ===");
+            FlushDiag(diag);
+            OnCompleted?.Invoke(result);
+        }
+
+        /// <summary>
+        /// Intenta asignar un parámetro de tipo ElementId localizando el elemento
+        /// referenciado por su nombre (AsValueString). Prueba en orden:
+        ///   1. SetValueString (puede funcionar para algunos tipos como Tipos de familia)
+        ///   2. Búsqueda por nombre entre fases, niveles, materiales, etc.
+        /// </summary>
+        private static bool TrySetElementIdParam(
+            Parameter param, string displayValue, Document doc, StringBuilder diag)
+        {
+            // Intento 1: SetValueString (funciona para Tipos, niveles en algunos contextos)
+            try
+            {
+                var r1 = param.SetValueString(displayValue);
+                DiagLog(diag, $"      → SetValueString('{displayValue}') = {r1}");
+                if (r1) return true;
+            }
+            catch (Exception ex)
+            {
+                DiagLog(diag, $"      → SetValueString EXCEPTION: {ex.Message}");
+            }
+
+            // Intento 2: buscar ElementId por nombre en fases
+            var phase = TryFindByName<Phase>(doc, displayValue);
+            if (phase != null)
+            {
+                try
+                {
+#pragma warning disable CS0618
+                    var r2 = param.Set(phase.Id);
+                    DiagLog(diag, $"      → Phase.Set({phase.Id.IntegerValue}) = {r2}");
+#pragma warning restore CS0618
+                    if (r2) return true;
+                }
+                catch (Exception ex) { DiagLog(diag, $"      → Phase.Set EXCEPTION: {ex.Message}"); }
+            }
+
+            // Intento 3: buscar en niveles
+            var level = TryFindByName<Level>(doc, displayValue);
+            if (level != null)
+            {
+                try
+                {
+#pragma warning disable CS0618
+                    var r3 = param.Set(level.Id);
+                    DiagLog(diag, $"      → Level.Set({level.Id.IntegerValue}) = {r3}");
+#pragma warning restore CS0618
+                    if (r3) return true;
+                }
+                catch (Exception ex) { DiagLog(diag, $"      → Level.Set EXCEPTION: {ex.Message}"); }
+            }
+
+            DiagLog(diag, $"      → ElementId param: all attempts failed for '{displayValue}'");
+            return false;
+        }
+
+        private static T? TryFindByName<T>(Document doc, string name) where T : Element
+        {
+            try
+            {
+                return new FilteredElementCollector(doc)
+                    .OfClass(typeof(T))
+                    .Cast<T>()
+                    .FirstOrDefault(e => string.Equals(e.Name, name, StringComparison.OrdinalIgnoreCase));
+            }
+            catch { return null; }
+        }
+
+        public string GetName() => "BIMPills: SubprojectAssignHandler";
+    }
+
+    /// <summary>
+    /// Lee los worksets disponibles del documento. Util para poblar el selector en la UI.
+    /// </summary>
+    public static class WorksetReader
+    {
+        public static IReadOnlyList<(long Id, string Name)> GetUserWorksets(Document doc)
+        {
+            if (!doc.IsWorkshared) return Array.Empty<(long, string)>();
+
+            return new FilteredWorksetCollector(doc)
+                .OfKind(WorksetKind.UserWorkset)
+                .Cast<Workset>()
+                .Select(w =>
+                {
+#pragma warning disable CS0618
+                    long id = w.Id.IntegerValue;
+#pragma warning restore CS0618
+                    return (id, w.Name);
+                })
+                .OrderBy(w => w.Name)
+                .ToList();
+        }
+    }
+}

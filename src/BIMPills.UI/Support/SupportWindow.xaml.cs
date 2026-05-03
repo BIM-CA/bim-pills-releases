@@ -32,7 +32,9 @@ namespace BIMPills.UI.Support
         private const uint TransparentKey  = 0x00030201; // COLORREF = 0x00BBGGRR
 
         private readonly ILogger? _logger;
-        private bool _webViewShown = false;
+        private bool _webViewShown    = false;
+        private bool _intercomShown   = false;
+        private System.Threading.CancellationTokenSource? _loadTimeoutCts;
 
         // ── Win32 P/Invoke ────────────────────────────────────────────────────
 
@@ -205,12 +207,15 @@ namespace BIMPills.UI.Support
         {
             if (e.IsSuccess)
             {
-                Log("Nav OK");
-                RevealWebView();
+                Log("Nav OK — esperando Intercom");
+                // No mostrar WebView todavía — esperar a que Intercom lance [SHOWN].
+                // Si en 6 s no llega, mostrar fallback de conexión.
+                StartLoadTimeout();
             }
             else
             {
                 Log($"Nav FAIL — {e.WebErrorStatus}");
+                Dispatcher.InvokeAsync(() => ShowConnectionFallback());
             }
         }
 
@@ -221,7 +226,16 @@ namespace BIMPills.UI.Support
             {
                 var msg = e.TryGetWebMessageAsString();
                 if (msg == "[CLOSE]")  Dispatcher.InvokeAsync(AnimateAndHide);
-                if (msg == "[SHOWN]")  Dispatcher.InvokeAsync(HideLoadingPanel);
+                if (msg == "[SHOWN]")
+                {
+                    _intercomShown = true;
+                    _loadTimeoutCts?.Cancel();
+                    Dispatcher.InvokeAsync(() =>
+                    {
+                        RevealWebView();
+                        HideLoadingPanel();
+                    });
+                }
             }
             catch { }
         }
@@ -239,6 +253,36 @@ namespace BIMPills.UI.Support
                 fade.Completed += (_, _) => LoadingPanel.Visibility = Visibility.Collapsed;
                 LoadingPanel.BeginAnimation(OpacityProperty, fade);
             });
+        }
+
+        /// <summary>
+        /// Inicia un temporizador de 6 segundos. Si Intercom no responde antes,
+        /// muestra el panel de fallback de conexión.
+        /// </summary>
+        private void StartLoadTimeout()
+        {
+            _loadTimeoutCts?.Cancel();
+            _loadTimeoutCts = new System.Threading.CancellationTokenSource();
+            var token = _loadTimeoutCts.Token;
+
+            System.Threading.Tasks.Task.Delay(6000, token)
+                .ContinueWith(t =>
+                {
+                    if (!t.IsCanceled && !_intercomShown)
+                        Dispatcher.InvokeAsync(ShowConnectionFallback);
+                });
+        }
+
+        /// <summary>
+        /// Muestra el panel de fallback cuando no hay conexión a Intercom.
+        /// </summary>
+        private void ShowConnectionFallback()
+        {
+            if (_intercomShown) return;
+            Log("Timeout — Intercom no respondió, mostrando fallback de conexión");
+            LoadingPanel.Visibility  = Visibility.Collapsed;
+            WebView.Visibility       = Visibility.Collapsed;
+            ConnectionFallbackPanel.Visibility = Visibility.Visible;
         }
 
         /// <summary>
@@ -294,15 +338,19 @@ namespace BIMPills.UI.Support
             // WebView ya cargado pero ventana oculta: re-mostrar LoadingPanel para tapar
             // el fondo negro de la superficie DComp mientras Intercom se expande.
             // onShow en el HTML dispara [SHOWN] → HideLoadingPanel().
-            // Fallback: ocultar LoadingPanel tras 3 s si onShow nunca llega (CDN offline, etc.).
+            // Fallback: mostrar panel de conexión tras 4 s si onShow nunca llega.
             if (_webViewShown)
             {
+                // Ocultar fallback de conexión si estaba visible (reintento)
+                ConnectionFallbackPanel.Visibility = Visibility.Collapsed;
+                WebView.Visibility = Visibility.Visible;
+
                 LoadingPanel.BeginAnimation(OpacityProperty, null);
                 LoadingPanel.Opacity    = 1;
                 LoadingPanel.Visibility = Visibility.Visible;
 
-                _ = System.Threading.Tasks.Task.Delay(3000)
-                    .ContinueWith(_ => Dispatcher.InvokeAsync(HideLoadingPanel));
+                _intercomShown = false;
+                StartLoadTimeout();
             }
 
             double targetTop = Top;
@@ -328,9 +376,17 @@ namespace BIMPills.UI.Support
 
         private void ShowFallback()
         {
-            LoadingPanel.Visibility  = Visibility.Collapsed;
-            WebView.Visibility       = Visibility.Collapsed;
-            FallbackPanel.Visibility = Visibility.Visible;
+            _loadTimeoutCts?.Cancel();
+            LoadingPanel.Visibility          = Visibility.Collapsed;
+            WebView.Visibility               = Visibility.Collapsed;
+            ConnectionFallbackPanel.Visibility = Visibility.Collapsed;
+            FallbackPanel.Visibility         = Visibility.Visible;
+        }
+
+        private void OpenSupportWeb_Click(object sender, RoutedEventArgs e)
+        {
+            try { Process.Start(new ProcessStartInfo("https://bim-ca.com") { UseShellExecute = true }); }
+            catch { }
         }
 
         private void DownloadWebView2_Click(object sender, RoutedEventArgs e)

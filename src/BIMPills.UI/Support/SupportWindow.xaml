@@ -75,7 +75,44 @@
                         BorderThickness="0" Padding="16,8"
                         FontSize="12" FontFamily="Segoe UI"
                         Cursor="Hand" HorizontalAlignment="Center"
-                        Click="DownloadWebView2_Click"/>
+                        Click="DownloadWebView2_Click"
+                        Margin="0,0,0,8"/>
+                <Button Content="Ir al sitio web de soporte"
+                        Background="Transparent" Foreground="#EF6337"
+                        BorderBrush="#EF6337" BorderThickness="1" Padding="16,8"
+                        FontSize="12" FontFamily="Segoe UI"
+                        Cursor="Hand" HorizontalAlignment="Center"
+                        Click="OpenSupportWeb_Click"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Fallback: Intercom no pudo conectar (CDN, proxy, etc.) -->
+        <Border x:Name="ConnectionFallbackPanel"
+                Visibility="Collapsed"
+                Background="#f3f4f6"
+                CornerRadius="12"
+                Margin="8">
+            <StackPanel VerticalAlignment="Center"
+                        HorizontalAlignment="Center"
+                        Margin="32">
+                <TextBlock Text="🔌" FontSize="36"
+                           HorizontalAlignment="Center" Margin="0,0,0,12"/>
+                <TextBlock Text="Sin conexión al chat"
+                           FontSize="14" FontWeight="SemiBold"
+                           Foreground="#1a1a2e"
+                           HorizontalAlignment="Center" TextAlignment="Center"
+                           FontFamily="Segoe UI"/>
+                <TextBlock Text="No se pudo conectar al servicio de soporte. Visita nuestra web para contactarnos."
+                           FontSize="12" Foreground="#666"
+                           HorizontalAlignment="Center" TextAlignment="Center"
+                           TextWrapping="Wrap" FontFamily="Segoe UI"
+                           Margin="0,8,0,20"/>
+                <Button Content="Ir al sitio web de soporte"
+                        Background="#EF6337" Foreground="White"
+                        BorderThickness="0" Padding="16,8"
+                        FontSize="12" FontFamily="Segoe UI"
+                        Cursor="Hand" HorizontalAlignment="Center"
+                        Click="OpenSupportWeb_Click"/>
             </StackPanel>
         </Border>
 

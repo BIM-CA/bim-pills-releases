@@ -46,13 +46,18 @@
         <!-- Header card -->
         <Border DockPanel.Dock="Top" Style="{StaticResource CardBorder}" Margin="0,0,0,10">
             <StackPanel Orientation="Horizontal" Margin="4,2">
-                <Image Source="/BIMPills.UI;component/Resources/pill-icon.png"
-                       Width="18" Height="30" RenderOptions.BitmapScalingMode="HighQuality"/>
-                <StackPanel Margin="10,0,0,0" VerticalAlignment="Center">
-                    <TextBlock Text="Ordenar" FontSize="11" FontWeight="SemiBold"
+                <Image Source="/BIMPills.UI;component/Resources/Icons/ordering.png"
+                       Width="24" Height="24" Margin="0,0,10,0"
+                       RenderOptions.BitmapScalingMode="HighQuality"
+                       VerticalAlignment="Center"/>
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="Organizar" FontSize="11" FontWeight="Medium"
                                Foreground="{StaticResource AccentBrush}" FontFamily="Segoe UI"/>
-                    <TextBlock Text="Numerador" FontSize="14" FontWeight="Bold"
-                               Foreground="#1A1A2E" FontFamily="Segoe UI"/>
+                    <TextBlock Text="Secuenciador" FontSize="13" FontWeight="SemiBold"
+                               Foreground="{StaticResource PrimaryBrush}" FontFamily="Segoe UI"/>
+                    <TextBlock Text="Asigna valores incrementales a elementos del modelo"
+                               FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"
+                               FontFamily="Segoe UI"/>
                 </StackPanel>
             </StackPanel>
         </Border>
@@ -60,41 +65,6 @@
         <!-- Main card -->
         <Border Style="{StaticResource CardBorder}">
             <DockPanel>
-
-                <!-- Tab bar — estilo global folder -->
-                <Border DockPanel.Dock="Top"
-                        BorderBrush="#E5E5EA" BorderThickness="0,0,0,1"
-                        Background="Transparent">
-                    <StackPanel Orientation="Horizontal" Margin="14,0">
-                        <Border x:Name="Tab1Border" Style="{StaticResource TabHeaderActive}">
-                            <TextBlock x:Name="Tab1Text" Style="{StaticResource TabHeaderTextActive}"
-                                       Text="Numerador"/>
-                        </Border>
-                        <Border Padding="12,9,12,8">
-                            <TextBlock Text="Pronto..." FontSize="12" FontStyle="Italic"
-                                       Foreground="#C7C7CC" FontFamily="Segoe UI"/>
-                        </Border>
-                    </StackPanel>
-                </Border>
-
-                <!-- Tool header -->
-                <Border DockPanel.Dock="Top"
-                        BorderBrush="#E5E5EA" BorderThickness="0,0,0,1"
-                        Padding="14,12">
-                    <StackPanel Orientation="Horizontal">
-                        <Border Width="30" Height="30" CornerRadius="7" Background="#E3F2FD"
-                                Margin="0,0,10,0" VerticalAlignment="Center">
-                            <bimca:Icon Slug="numberedlist" Size="16"
-                                        HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <StackPanel VerticalAlignment="Center">
-                            <TextBlock Text="Numerador" FontSize="14" FontWeight="SemiBold"
-                                       Foreground="{StaticResource PrimaryBrush}" FontFamily="Segoe UI"/>
-                            <TextBlock Text="Asigna valores incrementales a elementos del modelo"
-                                       FontSize="11" Foreground="#86868B" FontFamily="Segoe UI"/>
-                        </StackPanel>
-                    </StackPanel>
-                </Border>
 
                 <!-- Footer -->
                 <Border DockPanel.Dock="Bottom"
