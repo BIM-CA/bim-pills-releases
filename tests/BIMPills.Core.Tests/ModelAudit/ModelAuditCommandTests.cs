@@ -1,4 +1,4 @@
-using BIMPills.Commands.ModelAudit;
+﻿using BIMPills.Commands.ModelAudit;
 using BIMPills.Core.Audit;
 using BIMPills.Core.Commands;
 using BIMPills.Core.Documentacion;
@@ -94,7 +94,7 @@ namespace BIMPills.Core.Tests.ModelAudit
         }
     }
 
-    // ── Test doubles ────────────────────────────────────────────────────────────
+    // â”€â”€ Test doubles â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     internal sealed class FakeCommandContext : ICommandContext
     {
@@ -132,7 +132,7 @@ namespace BIMPills.Core.Tests.ModelAudit
         public bool CreateWorkset(string name)                           => true;
         public bool RenameWorkset(long worksetId, string newName)        => true;
 
-        // Documentación
+        // DocumentaciÃ³n
         public IReadOnlyList<DimensionTypeInfo> GetDimensionTypes()      => new List<DimensionTypeInfo>
         {
             new DimensionTypeInfo(1, "Linear - 2.5mm Arial")
@@ -151,7 +151,8 @@ namespace BIMPills.Core.Tests.ModelAudit
         public string GetModelIdentifier()                                 => "TestModel.rvt";
         // SheetLink
         public IReadOnlyList<Models.ScheduleInfo> GetSchedules()                                               => new List<Models.ScheduleInfo>();
-        public Models.ScheduleData GetScheduleData(long scheduleId)                                           => new Models.ScheduleData();
+        public Models.ScheduleData GetScheduleData(long scheduleId) => GetScheduleData(scheduleId, false);
+        public Models.ScheduleData GetScheduleData(long scheduleId, bool includeLinks)                                           => new Models.ScheduleData();
         public Models.ParameterUpdateResult ApplyParameterUpdates(IReadOnlyList<Models.ParameterUpdateRequest> u) => new Models.ParameterUpdateResult();
     }
 

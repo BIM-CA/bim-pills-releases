@@ -1154,7 +1154,10 @@ namespace BIMPills.Revit.Context
             catch { return new List<ScheduleInfo>(); }
         }
 
-        public ScheduleData GetScheduleData(long scheduleId)
+        public ScheduleData GetScheduleData(long scheduleId) =>
+            GetScheduleData(scheduleId, includeLinks: false);
+
+        public ScheduleData GetScheduleData(long scheduleId, bool includeLinks)
         {
             try
             {
@@ -1316,16 +1319,104 @@ namespace BIMPills.Revit.Context
                     elementIds.Add((long)GetElementIdValue(element.Id));
                 }
 
+                // ── Linked-model rows ────────────────────────────────────────────
+                // Host rows are all non-linked.
+                var isLinkedRow    = Enumerable.Repeat(false, rows.Count).ToList();
+                var linkSourceName = Enumerable.Repeat(string.Empty, rows.Count).ToList();
+
+                if (includeLinks && vs.Definition.CategoryId != ElementId.InvalidElementId)
+                {
+                    try
+                    {
+                        var linkInstances = new FilteredElementCollector(_doc)
+                            .OfClass(typeof(RevitLinkInstance))
+                            .Cast<RevitLinkInstance>()
+                            .ToList();
+
+                        foreach (var linkInst in linkInstances)
+                        {
+                            var linkDoc = linkInst.GetLinkDocument();
+                            if (linkDoc == null) continue;
+
+                            var linkName = Path.GetFileNameWithoutExtension(linkDoc.Title);
+
+                            // Collect elements of the same category from the linked document.
+                            var linkedElements = new List<Element>();
+                            try
+                            {
+                                linkedElements = new FilteredElementCollector(linkDoc)
+                                    .OfCategoryId(vs.Definition.CategoryId)
+                                    .WhereElementIsNotElementType()
+                                    .ToList();
+                            }
+                            catch { continue; }
+
+                            foreach (var element in linkedElements)
+                            {
+                                Element? typeElem = null;
+                                try
+                                {
+                                    var typeId = element.GetTypeId();
+                                    if (typeId != ElementId.InvalidElementId)
+                                        typeElem = linkDoc.GetElement(typeId);
+                                }
+                                catch { }
+
+                                var cellValues = new List<string>();
+                                foreach (var field in fields)
+                                {
+                                    string val = "";
+                                    try
+                                    {
+                                        if (!field.IsCalculatedField)
+                                        {
+                                            Parameter? param = null;
+                                            var fieldName = field.GetName();
+
+                                            // Linked docs may have different ParameterIds —
+                                            // use name-based lookup as primary strategy.
+                                            param = element.LookupParameter(fieldName)
+                                                 ?? typeElem?.LookupParameter(fieldName);
+
+                                            if (param != null && param.HasValue)
+                                            {
+                                                val = param.StorageType switch
+                                                {
+                                                    StorageType.String    => param.AsString() ?? "",
+                                                    StorageType.Integer   => param.AsInteger().ToString(),
+                                                    StorageType.Double    => param.AsValueString() ?? "",
+                                                    StorageType.ElementId => param.AsValueString() ?? "",
+                                                    _                     => ""
+                                                };
+                                            }
+                                        }
+                                    }
+                                    catch { }
+                                    cellValues.Add(val);
+                                }
+
+                                rows.Add(cellValues);
+                                elementIds.Add((long)GetElementIdValue(element.Id));
+                                isLinkedRow.Add(true);
+                                linkSourceName.Add(linkName);
+                            }
+                        }
+                    }
+                    catch { /* Non-critical — linked-model extraction is best-effort */ }
+                }
+
                 var schedules = GetSchedules();
                 var info = schedules.FirstOrDefault(s => s.Id == scheduleId)
                            ?? new ScheduleInfo { Id = scheduleId, Name = vs.Name };
 
                 return new ScheduleData
                 {
-                    Schedule   = info,
-                    Columns    = columns,
-                    ElementIds = elementIds,
-                    Rows       = rows
+                    Schedule       = info,
+                    Columns        = columns,
+                    ElementIds     = elementIds,
+                    Rows           = rows,
+                    IsLinkedRow    = isLinkedRow,
+                    LinkSourceName = linkSourceName
                 };
             }
             catch { return new ScheduleData(); }

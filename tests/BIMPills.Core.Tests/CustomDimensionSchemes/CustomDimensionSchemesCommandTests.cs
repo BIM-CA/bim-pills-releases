@@ -1,4 +1,4 @@
-using BIMPills.Commands.CustomDimensionSchemes;
+﻿using BIMPills.Commands.CustomDimensionSchemes;
 using BIMPills.Core.Audit;
 using BIMPills.Core.Commands;
 using BIMPills.Core.Documentacion;
@@ -27,7 +27,7 @@ namespace BIMPills.Core.Tests.CustomDimensionSchemes
         [Fact]
         public void Execute_NullContext_ReturnsSuccess()
         {
-            // CustomDimensionSchemesCommand is a thin wrapper — it doesn't use context
+            // CustomDimensionSchemesCommand is a thin wrapper â€” it doesn't use context
             var schemeService = new BIMPills.Infrastructure.Services.DimensionSchemeService(
                 new BIMPills.Infrastructure.Persistence.JsonSchemeRepository(
                     System.IO.Path.GetTempPath()));
@@ -72,7 +72,8 @@ namespace BIMPills.Core.Tests.CustomDimensionSchemes
         public string GetProjectName() => "TestProject";
         public string GetModelIdentifier() => "TestModel.rvt";
         public IReadOnlyList<Models.ScheduleInfo> GetSchedules() => new List<Models.ScheduleInfo>();
-        public Models.ScheduleData GetScheduleData(long scheduleId) => new Models.ScheduleData();
+        public Models.ScheduleData GetScheduleData(long scheduleId) => GetScheduleData(scheduleId, false);
+        public Models.ScheduleData GetScheduleData(long scheduleId, bool includeLinks) => new Models.ScheduleData();
         public Models.ParameterUpdateResult ApplyParameterUpdates(IReadOnlyList<Models.ParameterUpdateRequest> u)
             => new Models.ParameterUpdateResult();
     }

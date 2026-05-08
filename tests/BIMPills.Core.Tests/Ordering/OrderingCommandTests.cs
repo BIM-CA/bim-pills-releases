@@ -1,4 +1,4 @@
-using BIMPills.Commands.Ordering;
+﻿using BIMPills.Commands.Ordering;
 using BIMPills.Core.Audit;
 using BIMPills.Core.Commands;
 using BIMPills.Core.Documentacion;
@@ -44,7 +44,7 @@ namespace BIMPills.Core.Tests.Ordering
         }
     }
 
-    // ── Test doubles ────────────────────────────────────────────────────────────
+    // â”€â”€ Test doubles â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     internal sealed class FakeOrderingContext : ICommandContext
     {
@@ -90,7 +90,8 @@ namespace BIMPills.Core.Tests.Ordering
         public string GetProjectName()                                     => "TestProject";
         public string GetModelIdentifier()                                 => "TestModel.rvt";
         public IReadOnlyList<Models.ScheduleInfo> GetSchedules()           => new List<Models.ScheduleInfo>();
-        public Models.ScheduleData GetScheduleData(long scheduleId)        => new Models.ScheduleData();
+        public Models.ScheduleData GetScheduleData(long scheduleId) => GetScheduleData(scheduleId, false);
+        public Models.ScheduleData GetScheduleData(long scheduleId, bool includeLinks)        => new Models.ScheduleData();
         public Models.ParameterUpdateResult ApplyParameterUpdates(IReadOnlyList<Models.ParameterUpdateRequest> u)
             => new Models.ParameterUpdateResult();
     }

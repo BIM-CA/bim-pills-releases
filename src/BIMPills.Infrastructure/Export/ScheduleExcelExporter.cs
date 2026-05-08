@@ -102,15 +102,23 @@ namespace BIMPills.Infrastructure.Export
         // Read-only:           yellow  — cannot be edited
         // Instance (writable): blue    — edits this element only
         // Type (writable):     orange  — edits the whole element type
+        // Linked element:      gray    — element from a linked file (read-only in this model)
         private static readonly XLColor ColHeaderReadOnly  = XLColor.FromHtml("#FFF9C4");
         private static readonly XLColor ColCellReadOnly    = XLColor.FromHtml("#FFFDE7");
         private static readonly XLColor ColHeaderInstance  = XLColor.FromHtml("#BBDEFB");
         private static readonly XLColor ColCellInstance    = XLColor.FromHtml("#E3F2FD");
         private static readonly XLColor ColHeaderType      = XLColor.FromHtml("#FFE0B2");
         private static readonly XLColor ColCellType        = XLColor.FromHtml("#FFF3E0");
+        private static readonly XLColor ColLinkedRow       = XLColor.FromHtml("#EEEEEE");
+        private static readonly XLColor ColLinkedRowAlt    = XLColor.FromHtml("#F5F5F5");
 
         private static void WriteScheduleSheet(IXLWorksheet ws, ScheduleData data)
         {
+            bool hasLinkedRows = data.IsLinkedRow.Count > 0 && data.IsLinkedRow.Exists(x => x);
+            // +1 for hidden ElementId col, +1 extra for Origen col when links are present
+            int totalCols = data.Columns.Count + 1 + (hasLinkedRows ? 1 : 0);
+            int origenCol  = data.Columns.Count + 2; // only meaningful when hasLinkedRows
+
             // ── Row 1: schedule title ────────────────────────────────────────
             var titleCell = ws.Cell(1, 1);
             titleCell.Value = data.Schedule.Name;
@@ -118,7 +126,7 @@ namespace BIMPills.Infrastructure.Export
             titleCell.Style.Font.FontSize = 13;
             titleCell.Style.Fill.BackgroundColor = XLColor.FromHtml("#212B37");
             titleCell.Style.Font.FontColor = XLColor.White;
-            ws.Range(1, 1, 1, data.Columns.Count + 1).Merge();
+            ws.Range(1, 1, 1, totalCols).Merge();
 
             // ── Row 2: column headers ────────────────────────────────────────
             var idHeader = ws.Cell(2, 1);
@@ -143,6 +151,16 @@ namespace BIMPills.Infrastructure.Export
                     headerCell.Style.Fill.BackgroundColor = ColHeaderInstance;
             }
 
+            // "Origen" header — only when there are linked rows
+            if (hasLinkedRows)
+            {
+                var origenHeader = ws.Cell(2, origenCol);
+                origenHeader.Value = "Origen (vínculo)";
+                origenHeader.Style.Font.Bold = true;
+                origenHeader.Style.Fill.BackgroundColor = XLColor.FromHtml("#E0E0E0");
+                origenHeader.Style.Font.FontColor = XLColor.FromHtml("#616161");
+            }
+
             // ── Rows 3+: data ────────────────────────────────────────────────
             int excelRow = 3;
             for (int r = 0; r < data.Rows.Count; r++)
@@ -150,7 +168,20 @@ namespace BIMPills.Infrastructure.Export
                 long elementId = data.ElementIds.Count > r ? data.ElementIds[r] : 0L;
                 if (elementId == 0) continue;
 
-                ws.Cell(excelRow, 1).Value = elementId;
+                bool isLinked = data.IsLinkedRow.Count > r && data.IsLinkedRow[r];
+
+                // Linked rows: write "L:<id>" so long.TryParse fails in the importer → row is skipped automatically.
+                // Host rows: write the numeric id as before.
+                var idCell = ws.Cell(excelRow, 1);
+                if (isLinked)
+                {
+                    idCell.Value = $"L:{elementId}";
+                    idCell.Style.Fill.BackgroundColor = ColLinkedRow;
+                }
+                else
+                {
+                    idCell.Value = elementId;
+                }
 
                 var row = data.Rows[r];
                 for (int c = 0; c < data.Columns.Count; c++)
@@ -159,7 +190,13 @@ namespace BIMPills.Infrastructure.Export
                     var cell = ws.Cell(excelRow, c + 2);
                     cell.Value = c < row.Count ? row[c] : "";
 
-                    if (col.IsReadOnly)
+                    if (isLinked)
+                    {
+                        cell.Style.Fill.BackgroundColor = excelRow % 2 == 1 ? ColLinkedRow : ColLinkedRowAlt;
+                        cell.Style.Font.FontColor = XLColor.FromHtml("#616161");
+                        cell.Style.Protection.Locked = true;
+                    }
+                    else if (col.IsReadOnly)
                     {
                         cell.Style.Fill.BackgroundColor = ColCellReadOnly;
                         cell.Style.Protection.Locked = true;
@@ -174,6 +211,24 @@ namespace BIMPills.Infrastructure.Export
                     }
                 }
 
+                // Write "Origen (vínculo)" value for linked rows
+                if (hasLinkedRows)
+                {
+                    var origenCell = ws.Cell(excelRow, origenCol);
+                    if (isLinked)
+                    {
+                        string linkName = data.LinkSourceName.Count > r ? data.LinkSourceName[r] : "";
+                        origenCell.Value = linkName;
+                        origenCell.Style.Fill.BackgroundColor = excelRow % 2 == 1 ? ColLinkedRow : ColLinkedRowAlt;
+                        origenCell.Style.Font.FontColor = XLColor.FromHtml("#616161");
+                        origenCell.Style.Font.Italic = true;
+                    }
+                    else
+                    {
+                        origenCell.Value = "";
+                    }
+                }
+
                 excelRow++;
             }
 
@@ -181,13 +236,14 @@ namespace BIMPills.Infrastructure.Export
             for (int c = 2; c <= data.Columns.Count + 1; c++)
                 ws.Column(c).AdjustToContents(2, Math.Min(data.Rows.Count + 2, 500));
 
+            if (hasLinkedRows)
+                ws.Column(origenCol).AdjustToContents(2, Math.Min(data.Rows.Count + 2, 500));
+
             ws.SheetView.FreezeRows(2);
 
             // ── Auto-filter on header row ────────────────────────────────────
-            // Apply to row 2 (headers) covering all data columns.
-            // Auto-filter on row 1 (title) would be wrong since it's merged.
             int lastDataRow = Math.Max(excelRow - 1, 2);
-            ws.Range(2, 1, lastDataRow, data.Columns.Count + 1).SetAutoFilter();
+            ws.Range(2, 1, lastDataRow, totalCols).SetAutoFilter();
         }
 
         private static void WriteInstructionsSheet(XLWorkbook wb)
@@ -266,7 +322,7 @@ namespace BIMPills.Infrastructure.Export
             // ── Sección 1: Leyenda de colores ─────────────────────────────────
             Separator(2);
             Title(3, "1 · Leyenda de colores");
-            Body(4, "Cada columna tiene un color en el encabezado que indica el tipo de parámetro:");
+            Body(4, "Cada columna tiene un color en el encabezado que indica el tipo de parámetro. Las filas tienen colores adicionales según su origen:");
             ws.Row(4).Height = 22;
 
             ColorRow(5,
@@ -286,6 +342,12 @@ namespace BIMPills.Infrastructure.Export
                 "🟡  Solo lectura",
                 "Parámetro calculado o de sistema — no se puede modificar. " +
                 "Las celdas amarillas son ignoradas al importar.");
+
+            ColorRow(8,
+                XLColor.FromHtml("#EEEEEE"), XLColor.FromHtml("#F5F5F5"),
+                "⚪  Vínculo",
+                "Elemento proveniente de un archivo vinculado (Revit Link). " +
+                "Solo lectura — estas filas se incluyen para conteo y cuantificación, pero son ignoradas automáticamente al importar.");
 
             // ── Sección 2: Parámetros de tipo ─────────────────────────────────
             Separator(9);
@@ -321,7 +383,8 @@ namespace BIMPills.Infrastructure.Export
                 "④ Guarda el archivo Excel.",
                 "⑤ En Revit, abre BIMPills → Gestionar → pestaña Tablas → botón Importar.",
                 "⑥ Selecciona este archivo. BIMPills mostrará solo los cambios detectados.",
-                "⑦ Revisa la lista de cambios y pulsa Aplicar para confirmar."
+                "⑦ Revisa la lista de cambios y pulsa Aplicar para confirmar.",
+                "ℹ️  Las filas grises (elementos de vínculos) son ignoradas automáticamente al importar — no es necesario eliminarlas."
             };
 
             for (int i = 0; i < steps.Length; i++)

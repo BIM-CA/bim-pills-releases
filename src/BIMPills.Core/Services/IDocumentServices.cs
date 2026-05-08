@@ -97,6 +97,13 @@ namespace BIMPills.Core.Services
         /// <summary>Extrae los datos completos de una tabla de planificación.</summary>
         ScheduleData GetScheduleData(long scheduleId);
 
+        /// <summary>
+        /// Extrae los datos completos de una tabla de planificación.
+        /// Cuando <paramref name="includeLinks"/> es true, también incluye los elementos
+        /// que pertenecen a documentos vinculados (RevitLinkInstance), marcados con IsLinkedRow=true.
+        /// </summary>
+        ScheduleData GetScheduleData(long scheduleId, bool includeLinks);
+
         /// <summary>Aplica actualizaciones de parámetros en lote dentro de una transacción.</summary>
         ParameterUpdateResult ApplyParameterUpdates(IReadOnlyList<ParameterUpdateRequest> updates);
     }
