@@ -35,6 +35,10 @@ namespace BIMPills.Core.Models
         public List<long>               ElementIds { get; set; } = new List<long>();
         /// <summary>Row data: [rowIndex][columnIndex].</summary>
         public List<List<string>>       Rows       { get; set; } = new List<List<string>>();
+        /// <summary>True for each row that originates from a linked document. Parallel to Rows.</summary>
+        public List<bool>               IsLinkedRow   { get; set; } = new List<bool>();
+        /// <summary>Name of the linked file for each row. Empty for host-model rows. Parallel to Rows.</summary>
+        public List<string>             LinkSourceName { get; set; } = new List<string>();
     }
 
     /// <summary>Request to set a parameter value on a specific element.</summary>

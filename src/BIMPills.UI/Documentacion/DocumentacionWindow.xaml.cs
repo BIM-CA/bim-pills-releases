@@ -93,8 +93,8 @@ namespace BIMPills.UI.Documentacion
                     TabLeyendaText.Style    = activeTextStyle;
                     DibujarPanel.Visibility = Visibility.Visible;
                     ToolHeaderIcon.Slug     = "attach-excel";
-                    ToolHeaderTitle.Text    = "Leyenda desde Excel";
-                    ToolHeaderSubtitle.Text = "Dibuja tablas y leyendas en vistas de Revit a partir de un .xlsx";
+                    ToolHeaderTitle.Text    = "Dibujar Tabla desde Excel";
+                    ToolHeaderSubtitle.Text = "Dibuja tablas en vista de diseño de Revit a partir de un .xlsx";
                     break;
             }
         }

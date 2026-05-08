@@ -1,4 +1,4 @@
-using BIMPills.Commands.Documentacion;
+﻿using BIMPills.Commands.Documentacion;
 using BIMPills.Core.Audit;
 using BIMPills.Core.Commands;
 using BIMPills.Core.Documentacion;
@@ -8,7 +8,7 @@ using Xunit;
 
 namespace BIMPills.Core.Tests.Documentacion
 {
-    // ── AcotadoVanosResult ────────────────────────────────────────────────────
+    // â”€â”€ AcotadoVanosResult â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     public class AcotadoVanosResultTests
     {
@@ -36,7 +36,7 @@ namespace BIMPills.Core.Tests.Documentacion
         [Fact]
         public void Constructor_WithSkippedItems_PopulatesSkippedItems()
         {
-            var skipped = new List<string> { "Puerta 101: sin host", "Puerta 102: sin geometría" };
+            var skipped = new List<string> { "Puerta 101: sin host", "Puerta 102: sin geometrÃ­a" };
             var result = new AcotadoVanosResult(4, 6, 2, "Parcial", skipped);
 
             Assert.Equal(2, result.SkippedItems!.Count);
@@ -46,9 +46,9 @@ namespace BIMPills.Core.Tests.Documentacion
         [Fact]
         public void CreateError_SetsErrorMessageAndZeroCounts()
         {
-            var result = AcotadoVanosResult.CreateError("Fallo crítico");
+            var result = AcotadoVanosResult.CreateError("Fallo crÃ­tico");
 
-            Assert.Equal("Fallo crítico", result.ErrorMessage);
+            Assert.Equal("Fallo crÃ­tico", result.ErrorMessage);
             Assert.Equal(0, result.DimensionsCreated);
             Assert.Equal(0, result.DoorsProcessed);
             Assert.Equal(0, result.DoorsSkipped);
@@ -84,7 +84,7 @@ namespace BIMPills.Core.Tests.Documentacion
         }
     }
 
-    // ── AcotadoVanosData ─────────────────────────────────────────────────────
+    // â”€â”€ AcotadoVanosData â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     public class AcotadoVanosDataTests
     {
@@ -130,7 +130,7 @@ namespace BIMPills.Core.Tests.Documentacion
         }
     }
 
-    // ── SchemeOptionInfo ─────────────────────────────────────────────────────
+    // â”€â”€ SchemeOptionInfo â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     public class SchemeOptionInfoTests
     {
@@ -145,7 +145,7 @@ namespace BIMPills.Core.Tests.Documentacion
         }
     }
 
-    // ── AcotadoVanosSettings ─────────────────────────────────────────────────
+    // â”€â”€ AcotadoVanosSettings â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     public class AcotadoVanosSettingsTests
     {
@@ -181,7 +181,7 @@ namespace BIMPills.Core.Tests.Documentacion
         }
     }
 
-    // ── DimensionTypeInfo ────────────────────────────────────────────────────
+    // â”€â”€ DimensionTypeInfo â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     public class DimensionTypeInfoTests
     {
@@ -203,7 +203,7 @@ namespace BIMPills.Core.Tests.Documentacion
         }
     }
 
-    // ── AcotadoVanosCommand ───────────────────────────────────────────────────
+    // â”€â”€ AcotadoVanosCommand â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     // AcotadoVanosCommand exposes its last result through a static property, so
     // test classes that exercise Execute() must run serially to avoid races when
     // xUnit parallelises test classes.
@@ -268,7 +268,7 @@ namespace BIMPills.Core.Tests.Documentacion
         }
     }
 
-    // ── AcotadoVanosCommand — extended coverage ───────────────────────────────
+    // â”€â”€ AcotadoVanosCommand â€” extended coverage â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     [Collection("AcotadoVanosCommandLastResult")]
     public class AcotadoVanosCommandExtendedTests
@@ -356,7 +356,7 @@ namespace BIMPills.Core.Tests.Documentacion
         }
     }
 
-    // ── AcotadoVanosData — extended coverage ──────────────────────────────────
+    // â”€â”€ AcotadoVanosData â€” extended coverage â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     public class AcotadoVanosDataExtendedTests
     {
@@ -416,7 +416,7 @@ namespace BIMPills.Core.Tests.Documentacion
         }
     }
 
-    // ── AcotadoVanosSettings — extended coverage ──────────────────────────────
+    // â”€â”€ AcotadoVanosSettings â€” extended coverage â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     public class AcotadoVanosSettingsExtendedTests
     {
@@ -445,7 +445,7 @@ namespace BIMPills.Core.Tests.Documentacion
         }
     }
 
-    // ── Test doubles ─────────────────────────────────────────────────────────
+    // â”€â”€ Test doubles â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     internal sealed class FakeAcotadoContext : ICommandContext
     {
@@ -480,7 +480,8 @@ namespace BIMPills.Core.Tests.Documentacion
         public string GetProjectName()                                     => "TestProject";
         public string GetModelIdentifier()                                 => "TestModel.rvt";
         public IReadOnlyList<Core.Models.ScheduleInfo> GetSchedules()                                          => new List<Core.Models.ScheduleInfo>();
-        public Core.Models.ScheduleData GetScheduleData(long scheduleId)                                      => new Core.Models.ScheduleData();
+        public Core.Models.ScheduleData GetScheduleData(long scheduleId) => GetScheduleData(scheduleId, false);
+        public Core.Models.ScheduleData GetScheduleData(long scheduleId, bool includeLinks)                                      => new Core.Models.ScheduleData();
         public Core.Models.ParameterUpdateResult ApplyParameterUpdates(IReadOnlyList<Core.Models.ParameterUpdateRequest> u) => new Core.Models.ParameterUpdateResult();
         public IReadOnlyList<FamilyExportInfo>   GetLoadedFamilies()       => new List<FamilyExportInfo>();
         public bool ExportFamily(long id, string path)                     => true;

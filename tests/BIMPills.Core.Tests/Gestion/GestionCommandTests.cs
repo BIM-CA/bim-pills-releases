@@ -1,4 +1,4 @@
-using BIMPills.Commands.Gestion;
+﻿using BIMPills.Commands.Gestion;
 using BIMPills.Core.Audit;
 using BIMPills.Core.Commands;
 using BIMPills.Core.Documentacion;
@@ -77,7 +77,8 @@ namespace BIMPills.Core.Tests.Gestion
         public string GetProjectName() => "TestProject";
         public string GetModelIdentifier() => "TestModel.rvt";
         public IReadOnlyList<Models.ScheduleInfo> GetSchedules() => new List<Models.ScheduleInfo>();
-        public Models.ScheduleData GetScheduleData(long scheduleId) => new Models.ScheduleData();
+        public Models.ScheduleData GetScheduleData(long scheduleId) => GetScheduleData(scheduleId, false);
+        public Models.ScheduleData GetScheduleData(long scheduleId, bool includeLinks) => new Models.ScheduleData();
         public Models.ParameterUpdateResult ApplyParameterUpdates(IReadOnlyList<Models.ParameterUpdateRequest> u)
             => new Models.ParameterUpdateResult();
     }
@@ -110,7 +111,8 @@ namespace BIMPills.Core.Tests.Gestion
         public string GetProjectName() => "TestProject";
         public string GetModelIdentifier() => "TestModel.rvt";
         public IReadOnlyList<Models.ScheduleInfo> GetSchedules() => new List<Models.ScheduleInfo>();
-        public Models.ScheduleData GetScheduleData(long scheduleId) => new Models.ScheduleData();
+        public Models.ScheduleData GetScheduleData(long scheduleId) => GetScheduleData(scheduleId, false);
+        public Models.ScheduleData GetScheduleData(long scheduleId, bool includeLinks) => new Models.ScheduleData();
         public Models.ParameterUpdateResult ApplyParameterUpdates(IReadOnlyList<Models.ParameterUpdateRequest> u)
             => new Models.ParameterUpdateResult();
     }

@@ -1,4 +1,4 @@
-using BIMPills.Commands.DataManager;
+﻿using BIMPills.Commands.DataManager;
 using BIMPills.Core.Audit;
 using BIMPills.Core.Commands;
 using BIMPills.Core.Documentacion;
@@ -54,7 +54,7 @@ namespace BIMPills.Core.Tests.DataManager
         }
     }
 
-    // ── Test doubles ────────────────────────────────────────────────────────────
+    // â”€â”€ Test doubles â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     internal sealed class FakeDataManagerContext : ICommandContext
     {
@@ -96,7 +96,8 @@ namespace BIMPills.Core.Tests.DataManager
         public string GetProjectName()                                       => "TestProject";
         public string GetModelIdentifier()                                   => "TestModel.rvt";
         public IReadOnlyList<ScheduleInfo> GetSchedules()                    => Schedules;
-        public ScheduleData GetScheduleData(long scheduleId)                 => new ScheduleData();
+        public ScheduleData GetScheduleData(long scheduleId) => GetScheduleData(scheduleId, false);
+        public ScheduleData GetScheduleData(long scheduleId, bool includeLinks)                 => new ScheduleData();
         public ParameterUpdateResult ApplyParameterUpdates(IReadOnlyList<ParameterUpdateRequest> u)
             => new ParameterUpdateResult();
     }
@@ -132,7 +133,8 @@ namespace BIMPills.Core.Tests.DataManager
         public string GetProjectName()                                       => "";
         public string GetModelIdentifier()                                   => "";
         public IReadOnlyList<ScheduleInfo> GetSchedules()                    => null!;  // triggers failure branch
-        public ScheduleData GetScheduleData(long scheduleId)                 => null!;
+        public ScheduleData GetScheduleData(long scheduleId)                 => GetScheduleData(scheduleId, false);
+        public ScheduleData GetScheduleData(long scheduleId, bool includeLinks) => null!;
         public ParameterUpdateResult ApplyParameterUpdates(IReadOnlyList<ParameterUpdateRequest> u)
             => new ParameterUpdateResult();
     }

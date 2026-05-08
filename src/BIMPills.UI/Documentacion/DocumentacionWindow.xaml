@@ -68,7 +68,7 @@
                                 MouseLeftButtonDown="TabLeyenda_Click" Cursor="Hand">
                             <TextBlock x:Name="TabLeyendaText"
                                        Style="{StaticResource TabHeaderText}"
-                                       Text="Leyenda Excel"/>
+                                       Text="Dibujar Tabla"/>
                         </Border>
                     </StackPanel>
                 </Border>

@@ -198,6 +198,31 @@
                         </StackPanel>
                     </Grid>
 
+                    <!-- Nota al pie — limitante API Revit -->
+                    <Border Background="#FFF8E1" BorderBrush="#FFE082" BorderThickness="1"
+                            CornerRadius="4" Padding="10,8" Margin="0,12,0,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="⚠" FontSize="12" Foreground="#F9A825"
+                                       Margin="0,0,8,0" VerticalAlignment="Top"/>
+                            <TextBlock TextWrapping="Wrap" FontSize="10.5"
+                                       Foreground="#6D4C00" FontFamily="Segoe UI"
+                                       LineHeight="16">
+                                <Run FontWeight="SemiBold">Nota:</Run>
+                                <Run> La API de Revit no permite crear vistas de tipo </Run>
+                                <Run FontStyle="Italic">Leyenda</Run>
+                                <Run> mediante código.</Run>
+                            </TextBlock>
+                        </StackPanel>
+                    </Border>
+                    <Border Background="#F8F9FA" BorderBrush="#E5E5EA" BorderThickness="1"
+                            CornerRadius="4" Padding="10,8" Margin="0,6,0,0">
+                        <TextBlock FontSize="10.5" Foreground="#86868B" FontFamily="Segoe UI">
+                            <Run>La tabla se creará como una </Run>
+                            <Run FontWeight="SemiBold" Foreground="#424242">Vista de diseño</Run>
+                            <Run> en el explorador de proyecto.</Run>
+                        </TextBlock>
+                    </Border>
+
                 </StackPanel>
 
                 <!-- ════════ Paso 2 content ════════════════════════════════ -->

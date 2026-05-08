@@ -217,6 +217,22 @@
                                      Height="30" Margin="0,0,0,6"
                                      Tag="Buscar tabla..."
                                      TextChanged="ScheduleSearch_Changed"/>
+                            <!-- Incluir vínculos toggle -->
+                            <Border DockPanel.Dock="Top"
+                                    Background="#F5F5F5" CornerRadius="6"
+                                    BorderBrush="#E0E0E0" BorderThickness="1"
+                                    Padding="8,5" Margin="0,0,0,6">
+                                <CheckBox x:Name="IncludeLinksCheck"
+                                          FontFamily="Segoe UI" FontSize="11"
+                                          Foreground="#424242"
+                                          Checked="IncludeLinks_Changed"
+                                          Unchecked="IncludeLinks_Changed">
+                                    <TextBlock TextWrapping="Wrap">
+                                        <Run Text="Incluir elementos de " FontSize="11"/>
+                                        <Run Text="vínculos" FontWeight="SemiBold" FontSize="11"/>
+                                    </TextBlock>
+                                </CheckBox>
+                            </Border>
                             <ListBox x:Name="ScheduleListBox"
                                      Style="{StaticResource BIMPillsListBox}"
                                      SelectionChanged="ScheduleList_SelectionChanged">
@@ -329,9 +345,15 @@
                                                     VerticalAlignment="Center"
                                                     Margin="12,0,4,0">
                                             <Border Width="10" Height="10" CornerRadius="2"
-                                                    Background="White" BorderBrush="#D1D1D6"
+                                                    Background="#BBDEFB" BorderBrush="#90CAF9"
                                                     BorderThickness="1.5" Margin="0,0,4,0"/>
-                                            <TextBlock Text="Editable" FontSize="10"
+                                            <TextBlock Text="Instancia" FontSize="10"
+                                                       Foreground="#86868B" FontFamily="Segoe UI"
+                                                       VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                            <Border Width="10" Height="10" CornerRadius="2"
+                                                    Background="#FFE0B2" BorderBrush="#FFCC80"
+                                                    BorderThickness="1.5" Margin="0,0,4,0"/>
+                                            <TextBlock Text="Tipo" FontSize="10"
                                                        Foreground="#86868B" FontFamily="Segoe UI"
                                                        VerticalAlignment="Center" Margin="0,0,12,0"/>
                                             <Border Width="10" Height="10" CornerRadius="2"
@@ -341,9 +363,9 @@
                                                        Foreground="#86868B" FontFamily="Segoe UI"
                                                        VerticalAlignment="Center" Margin="0,0,12,0"/>
                                             <Border Width="10" Height="10" CornerRadius="2"
-                                                    Background="#E8F5E9" BorderBrush="#A5D6A7"
+                                                    Background="#EEEEEE" BorderBrush="#BDBDBD"
                                                     BorderThickness="1.5" Margin="0,0,4,0"/>
-                                            <TextBlock Text="Modificado" FontSize="10"
+                                            <TextBlock Text="Vínculo" FontSize="10"
                                                        Foreground="#86868B" FontFamily="Segoe UI"
                                                        VerticalAlignment="Center"/>
                                         </StackPanel>

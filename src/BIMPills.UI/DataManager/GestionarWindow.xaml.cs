@@ -39,7 +39,8 @@ namespace BIMPills.UI.DataManager
         private readonly string _modelName;
 
         /// <summary>Track which columns are read-only by name for styling.</summary>
-        private HashSet<string> _readOnlyColumnNames = new();
+        private HashSet<string> _readOnlyColumnNames  = new();
+        private HashSet<string> _typeParamColumnNames = new();
 
         private bool _tablasLoaded = false;
         private int  _activeTab   = 0;
@@ -168,24 +169,39 @@ namespace BIMPills.UI.DataManager
                 : _allSchedules.Where(s => s.Name.ToLower().Contains(q)).ToList();
         }
 
+        private void IncludeLinks_Changed(object sender, RoutedEventArgs e)
+        {
+            if (ScheduleListBox.SelectedItem is ScheduleInfo info)
+                LoadSchedulePreview(info);
+        }
+
         private void ScheduleList_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (ScheduleListBox.SelectedItem is not ScheduleInfo info) return;
+            LoadSchedulePreview(info);
+        }
 
+        private void LoadSchedulePreview(ScheduleInfo info)
+        {
             try
             {
-                _currentData = _documentServices.GetScheduleData(info.Id);
+                bool includeLinks = IncludeLinksCheck?.IsChecked == true;
+                _currentData = _documentServices.GetScheduleData(info.Id, includeLinks);
 
-                // Track read-only column names
-                _readOnlyColumnNames = new HashSet<string>(
+                // Track column types for preview coloring
+                _readOnlyColumnNames  = new HashSet<string>(
                     _currentData.Columns.Where(c => c.IsReadOnly).Select(c => c.Name));
+                _typeParamColumnNames = new HashSet<string>(
+                    _currentData.Columns.Where(c => !c.IsReadOnly && c.IsTypeParameter).Select(c => c.Name));
 
                 // Show preview area, hide empty state
                 EmptyState.Visibility  = Visibility.Collapsed;
                 PreviewArea.Visibility = Visibility.Visible;
 
                 RefreshPreviewGrid();
-                StatusLabel.Text = $"{info.Name}  ·  {_currentData.Rows.Count} elementos  ·  {_currentData.Columns.Count} columnas";
+                int linkedCount = _currentData.IsLinkedRow.Count(x => x);
+                string linkedSuffix = linkedCount > 0 ? $"  ·  {linkedCount} de vínculo" : "";
+                StatusLabel.Text = $"{info.Name}  ·  {_currentData.Rows.Count} elementos  ·  {_currentData.Columns.Count} columnas{linkedSuffix}";
             }
             catch (Exception ex)
             {
@@ -197,6 +213,8 @@ namespace BIMPills.UI.DataManager
             }
         }
 
+        private const string LinkedRowMarkerCol = "__IsLinked";
+
         private void RefreshPreviewGrid()
         {
             if (_currentData == null) return;
@@ -204,14 +222,35 @@ namespace BIMPills.UI.DataManager
             var dt = new DataTable();
             foreach (var col in _currentData.Columns)
                 dt.Columns.Add(col.Name, typeof(string));
+            dt.Columns.Add(LinkedRowMarkerCol, typeof(string));
 
-            foreach (var row in _currentData.Rows)
+            for (int r = 0; r < _currentData.Rows.Count; r++)
             {
+                var row = _currentData.Rows[r];
                 var dr = dt.NewRow();
                 for (int i = 0; i < _currentData.Columns.Count && i < row.Count; i++)
                     dr[i] = row[i] ?? "";
+                bool linked = _currentData.IsLinkedRow.Count > r && _currentData.IsLinkedRow[r];
+                dr[LinkedRowMarkerCol] = linked ? "1" : "0";
                 dt.Rows.Add(dr);
             }
+
+            // Apply row style that grays out linked rows
+            var linkedBg = new System.Windows.Media.SolidColorBrush(
+                System.Windows.Media.Color.FromRgb(0xEE, 0xEE, 0xEE));
+            var linkedFg = new System.Windows.Media.SolidColorBrush(
+                System.Windows.Media.Color.FromRgb(0x61, 0x61, 0x61));
+
+            var rowStyle = new Style(typeof(DataGridRow));
+            var trigger = new DataTrigger
+            {
+                Binding = new Binding($"[{LinkedRowMarkerCol}]"),
+                Value   = "1"
+            };
+            trigger.Setters.Add(new Setter(DataGridRow.BackgroundProperty, linkedBg));
+            trigger.Setters.Add(new Setter(DataGridRow.ForegroundProperty, linkedFg));
+            rowStyle.Triggers.Add(trigger);
+            PreviewGrid.RowStyle = rowStyle;
 
             PreviewGrid.ItemsSource = dt.DefaultView;
         }
@@ -221,46 +260,70 @@ namespace BIMPills.UI.DataManager
         /// </summary>
         private void PreviewGrid_AutoGeneratingColumn(object sender, DataGridAutoGeneratingColumnEventArgs e)
         {
+            if (e.PropertyName == LinkedRowMarkerCol)
+            {
+                e.Cancel = true;
+                return;
+            }
+
             e.Column.Header = e.PropertyName.ToUpperInvariant();
 
-            if (_readOnlyColumnNames.Contains(e.PropertyName))
+            bool isReadOnly = _readOnlyColumnNames.Contains(e.PropertyName);
+            bool isType     = _typeParamColumnNames.Contains(e.PropertyName);
+
+            // ── Colour palette — mirrors Excel export ──────────────────────
+            var (headerHex, cellHex, headerFgHex, cellFgHex) = isReadOnly
+                ? ("#FFF9C4", "#FFFDE7", "#F57F17", "#9E9D24")   // yellow  — read-only
+                : isType
+                ? ("#FFE0B2", "#FFF3E0", "#E65C00", "#795548")   // orange  — type param
+                : ("#BBDEFB", "#E3F2FD", "#1565C0", "#1565C0");  // blue    — instance
+
+            System.Windows.Media.Color ParseHex(string hex)
             {
-                var cellStyle = new Style(typeof(DataGridCell));
-                cellStyle.Setters.Add(new Setter(BackgroundProperty,
-                    new System.Windows.Media.SolidColorBrush(
-                        System.Windows.Media.Color.FromRgb(0xFF, 0xF9, 0xC4))));
-                cellStyle.Setters.Add(new Setter(ForegroundProperty,
-                    new System.Windows.Media.SolidColorBrush(
-                        System.Windows.Media.Color.FromRgb(0x9E, 0x9D, 0x24))));
+                hex = hex.TrimStart('#');
+                return System.Windows.Media.Color.FromRgb(
+                    Convert.ToByte(hex.Substring(0, 2), 16),
+                    Convert.ToByte(hex.Substring(2, 2), 16),
+                    Convert.ToByte(hex.Substring(4, 2), 16));
+            }
+
+            var cellBg   = new System.Windows.Media.SolidColorBrush(ParseHex(cellHex));
+            var cellFg   = new System.Windows.Media.SolidColorBrush(ParseHex(cellFgHex));
+            var linkedBg = new System.Windows.Media.SolidColorBrush(ParseHex("#EEEEEE"));
+            var linkedFg = new System.Windows.Media.SolidColorBrush(ParseHex("#616161"));
+
+            // ── Cell style ─────────────────────────────────────────────────
+            var cellStyle = new Style(typeof(DataGridCell));
+            cellStyle.Setters.Add(new Setter(BackgroundProperty, cellBg));
+            cellStyle.Setters.Add(new Setter(ForegroundProperty, cellFg));
+            if (isReadOnly)
                 cellStyle.Setters.Add(new Setter(FontStyleProperty, FontStyles.Italic));
 
-                var template = new ControlTemplate(typeof(DataGridCell));
-                var borderFactory = new FrameworkElementFactory(typeof(Border));
-                borderFactory.SetBinding(Border.BackgroundProperty,
-                    new Binding("Background") { RelativeSource = new RelativeSource(RelativeSourceMode.TemplatedParent) });
-                borderFactory.SetValue(Border.PaddingProperty, new Thickness(10, 0, 10, 0));
-                var contentFactory = new FrameworkElementFactory(typeof(ContentPresenter));
-                contentFactory.SetValue(ContentPresenter.VerticalAlignmentProperty, VerticalAlignment.Center);
-                borderFactory.AppendChild(contentFactory);
-                template.VisualTree = borderFactory;
-                cellStyle.Setters.Add(new Setter(Control.TemplateProperty, template));
+            // Linked rows override column color → gray
+            var linkedTrigger = new DataTrigger
+            {
+                Binding = new Binding($"[{LinkedRowMarkerCol}]"),
+                Value   = "1"
+            };
+            linkedTrigger.Setters.Add(new Setter(BackgroundProperty, linkedBg));
+            linkedTrigger.Setters.Add(new Setter(ForegroundProperty, linkedFg));
+            cellStyle.Triggers.Add(linkedTrigger);
 
-                if (e.Column is DataGridTextColumn textCol)
-                    textCol.CellStyle = cellStyle;
+            if (e.Column is DataGridTextColumn textCol)
+                textCol.CellStyle = cellStyle;
 
-                var headerStyle = new Style(typeof(DataGridColumnHeader));
-                headerStyle.Setters.Add(new Setter(BackgroundProperty,
-                    new System.Windows.Media.SolidColorBrush(
-                        System.Windows.Media.Color.FromRgb(0xFF, 0xF9, 0xC4))));
-                headerStyle.Setters.Add(new Setter(ForegroundProperty,
-                    new System.Windows.Media.SolidColorBrush(
-                        System.Windows.Media.Color.FromRgb(0xF5, 0x7F, 0x17))));
-                headerStyle.Setters.Add(new Setter(DataGridColumnHeader.FontWeightProperty, FontWeights.SemiBold));
-                headerStyle.Setters.Add(new Setter(DataGridColumnHeader.FontSizeProperty, 10.0));
-                headerStyle.Setters.Add(new Setter(DataGridColumnHeader.PaddingProperty, new Thickness(10, 7, 10, 7)));
-                headerStyle.Setters.Add(new Setter(DataGridColumnHeader.FontFamilyProperty, new System.Windows.Media.FontFamily("Segoe UI")));
-                e.Column.HeaderStyle = headerStyle;
-            }
+            // ── Header style ────────────────────────────────────────────────
+            var headerStyle = new Style(typeof(DataGridColumnHeader));
+            headerStyle.Setters.Add(new Setter(BackgroundProperty,
+                new System.Windows.Media.SolidColorBrush(ParseHex(headerHex))));
+            headerStyle.Setters.Add(new Setter(ForegroundProperty,
+                new System.Windows.Media.SolidColorBrush(ParseHex(headerFgHex))));
+            headerStyle.Setters.Add(new Setter(DataGridColumnHeader.FontWeightProperty, FontWeights.SemiBold));
+            headerStyle.Setters.Add(new Setter(DataGridColumnHeader.FontSizeProperty, 10.0));
+            headerStyle.Setters.Add(new Setter(DataGridColumnHeader.PaddingProperty, new Thickness(10, 7, 10, 7)));
+            headerStyle.Setters.Add(new Setter(DataGridColumnHeader.FontFamilyProperty,
+                new System.Windows.Media.FontFamily("Segoe UI")));
+            e.Column.HeaderStyle = headerStyle;
         }
 
         // ── Selection ─────────────────────────────────────────────────────────
@@ -395,7 +458,7 @@ namespace BIMPills.UI.DataManager
 
             try
             {
-                var data = _documentServices.GetScheduleData(info.Id);
+                var data = _documentServices.GetScheduleData(info.Id, IncludeLinksCheck?.IsChecked == true);
                 var folder = Path.GetDirectoryName(dlg.FileName)!;
                 var fileName = Path.GetFileName(dlg.FileName);
                 ExportPathBox.Text = folder;
@@ -441,7 +504,7 @@ namespace BIMPills.UI.DataManager
                 var allData = new List<ScheduleData>();
                 foreach (var info in selected)
                 {
-                    var data = _documentServices.GetScheduleData(info.Id);
+                    var data = _documentServices.GetScheduleData(info.Id, IncludeLinksCheck?.IsChecked == true);
                     if (data?.Rows.Count > 0)
                         allData.Add(data);
                 }
