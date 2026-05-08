@@ -26,6 +26,13 @@ Evalúa la calidad y madurez BIM de tu modelo con una puntuación objetiva basad
 - Familias in-situ, importaciones CAD y grupos
 - Elementos sin categoría y texturas embebidas
 - Compatibilidad con Revit Server, BIM 360 y ACC
+- **Elementos purgables** — detecta vistas, familias, materiales, tipos de familia sin uso y más; filtro dinámico por tipo de elemento
+
+### 🎯 Seleccionar
+Herramientas de selección y edición masiva de elementos en la vista activa:
+- **Buscar y Seleccionar** — filtra elementos por categoría, parámetro y valor para seleccionarlos directamente en Revit
+- **Etiquetar** — coloca etiquetas automáticamente en los elementos de una selección
+- **Asignar Valores / Numerador** — asigna y ordena valores de parámetros en lote con lógica configurable
 
 ### 📤 Exportar
 Exportación profesional de entregables directamente desde Revit:
@@ -40,9 +47,6 @@ Importa plantillas, filtros y estándares desde archivos externos para homogenei
 
 ### 🗝️ Keynotes
 Gestión de notas clave del proyecto: edición, reorganización y sincronización del archivo de keynotes directamente desde Revit.
-
-### 📐 Ordenar / Numerador
-Reordena y renombra elementos del modelo (vistas, planos, familias) con lógica automática basada en parámetros del proyecto.
 
 ### 🔄 Trasladar
 Transfiere estándares entre modelos: plantillas de vista, filtros, tipos de línea, patrones de relleno y más, desde un modelo origen hacia el modelo activo.
@@ -77,7 +81,7 @@ Integración experimental con servidores MCP para automatización avanzada del m
 
 1. Descarga el instalador desde [**Releases →**](../../releases/latest)
 2. Cierra Revit si está abierto
-3. Ejecuta **BIM Pills beta X.X Setup.exe** como administrador
+3. Ejecuta **BIMPills-beta-7.0-Setup.exe** como administrador
 4. Selecciona las versiones de Revit que tienes instaladas
 5. Abre Revit — BIM Pills aparecerá en la cinta de opciones
 
