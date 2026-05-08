@@ -3,7 +3,7 @@
   <h1>BIM Pills</h1>
   <p><strong>Píldoras inteligentes para optimizar tu flujo de trabajo en Autodesk Revit</strong></p>
   <p>
-    <img src="https://img.shields.io/badge/versión-beta%206.1-EF6337" alt="beta 6.1"/>
+    <img src="https://img.shields.io/badge/versión-beta%207.0-EF6337" alt="beta 7.0"/>
     <img src="https://img.shields.io/badge/Revit-2024%20%7C%202025%20%7C%202026%20%7C%202027-0696D7" alt="Revit Versions"/>
     <img src="https://img.shields.io/badge/plataforma-Windows-informational" alt="Windows"/>
   </p>
