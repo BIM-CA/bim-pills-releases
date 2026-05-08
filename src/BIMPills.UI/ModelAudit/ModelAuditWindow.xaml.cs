@@ -120,6 +120,9 @@ namespace BIMPills.UI.ModelAudit
             _purgeableViewModels = _allPurgeableViewModels;
             PurgeableGrid.ItemsSource = _purgeableViewModels;
 
+            // Poblar ComboBox de filtro con los tipos presentes en los datos
+            PopulatePurgeTypeFilter();
+
             // Deshabilitar purga si no hay callback
             if (_purgeCallback == null)
             {
@@ -128,6 +131,28 @@ namespace BIMPills.UI.ModelAudit
             }
 
             UpdatePurgeSelection();
+        }
+
+        /// <summary>
+        /// Llena el ComboBox de tipo con "Todos los tipos" + los ItemType distintos
+        /// presentes en los datos, ordenados alfabéticamente.
+        /// </summary>
+        private void PopulatePurgeTypeFilter()
+        {
+            PurgeTypeFilter.Items.Clear();
+            PurgeTypeFilter.Items.Add("Todos los tipos");
+
+            var types = _allPurgeableViewModels
+                .Select(vm => vm.ItemType)
+                .Where(t => !string.IsNullOrWhiteSpace(t))
+                .Distinct()
+                .OrderBy(t => t)
+                .ToList();
+
+            foreach (var t in types)
+                PurgeTypeFilter.Items.Add(t);
+
+            PurgeTypeFilter.SelectedIndex = 0;
         }
 
         // ── Purge selection management ─────────────────────────────────
@@ -172,16 +197,13 @@ namespace BIMPills.UI.ModelAudit
             UpdatePurgeSelection();
         }
 
-        private void FilterChip_Checked(object sender, RoutedEventArgs e)
+        private void PurgeTypeFilter_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (sender is System.Windows.Controls.Primitives.ToggleButton tb)
-            {
-                var tag = tb.Tag as string;
-                _activeTypeFilter = string.IsNullOrEmpty(tag) ? null : tag;
+            if (PurgeTypeFilter.SelectedItem is string selected && selected != "Todos los tipos")
+                _activeTypeFilter = selected;
+            else
+                _activeTypeFilter = null;
 
-                foreach (System.Windows.Controls.Primitives.ToggleButton chip in FilterChipsPanel.Children)
-                    if (chip != tb) chip.IsChecked = false;
-            }
             ApplyPurgeFilters();
         }
 
@@ -1190,7 +1212,7 @@ namespace BIMPills.UI.ModelAudit
             var type = value as string;
             if (string.IsNullOrEmpty(type)) return DefaultBrush;
 
-            return type.ToLowerInvariant() switch
+            return type!.ToLowerInvariant() switch
             {
                 "familia"        => FamiliaBrush,
                 "vista"          => VistaBrush,

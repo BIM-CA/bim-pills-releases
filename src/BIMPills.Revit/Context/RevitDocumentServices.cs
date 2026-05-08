@@ -34,7 +34,7 @@ namespace BIMPills.Revit.Context
                 var raw = _doc.PathName?.Trim().TrimEnd('\0');
                 if (string.IsNullOrEmpty(raw)) return 0;
 
-                var path = raw.Replace('/', Path.DirectorySeparatorChar);
+                var path = raw!.Replace('/', Path.DirectorySeparatorChar);
 
                 if (!IsCloudOrServerPath(raw))
                 {
@@ -455,6 +455,50 @@ namespace BIMPills.Revit.Context
                 }
             }
 
+            // Tipos de familia sin uso (FamilySymbol con 0 instancias, en familias que sí tienen otros tipos usados)
+            try
+            {
+                // Recopilar todos los TypeIds en uso en una sola pasada (más eficiente que FamilyInstanceFilter por tipo)
+                var usedTypeIds = new FilteredElementCollector(_doc)
+                    .OfClass(typeof(FamilyInstance))
+                    .Cast<FamilyInstance>()
+                    .Select(fi => fi.GetTypeId())
+                    .ToHashSet();
+
+                var allSymbols = new FilteredElementCollector(_doc)
+                    .OfClass(typeof(FamilySymbol))
+                    .Cast<FamilySymbol>()
+                    .Where(s => !usedTypeIds.Contains(s.Id))
+                    .ToList();
+
+                foreach (var symbol in allSymbols)
+                {
+                    try
+                    {
+                        var family = symbol.Family;
+                        if (family == null) continue;
+
+                        var allTypeIds = family.GetFamilySymbolIds();
+
+                        // No se puede borrar el último tipo de una familia
+                        if (allTypeIds.Count < 2) continue;
+
+                        // Si ningún tipo de esta familia está en uso, ya queda cubierta por "Familia"
+                        if (!allTypeIds.Any(id => usedTypeIds.Contains(id))) continue;
+
+                        var category = family.FamilyCategory?.Name ?? "Sin categoría";
+                        purgeable.Add(new PurgeableItem(
+                            GetElementIdValue(symbol.Id),
+                            $"{family.Name} : {symbol.Name}",
+                            category,
+                            "Tipo familia",
+                            0));
+                    }
+                    catch { /* símbolo individual no crítico */ }
+                }
+            }
+            catch { /* No crítico */ }
+
             // Vistas no colocadas en planos (excluyendo plantillas y vistas del sistema)
             var placedViewIds = new FilteredElementCollector(_doc)
                 .OfClass(typeof(Viewport))
@@ -546,6 +590,63 @@ namespace BIMPills.Revit.Context
                     purgeable.Add(new PurgeableItem(
                         GetElementIdValue(t.Id), t.Name,
                         "Regiones rellenas", "Patron relleno", 0));
+            }
+            catch { /* No crítico */ }
+
+            // Plantillas de vista sin uso (IsTemplate == true y ninguna vista las referencia)
+            try
+            {
+                // IDs de plantillas usadas: vistas no-plantilla que tienen ViewTemplateId asignado
+                var usedTemplateIds = new FilteredElementCollector(_doc)
+                    .OfClass(typeof(View))
+                    .Cast<View>()
+                    .Where(v => !v.IsTemplate && v.ViewTemplateId != ElementId.InvalidElementId)
+                    .Select(v => v.ViewTemplateId)
+                    .ToHashSet();
+
+                var unusedTemplates = new FilteredElementCollector(_doc)
+                    .OfClass(typeof(View))
+                    .Cast<View>()
+                    .Where(v => v.IsTemplate && !usedTemplateIds.Contains(v.Id))
+                    .ToList();
+
+                foreach (var t in unusedTemplates)
+                    purgeable.Add(new PurgeableItem(
+                        GetElementIdValue(t.Id),
+                        t.Name,
+                        MapViewTypeToSpanish(t.ViewType),
+                        "Plantilla vista",
+                        0));
+            }
+            catch { /* No crítico */ }
+
+            // Filtros de vista sin uso (ParameterFilterElement no aplicado en ninguna vista ni plantilla)
+            try
+            {
+                // Recorre TODAS las vistas (incluyendo plantillas) para recolectar filtros en uso
+                var usedFilterIds = new FilteredElementCollector(_doc)
+                    .OfClass(typeof(View))
+                    .Cast<View>()
+                    .SelectMany(v =>
+                    {
+                        try { return v.GetFilters().AsEnumerable(); }
+                        catch { return Enumerable.Empty<ElementId>(); }
+                    })
+                    .ToHashSet();
+
+                var unusedFilters = new FilteredElementCollector(_doc)
+                    .OfClass(typeof(ParameterFilterElement))
+                    .Cast<ParameterFilterElement>()
+                    .Where(f => !usedFilterIds.Contains(f.Id))
+                    .ToList();
+
+                foreach (var f in unusedFilters)
+                    purgeable.Add(new PurgeableItem(
+                        GetElementIdValue(f.Id),
+                        f.Name,
+                        "Filtros de vista",
+                        "Filtro vista",
+                        0));
             }
             catch { /* No crítico */ }
 
@@ -880,6 +981,20 @@ namespace BIMPills.Revit.Context
             catch { return new List<NwcViewInfo>(); }
         }
 
+        private static string MapViewTypeToSpanish(ViewType vt) => vt switch
+        {
+            ViewType.FloorPlan    => "Planta",
+            ViewType.CeilingPlan  => "Planta de techo",
+            ViewType.Elevation    => "Alzado",
+            ViewType.Section      => "Sección",
+            ViewType.ThreeD       => "Vista 3D",
+            ViewType.Legend       => "Leyenda",
+            ViewType.DraftingView => "Vista de boceto",
+            ViewType.AreaPlan     => "Plano de área",
+            ViewType.Detail       => "Vista de detalle",
+            _                     => "Vista"
+        };
+
         private static ExportableItemType MapViewType(ViewType vt) => vt switch
         {
             ViewType.FloorPlan    => ExportableItemType.FloorPlan,
@@ -1057,22 +1172,68 @@ namespace BIMPills.Revit.Context
                     if (!f.IsHidden) fields.Add(f);
                 }
 
-                var columns = fields.Select(f => new ScheduleColumnInfo
+                // Sample the first element to classify each field as type vs instance.
+                // We do this before reading all rows so the per-column info is available.
+                Element? sampleElem = null;
+                Element? sampleType = null;
+                try
                 {
-                    Name          = f.ColumnHeading,
-                    ParameterName = f.GetName(),
-                    IsReadOnly    = f.IsCalculatedField || f.ParameterId == ElementId.InvalidElementId,
-                    StorageType   = "String"
+                    sampleElem = new FilteredElementCollector(_doc, vs.Id)
+                        .WhereElementIsNotElementType()
+                        .ToElements()
+                        .FirstOrDefault(e => e is not RevitLinkInstance);
+
+                    if (sampleElem != null)
+                    {
+                        var typeId = sampleElem.GetTypeId();
+                        if (typeId != ElementId.InvalidElementId)
+                            sampleType = _doc.GetElement(typeId);
+                    }
+                }
+                catch { }
+
+                var columns = fields.Select(f =>
+                {
+                    bool readOnly = f.IsCalculatedField || f.ParameterId == ElementId.InvalidElementId;
+                    bool isType   = false;
+
+                    if (!readOnly && sampleElem != null)
+                    {
+                        // If param is found directly on the instance it's an instance param.
+                        bool onInstance = sampleElem.Parameters
+                            .Cast<Parameter>()
+                            .Any(p => p.Id == f.ParameterId);
+
+                        if (!onInstance && sampleType != null)
+                        {
+                            bool onType = sampleType.Parameters
+                                .Cast<Parameter>()
+                                .Any(p => p.Id == f.ParameterId);
+                            isType = onType;
+                        }
+                    }
+
+                    return new ScheduleColumnInfo
+                    {
+                        Name            = f.ColumnHeading,
+                        ParameterName   = f.GetName(),
+                        IsReadOnly      = readOnly,
+                        IsTypeParameter = isType,
+                        StorageType     = "String"
+                    };
                 }).ToList();
 
                 // Get only the actual elements in this schedule (excludes totals,
                 // group headers, subtotals, and grand totals entirely).
+                // Filters out RevitLinkInstance objects — they appear when the schedule
+                // includes linked models but their parameters don't match host-model fields.
                 var elements = new List<Element>();
                 try
                 {
                     elements = new FilteredElementCollector(_doc, vs.Id)
                         .WhereElementIsNotElementType()
                         .ToElements()
+                        .Where(e => e is not RevitLinkInstance)
                         .ToList();
                 }
                 catch { }
@@ -1084,6 +1245,17 @@ namespace BIMPills.Revit.Context
 
                 foreach (var element in elements)
                 {
+                    // Pre-fetch the type element once per element (type params like
+                    // Función, Anchura, Altura are often defined on the FamilySymbol)
+                    Element? typeElem = null;
+                    try
+                    {
+                        var typeId = element.GetTypeId();
+                        if (typeId != ElementId.InvalidElementId)
+                            typeElem = _doc.GetElement(typeId);
+                    }
+                    catch { }
+
                     var cellValues = new List<string>();
                     foreach (var field in fields)
                     {
@@ -1092,11 +1264,39 @@ namespace BIMPills.Revit.Context
                         {
                             if (!field.IsCalculatedField && field.ParameterId != ElementId.InvalidElementId)
                             {
-                                // Look up by matching ElementId in the element's parameter collection
-                                var param = element.Parameters
+                                Parameter? param = null;
+
+                                // 1. Search instance parameter collection by ParameterId.
+                                //    Note: element.Parameters includes ONLY instance-level params;
+                                //    type params (Función, Nota clave, Marca de tipo…) are NOT
+                                //    always exposed here — they require the type element lookup.
+                                param = element.Parameters
                                     .Cast<Parameter>()
                                     .FirstOrDefault(p => p.Id == field.ParameterId);
-                                if (param != null)
+
+                                // 2. If not found (or has no value) on the instance, search the
+                                //    FamilySymbol (type element) directly. This covers:
+                                //      • Función (FUNCTION_PARAM)
+                                //      • Nota clave (KEYNOTE_PARAM)
+                                //      • Marca de tipo (ALL_MODEL_TYPE_MARK)
+                                //      • Any project/shared param defined at type level.
+                                if ((param == null || !param.HasValue) && typeElem != null)
+                                    param = typeElem.Parameters
+                                        .Cast<Parameter>()
+                                        .FirstOrDefault(p => p.Id == field.ParameterId);
+
+                                // 3. Fallback: name-based lookup on instance then type.
+                                //    Catches shared params whose definition ElementId may differ
+                                //    from what the schedule field reports (e.g. cross-doc mismatch).
+                                if (param == null || !param.HasValue)
+                                {
+                                    var fieldName = field.GetName();
+                                    var byName = element.LookupParameter(fieldName)
+                                              ?? typeElem?.LookupParameter(fieldName);
+                                    if (byName != null && byName.HasValue) param = byName;
+                                }
+
+                                if (param != null && param.HasValue)
                                 {
                                     val = param.StorageType switch
                                     {
@@ -1145,7 +1345,30 @@ namespace BIMPills.Revit.Context
                     try
                     {
                         var element = _doc.GetElement(new ElementId(req.ElementId));
-                        var param   = element?.LookupParameter(req.ParameterName);
+                        if (element == null) { skipped++; continue; }
+
+                        // 1. Try instance element first
+                        Parameter? param = element.LookupParameter(req.ParameterName);
+
+                        // 2. If not writable on the instance, try the type element.
+                        //    Type params (Función, Descripción, Anchura, Altura, Nota clave…)
+                        //    are defined on the FamilySymbol, not on the instance.
+                        if (param == null || param.IsReadOnly)
+                        {
+                            try
+                            {
+                                var typeId = element.GetTypeId();
+                                if (typeId != ElementId.InvalidElementId)
+                                {
+                                    var typeElem = _doc.GetElement(typeId);
+                                    var tp = typeElem?.LookupParameter(req.ParameterName);
+                                    if (tp != null && !tp.IsReadOnly)
+                                        param = tp;
+                                }
+                            }
+                            catch { }
+                        }
+
                         if (param == null || param.IsReadOnly) { skipped++; continue; }
 
                         switch (param.StorageType)
@@ -1158,8 +1381,17 @@ namespace BIMPills.Revit.Context
                                 else skipped++;
                                 break;
                             case StorageType.Double:
-                                if (double.TryParse(req.NewValue, out double dv)) param.Set(dv);
-                                else skipped++;
+                                // Values exported via AsValueString() include display units (e.g. "3.00 m").
+                                // Try to re-parse via SetValueString first; fall back to raw double parse.
+                                try { param.SetValueString(req.NewValue ?? ""); }
+                                catch
+                                {
+                                    if (double.TryParse(req.NewValue,
+                                        System.Globalization.NumberStyles.Any,
+                                        System.Globalization.CultureInfo.InvariantCulture, out double dv))
+                                        param.Set(dv);
+                                    else { skipped++; continue; }
+                                }
                                 break;
                             default:
                                 skipped++;

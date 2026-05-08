@@ -2,6 +2,8 @@ using BIMPills.Core.Updates;
 using System;
 using System.Text.RegularExpressions;
 using System.Windows;
+using System.Windows.Documents;
+using System.Windows.Media;
 
 namespace BIMPills.UI.Updates
 {
@@ -25,26 +27,89 @@ namespace BIMPills.UI.Updates
             NewVersionText.Text     = update.DisplayVersion;
             SubtitleText.Text       = $"BIM Pills {update.DisplayVersion} está lista para instalar";
 
-            ReleaseNotesText.Text = string.IsNullOrWhiteSpace(update.ReleaseNotes)
-                ? "Sin notas de versión disponibles."
-                : CleanMarkdown(update.ReleaseNotes);
+            RenderMarkdown(ReleaseNotesText, update.ReleaseNotes);
 
             if (string.IsNullOrEmpty(update.InstallerDownloadUrl))
                 UpdateBtn.Content = "Ver en GitHub";
         }
 
-        private static string CleanMarkdown(string md)
+        /// <summary>
+        /// Parsea el markdown del changelog y lo renderiza como inlines WPF con
+        /// formato real: H1/H2 en negrita y mayor tamaño, bullets con •, **bold**.
+        /// </summary>
+        private static void RenderMarkdown(System.Windows.Controls.TextBlock tb, string md)
         {
-            // Remove heading markers (##, ###, etc.)
-            md = Regex.Replace(md, @"^#{1,6}\s+", string.Empty, RegexOptions.Multiline);
-            // Remove bold/italic markers (**text** → text)
-            md = Regex.Replace(md, @"\*\*(.+?)\*\*", "$1");
-            md = Regex.Replace(md, @"\*(.+?)\*", "$1");
-            // Convert - bullets to •
-            md = Regex.Replace(md, @"^- ", "• ", RegexOptions.Multiline);
-            // Collapse triple+ newlines to double
-            md = Regex.Replace(md, @"\n{3,}", "\n\n");
-            return md.Trim();
+            tb.Inlines.Clear();
+
+            if (string.IsNullOrWhiteSpace(md))
+            {
+                tb.Inlines.Add(new Run("Sin notas de versión disponibles."));
+                return;
+            }
+
+            var lines     = md.Replace("\r\n", "\n").Split('\n');
+            bool first    = true;
+            bool lastEmpty = false;
+
+            foreach (var rawLine in lines)
+            {
+                var line  = rawLine.TrimEnd();
+                bool empty = string.IsNullOrWhiteSpace(line);
+
+                if (empty) { lastEmpty = true; continue; }
+
+                // Spacing between blocks
+                if (!first)
+                {
+                    tb.Inlines.Add(new LineBreak());
+                    if (lastEmpty) tb.Inlines.Add(new LineBreak()); // blank line between sections
+                }
+                lastEmpty = false;
+                first     = false;
+
+                if (line.StartsWith("# "))
+                {
+                    tb.Inlines.Add(new Run(line.Substring(2))
+                    {
+                        FontWeight = FontWeights.Bold,
+                        FontSize   = 14,
+                        Foreground = new SolidColorBrush(Color.FromRgb(33, 43, 55))
+                    });
+                }
+                else if (line.StartsWith("## "))
+                {
+                    tb.Inlines.Add(new Run(line.Substring(3))
+                    {
+                        FontWeight = FontWeights.SemiBold,
+                        FontSize   = 13,
+                        Foreground = new SolidColorBrush(Color.FromRgb(33, 43, 55))
+                    });
+                }
+                else if (line.StartsWith("- "))
+                {
+                    tb.Inlines.Add(new Run("• ") { Foreground = new SolidColorBrush(Color.FromRgb(0, 122, 255)) });
+                    AddInlineRuns(tb, line.Substring(2));
+                }
+                else
+                {
+                    AddInlineRuns(tb, line);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Añade texto con soporte para **negrita** inline.
+        /// </summary>
+        private static void AddInlineRuns(System.Windows.Controls.TextBlock tb, string text)
+        {
+            var parts = Regex.Split(text, @"\*\*(.+?)\*\*");
+            for (int i = 0; i < parts.Length; i++)
+            {
+                if (string.IsNullOrEmpty(parts[i])) continue;
+                tb.Inlines.Add(i % 2 == 1
+                    ? new Run(parts[i]) { FontWeight = FontWeights.SemiBold }
+                    : new Run(parts[i]));
+            }
         }
 
         private async void Update_Click(object sender, RoutedEventArgs e)

@@ -1,6 +1,6 @@
 $nsis  = "C:\Program Files (x86)\NSIS\makensis.exe"
 $nsi   = "G:\Claude\Code\installer\BIMPills-Installer.nsi"
-$exeOut = "G:\Claude\Code\installer\BIMPills-beta-6.1-Setup.exe"
+$exeOut = "G:\Claude\Code\installer\BIMPills-beta-7.0-Setup.exe"
 
 # Delete old EXE so we know if build actually succeeded
 if (Test-Path $exeOut) { Remove-Item $exeOut -Force }

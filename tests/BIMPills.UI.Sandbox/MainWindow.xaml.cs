@@ -93,16 +93,34 @@ namespace BIMPills.UI.Sandbox
                     },
                     PurgeableItems = new List<PurgeableItem>
                     {
-                        new PurgeableItem(200001, "Familia_Sin_Usar_01",      "Mobiliario",       "Familia",        2_097_152),
-                        new PurgeableItem(200002, "Familia_Sin_Usar_02",      "Puertas",          "Familia",        1_048_576),
-                        new PurgeableItem(200003, "Vista_Sin_Colocar_Borrador","FloorPlan",       "Vista",          0        ),
-                        new PurgeableItem(200004, "Sección Antigua TEST",     "Section",          "Vista",          0        ),
-                        new PurgeableItem(200005, "Arial 2.5mm",              "Estilos de texto", "Estilo texto",   0        ),
-                        new PurgeableItem(200006, "Nota 3.5 Negrita",         "Estilos de texto", "Estilo texto",   0        ),
-                        new PurgeableItem(200007, "Lineal 1:100 BIM-CA",      "Tipos de cota",    "Tipo cota",      0        ),
-                        new PurgeableItem(200008, "Angular Grados",           "Tipos de cota",    "Tipo cota",      0        ),
-                        new PurgeableItem(200009, "Patrón Hormigón Rayado",   "Regiones rellenas","Patron relleno", 0        ),
-                        new PurgeableItem(200010, "Material_Obsoleto",        "General",          "Material",       524_288  ),
+                        // Familias completas sin instancias
+                        new PurgeableItem(200001, "Familia_Sin_Usar_01",                   "Mobiliario",       "Familia",        2_097_152),
+                        new PurgeableItem(200002, "Familia_Sin_Usar_02",                   "Puertas",          "Familia",        1_048_576),
+                        new PurgeableItem(200003, "Mueble_Auxiliar_Antiguo",               "Mobiliario",       "Familia",          786_432),
+                        // Tipos de familia sin uso (family has other types in use)
+                        new PurgeableItem(200020, "Puerta Abatible Simple : 0.9x2.1m",    "Puertas",          "Tipo familia",   0),
+                        new PurgeableItem(200021, "Puerta Abatible Simple : 0.7x2.0m",    "Puertas",          "Tipo familia",   0),
+                        new PurgeableItem(200022, "Ventana Corredera 2H : 1.5x1.2m",      "Ventanas",         "Tipo familia",   0),
+                        new PurgeableItem(200023, "Silla Oficina Ergonómica : Con ruedas", "Mobiliario",       "Tipo familia",   0),
+                        // Vistas no colocadas
+                        new PurgeableItem(200004, "Vista_Sin_Colocar_Borrador",            "FloorPlan",        "Vista",          0),
+                        new PurgeableItem(200005, "Sección Antigua TEST",                  "Section",          "Vista",          0),
+                        new PurgeableItem(200006, "Elevación Norte BORRADOR",              "Elevation",        "Vista",          0),
+                        // Plantillas de vista sin uso
+                        new PurgeableItem(200030, "ARQ - Presentación ANTIGUA",            "FloorPlan",        "Plantilla vista",0),
+                        new PurgeableItem(200031, "EST - Estructura v1",                   "Section",          "Plantilla vista",0),
+                        // Filtros de vista sin uso
+                        new PurgeableItem(200040, "Filtro Demolición v2",                  "Filtros de vista", "Filtro vista",   0),
+                        new PurgeableItem(200041, "Fase Provisional TEST",                 "Filtros de vista", "Filtro vista",   0),
+                        // Estilos de texto
+                        new PurgeableItem(200007, "Arial 2.5mm",                           "Estilos de texto", "Estilo texto",   0),
+                        new PurgeableItem(200008, "Nota 3.5 Negrita",                      "Estilos de texto", "Estilo texto",   0),
+                        // Tipos de cota
+                        new PurgeableItem(200009, "Lineal 1:100 BIM-CA",                   "Tipos de cota",    "Tipo cota",      0),
+                        new PurgeableItem(200010, "Angular Grados",                        "Tipos de cota",    "Tipo cota",      0),
+                        // Patrones de relleno
+                        new PurgeableItem(200011, "Patrón Hormigón Rayado",                "Regiones rellenas","Patron relleno", 0),
+                        new PurgeableItem(200012, "Patrón Arena Obsoleto",                 "Regiones rellenas","Patron relleno", 0),
                     }
                 };
 
@@ -490,14 +508,6 @@ namespace BIMPills.UI.Sandbox
                     "Escaleras", "Pilares", "Suelos", "Techos", "Habitaciones"
                 };
 
-                var worksets = new List<WorksetInfo>
-                {
-                    new WorksetInfo { Id = 1, Name = "ARQ - Arquitectura",  IsOpen = true,  IsDefault = true,  IsEditable = true },
-                    new WorksetInfo { Id = 2, Name = "EST - Estructura",     IsOpen = true,  IsDefault = false, IsEditable = false },
-                    new WorksetInfo { Id = 3, Name = "MEP - Instalaciones",  IsOpen = false, IsDefault = false, IsEditable = false },
-                    new WorksetInfo { Id = 4, Name = "EXT - Exteriores",     IsOpen = true,  IsDefault = false, IsEditable = true  },
-                };
-
                 // sandbox: mock selection counts
                 var tempDir   = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "BIMPillsSandbox_Seleccionar_" + Guid.NewGuid().ToString("N"));
                 System.IO.Directory.CreateDirectory(tempDir);
@@ -508,9 +518,27 @@ namespace BIMPills.UI.Sandbox
                         $"[Sandbox] Aplicar filtro:\nCategoría: {(string.IsNullOrEmpty(filter.CategoryName) ? "todas" : filter.CategoryName)}\nCondiciones: {filter.Conditions.Count}\nLógica: {filter.Logic}",
                         "Sandbox — Seleccionar mock", MessageBoxButton.OK, MessageBoxImage.Information);
 
-                var compatibleParams = new List<string>
+                // Mock ParamInfos con AllowedValues para los parámetros con valores predefinidos
+                var allParamInfos = new List<ParamInfo>
                 {
-                    "Comentarios", "Descripción", "Marca", "Referencia BIM", "Subnivel", "Fase creada"
+                    new ParamInfo { Name = "Comentarios",    Group = "Restricciones" },
+                    new ParamInfo { Name = "Descripción",    Group = "Datos de identidad" },
+                    new ParamInfo { Name = "Marca",          Group = "Datos de identidad" },
+                    new ParamInfo { Name = "Referencia BIM", Group = "Datos de identidad" },
+                    new ParamInfo { Name = "Subnivel",       Group = "Datos de identidad",
+                        AllowedValues = new List<string> { "Planta Baja", "Planta 1", "Planta 2", "Cubierta" } },
+                    new ParamInfo { Name = "Fase de Creación", Group = "Datos de fase",
+                        AllowedValues = new List<string> { "Obra Nueva", "Existente", "Demolición" } },
+                    new ParamInfo { Name = "Fase de Derribo", Group = "Datos de fase",
+                        AllowedValues = new List<string> { "Ninguno", "Existente", "Demolición" } },
+                };
+
+                var paramsByCategory = new Dictionary<string, IReadOnlyList<ParamInfo>>
+                {
+                    ["Muros"]    = allParamInfos,
+                    ["Puertas"]  = allParamInfos,
+                    ["Ventanas"] = allParamInfos,
+                    ["Columnas"] = allParamInfos,
                 };
 
                 var selectionSummary = new List<BIMPills.Core.Seleccionar.CategoryElementSummary>
@@ -520,26 +548,16 @@ namespace BIMPills.UI.Sandbox
                     new("Ventanas",   8,  8),
                 };
 
-                Action<SubprojectAssignRequest> assignSubproject = req =>
-                {
-                    var paramsSummary = req.ParameterAssignments.Count > 0
-                        ? "\nParámetros: " + string.Join(", ", req.ParameterAssignments.Select(p => $"{p.ParameterName}='{p.NewValue}'"))
-                        : "";
-                    MessageBox.Show(
-                        $"[Sandbox] Asignar valores:\nWorkset: {(req.AssignWorkset ? req.WorksetId.ToString() : "(ninguno)")}{paramsSummary}",
-                        "Sandbox — Asignar valores mock", MessageBoxButton.OK, MessageBoxImage.Information);
-                };
-
                 SeleccionarGalleryWindow? win = null;
                 win = new SeleccionarGalleryWindow(
-                    categories:       categories,
-                    worksets:         worksets,
-                    compatibleParams: compatibleParams,
-                    selectionSummary: selectionSummary,
-                    presetRepo:       presetRepo,
-                    raiseApply:       applyFilter,
-                    raiseAssign:      assignSubproject,
-                    raiseOrdenar:     () =>
+                    categories:         categories,
+                    allParamInfos:      allParamInfos,
+                    paramsByCategory:   paramsByCategory,
+                    selectionSummary:   selectionSummary,
+                    presetRepo:         presetRepo,
+                    raiseApply:         applyFilter,
+                    raiseOpenAssign:    () => MessageBox.Show("[Sandbox] Abrir modal Asignar Subproyecto", "Sandbox", MessageBoxButton.OK),
+                    raiseOrdenar:       () =>
                     {
                         IReadOnlyList<string> GetCategoriesByType(string type) => type == "Modelo"
                             ? new List<string> { "Puertas", "Ventanas", "Muros", "Columnas", "Mobiliario", "Escaleras" }
@@ -552,12 +570,14 @@ namespace BIMPills.UI.Sandbox
                         };
                         var ordenarWin = new OrdenarWindow(GetCategoriesByType, GetParamsByCategory)
                         {
-                            Owner = win   // igual que FindSelectModal → ESC por niveles
+                            Owner = win
                         };
                         ordenarWin.ShowDialog();
                     },
-                    onApplyDone:      cb => { /* no-op en sandbox */ },
-                    onAssignDone:     cb => { /* no-op en sandbox */ });
+                    onApplyDone:        cb => { /* no-op en sandbox */ },
+                    onAssignDone:       cb => { /* no-op en sandbox */ },
+                    onEyedropperReady:  cb => { /* no-op en sandbox */ },
+                    onRectSelectReady:  cb => { /* no-op en sandbox */ });
 
                 win.Show();
             }
@@ -697,15 +717,22 @@ namespace BIMPills.UI.Sandbox
             {
                 var fakeUpdate = new UpdateInfo
                 {
-                    TagName      = "beta-1.1",
+                    TagName      = "1.0.0-beta.7.0",
                     ReleaseNotes =
-                        "## Novedades en beta 1.1\n\n" +
-                        "- **Auditoría:** Corrección del peso del archivo en modelos colaborativos (BIM 360/ACC/Revit Server)\n" +
-                        "- **Auditoría:** Barras de metodología ahora se llenan según el puntaje real\n" +
-                        "- **UI:** Selección múltiple con Shift+Click en pestaña Purgables\n" +
-                        "- **Auto-update:** Sistema de actualización automática desde GitHub Releases\n" +
-                        "- **Diálogos:** Reemplazo completo de MessageBox por BimPillsDialog",
-                    InstallerDownloadUrl = "https://github.com/BIM-CA/bim-pills/releases/download/beta-1.1/BIMPills-setup.exe",
+                        "## Nueva herramienta: Seleccionar\n\n" +
+                        "- **Buscar y Seleccionar** — filtros por categoría, parámetros y condiciones con presets guardados; selección rectangular y cuentagotas\n" +
+                        "- **Organizar (Numerador)** — etiquetado secuencial haciendo click en elementos uno a uno (antes era botón independiente, ahora vive dentro de Seleccionar)\n" +
+                        "- **Asignar Valores** — asigna workset y valores de parámetros a toda la selección activa\n\n" +
+                        "## Tablas (Excel)\n\n" +
+                        "- Colores por tipo de parámetro: amarillo = solo lectura, azul = instancia, naranja = tipo\n" +
+                        "- Auto-filtros en cabeceras de columna\n" +
+                        "- Hoja de instrucciones incluida en cada exportación\n" +
+                        "- Importación detecta solo las celdas realmente modificadas\n" +
+                        "- Escritura correcta de parámetros de tipo (Descripción, Función, etc.)\n\n" +
+                        "## Auditoría\n\n" +
+                        "- Tipos de familia sin uso aparecen como purgables de forma segura\n" +
+                        "- Filtro de tipo reemplazado por menú desplegable dinámico (se adapta a cada modelo)",
+                    InstallerDownloadUrl = "https://github.com/BIM-CA/bim-pills/releases/download/beta-7.0/BIMPills-beta-7.0-Setup.exe",
                 };
 
                 // Simular descarga: espera 2 segundos y retorna ruta ficticia

@@ -250,14 +250,15 @@ namespace BIMPills.Infrastructure.Licensing
                         return false; // Key exists but is past grace period — reject activation
                 }
 
-                // Write Machine ID + Ultima Validacion to Airtable
+                // Write Machine ID + Ultima Validacion + Version to Airtable
                 var patchUrl = $"https://api.airtable.com/v0/{BaseId}/{TableId}/{recordId}";
                 var patchBody = new JObject
                 {
                     ["fields"] = new JObject
                     {
-                        ["Machine ID"] = machineId,
-                        ["\u00DAltima Validaci\u00F3n"] = DateTime.UtcNow.ToString("o")
+                        ["Machine ID"]         = machineId,
+                        ["\u00DAltima Validaci\u00F3n"]  = DateTime.UtcNow.ToString("o"),
+                        ["Version"]            = GetPluginVersion()
                     }
                 };
 
@@ -343,7 +344,8 @@ namespace BIMPills.Infrastructure.Licensing
                 {
                     ["fields"] = new JObject
                     {
-                        ["\u00DAltima Validaci\u00F3n"] = DateTime.UtcNow.ToString("o")
+                        ["\u00DAltima Validaci\u00F3n"] = DateTime.UtcNow.ToString("o"),
+                        ["Version"]                     = GetPluginVersion()
                     }
                 };
 
@@ -390,5 +392,33 @@ namespace BIMPills.Infrastructure.Licensing
 
         private static DateTime ToUtc(DateTime dt)
             => dt.Kind == DateTimeKind.Utc ? dt : dt.ToUniversalTime();
+
+        /// <summary>
+        /// Devuelve la versión del plugin en formato corto — ej. "beta 7.0".
+        /// Elimina el prefijo "1.0.0-" del InformationalVersion para mostrar solo el número de beta.
+        /// </summary>
+        private static string GetPluginVersion()
+        {
+            try
+            {
+                var asm = typeof(AirtableLicenseService).Assembly;
+                var attr = asm.GetCustomAttributes(
+                    typeof(System.Reflection.AssemblyInformationalVersionAttribute), false);
+                if (attr.Length > 0)
+                {
+                    var raw = ((System.Reflection.AssemblyInformationalVersionAttribute)attr[0])
+                        .InformationalVersion;
+
+                    // "1.0.0-beta.7.0" → "beta 7.0"
+                    var betaIdx = raw.IndexOf("-beta.", StringComparison.OrdinalIgnoreCase);
+                    if (betaIdx >= 0)
+                        return "beta " + raw.Substring(betaIdx + 6);
+
+                    return raw;
+                }
+            }
+            catch { }
+            return "unknown";
+        }
     }
 }
