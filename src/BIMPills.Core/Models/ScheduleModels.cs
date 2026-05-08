@@ -17,10 +17,13 @@ namespace BIMPills.Core.Models
     /// <summary>Info about a single field/column in a schedule.</summary>
     public class ScheduleColumnInfo
     {
-        public string Name          { get; set; } = "";
-        public string ParameterName { get; set; } = "";
-        public bool   IsReadOnly    { get; set; }
-        public string StorageType   { get; set; } = "";  // "String", "Integer", "Double"
+        public string Name            { get; set; } = "";
+        public string ParameterName   { get; set; } = "";
+        public bool   IsReadOnly      { get; set; }
+        /// <summary>True when the parameter is defined on the element type (FamilySymbol);
+        /// false means it is an instance parameter. Only meaningful when IsReadOnly is false.</summary>
+        public bool   IsTypeParameter { get; set; }
+        public string StorageType     { get; set; } = "";  // "String", "Integer", "Double"
     }
 
     /// <summary>Full data snapshot of a schedule — schedule info + columns + rows.</summary>
@@ -40,6 +43,8 @@ namespace BIMPills.Core.Models
         public long   ElementId     { get; set; }
         public string ParameterName { get; set; } = "";
         public string NewValue      { get; set; } = "";
+        /// <summary>Value before the change, populated by the importer when original data is available.</summary>
+        public string CurrentValue  { get; set; } = "";
     }
 
     /// <summary>Result of a batch parameter update operation.</summary>

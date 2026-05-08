@@ -182,7 +182,7 @@ namespace BIMPills.UI.Export.Parameters
             if (HideUncheckedCheck?.IsChecked == true && !vm.IsChecked) return false;
 
             if (!string.IsNullOrEmpty(ParamSearch?.Text) &&
-                vm.DisplayName.IndexOf(ParamSearch.Text, StringComparison.OrdinalIgnoreCase) < 0)
+                vm.DisplayName.IndexOf(ParamSearch!.Text, StringComparison.OrdinalIgnoreCase) < 0)
                 return false;
 
             if (_paramsByCategory == null) return true;

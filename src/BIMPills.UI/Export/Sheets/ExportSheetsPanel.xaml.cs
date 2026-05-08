@@ -326,7 +326,7 @@ namespace BIMPills.UI.Export.Sheets
 
             // Render the tree — base folder first, then each sub-folder with its files.
             var lines = new List<string>();
-            var baseName = Path.GetFileName(_selectedFolder.TrimEnd('\\', '/'));
+            var baseName = Path.GetFileName(_selectedFolder!.TrimEnd('\\', '/'));
             if (string.IsNullOrEmpty(baseName)) baseName = _selectedFolder;
             lines.Add($"\U0001F4C1 {baseName}/");
 
@@ -748,7 +748,7 @@ namespace BIMPills.UI.Export.Sheets
 
             var set = new PublicationSet
             {
-                Name = name.Trim(),
+                Name = name!.Trim(),
                 Items = items
             };
             CaptureExportSettings(set);
@@ -822,7 +822,7 @@ namespace BIMPills.UI.Export.Sheets
                 var newName = PromptForSetName(set.Name);
                 if (string.IsNullOrWhiteSpace(newName)) return;
 
-                set.Name = newName.Trim();
+                set.Name = newName!.Trim();
                 _publicationSetRepo?.Update(set);
                 LoadPublicationSets();
                 SelectSetById(set.Id);
@@ -1133,7 +1133,7 @@ namespace BIMPills.UI.Export.Sheets
             {
                 var profile = new SheetExportProfile
                 {
-                    Name               = name.Trim(),
+                    Name               = name!.Trim(),
                     Format             = GetSelectedFormat(),
                     NamingConvention   = new SheetNamingConvention { Pattern = NamingPatternBox?.Text ?? "{SheetNumber}-{SheetName}" },
                     FolderOrganization = GetSelectedFolderOrganization(),
@@ -1275,6 +1275,7 @@ namespace BIMPills.UI.Export.Sheets
             try
             {
                 if (string.IsNullOrEmpty(_selectedFolder)) return;
+                var selectedFolder = _selectedFolder!;
 
                 bool exportPdf = PdfCheck.IsChecked == true;
                 bool exportDwg = DwgCheck.IsChecked == true;
@@ -1300,7 +1301,7 @@ namespace BIMPills.UI.Export.Sheets
 
                     if (exportPdf)
                     {
-                        var folder = GetExportFolder(_selectedFolder, folderOrg, "PDF", row.Discipline);
+                        var folder = GetExportFolder(selectedFolder, folderOrg, "PDF", row.Discipline);
                         Directory.CreateDirectory(folder);
                         queue.Add(new ExportQueueItem
                         {
@@ -1315,7 +1316,7 @@ namespace BIMPills.UI.Export.Sheets
 
                     if (exportDwg)
                     {
-                        var folder = GetExportFolder(_selectedFolder, folderOrg, "DWG", row.Discipline);
+                        var folder = GetExportFolder(selectedFolder, folderOrg, "DWG", row.Discipline);
                         Directory.CreateDirectory(folder);
                         queue.Add(new ExportQueueItem
                         {
@@ -1553,7 +1554,7 @@ namespace BIMPills.UI.Export.Sheets
                 defaultValue: $"Preset {DateTime.Now:yyyy-MM-dd}");
             if (string.IsNullOrWhiteSpace(name)) return;
 
-            var preset = new ExportConfigPreset { Name = name.Trim() };
+            var preset = new ExportConfigPreset { Name = name!.Trim() };
             CaptureFormatSettings(preset);
             _exportConfigPresetRepo?.Create(preset);
             ReloadBothPresetCombos(preset.Id);
@@ -1580,7 +1581,7 @@ namespace BIMPills.UI.Export.Sheets
                     defaultValue: preset.Name);
                 if (string.IsNullOrWhiteSpace(newName)) return;
 
-                preset.Name = newName.Trim();
+                preset.Name = newName!.Trim();
                 _exportConfigPresetRepo?.Update(preset);
                 ReloadBothPresetCombos(preset.Id);
             }
@@ -1797,7 +1798,7 @@ namespace BIMPills.UI.Export.Sheets
                 defaultValue: $"Preset {DateTime.Now:yyyy-MM-dd}");
             if (string.IsNullOrWhiteSpace(name)) return;
 
-            var preset = new ExportConfigPreset { Name = name.Trim() };
+            var preset = new ExportConfigPreset { Name = name!.Trim() };
             CaptureFormatSettings(preset);
 
             _exportConfigPresetRepo?.Create(preset);
@@ -1827,7 +1828,7 @@ namespace BIMPills.UI.Export.Sheets
                     defaultValue: preset.Name);
                 if (string.IsNullOrWhiteSpace(newName)) return;
 
-                preset.Name = newName.Trim();
+                preset.Name = newName!.Trim();
                 _exportConfigPresetRepo?.Update(preset);
                 LoadExportConfigPresets();
                 SelectPresetInCombo(preset.Id);

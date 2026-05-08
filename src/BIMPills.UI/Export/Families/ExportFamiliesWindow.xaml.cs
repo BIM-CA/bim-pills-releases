@@ -80,7 +80,7 @@ namespace BIMPills.UI.Export.Families
 
         private void UpdateFolderPreview()
         {
-            string basePath = _selectedFolder ?? "C:\\...";
+            string basePath = _selectedFolder ?? "";
             string projectFolder = SanitizeFileName(
                 !string.IsNullOrEmpty(_documentTitle) ? _documentTitle : "Proyecto");
             var distinctCategories = _families.Select(f => f.Category).Distinct().ToList();

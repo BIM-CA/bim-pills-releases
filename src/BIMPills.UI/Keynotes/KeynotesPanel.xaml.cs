@@ -116,7 +116,7 @@ namespace BIMPills.UI.Keynotes
             {
                 if (File.Exists(keynoteFilePath))
                 {
-                    LoadFromFile(keynoteFilePath);
+                    LoadFromFile(keynoteFilePath!);
                 }
                 else
                 {
@@ -190,7 +190,17 @@ namespace BIMPills.UI.Keynotes
         {
             var bom = new byte[4];
             using (var fs = File.OpenRead(path))
-                fs.Read(bom, 0, Math.Min(4, (int)fs.Length));
+            {
+                // Read all available bytes up to 4 — loop to handle partial reads (CA2022)
+                int toRead = Math.Min(4, (int)fs.Length);
+                int offset = 0;
+                while (offset < toRead)
+                {
+                    int n = fs.Read(bom, offset, toRead - offset);
+                    if (n == 0) break;
+                    offset += n;
+                }
+            }
 
             if (bom[0] == 0xFF && bom[1] == 0xFE) return System.Text.Encoding.Unicode;        // UTF-16 LE
             if (bom[0] == 0xFE && bom[1] == 0xFF) return System.Text.Encoding.BigEndianUnicode; // UTF-16 BE

@@ -116,37 +116,26 @@ namespace BIMPills.Revit.Application
         }
 
         /// <summary>
-        /// Registers global unhandled-exception handlers so that no BIMPills exception
-        /// can propagate unhandled and crash Revit.
+        /// Registers global unhandled-exception handlers for BIMPills.
+        ///
+        /// IMPORTANT: We intentionally do NOT hook Dispatcher.CurrentDispatcher.UnhandledException.
+        /// That dispatcher is shared among ALL Revit add-ins in the same process. Subscribing to it
+        /// would intercept exceptions thrown by other add-ins (e.g. DiRoots, pyRevit…) and display
+        /// a false "BIM Pills — Error inesperado" dialog that confuses users and can even suppress
+        /// Revit's own error recovery.
+        ///
+        /// Our own commands are protected at every entry point via try/catch in RevitCommandBase
+        /// and individual Execute() overrides, so no BIMPills exception will go unhandled.
         /// </summary>
         private static void RegisterGlobalExceptionHandlers(ILogger logger)
         {
-            // Catch all unhandled WPF UI-thread exceptions — prevents Revit crash
-            System.Windows.Threading.Dispatcher.CurrentDispatcher.UnhandledException += (s, e) =>
-            {
-                try
-                {
-                    logger?.Error("Excepción no controlada en hilo UI de BIMPills", e.Exception);
-
-                    System.Windows.MessageBox.Show(
-                        $"Ocurrió un error inesperado en BIM Pills:\n\n{e.Exception?.Message}\n\nEl error ha sido registrado en el log.",
-                        "BIM Pills — Error inesperado",
-                        System.Windows.MessageBoxButton.OK,
-                        System.Windows.MessageBoxImage.Error);
-                }
-                finally
-                {
-                    // CRITICAL: prevents crash propagation to Revit
-                    e.Handled = true;
-                }
-            };
-
-            // Catch unhandled non-UI thread exceptions (best-effort logging; CLR may still terminate)
+            // Best-effort logging of non-UI thread AppDomain exceptions (no UI shown — we cannot
+            // attribute these to BIMPills with certainty and showing a dialog here would be wrong).
             AppDomain.CurrentDomain.UnhandledException += (s, e) =>
             {
                 try
                 {
-                    logger?.Error("Excepción fatal en AppDomain de BIMPills", e.ExceptionObject as Exception);
+                    logger?.Error("Excepción fatal en AppDomain (posiblemente de otro add-in)", e.ExceptionObject as Exception);
                 }
                 catch
                 {

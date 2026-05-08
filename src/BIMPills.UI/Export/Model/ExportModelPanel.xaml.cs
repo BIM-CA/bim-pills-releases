@@ -155,7 +155,7 @@ namespace BIMPills.UI.Export.Model
         private void AddParam_Click(object sender, RoutedEventArgs e)
         {
             var param = (ParamSelectorCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString();
-            if (!string.IsNullOrEmpty(param)) InsertToken(param);
+            if (!string.IsNullOrEmpty(param)) InsertToken(param!);
         }
 
         private void InsertToken(string paramName)
@@ -247,7 +247,7 @@ namespace BIMPills.UI.Export.Model
             if (string.IsNullOrWhiteSpace(name)) return;
 
             var config = GetConfig();
-            var preset = new NwcExportPreset { Name = name, Config = config };
+            var preset = new NwcExportPreset { Name = name!, Config = config };
             _presets.Add(preset);
 
             PresetCombo.Items.Add(new ComboBoxItem { Content = name, Tag = preset.Id });

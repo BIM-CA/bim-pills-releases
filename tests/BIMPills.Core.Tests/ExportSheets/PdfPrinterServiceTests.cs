@@ -1,7 +1,10 @@
 using BIMPills.Infrastructure.Services;
 using Microsoft.Win32;
 using System;
+using System.Runtime.Versioning;
 using Xunit;
+
+#pragma warning disable CA1416 // Registry API es Windows-only — estos tests solo corren en Windows
 
 namespace BIMPills.Core.Tests.ExportSheets
 {

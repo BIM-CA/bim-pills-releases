@@ -62,11 +62,11 @@ namespace BIMPills.Revit.Commands.ParameterExtractor
                 var catName = elem.Category?.Name;
                 if (string.IsNullOrWhiteSpace(catName)) continue;
 
-                categories.Add(catName);
+                categories.Add(catName!);
 
                 // Curve flag — once set to true for a category it never goes back
-                if (!hasCurve.TryGetValue(catName, out var already) || !already)
-                    hasCurve[catName] = isCurve;
+                if (!hasCurve.TryGetValue(catName!, out var already) || !already)
+                    hasCurve[catName!] = isCurve;
 
                 // Family / Type — cached per ElementType
                 var typeId = elem.GetTypeId();
@@ -81,8 +81,8 @@ namespace BIMPills.Revit.Commands.ParameterExtractor
                 if (string.IsNullOrWhiteSpace(cached.fam) &&
                     string.IsNullOrWhiteSpace(cached.type)) continue;
 
-                if (!famTypes.TryGetValue(catName, out var famDict))
-                    famTypes[catName] = famDict =
+                if (!famTypes.TryGetValue(catName!, out var famDict))
+                    famTypes[catName!] = famDict =
                         new Dictionary<string, SortedSet<string>>(StringComparer.OrdinalIgnoreCase);
 
                 if (!famDict.TryGetValue(cached.fam, out var typeSet))

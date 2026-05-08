@@ -95,7 +95,7 @@ namespace BIMPills.UI.LegendFromExcel
             if (string.IsNullOrEmpty(hex)) return null;
             try
             {
-                hex = hex.TrimStart('#');
+                hex = hex!.TrimStart('#');
                 if (hex.Length == 6)
                 {
                     byte r = Convert.ToByte(hex.Substring(0, 2), 16);

@@ -37,8 +37,8 @@ namespace BIMPills.Core.Tests.ModelAudit
             var result  = new ModelAuditCommand().Execute(context);
 
             Assert.True(result.Success);
-            Assert.Equal(0, ModelAuditCommand.LastResult!.Warnings.Count);
-            Assert.Equal(0, ModelAuditCommand.LastResult!.UnplacedViews.Count);
+            Assert.Empty(ModelAuditCommand.LastResult!.Warnings);
+            Assert.Empty(ModelAuditCommand.LastResult!.UnplacedViews);
         }
 
         [Fact]

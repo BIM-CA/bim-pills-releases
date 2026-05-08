@@ -117,7 +117,7 @@ namespace BIMPills.UI.Documentacion
             var tag = card.Tag?.ToString();
             if (string.IsNullOrEmpty(tag)) return;
 
-            _selectedScheme = tag;
+            _selectedScheme = tag!;
 
             // Toggle radio buttons
             if (tag == "opening-width")

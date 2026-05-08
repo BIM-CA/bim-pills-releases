@@ -742,7 +742,7 @@ namespace BIMPills.UI.Export.Parameters
             RebuildParamRows();
             var config = BuildConfig();
 
-            var preset = new ExtractionPreset { Name = name, Config = config };
+            var preset = new ExtractionPreset { Name = name!, Config = config };
             if (_presetRepository != null)
                 _presetRepository.Create(preset);
             else
@@ -765,7 +765,7 @@ namespace BIMPills.UI.Export.Parameters
                 owner: Window.GetWindow(this));
             if (!confirmed) return;
 
-            _presetRepository?.Delete(id);
+            _presetRepository?.Delete(id!);
             _presets.RemoveAll(p => p.Id == id);
 
             var idx = PresetCombo.SelectedIndex;
@@ -807,7 +807,7 @@ namespace BIMPills.UI.Export.Parameters
                 if (leaf == null) continue;
                 leaf.IsChecked = true;
                 if (!string.IsNullOrWhiteSpace(rule.Target?.ParameterName) &&
-                    rule.Target.ParameterName != leaf.DefaultParamName)
+                    rule.Target!.ParameterName != leaf.DefaultParamName)
                     _customNames[(rule.Source, rule.CoordinateOrigin, rule.GeoFormat)] = rule.Target.ParameterName;
             }
 

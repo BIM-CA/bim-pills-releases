@@ -20,10 +20,11 @@ namespace BIMPills.UI.DataManager
     /// <summary>View model for one row in the diff preview grid.</summary>
     internal sealed class DiffItem
     {
-        public string Tabla      { get; set; } = "";
-        public long   ElementId  { get; set; }
-        public string Parametro  { get; set; } = "";
-        public string NuevoValor { get; set; } = "";
+        public string Tabla        { get; set; } = "";
+        public long   ElementId    { get; set; }
+        public string Parametro    { get; set; } = "";
+        public string ValorActual  { get; set; } = "";
+        public string NuevoValor   { get; set; } = "";
     }
 
     public partial class GestionarWindow : Window
@@ -503,13 +504,23 @@ namespace BIMPills.UI.DataManager
 
             try
             {
-                var multiUpdates = _importer.ImportMultiple(dlg.FileName);
+                // Pass original data callback so only genuinely changed cells are imported
+                var multiUpdates = _importer.ImportMultiple(
+                    dlg.FileName,
+                    scheduleName =>
+                    {
+                        var match = _allSchedules.FirstOrDefault(
+                            s => s.Name.Equals(scheduleName, StringComparison.OrdinalIgnoreCase));
+                        if (match == null) return null;
+                        try { return _documentServices.GetScheduleData(match.Id); }
+                        catch { return null; }
+                    });
 
                 if (multiUpdates.Count == 0)
                 {
-                    BimPillsDialog.Warning(
-                        header: "Sin datos importables",
-                        message: "No se detectaron datos importables en el archivo seleccionado.",
+                    BimPillsDialog.Info(
+                        header: "Sin cambios",
+                        message: "No se detectaron cambios entre el archivo y el modelo actual.",
                         owner: this);
                     return;
                 }
@@ -525,10 +536,11 @@ namespace BIMPills.UI.DataManager
                     {
                         diffItems.Add(new DiffItem
                         {
-                            Tabla      = kvp.Key,
-                            ElementId  = u.ElementId,
-                            Parametro  = u.ParameterName,
-                            NuevoValor = u.NewValue
+                            Tabla       = kvp.Key,
+                            ElementId   = u.ElementId,
+                            Parametro   = u.ParameterName,
+                            ValorActual = u.CurrentValue,
+                            NuevoValor  = u.NewValue
                         });
                     }
                 }

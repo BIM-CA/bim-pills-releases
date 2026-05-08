@@ -75,11 +75,11 @@ namespace BIMPills.UI.Gestion
             var name = PromptForName("Nuevo subproyecto", "Nombre del subproyecto:", "");
             if (string.IsNullOrWhiteSpace(name)) return;
 
-            if (_createCallback != null && _createCallback(name))
+            if (_createCallback != null && _createCallback(name!))
             {
                 _worksets.Add(new WorksetViewModel(new WorksetInfo
                 {
-                    Name = name,
+                    Name = name!,
                     IsOpen = true,
                     IsEditable = true,
                     Owner = "",
@@ -102,9 +102,9 @@ namespace BIMPills.UI.Gestion
                 var newName = PromptForName("Renombrar subproyecto", "Nuevo nombre:", ws.Name);
                 if (string.IsNullOrWhiteSpace(newName) || newName == ws.Name) return;
 
-                if (_renameCallback != null && _renameCallback(ws.Id, newName))
+                if (_renameCallback != null && _renameCallback(ws.Id, newName!))
                 {
-                    ws.Name = newName;
+                    ws.Name = newName!;
                 }
                 else
                 {

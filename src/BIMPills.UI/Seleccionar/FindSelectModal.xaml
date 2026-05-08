@@ -102,8 +102,9 @@
                                         </ControlTemplate.Triggers>
                                     </ControlTemplate>
                                 </Button.Template>
-                                <TextBlock Text="▶" FontSize="11"
-                                           Foreground="{StaticResource PrimaryBrush}"/>
+                                <TextBlock Text="⋮" FontSize="14"
+                                           Foreground="{StaticResource PrimaryBrush}"
+                                           FontWeight="Bold"/>
                             </Button>
                         </Grid>
 

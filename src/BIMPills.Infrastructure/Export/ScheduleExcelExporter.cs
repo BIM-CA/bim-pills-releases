@@ -65,6 +65,7 @@ namespace BIMPills.Infrastructure.Export
                 WriteScheduleSheet(ws, data);
             }
 
+            WriteInstructionsSheet(wb);
             wb.SaveAs(filePath);
             return filePath;
         }
@@ -92,9 +93,21 @@ namespace BIMPills.Infrastructure.Export
             using var wb = new XLWorkbook();
             var ws = wb.Worksheets.Add(safeName.Length > 31 ? safeName.Substring(0, 31) : safeName);
             WriteScheduleSheet(ws, data);
+            WriteInstructionsSheet(wb);
             wb.SaveAs(filePath);
             return filePath;
         }
+
+        // ── Column colour palette ────────────────────────────────────────────
+        // Read-only:           yellow  — cannot be edited
+        // Instance (writable): blue    — edits this element only
+        // Type (writable):     orange  — edits the whole element type
+        private static readonly XLColor ColHeaderReadOnly  = XLColor.FromHtml("#FFF9C4");
+        private static readonly XLColor ColCellReadOnly    = XLColor.FromHtml("#FFFDE7");
+        private static readonly XLColor ColHeaderInstance  = XLColor.FromHtml("#BBDEFB");
+        private static readonly XLColor ColCellInstance    = XLColor.FromHtml("#E3F2FD");
+        private static readonly XLColor ColHeaderType      = XLColor.FromHtml("#FFE0B2");
+        private static readonly XLColor ColCellType        = XLColor.FromHtml("#FFF3E0");
 
         private static void WriteScheduleSheet(IXLWorksheet ws, ScheduleData data)
         {
@@ -121,9 +134,13 @@ namespace BIMPills.Infrastructure.Export
                 var headerCell = ws.Cell(2, c + 2);
                 headerCell.Value = col.Name;
                 headerCell.Style.Font.Bold = true;
-                headerCell.Style.Fill.BackgroundColor = XLColor.FromHtml("#E5E5EA");
+
                 if (col.IsReadOnly)
-                    headerCell.Style.Fill.BackgroundColor = XLColor.FromHtml("#FFF9C4");
+                    headerCell.Style.Fill.BackgroundColor = ColHeaderReadOnly;
+                else if (col.IsTypeParameter)
+                    headerCell.Style.Fill.BackgroundColor = ColHeaderType;
+                else
+                    headerCell.Style.Fill.BackgroundColor = ColHeaderInstance;
             }
 
             // ── Rows 3+: data ────────────────────────────────────────────────
@@ -138,22 +155,22 @@ namespace BIMPills.Infrastructure.Export
                 var row = data.Rows[r];
                 for (int c = 0; c < data.Columns.Count; c++)
                 {
+                    var col  = data.Columns[c];
                     var cell = ws.Cell(excelRow, c + 2);
                     cell.Value = c < row.Count ? row[c] : "";
 
-                    if (data.Columns[c].IsReadOnly)
+                    if (col.IsReadOnly)
                     {
-                        cell.Style.Fill.BackgroundColor = XLColor.FromHtml("#FFFDE7");
+                        cell.Style.Fill.BackgroundColor = ColCellReadOnly;
                         cell.Style.Protection.Locked = true;
                     }
-                }
-
-                if (excelRow % 2 == 1)
-                {
-                    for (int c = 2; c <= data.Columns.Count + 1; c++)
+                    else if (col.IsTypeParameter && excelRow % 2 == 1)
                     {
-                        if (!data.Columns[c - 2].IsReadOnly)
-                            ws.Cell(excelRow, c).Style.Fill.BackgroundColor = XLColor.FromHtml("#FAFAFA");
+                        cell.Style.Fill.BackgroundColor = ColCellType;
+                    }
+                    else if (!col.IsTypeParameter && excelRow % 2 == 1)
+                    {
+                        cell.Style.Fill.BackgroundColor = ColCellInstance;
                     }
                 }
 
@@ -165,6 +182,169 @@ namespace BIMPills.Infrastructure.Export
                 ws.Column(c).AdjustToContents(2, Math.Min(data.Rows.Count + 2, 500));
 
             ws.SheetView.FreezeRows(2);
+
+            // ── Auto-filter on header row ────────────────────────────────────
+            // Apply to row 2 (headers) covering all data columns.
+            // Auto-filter on row 1 (title) would be wrong since it's merged.
+            int lastDataRow = Math.Max(excelRow - 1, 2);
+            ws.Range(2, 1, lastDataRow, data.Columns.Count + 1).SetAutoFilter();
+        }
+
+        private static void WriteInstructionsSheet(XLWorkbook wb)
+        {
+            var ws = wb.Worksheets.Add("📋 Instrucciones");
+
+            // ── Helpers ──────────────────────────────────────────────────────
+            void Title(int row, string text)
+            {
+                var c = ws.Cell(row, 1);
+                c.Value = text;
+                c.Style.Font.Bold      = true;
+                c.Style.Font.FontSize  = 13;
+                c.Style.Font.FontColor = XLColor.FromHtml("#212B37");
+                ws.Range(row, 1, row, 6).Merge();
+            }
+
+            void Body(int row, string text)
+            {
+                var c = ws.Cell(row, 1);
+                c.Value = text;
+                c.Style.Font.FontSize = 11;
+                ws.Range(row, 1, row, 6).Merge();
+                c.Style.Alignment.WrapText = true;
+            }
+
+            void ColorRow(int row, XLColor headerColor, XLColor cellColor, string label, string description)
+            {
+                // Swatch cell
+                var swatch = ws.Cell(row, 1);
+                swatch.Value = label;
+                swatch.Style.Fill.BackgroundColor = headerColor;
+                swatch.Style.Font.Bold  = true;
+                swatch.Style.Font.FontSize = 11;
+                swatch.Style.Alignment.Horizontal  = XLAlignmentHorizontalValues.Center;
+                swatch.Style.Alignment.Vertical    = XLAlignmentVerticalValues.Center;
+                ws.Column(1).Width = 22;
+
+                // Sample data cell
+                var sample = ws.Cell(row, 2);
+                sample.Value = "Ejemplo";
+                sample.Style.Fill.BackgroundColor  = cellColor;
+                sample.Style.Font.FontSize         = 11;
+                sample.Style.Alignment.Horizontal  = XLAlignmentHorizontalValues.Center;
+                sample.Style.Alignment.Vertical    = XLAlignmentVerticalValues.Center;
+                ws.Column(2).Width = 14;
+
+                // Description — columna ancha, sin WrapText para evitar corte por altura fija
+                var desc = ws.Cell(row, 3);
+                desc.Value = description;
+                desc.Style.Font.FontSize           = 11;
+                desc.Style.Alignment.Vertical      = XLAlignmentVerticalValues.Center;
+                desc.Style.Alignment.WrapText      = false;   // texto en una línea, sin corte
+                ws.Range(row, 3, row, 6).Merge();             // fusionar hasta col F para dar más espacio
+                ws.Column(3).Width = 80;                      // suficiente para la descripción más larga
+
+                // Altura fija cómoda para una sola línea
+                ws.Row(row).Height = 28;
+            }
+
+            void Separator(int row)
+            {
+                ws.Range(row, 1, row, 5).Style.Fill.BackgroundColor = XLColor.FromHtml("#F5F5F5");
+            }
+
+            // ── Encabezado principal ──────────────────────────────────────────
+            var header = ws.Cell(1, 1);
+            header.Value = "BIMPills — Guía de uso del archivo Excel";
+            header.Style.Font.Bold      = true;
+            header.Style.Font.FontSize  = 15;
+            header.Style.Font.FontColor = XLColor.White;
+            header.Style.Fill.BackgroundColor = XLColor.FromHtml("#212B37");
+            ws.Range(1, 1, 1, 6).Merge();
+            ws.Row(1).Height = 28;
+
+            // ── Sección 1: Leyenda de colores ─────────────────────────────────
+            Separator(2);
+            Title(3, "1 · Leyenda de colores");
+            Body(4, "Cada columna tiene un color en el encabezado que indica el tipo de parámetro:");
+            ws.Row(4).Height = 22;
+
+            ColorRow(5,
+                XLColor.FromHtml("#BBDEFB"), XLColor.FromHtml("#E3F2FD"),
+                "🔵  Instancia",
+                "Parámetro de instancia — el valor es exclusivo de este elemento. " +
+                "Puedes editarlo libremente sin afectar otros elementos.");
+
+            ColorRow(6,
+                XLColor.FromHtml("#FFE0B2"), XLColor.FromHtml("#FFF3E0"),
+                "🟠  Tipo",
+                "Parámetro de tipo — el valor es compartido por todos los elementos " +
+                "del mismo tipo de familia. Ver sección 2.");
+
+            ColorRow(7,
+                XLColor.FromHtml("#FFF9C4"), XLColor.FromHtml("#FFFDE7"),
+                "🟡  Solo lectura",
+                "Parámetro calculado o de sistema — no se puede modificar. " +
+                "Las celdas amarillas son ignoradas al importar.");
+
+            // ── Sección 2: Parámetros de tipo ─────────────────────────────────
+            Separator(9);
+            Title(10, "2 · Parámetros de tipo (columnas naranjas)");
+
+            Body(11,
+                "⚠️  IMPORTANTE: los parámetros de tipo son compartidos entre todos los elementos " +
+                "que usan el mismo tipo de familia.");
+            ws.Row(11).Height = 30;
+
+            Body(12,
+                "Ejemplo: si tienes 10 puertas de tipo \"P-01\" y cambias la Descripción " +
+                "en una fila, al importar se actualizará la Descripción del tipo \"P-01\" " +
+                "completo — todas las 10 puertas quedarán con el mismo valor nuevo.");
+            ws.Row(12).Height = 40;
+
+            Body(13,
+                "Si dos filas del mismo tipo tienen valores distintos en una columna naranja, " +
+                "prevalecerá el último elemento procesado. Para evitar inconsistencias, " +
+                "asegúrate de que todas las filas del mismo tipo tengan el mismo valor " +
+                "en las columnas naranjas antes de importar.");
+            ws.Row(13).Height = 50;
+
+            // ── Sección 3: Cómo importar ──────────────────────────────────────
+            Separator(15);
+            Title(16, "3 · Cómo importar cambios al modelo");
+
+            var steps = new[]
+            {
+                "① Edita solo las celdas que necesites cambiar (azules o naranjas).",
+                "② No agregues ni elimines filas — el ID de elemento (columna oculta) es necesario para identificar cada fila.",
+                "③ No cambies los encabezados de columna — son usados para identificar el parámetro.",
+                "④ Guarda el archivo Excel.",
+                "⑤ En Revit, abre BIMPills → Gestionar → pestaña Tablas → botón Importar.",
+                "⑥ Selecciona este archivo. BIMPills mostrará solo los cambios detectados.",
+                "⑦ Revisa la lista de cambios y pulsa Aplicar para confirmar."
+            };
+
+            for (int i = 0; i < steps.Length; i++)
+            {
+                int r = 17 + i;
+                Body(r, steps[i]);
+                ws.Row(r).Height = 20;
+            }
+
+            // ── Pie ───────────────────────────────────────────────────────────
+            int footerRow = 25;
+            var footer = ws.Cell(footerRow, 1);
+            footer.Value = $"Generado por BIMPills · {DateTime.Now:dd/MM/yyyy HH:mm}";
+            footer.Style.Font.FontSize  = 9;
+            footer.Style.Font.FontColor = XLColor.FromHtml("#86868B");
+            ws.Range(footerRow, 1, footerRow, 6).Merge();
+
+            // ── Ancho de columnas y formato general ───────────────────────────
+            ws.Column(4).Width = 10;
+            ws.Column(5).Width = 10;
+            ws.SheetView.ZoomScale = 110;
+
+            // No auto-filter en la hoja de instrucciones
         }
 
         private static string SanitizeSheetName(string name)

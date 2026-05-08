@@ -204,7 +204,7 @@
                                     Padding="8,5">
                                 <DockPanel>
                                     <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                                        <Button Content="TODO"
+                                        <Button Content="TODOS"
                                                 ToolTip="Seleccionar todos"
                                                 Style="{StaticResource CompactButton}"
                                                 Click="SelectAllFilter_Click"/>
@@ -267,7 +267,7 @@
                                     Padding="8,5">
                                 <DockPanel>
                                     <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                                        <Button Content="TODO"
+                                        <Button Content="TODOS"
                                                 ToolTip="Seleccionar todos los parámetros"
                                                 Style="{StaticResource CompactButton}"
                                                 Click="SelectAll_Click"/>

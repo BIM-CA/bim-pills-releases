@@ -19,6 +19,8 @@ namespace BIMPills.UI.Seleccionar
         private IReadOnlyList<CategoryElementSummary>  _selectionSummary;
         private readonly ObservableCollection<ParamEditRow>    _paramRows = new();
         private ICollectionView?                               _paramView;
+        /// <summary>IDs snapshotteados en el momento de abrir el modal — no depende de la selección activa al aplicar.</summary>
+        private List<long>                                     _snapshotElementIds = new();
 
         public SubprojectAssignRequest? ResultRequest { get; private set; }
 
@@ -29,12 +31,14 @@ namespace BIMPills.UI.Seleccionar
         public AssignValuesModal(
             IReadOnlyList<WorksetInfo>            worksets,
             IReadOnlyList<ParamInfo>              compatibleParams,
-            IReadOnlyList<CategoryElementSummary> selectionSummary)
+            IReadOnlyList<CategoryElementSummary> selectionSummary,
+            List<long>?                           snapshotElementIds = null)
         {
             InitializeComponent();
 
-            _worksets         = worksets;
-            _selectionSummary = selectionSummary;
+            _worksets            = worksets;
+            _selectionSummary    = selectionSummary;
+            _snapshotElementIds  = snapshotElementIds ?? new List<long>();
 
             // ── Worksets ──────────────────────────────────────────────
             if (worksets.Count == 0)
@@ -84,6 +88,14 @@ namespace BIMPills.UI.Seleccionar
             SummaryTotalLabel.Text   = $"{total} elemento{(total != 1 ? "s" : "")} seleccionado{(total != 1 ? "s" : "")}";
             FooterTotalLabel.Text    = $"{total} seleccionado{(total != 1 ? "s" : "")}";
             FooterEditableLabel.Text = $"{editable} editable{(editable != 1 ? "s" : "")}";
+        }
+
+        /// <summary>
+        /// Actualiza los IDs snapshotteados cuando la selección de Revit cambia mientras el modal está abierto.
+        /// </summary>
+        public void UpdateElementIds(List<long> ids)
+        {
+            _snapshotElementIds = ids ?? new List<long>();
         }
 
         /// <summary>
@@ -171,7 +183,11 @@ namespace BIMPills.UI.Seleccionar
             {
                 WorksetId            = assignWorkset ? _worksets[WorksetCombo.SelectedIndex].Id : 0L,
                 AssignWorkset        = assignWorkset,
-                UseCurrentSelection  = true,
+                // Usar los IDs snapshotteados al abrir el modal (no re-leer la selección al
+                // ejecutar — para ese momento el modal ya cerró y Revit puede haber limpiado
+                // la selección al recuperar el foco).
+                UseCurrentSelection  = false,
+                ElementIds           = _snapshotElementIds,
                 ParameterAssignments = assignments
             };
 

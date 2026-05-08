@@ -47,8 +47,8 @@ namespace BIMPills.Revit.Commands.Seleccionar
                 .ToList();
             Worksets = currentWorksets;
 
-            // ── Leer selección actual ────────────────────────────────────
-            var (compatibleParams, selectionSummary) = ReadSelectionData(uiDoc, doc);
+            // ── Leer selección actual + snapshot de IDs ─────────────────
+            var (compatibleParams, selectionSummary, snapshotIds) = ReadSelectionData(uiDoc, doc);
 
             if (RefreshMode)
             {
@@ -56,12 +56,15 @@ namespace BIMPills.Revit.Commands.Seleccionar
                 var target = OpenModal;
                 if (target != null)
                     target.Dispatcher.Invoke(() =>
-                        target.UpdateParams(compatibleParams, selectionSummary, currentWorksets));
+                    {
+                        target.UpdateParams(compatibleParams, selectionSummary, currentWorksets);
+                        target.UpdateElementIds(snapshotIds);   // actualizar snapshot con la selección nueva
+                    });
                 return;
             }
 
             // ── Abrir modal directamente (ExternalEvent.Execute corre en el hilo UI de Revit) ──
-            var modal = new AssignValuesModal(Worksets, compatibleParams, selectionSummary);
+            var modal = new AssignValuesModal(Worksets, compatibleParams, selectionSummary, snapshotIds);
             modal.OnApply += request => OnAssign?.Invoke(request);
             modal.Closed  += (_, __) => OpenModal = null;
             OpenModal = modal;
@@ -71,16 +74,28 @@ namespace BIMPills.Revit.Commands.Seleccionar
         }
 
         /// <summary>
-        /// Lee la selección activa y calcula parámetros compatibles + resumen.
+        /// Lee la selección activa y calcula parámetros compatibles + resumen + IDs snapshotteados.
         /// </summary>
         private static (IReadOnlyList<ParamInfo> compatibleParams,
-                        IReadOnlyList<CategoryElementSummary> selectionSummary)
+                        IReadOnlyList<CategoryElementSummary> selectionSummary,
+                        List<long> snapshotIds)
             ReadSelectionData(Autodesk.Revit.UI.UIDocument uiDoc, Document doc)
         {
             var selection        = uiDoc.Selection.GetElementIds();
             var selectionSummary = new List<CategoryElementSummary>();
             var paramInfoByName  = new Dictionary<string, ParamInfo>(StringComparer.OrdinalIgnoreCase);
             HashSet<string>? sharedNames = null;
+
+            // Snapshot de IDs para que el handler no dependa de la selección activa al ejecutar
+            var snapshotIds = selection.Select(id =>
+#if REVIT2024
+#pragma warning disable CS0618
+                (long)id.IntegerValue
+#pragma warning restore CS0618
+#else
+                id.Value
+#endif
+            ).ToList();
 
             // Recopilar fases disponibles una sola vez
             var phaseNames = new FilteredElementCollector(doc)
@@ -142,7 +157,7 @@ namespace BIMPills.Revit.Commands.Seleccionar
                 compatibleParams = Array.Empty<ParamInfo>();
             }
 
-            return (compatibleParams, selectionSummary);
+            return (compatibleParams, selectionSummary, snapshotIds);
         }
 
         public string GetName() => "BIMPills: AssignValuesOpenHandler";

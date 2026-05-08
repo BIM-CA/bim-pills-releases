@@ -416,6 +416,8 @@
                                                             Width="100" MinWidth="80"/>
                                         <DataGridTextColumn Header="PARÁMETRO" Binding="{Binding Parametro}"
                                                             Width="180" MinWidth="100"/>
+                                        <DataGridTextColumn Header="VALOR ACTUAL" Binding="{Binding ValorActual}"
+                                                            Width="*" MinWidth="100"/>
                                         <DataGridTextColumn Header="NUEVO VALOR" Binding="{Binding NuevoValor}"
                                                             Width="*" MinWidth="100"/>
                                     </DataGrid.Columns>

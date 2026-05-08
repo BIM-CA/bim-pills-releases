@@ -238,10 +238,14 @@ namespace BIMPills.Revit.Commands.Seleccionar
             {
                 try
                 {
-#pragma warning disable CS0618
                     var r2 = param.Set(phase.Id);
+#if REVIT2024
+#pragma warning disable CS0618
                     DiagLog(diag, $"      → Phase.Set({phase.Id.IntegerValue}) = {r2}");
 #pragma warning restore CS0618
+#else
+                    DiagLog(diag, $"      → Phase.Set({phase.Id.Value}) = {r2}");
+#endif
                     if (r2) return true;
                 }
                 catch (Exception ex) { DiagLog(diag, $"      → Phase.Set EXCEPTION: {ex.Message}"); }
@@ -253,10 +257,14 @@ namespace BIMPills.Revit.Commands.Seleccionar
             {
                 try
                 {
-#pragma warning disable CS0618
                     var r3 = param.Set(level.Id);
+#if REVIT2024
+#pragma warning disable CS0618
                     DiagLog(diag, $"      → Level.Set({level.Id.IntegerValue}) = {r3}");
 #pragma warning restore CS0618
+#else
+                    DiagLog(diag, $"      → Level.Set({level.Id.Value}) = {r3}");
+#endif
                     if (r3) return true;
                 }
                 catch (Exception ex) { DiagLog(diag, $"      → Level.Set EXCEPTION: {ex.Message}"); }

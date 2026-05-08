@@ -170,7 +170,7 @@ namespace BIMPills.UI.MCPIntegration
                 var selectedModel = (ModelCombo.SelectedItem as System.Windows.Controls.ComboBoxItem)
                     ?.Tag?.ToString() ?? "claude-sonnet-4-5";
 
-                SaveClaudeConfig(apiKey, selectedModel);   // ← encrypts with DPAPI
+                SaveClaudeConfig(apiKey!, selectedModel);   // ← encrypts with DPAPI
 
                 SetClaudeStatus(true, "✓ Configuración guardada correctamente");
                 BimPillsDialog.Success(
@@ -277,8 +277,8 @@ namespace BIMPills.UI.MCPIntegration
                 var cfg = new MCPConnectionConfig
                 {
                     Id       = Guid.NewGuid().ToString(),
-                    Name     = name,
-                    Endpoint = endpoint,
+                    Name     = name!,
+                    Endpoint = endpoint!,
                 };
 
                 if (_mcpService != null)

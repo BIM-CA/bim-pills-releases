@@ -108,7 +108,15 @@ namespace BIMPills.Infrastructure.Export
         /// Returns a dictionary mapping schedule name → list of updates.
         /// Each sheet's Row 1 contains the schedule name, Row 2 the headers.
         /// </summary>
-        public Dictionary<string, List<ParameterUpdateRequest>> ImportMultiple(string filePath)
+        /// <param name="filePath">Path to the .xlsx file.</param>
+        /// <param name="getOriginalData">
+        /// Optional callback — given a schedule name, returns the current Revit snapshot for
+        /// change-detection. Only cells where the Excel value differs from the original are
+        /// included in the result. When null, all non-empty cells are returned (legacy behaviour).
+        /// </param>
+        public Dictionary<string, List<ParameterUpdateRequest>> ImportMultiple(
+            string filePath,
+            Func<string, ScheduleData?>? getOriginalData = null)
         {
             if (!File.Exists(filePath))
                 throw new FileNotFoundException("Archivo Excel no encontrado.", filePath);
@@ -130,6 +138,23 @@ namespace BIMPills.Infrastructure.Export
                 for (int col = 2; col <= lastCol; col++)
                     paramNames.Add(ws.Cell(2, col).GetString());
 
+                // Build original-data lookups for change detection (if available)
+                ScheduleData?            origData         = getOriginalData?.Invoke(scheduleName);
+                Dictionary<long, int>?   origIdToIndex    = null;
+                Dictionary<string, int>? origColToIndex   = null;
+
+                if (origData != null)
+                {
+                    origIdToIndex = new Dictionary<long, int>(origData.ElementIds.Count);
+                    for (int i = 0; i < origData.ElementIds.Count; i++)
+                        origIdToIndex[origData.ElementIds[i]] = i;
+
+                    origColToIndex = new Dictionary<string, int>(
+                        origData.Columns.Count, StringComparer.OrdinalIgnoreCase);
+                    for (int i = 0; i < origData.Columns.Count; i++)
+                        origColToIndex[origData.Columns[i].Name] = i;
+                }
+
                 var updates = new List<ParameterUpdateRequest>();
                 for (int row = 3; row <= lastRow; row++)
                 {
@@ -146,11 +171,24 @@ namespace BIMPills.Infrastructure.Export
 
                         var value = ws.Cell(row, col).GetString();
 
+                        // Change-detection: skip cells whose value hasn't changed
+                        string currentValue = "";
+                        if (origIdToIndex  != null && origColToIndex != null &&
+                            origIdToIndex.TryGetValue(elementId, out int origRowIdx) &&
+                            origColToIndex.TryGetValue(paramName,  out int origColIdx) &&
+                            origRowIdx < origData!.Rows.Count)
+                        {
+                            var origRow = origData.Rows[origRowIdx];
+                            currentValue = origColIdx < origRow.Count ? (origRow[origColIdx] ?? "") : "";
+                            if (value == currentValue) continue;   // unchanged — skip
+                        }
+
                         updates.Add(new ParameterUpdateRequest
                         {
                             ElementId     = elementId,
                             ParameterName = paramName,
-                            NewValue      = value
+                            NewValue      = value,
+                            CurrentValue  = currentValue
                         });
                     }
                 }

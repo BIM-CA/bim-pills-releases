@@ -113,7 +113,7 @@ namespace BIMPills.UI.Export.Families
 
         private void UpdateFolderPreview()
         {
-            string basePath = _selectedFolder ?? @"C:\...";
+            string basePath = _selectedFolder ?? "";
             string projectFolder = SanitizeFileName(
                 !string.IsNullOrEmpty(_documentTitle) ? _documentTitle : "Proyecto");
             var categories = _families.Select(f => f.Category).Distinct().OrderBy(c => c).Take(4).ToList();
