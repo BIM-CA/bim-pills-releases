@@ -3,7 +3,7 @@
   <h1>BIM Pills</h1>
   <p><strong>Píldoras inteligentes para optimizar tu flujo de trabajo en Autodesk Revit</strong></p>
   <p>
-    <img src="https://img.shields.io/badge/versión-beta%207.1-EF6337" alt="beta 7.1"/>
+    <img src="https://img.shields.io/badge/versión-beta%207.2-EF6337" alt="beta 7.2"/>
     <img src="https://img.shields.io/badge/Revit-2024%20%7C%202025%20%7C%202026%20%7C%202027-0696D7" alt="Revit Versions"/>
     <img src="https://img.shields.io/badge/plataforma-Windows-informational" alt="Windows"/>
   </p>
@@ -51,13 +51,16 @@ Gestión de notas clave del proyecto: edición, reorganización y sincronizació
 ### 🔄 Trasladar
 Transfiere estándares entre modelos: plantillas de vista, filtros, tipos de línea, patrones de relleno y más, desde un modelo origen hacia el modelo activo.
 
-### 🗂️ Gestionar Datos
-Herramienta de gestión de datos del proyecto: conecta con fuentes externas, actualiza parámetros en masa y mantiene coherencia entre el modelo y la información del proyecto.
+### 🗂️ Tablas
+Gestión y exportación de tablas de planificación (schedules) de Revit a Excel:
+- Vista previa de tablas con colores por tipo de parámetro (azul=instancia, naranja=tipo, amarillo=solo lectura)
+- **Elementos de vínculos** — checkbox para incluir elementos de archivos vinculados (Revit Link); se muestran en gris en la vista previa y en el Excel exportado, con columna de origen y entrada en la leyenda; son ignorados automáticamente al importar
+- Exportación e importación de valores desde/hacia Excel con protección de campos de solo lectura
 
 ### 📋 Documentar
 Herramientas de documentación del modelo:
 - **Acotado** — Acotado automático de elementos (vanos, puertas, ventanas) con esquemas configurables
-- **Leyenda desde Excel** — Dibuja tablas y leyendas en vistas de Revit directamente desde archivos `.xlsx`, con soporte de celdas fusionadas y colores
+- **Dibujar Tabla desde Excel** — Dibuja tablas en vistas de diseño de Revit directamente desde archivos `.xlsx`, con soporte de celdas fusionadas y colores
 
 ### 🔗 Conexión MCP
 Integración experimental con servidores MCP para automatización avanzada del modelo desde herramientas externas.
@@ -81,7 +84,7 @@ Integración experimental con servidores MCP para automatización avanzada del m
 
 1. Descarga el instalador desde [**Releases →**](../../releases/latest)
 2. Cierra Revit si está abierto
-3. Ejecuta **BIMPills-beta-7.1-Setup.exe** como administrador
+3. Ejecuta **BIMPills-beta-7.2-Setup.exe** como administrador
 4. Selecciona las versiones de Revit que tienes instaladas
 5. Abre Revit — BIM Pills aparecerá en la cinta de opciones
 
