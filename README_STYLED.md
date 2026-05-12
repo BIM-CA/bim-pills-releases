@@ -11,16 +11,16 @@
   ─────────────────────────────────────────────────────────────────
 ```
 
-**Versión**: 1.0.0-beta.4.0 &nbsp;·&nbsp; **Desarrollador**: BIM-CA
+**Versión**: 1.0.0-beta.7.2 &nbsp;·&nbsp; **Desarrollador**: BIM-CA
 
 ---
 
-## Novedades en beta.4.0
+## Novedades en beta.7.2
 
-- **Chat de soporte en vivo (Intercom)**: nuevo botón **Soporte** en el ribbon abre un chat flotante directamente en Revit. Tu nombre y email se cargan automáticamente desde la licencia activa. Requiere WebView2 Runtime (instalado automáticamente con el installer).
-- **WebView2 incluido en el installer**: el installer detecta si WebView2 Runtime está presente y lo instala automáticamente si falta — sin ventanas emergentes para el usuario.
-- **Diálogos de error mejorados**: todos los mensajes de error usan ahora el diálogo propio de BIM Pills (con icono y estilo consistente) en lugar del diálogo genérico de Windows.
-- **Correcciones de nombre**: el nombre "BIM Pills" (con espacio) ahora es consistente en todos los mensajes, títulos de ventana y diálogos del plugin.
+- **Tablas — Elementos de vínculos**: nuevo checkbox "Incluir elementos de vínculos" para mostrar elementos de archivos Revit vinculados. Las filas de vínculos se muestran en gris con columna Origen en el Excel exportado.
+- **Dibujar Tabla**: renombrada desde "Leyenda Excel" con nota de tipo de vista compatible.
+- **Notas Clave — codificación ANSI**: los archivos `.txt` se leen y guardan en Windows-1252 (ANSI), garantizando compatibilidad con Revit y soporte correcto de caracteres en español (tildes, ñ, ü).
+- **Notas Clave — selección de texto**: corregido conflicto con drag-and-drop que impedía seleccionar texto en la columna Descripción. El arrastre ahora solo se activa desde el handle (≡).
 
 ---
 
@@ -60,7 +60,7 @@ Numeración incremental interactiva de elementos con prefijos, pasos y sufijos c
 ## Instalación
 
 ### Opción 1: Installer (recomendado)
-1. Ejecuta `BIM Pills 1.0.0-beta.4.0 Setup.exe`
+1. Ejecuta `BIMPills-beta-7.2-Setup.exe`
 2. Selecciona las versiones de Revit a instalar (2024, 2025, 2026, 2027)
 3. Opcionalmente instala **PDF24 Creator** — necesario para exportación PDF silenciosa
 4. **WebView2 Runtime** se instala automáticamente si no está presente (necesario para el chat de soporte)

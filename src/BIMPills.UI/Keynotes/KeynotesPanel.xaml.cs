@@ -205,7 +205,7 @@ namespace BIMPills.UI.Keynotes
             if (bom[0] == 0xFF && bom[1] == 0xFE) return System.Text.Encoding.Unicode;        // UTF-16 LE
             if (bom[0] == 0xFE && bom[1] == 0xFF) return System.Text.Encoding.BigEndianUnicode; // UTF-16 BE
             if (bom[0] == 0xEF && bom[1] == 0xBB && bom[2] == 0xBF) return System.Text.Encoding.UTF8;
-            return System.Text.Encoding.Default; // ANSI fallback
+            return System.Text.Encoding.GetEncoding(1252); // ANSI Windows-1252 (Encoding.Default es UTF-8 en .NET 8+)
         }
 
 
@@ -294,7 +294,9 @@ namespace BIMPills.UI.Keynotes
         private void KeynotesGrid_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             _dragStartPoint = e.GetPosition(null);
-            _dragSource = GetEntryFromPoint(e.GetPosition(KeynotesGrid));
+            // Only allow drag when the click originates in the drag-handle column (first column, 28px wide)
+            var localX = e.GetPosition(KeynotesGrid).X;
+            _dragSource = localX <= 28 ? GetEntryFromPoint(e.GetPosition(KeynotesGrid)) : null;
         }
 
         private void KeynotesGrid_PreviewMouseMove(object sender, MouseEventArgs e)
@@ -604,7 +606,7 @@ namespace BIMPills.UI.Keynotes
 
             try
             {
-                // Write a minimal template with instructions
+                // Write a minimal template with instructions — ANSI (Windows-1252) for Revit compatibility
                 File.WriteAllLines(dlg.FileName, new[]
                 {
                     "# Archivo de notas clave BIM Pills",
@@ -615,7 +617,7 @@ namespace BIMPills.UI.Keynotes
                     "# 01\tEstructura\t",
                     "# 01.01\tHormigón armado\t01",
                     "# 01.01.01\tHA-25/B/20/IIa\t01.01",
-                });
+                }, System.Text.Encoding.GetEncoding(1252));
                 LoadFromFile(dlg.FileName);
             }
             catch (Exception ex)
@@ -679,7 +681,8 @@ namespace BIMPills.UI.Keynotes
                 // Sort in tree order before saving
                 var ordered = SortedTreeOrder(_allEntries).ToList();
                 File.WriteAllLines(_currentFile,
-                    ordered.Select(en => $"{en.Key}\t{en.Description}\t{en.ParentKey}"));
+                    ordered.Select(en => $"{en.Key}\t{en.Description}\t{en.ParentKey}"),
+                    System.Text.Encoding.GetEncoding(1252));
 
                 foreach (var entry in _allEntries) { entry.IsModified = false; entry.IsNew = false; }
                 _hasChanges = false;
