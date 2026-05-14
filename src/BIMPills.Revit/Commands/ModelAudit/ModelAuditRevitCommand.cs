@@ -25,14 +25,13 @@ namespace BIMPills.Revit.Commands.ModelAudit
 
             var logger = ServiceLocator.IsRegistered<ILogger>() ? ServiceLocator.Get<ILogger>() : null;
 
-            System.Action<IReadOnlyList<long>>? purgeCallback = null;
+            Func<IReadOnlyList<long>, IReadOnlyList<long>>? purgeCallback = null;
             if (doc != null)
             {
                 purgeCallback = ids =>
                 {
                     logger?.Info($"[ModelAudit] Iniciando purga de {ids.Count} elementos...");
-                    int purged = 0;
-                    int failed = 0;
+                    var deletedIds = new List<long>();
                     using (var trans = new Transaction(doc, "BIMPills - Purgar elementos"))
                     {
                         trans.Start();
@@ -44,22 +43,21 @@ namespace BIMPills.Revit.Commands.ModelAudit
                                 var elem = doc.GetElement(elementId);
                                 if (elem == null) continue;
 
-                                // Revit 2025+ bug: pinned elements throw on Delete
                                 if (elem.Pinned)
                                     elem.Pinned = false;
 
                                 doc.Delete(elementId);
-                                purged++;
+                                deletedIds.Add(id);
                             }
                             catch (Exception ex)
                             {
-                                logger?.Warning($"[ModelAudit] No se pudo eliminar elemento Id={id}: {ex.Message}");
-                                failed++;
+                                logger?.Warning($"[ModelAudit] No se pudo eliminar Id={id}: {ex.Message}");
                             }
                         }
                         trans.Commit();
                     }
-                    logger?.Info($"[ModelAudit] Purga completada: {purged} eliminados, {failed} omitidos.");
+                    logger?.Info($"[ModelAudit] Purga: {deletedIds.Count} eliminados, {ids.Count - deletedIds.Count} omitidos.");
+                    return deletedIds;
                 };
             }
 

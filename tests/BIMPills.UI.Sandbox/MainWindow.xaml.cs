@@ -124,10 +124,13 @@ namespace BIMPills.UI.Sandbox
                     }
                 };
 
-                // En sandbox, mock callback que simula la purga (solo muestra qué IDs se purgarían)
-                Action<IReadOnlyList<long>> mockPurge = ids =>
+                // En sandbox, mock callback que simula la purga — retorna todos como eliminados
+                Func<IReadOnlyList<long>, IReadOnlyList<long>> mockPurge = ids =>
+                {
                     MessageBox.Show($"[Sandbox] Purgar/eliminar {ids.Count} elementos:\n{string.Join(", ", ids)}",
                         "Sandbox — Mock purge");
+                    return ids;
+                };
 
                 var win = new ModelAuditWindow(result, purgeCallback: mockPurge);
                 win.Show();

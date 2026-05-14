@@ -458,17 +458,9 @@ namespace BIMPills.Revit.Context
             // Tipos de familia sin uso (FamilySymbol con 0 instancias, en familias que sí tienen otros tipos usados)
             try
             {
-                // Recopilar todos los TypeIds en uso en una sola pasada (más eficiente que FamilyInstanceFilter por tipo)
-                var usedTypeIds = new FilteredElementCollector(_doc)
-                    .OfClass(typeof(FamilyInstance))
-                    .Cast<FamilyInstance>()
-                    .Select(fi => fi.GetTypeId())
-                    .ToHashSet();
-
                 var allSymbols = new FilteredElementCollector(_doc)
                     .OfClass(typeof(FamilySymbol))
                     .Cast<FamilySymbol>()
-                    .Where(s => !usedTypeIds.Contains(s.Id))
                     .ToList();
 
                 foreach (var symbol in allSymbols)
@@ -483,8 +475,18 @@ namespace BIMPills.Revit.Context
                         // No se puede borrar el último tipo de una familia
                         if (allTypeIds.Count < 2) continue;
 
-                        // Si ningún tipo de esta familia está en uso, ya queda cubierta por "Familia"
-                        if (!allTypeIds.Any(id => usedTypeIds.Contains(id))) continue;
+                        // Usar FamilyInstanceFilter (mismo enfoque que "Familia") — más fiable que HashSet manual
+                        var instanceCount = new FilteredElementCollector(_doc)
+                            .WherePasses(new FamilyInstanceFilter(_doc, symbol.Id))
+                            .GetElementCount();
+                        if (instanceCount > 0) continue;
+
+                        // Si NINGÚN tipo de la familia tiene instancias, la familia entera ya aparece como "Familia"
+                        bool familyHasAnyInstance = allTypeIds.Any(tid =>
+                            new FilteredElementCollector(_doc)
+                                .WherePasses(new FamilyInstanceFilter(_doc, tid))
+                                .GetElementCount() > 0);
+                        if (!familyHasAnyInstance) continue;
 
                         var category = family.FamilyCategory?.Name ?? "Sin categoría";
                         purgeable.Add(new PurgeableItem(

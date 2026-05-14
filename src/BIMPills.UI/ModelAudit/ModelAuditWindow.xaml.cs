@@ -26,14 +26,15 @@ namespace BIMPills.UI.ModelAudit
         public string PurgeableHeader  => $"Purgables ({_result.PurgeableItems.Count})";
 
         private readonly ModelAuditResult _result;
-        private readonly Action<IReadOnlyList<long>>? _purgeCallback;
+        /// <summary>Recibe IDs a eliminar, retorna los IDs que realmente se eliminaron.</summary>
+        private readonly Func<IReadOnlyList<long>, IReadOnlyList<long>>? _purgeCallback;
         private List<PurgeableItemViewModel> _allPurgeableViewModels = new List<PurgeableItemViewModel>();
         private List<PurgeableItemViewModel> _purgeableViewModels = new List<PurgeableItemViewModel>();
         private string? _activeTypeFilter = null;
         private string _purgeSearchText = "";
         private List<OrphanElementViewModel> _orphanViewModels = new List<OrphanElementViewModel>();
 
-        public ModelAuditWindow(ModelAuditResult result, Action<IReadOnlyList<long>>? purgeCallback = null)
+        public ModelAuditWindow(ModelAuditResult result, Func<IReadOnlyList<long>, IReadOnlyList<long>>? purgeCallback = null)
         {
             _result = result;
             _purgeCallback = purgeCallback;
@@ -274,10 +275,11 @@ namespace BIMPills.UI.ModelAudit
             try
             {
                 var ids = selectedItems.Select(vm => vm.Id).ToList();
-                _purgeCallback(ids);
+                var deletedIds = _purgeCallback(ids).ToHashSet();
 
-                // Remove purged items from both lists
-                foreach (var item in selectedItems)
+                // Solo quitar los que Revit confirmó como eliminados
+                var purged = selectedItems.Where(vm => deletedIds.Contains(vm.Id)).ToList();
+                foreach (var item in purged)
                 {
                     _purgeableViewModels.Remove(item);
                     _allPurgeableViewModels.Remove(item);
@@ -287,10 +289,22 @@ namespace BIMPills.UI.ModelAudit
                 PurgeableGrid.ItemsSource = _purgeableViewModels;
                 UpdatePurgeSelection();
 
-                Shared.BimPillsDialog.Success(
-                    "Purga completada",
-                    $"Se purgaron {selectedItems.Count} elementos exitosamente.",
-                    owner: this);
+                int failed = selectedItems.Count - purged.Count;
+                if (failed == 0)
+                {
+                    Shared.BimPillsDialog.Success(
+                        "Purga completada",
+                        $"Se purgaron {purged.Count} elementos exitosamente.",
+                        owner: this);
+                }
+                else
+                {
+                    Shared.BimPillsDialog.Info(
+                        header: "Purga parcial",
+                        message: $"{purged.Count} elementos eliminados, {failed} no se pudieron eliminar.",
+                        detail: "Los elementos que no se pudieron eliminar pueden tener dependencias en el modelo.",
+                        owner: this);
+                }
             }
             catch (Exception ex)
             {
@@ -382,19 +396,32 @@ namespace BIMPills.UI.ModelAudit
             try
             {
                 var ids = selected.Select(vm => (long)vm.Id).ToList();
-                _purgeCallback(ids);
+                var deletedIds = _purgeCallback(ids).ToHashSet();
 
-                foreach (var vm in selected)
+                var removed = selected.Where(vm => deletedIds.Contains((long)vm.Id)).ToList();
+                foreach (var vm in removed)
                     _orphanViewModels.Remove(vm);
 
                 OrphansGrid.ItemsSource = null;
                 OrphansGrid.ItemsSource = _orphanViewModels;
                 UpdateOrphanSelection();
 
-                Shared.BimPillsDialog.Success(
-                    "Eliminación completada",
-                    $"Se eliminaron {selected.Count} elementos exitosamente.",
-                    owner: this);
+                int failed = selected.Count - removed.Count;
+                if (failed == 0)
+                {
+                    Shared.BimPillsDialog.Success(
+                        "Eliminación completada",
+                        $"Se eliminaron {removed.Count} elementos exitosamente.",
+                        owner: this);
+                }
+                else
+                {
+                    Shared.BimPillsDialog.Info(
+                        header: "Eliminación parcial",
+                        message: $"{removed.Count} elementos eliminados, {failed} no se pudieron eliminar.",
+                        detail: "Los elementos que no se pudieron eliminar pueden tener dependencias en el modelo.",
+                        owner: this);
+                }
             }
             catch (Exception ex)
             {
