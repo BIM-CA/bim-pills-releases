@@ -132,16 +132,35 @@
                                 <TextBlock DockPanel.Dock="Left" Text="Conjuntos:"
                                            FontSize="11" FontFamily="Segoe UI"
                                            Foreground="{StaticResource TextSecondaryBrush}"
-                                           VerticalAlignment="Top" Margin="0,4,8,0"/>
-                                <Border BorderBrush="#D0D0D8" BorderThickness="1" CornerRadius="4"
-                                        Background="#FFFFFF" MinHeight="28">
-                                    <ScrollViewer MaxHeight="96"
-                                                  VerticalScrollBarVisibility="Auto"
-                                                  HorizontalScrollBarVisibility="Disabled"
-                                                  Padding="2">
-                                        <StackPanel x:Name="SetListPanel"/>
-                                    </ScrollViewer>
-                                </Border>
+                                           VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <Button x:Name="MixBtn"
+                                        DockPanel.Dock="Right"
+                                        Content="MIX"
+                                        Style="{StaticResource TertiaryButton}"
+                                        Padding="10,4" FontSize="11"
+                                        Margin="6,0,0,0"
+                                        ToolTip="Combinar varios conjuntos a la vez"
+                                        Click="MixBtn_Click"/>
+                                <ComboBox x:Name="SetCombo"
+                                          Style="{StaticResource BIMPillsComboBox}"
+                                          FontSize="11"
+                                          SelectionChanged="SetCombo_SelectionChanged">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding Label}" FontSize="11"/>
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                    <ComboBox.ItemContainerStyle>
+                                        <Style TargetType="ComboBoxItem">
+                                            <Style.Triggers>
+                                                <!-- Mixed-state marker: shown as header but hidden in dropdown -->
+                                                <DataTrigger Binding="{Binding IsMixed}" Value="True">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </ComboBox.ItemContainerStyle>
+                                </ComboBox>
                             </DockPanel>
                         </DockPanel>
                     </Border>

@@ -930,7 +930,9 @@ namespace BIMPills.UI.Sandbox
             new ScheduleInfo { Id = 5003, Name = "Planilla de Materiales",CategoryName = "Materiales", RowCount = 120, ColumnCount = 6 },
         };
 
-        public ScheduleData GetScheduleData(long scheduleId)
+        public ScheduleData GetScheduleData(long scheduleId) => GetScheduleData(scheduleId, false);
+
+        public ScheduleData GetScheduleData(long scheduleId, bool includeLinks)
         {
             return new ScheduleData
             {

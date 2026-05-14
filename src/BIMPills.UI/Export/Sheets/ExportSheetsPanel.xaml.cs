@@ -30,6 +30,10 @@ namespace BIMPills.UI.Export.Sheets
         private List<PublicationSet> _publicationSets = new List<PublicationSet>();
         /// <summary>IDs de los conjuntos actualmente seleccionados (puede ser más de uno).</summary>
         private readonly HashSet<string> _selectedSetIds = new HashSet<string>();
+        private bool _suppressSetComboEvents;
+
+        private static readonly SetComboItem _noneItem  = new SetComboItem("",         "(Sin conjunto)",                                               false);
+        private static readonly SetComboItem _mixedItem = new SetComboItem("__mixed__", "Diferentes Conjuntos Seleccionados — presiona MIX para ver", true);
 
         // Export config presets
         private JsonExportConfigPresetRepository? _exportConfigPresetRepo;
@@ -497,30 +501,15 @@ namespace BIMPills.UI.Export.Sheets
                 _publicationSetRepo = new JsonPublicationSetRepository(repoPath);
                 _publicationSets = _publicationSetRepo.GetAll();
 
-                // Preserve which sets were checked before reload
-                var previouslyChecked = new HashSet<string>(_selectedSetIds);
-
-                SetListPanel.Children.Clear();
+                var previouslySelected = new HashSet<string>(_selectedSetIds);
                 _selectedSetIds.Clear();
-
-                foreach (var set in _publicationSets)
+                foreach (var id in previouslySelected)
                 {
-                    var cb = new CheckBox
-                    {
-                        Content = $"{set.Name} ({set.Items.Count} items)",
-                        Tag = set.Id,
-                        Padding = new Thickness(6, 3, 6, 3),
-                        FontSize = 11,
-                        IsChecked = previouslyChecked.Contains(set.Id)
-                    };
-                    cb.Checked   += SetCheckbox_Changed;
-                    cb.Unchecked += SetCheckbox_Changed;
-                    SetListPanel.Children.Add(cb);
-
-                    if (cb.IsChecked == true)
-                        _selectedSetIds.Add(set.Id);
+                    if (_publicationSets.Any(s => s.Id == id))
+                        _selectedSetIds.Add(id);
                 }
 
+                RefreshSetCombo();
                 UpdateSetActionButtons();
             }
             catch (Exception ex)
@@ -529,22 +518,91 @@ namespace BIMPills.UI.Export.Sheets
             }
         }
 
-        private void SetCheckbox_Changed(object sender, RoutedEventArgs e)
+        private void RefreshSetCombo()
         {
+            _suppressSetComboEvents = true;
             try
             {
-                // Rebuild selected IDs from checkboxes
+                var items = new List<SetComboItem> { _noneItem };
+                items.AddRange(_publicationSets.Select(s =>
+                    new SetComboItem(s.Id, $"{s.Name}  ({s.Items.Count} items)", false)));
+
+                if (_selectedSetIds.Count >= 2)
+                    items.Insert(0, _mixedItem);
+
+                SetCombo.ItemsSource = items;
+
+                if (_selectedSetIds.Count == 0)
+                    SetCombo.SelectedItem = _noneItem;
+                else if (_selectedSetIds.Count == 1)
+                    SetCombo.SelectedItem = items.FirstOrDefault(i => i.Id == _selectedSetIds.First());
+                else
+                    SetCombo.SelectedItem = _mixedItem;
+            }
+            finally
+            {
+                _suppressSetComboEvents = false;
+            }
+        }
+
+        private void SetCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_suppressSetComboEvents) return;
+            if (SetCombo.SelectedItem is not SetComboItem item) return;
+            if (item.IsMixed) return; // user can't pick this from dropdown (collapsed)
+
+            try
+            {
                 _selectedSetIds.Clear();
-                foreach (CheckBox cb in SetListPanel.Children)
+                if (!string.IsNullOrEmpty(item.Id))
+                    _selectedSetIds.Add(item.Id);
+
+                // Remove mixed marker now that single mode is active
+                var current = (SetCombo.ItemsSource as List<SetComboItem>)?.ToList();
+                if (current != null && current.Contains(_mixedItem))
                 {
-                    if (cb.IsChecked == true && cb.Tag is string id && !string.IsNullOrEmpty(id))
-                        _selectedSetIds.Add(id);
+                    _suppressSetComboEvents = true;
+                    current.Remove(_mixedItem);
+                    SetCombo.ItemsSource = current;
+                    SetCombo.SelectedItem = item;
+                    _suppressSetComboEvents = false;
                 }
 
                 UpdateSetActionButtons();
                 ApplyCombinedSets();
             }
-            catch (Exception ex) { _logger?.Error("Error en SetCheckbox_Changed", ex); }
+            catch (Exception ex) { _logger?.Error("Error en SetCombo_SelectionChanged", ex); }
+        }
+
+        private void MixBtn_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (_publicationSets.Count < 2)
+                {
+                    BimPillsDialog.Info(
+                        header: "Sin conjuntos suficientes",
+                        message: "Necesitas al menos 2 conjuntos guardados para combinar.",
+                        owner: Window.GetWindow(this));
+                    return;
+                }
+
+                var dlg = new MixSetsDialog(_publicationSets, _selectedSetIds)
+                {
+                    Owner = Window.GetWindow(this)
+                };
+
+                if (dlg.ShowDialog() != true) return;
+
+                _selectedSetIds.Clear();
+                foreach (var id in dlg.SelectedSetIds)
+                    _selectedSetIds.Add(id);
+
+                RefreshSetCombo();
+                UpdateSetActionButtons();
+                ApplyCombinedSets();
+            }
+            catch (Exception ex) { _logger?.Error("Error en MixBtn_Click", ex); }
         }
 
         /// <summary>
@@ -765,14 +823,11 @@ namespace BIMPills.UI.Export.Sheets
 
         private void SelectSetById(string setId)
         {
-            foreach (CheckBox cb in SetListPanel.Children)
-            {
-                if (cb.Tag?.ToString() == setId)
-                {
-                    cb.IsChecked = true; // triggers SetCheckbox_Changed
-                    break;
-                }
-            }
+            _selectedSetIds.Clear();
+            if (!string.IsNullOrEmpty(setId))
+                _selectedSetIds.Add(setId);
+            RefreshSetCombo();
+            UpdateSetActionButtons();
         }
 
         private void DeleteSet_Click(object sender, RoutedEventArgs e)
@@ -2404,6 +2459,20 @@ namespace BIMPills.UI.Export.Sheets
         {
             var sheetProxy = new SheetExportInfo(Item.Id, Item.SheetNumber, Item.Name, Item.Revision, Item.Discipline);
             DisplayFileName = convention.GenerateFileName(sheetProxy, projectName, DateTime.Now, Item.ParameterValues);
+        }
+    }
+
+    internal sealed class SetComboItem
+    {
+        public string Id      { get; }
+        public string Label   { get; }
+        public bool   IsMixed { get; }
+
+        public SetComboItem(string id, string label, bool isMixed)
+        {
+            Id      = id;
+            Label   = label;
+            IsMixed = isMixed;
         }
     }
 }

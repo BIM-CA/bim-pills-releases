@@ -1,0 +1,81 @@
+<Window x:Class="BIMPills.UI.Export.Sheets.MixSetsDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Combinar Conjuntos"
+        Width="380" SizeToContent="Height" MaxHeight="520"
+        WindowStartupLocation="CenterOwner"
+        WindowStyle="ToolWindow"
+        ResizeMode="NoResize"
+        Background="White"
+        ShowInTaskbar="False"
+        FontFamily="Segoe UI">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/BIMPills.UI;component/Shared/Styles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0"
+                Background="#FAFAFC"
+                BorderBrush="#E5E5EA" BorderThickness="0,0,0,1"
+                Padding="16,12">
+            <StackPanel>
+                <TextBlock Text="Combinar Conjuntos"
+                           FontSize="13" FontWeight="SemiBold"
+                           Foreground="{StaticResource TextPrimaryBrush}"/>
+                <TextBlock Text="Selecciona los conjuntos que quieres combinar. Se aplicará la unión de todos los items seleccionados."
+                           FontSize="11"
+                           Foreground="{StaticResource TextSecondaryBrush}"
+                           TextWrapping="Wrap"
+                           Margin="0,3,0,0"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Set list -->
+        <ScrollViewer Grid.Row="1"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled"
+                      Padding="16,8">
+            <StackPanel x:Name="SetCheckPanel" Margin="0,4"/>
+        </ScrollViewer>
+
+        <!-- Footer -->
+        <Border Grid.Row="2"
+                Background="#FAFAFC"
+                BorderBrush="#E5E5EA" BorderThickness="0,1,0,0"
+                Padding="16,10">
+            <DockPanel>
+                <TextBlock x:Name="SelectionHint"
+                           DockPanel.Dock="Left"
+                           Text="0 conjuntos seleccionados"
+                           FontSize="11"
+                           Foreground="{StaticResource TextSecondaryBrush}"
+                           VerticalAlignment="Center"/>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="Cancelar"
+                            Style="{StaticResource TertiaryButton}"
+                            Padding="14,6" FontSize="12"
+                            Margin="0,0,8,0"
+                            Click="Cancel_Click"/>
+                    <Button x:Name="ApplyBtn"
+                            Content="Aplicar"
+                            Style="{StaticResource PrimaryButton}"
+                            Padding="14,6" FontSize="12"
+                            IsEnabled="False"
+                            Click="Apply_Click"/>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+    </Grid>
+</Window>
