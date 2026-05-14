@@ -258,9 +258,9 @@ namespace BIMPills.UI.Seleccionar
         public bool HasAllowedValues => AllowedValues != null && AllowedValues.Count > 0;
 
         public bool   IsTypeParam    { get; set; } = false;
-        public string TypeLabel      => IsTypeParam ? "T" : "I";
-        public string TypeLabelColor => IsTypeParam ? "#7B5EA7" : "#2E7D6B";
-        public string TypeLabelBg    => IsTypeParam ? "#F0EBF8" : "#E8F5F0";
+        public string TypeLabel      => IsTypeParam ? "TIPO" : "EJEMPLAR";
+        public string TypeLabelColor => IsTypeParam ? "#FFFFFF" : "#FFFFFF";
+        public string TypeLabelBg    => IsTypeParam ? "#7B5EA7" : "#1565C0";
 
         private string _newValue = string.Empty;
         public string NewValue

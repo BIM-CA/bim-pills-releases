@@ -281,16 +281,16 @@
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellEditingTemplate>
                                     </DataGridTemplateColumn>
-                                    <!-- Columna T/E — badge tipo/instancia al extremo derecho de la fila -->
-                                    <DataGridTemplateColumn Header="" IsReadOnly="True" Width="36">
+                                    <!-- Columna TIPO/EJEMPLAR — badge con color sólido -->
+                                    <DataGridTemplateColumn Header="" IsReadOnly="True" Width="Auto" MinWidth="70">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <Border Background="{Binding TypeLabelBg}"
-                                                        CornerRadius="3" Padding="4,1"
+                                                        CornerRadius="3" Padding="5,2"
                                                         HorizontalAlignment="Center"
                                                         VerticalAlignment="Center">
                                                     <TextBlock Text="{Binding TypeLabel}"
-                                                               FontSize="9" FontWeight="Bold"
+                                                               FontSize="8" FontWeight="Bold"
                                                                Foreground="{Binding TypeLabelColor}"
                                                                FontFamily="Segoe UI"/>
                                                 </Border>
