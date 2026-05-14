@@ -11,9 +11,16 @@
   ─────────────────────────────────────────────────────────────────
 ```
 
-**Versión**: 1.0.0-beta.7.2 &nbsp;·&nbsp; **Desarrollador**: BIM-CA
+**Versión**: 1.0.0-beta.7.3 &nbsp;·&nbsp; **Desarrollador**: BIM-CA
 
 ---
+
+## Novedades en beta.7.3
+
+- **Exportar Planos — Conjuntos**: los conjuntos de publicación ahora aparecen en un ComboBox. Nuevo botón **MIX** para combinar múltiples conjuntos en una sola exportación.
+- **Seleccionar — parámetros TIPO/EJEMPLAR**: las etiquetas ahora muestran el texto completo "TIPO" y "EJEMPLAR" con colores contrastantes (púrpura y azul) en lugar de solo la letra.
+- **Auditar — Purga mejorada**: la purga de elementos es ahora más robusta. Si algún elemento no puede eliminarse, el diálogo muestra el nombre y la razón exacta de Revit para cada fallo en lugar de un mensaje genérico.
+- **Correcciones en Seleccionar**: varios bugs en la asignación de subproyectos y el modal de valores.
 
 ## Novedades en beta.7.2
 
@@ -60,7 +67,7 @@ Numeración incremental interactiva de elementos con prefijos, pasos y sufijos c
 ## Instalación
 
 ### Opción 1: Installer (recomendado)
-1. Ejecuta `BIMPills-beta-7.2-Setup.exe`
+1. Ejecuta `BIMPills-beta-7.3-Setup.exe`
 2. Selecciona las versiones de Revit a instalar (2024, 2025, 2026, 2027)
 3. Opcionalmente instala **PDF24 Creator** — necesario para exportación PDF silenciosa
 4. **WebView2 Runtime** se instala automáticamente si no está presente (necesario para el chat de soporte)

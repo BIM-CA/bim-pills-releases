@@ -26,15 +26,14 @@ namespace BIMPills.UI.ModelAudit
         public string PurgeableHeader  => $"Purgables ({_result.PurgeableItems.Count})";
 
         private readonly ModelAuditResult _result;
-        /// <summary>Recibe IDs a eliminar, retorna los IDs que realmente se eliminaron.</summary>
-        private readonly Func<IReadOnlyList<long>, IReadOnlyList<long>>? _purgeCallback;
+        private readonly Func<IReadOnlyList<long>, PurgeCallbackResult>? _purgeCallback;
         private List<PurgeableItemViewModel> _allPurgeableViewModels = new List<PurgeableItemViewModel>();
         private List<PurgeableItemViewModel> _purgeableViewModels = new List<PurgeableItemViewModel>();
         private string? _activeTypeFilter = null;
         private string _purgeSearchText = "";
         private List<OrphanElementViewModel> _orphanViewModels = new List<OrphanElementViewModel>();
 
-        public ModelAuditWindow(ModelAuditResult result, Func<IReadOnlyList<long>, IReadOnlyList<long>>? purgeCallback = null)
+        public ModelAuditWindow(ModelAuditResult result, Func<IReadOnlyList<long>, PurgeCallbackResult>? purgeCallback = null)
         {
             _result = result;
             _purgeCallback = purgeCallback;
@@ -275,10 +274,11 @@ namespace BIMPills.UI.ModelAudit
             try
             {
                 var ids = selectedItems.Select(vm => vm.Id).ToList();
-                var deletedIds = _purgeCallback(ids).ToHashSet();
+                var result = _purgeCallback(ids);
+                var deletedSet = result.DeletedIds.ToHashSet();
 
                 // Solo quitar los que Revit confirmó como eliminados
-                var purged = selectedItems.Where(vm => deletedIds.Contains(vm.Id)).ToList();
+                var purged = selectedItems.Where(vm => deletedSet.Contains(vm.Id)).ToList();
                 foreach (var item in purged)
                 {
                     _purgeableViewModels.Remove(item);
@@ -289,8 +289,7 @@ namespace BIMPills.UI.ModelAudit
                 PurgeableGrid.ItemsSource = _purgeableViewModels;
                 UpdatePurgeSelection();
 
-                int failed = selectedItems.Count - purged.Count;
-                if (failed == 0)
+                if (result.FailedItems.Count == 0)
                 {
                     Shared.BimPillsDialog.Success(
                         "Purga completada",
@@ -299,10 +298,11 @@ namespace BIMPills.UI.ModelAudit
                 }
                 else
                 {
+                    var detail = BuildFailedDetail(result.FailedItems);
                     Shared.BimPillsDialog.Info(
                         header: "Purga parcial",
-                        message: $"{purged.Count} elementos eliminados, {failed} no se pudieron eliminar.",
-                        detail: "Los elementos que no se pudieron eliminar pueden tener dependencias en el modelo.",
+                        message: $"{purged.Count} elementos eliminados, {result.FailedItems.Count} no se pudieron eliminar.",
+                        detail: detail,
                         owner: this);
                 }
             }
@@ -396,9 +396,10 @@ namespace BIMPills.UI.ModelAudit
             try
             {
                 var ids = selected.Select(vm => (long)vm.Id).ToList();
-                var deletedIds = _purgeCallback(ids).ToHashSet();
+                var result = _purgeCallback(ids);
+                var deletedSet = result.DeletedIds.ToHashSet();
 
-                var removed = selected.Where(vm => deletedIds.Contains((long)vm.Id)).ToList();
+                var removed = selected.Where(vm => deletedSet.Contains((long)vm.Id)).ToList();
                 foreach (var vm in removed)
                     _orphanViewModels.Remove(vm);
 
@@ -406,8 +407,7 @@ namespace BIMPills.UI.ModelAudit
                 OrphansGrid.ItemsSource = _orphanViewModels;
                 UpdateOrphanSelection();
 
-                int failed = selected.Count - removed.Count;
-                if (failed == 0)
+                if (result.FailedItems.Count == 0)
                 {
                     Shared.BimPillsDialog.Success(
                         "Eliminación completada",
@@ -416,10 +416,11 @@ namespace BIMPills.UI.ModelAudit
                 }
                 else
                 {
+                    var detail = BuildFailedDetail(result.FailedItems);
                     Shared.BimPillsDialog.Info(
                         header: "Eliminación parcial",
-                        message: $"{removed.Count} elementos eliminados, {failed} no se pudieron eliminar.",
-                        detail: "Los elementos que no se pudieron eliminar pueden tener dependencias en el modelo.",
+                        message: $"{removed.Count} elementos eliminados, {result.FailedItems.Count} no se pudieron eliminar.",
+                        detail: detail,
                         owner: this);
                 }
             }
@@ -1113,6 +1114,39 @@ namespace BIMPills.UI.ModelAudit
         }
 
         private void CloseButton_Click(object sender, RoutedEventArgs e) => Close();
+
+        private static string BuildFailedDetail(IReadOnlyList<(long Id, string Name, string Reason)> failed)
+        {
+            const int maxShown = 10;
+            var sb = new System.Text.StringBuilder("No se pudieron eliminar:\n");
+            foreach (var (_, name, reason) in failed.Take(maxShown))
+            {
+                sb.Append("• ").Append(name);
+                if (!string.IsNullOrWhiteSpace(reason))
+                    sb.Append(" — ").Append(reason);
+                sb.AppendLine();
+            }
+            if (failed.Count > maxShown)
+                sb.Append($"… y {failed.Count - maxShown} más.");
+            return sb.ToString().TrimEnd();
+        }
+    }
+
+    public sealed class PurgeCallbackResult
+    {
+        public static readonly PurgeCallbackResult Empty =
+            new PurgeCallbackResult(Array.Empty<long>(), Array.Empty<(long, string, string)>());
+
+        public IReadOnlyList<long> DeletedIds { get; }
+        public IReadOnlyList<(long Id, string Name, string Reason)> FailedItems { get; }
+
+        public PurgeCallbackResult(
+            IReadOnlyList<long> deletedIds,
+            IReadOnlyList<(long Id, string Name, string Reason)> failedItems)
+        {
+            DeletedIds = deletedIds;
+            FailedItems = failedItems;
+        }
     }
 
     // ── Family category group for grouped display ────────────────────
