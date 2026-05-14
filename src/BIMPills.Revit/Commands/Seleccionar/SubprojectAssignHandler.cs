@@ -79,11 +79,41 @@ namespace BIMPills.Revit.Commands.Seleccionar
                 return;
             }
 
+            // Separate instance vs type assignments up-front
+            var instanceAssignments = Request.ParameterAssignments.Where(a => !a.IsTypeParam).ToList();
+            var typeAssignments     = Request.ParameterAssignments.Where(a =>  a.IsTypeParam).ToList();
+
             try
             {
                 using var tx = new Transaction(doc, "BIM Pills: Asignar subproyecto");
                 tx.Start();
 
+                // ── Type parameters: apply once per unique type element ────────
+                if (typeAssignments.Count > 0)
+                {
+                    var seenTypeIds = new HashSet<ElementId>();
+                    foreach (var id in elementIds)
+                    {
+                        var elemId  = new ElementId(id);
+                        var element = doc.GetElement(elemId);
+                        if (element == null) continue;
+
+                        var typeId = element.GetTypeId();
+                        if (typeId == ElementId.InvalidElementId || !seenTypeIds.Add(typeId)) continue;
+
+                        var typeElem = doc.GetElement(typeId);
+                        if (typeElem == null) continue;
+
+                        DiagLog(diag, $"  TypeElem {typeId} for instance {id}:");
+                        foreach (var assignment in typeAssignments)
+                        {
+                            var ok = ApplyParamAssignment(typeElem, assignment, doc, diag);
+                            if (ok) result.ElementsAssigned++;
+                        }
+                    }
+                }
+
+                // ── Instance parameters + workset ──────────────────────────────
                 foreach (var id in elementIds)
                 {
                     try
@@ -117,73 +147,11 @@ namespace BIMPills.Revit.Commands.Seleccionar
                             }
                         }
 
-                        // ── Parámetros ─────────────────────────────────────────────────
-                        foreach (var assignment in Request.ParameterAssignments)
+                        // ── Instance parameters ────────────────────────────────────────
+                        foreach (var assignment in instanceAssignments)
                         {
-                            var param = element.LookupParameter(assignment.ParameterName);
-
-                            if (param == null)
-                            {
-                                DiagLog(diag, $"    '{assignment.ParameterName}': NOT FOUND");
-                                continue;
-                            }
-
-                            DiagLog(diag, $"    '{assignment.ParameterName}': StorageType={param.StorageType}  IsReadOnly={param.IsReadOnly}");
-
-                            if (param.IsReadOnly)
-                            {
-                                DiagLog(diag, $"      → IsReadOnly=true — skip");
-                                continue;
-                            }
-
-                            try
-                            {
-                                bool setOk = false;
-
-                                switch (param.StorageType)
-                                {
-                                    case StorageType.String:
-                                        setOk = param.Set(assignment.NewValue);
-                                        DiagLog(diag, $"      → Set(string '{assignment.NewValue}') = {setOk}");
-                                        break;
-
-                                    case StorageType.Integer:
-                                        if (int.TryParse(assignment.NewValue, out var iv))
-                                        {
-                                            setOk = param.Set(iv);
-                                            DiagLog(diag, $"      → Set(int {iv}) = {setOk}");
-                                        }
-                                        else
-                                        {
-                                            // Fallback: SetValueString para labels/enumerados
-                                            setOk = param.SetValueString(assignment.NewValue);
-                                            DiagLog(diag, $"      → SetValueString('{assignment.NewValue}') = {setOk}");
-                                        }
-                                        break;
-
-                                    case StorageType.Double:
-                                        setOk = param.SetValueString(assignment.NewValue);
-                                        DiagLog(diag, $"      → SetValueString('{assignment.NewValue}') = {setOk}");
-                                        break;
-
-                                    case StorageType.ElementId:
-                                        // Para parámetros ElementId (Fases, Tipos, Niveles…)
-                                        // SetValueString no funciona de forma confiable.
-                                        // Buscamos el elemento por su AsValueString en el documento.
-                                        setOk = TrySetElementIdParam(param, assignment.NewValue, doc, diag);
-                                        break;
-
-                                    default:
-                                        DiagLog(diag, $"      → StorageType desconocido — skip");
-                                        break;
-                                }
-
-                                if (setOk) changed = true;
-                            }
-                            catch (Exception ex)
-                            {
-                                DiagLog(diag, $"      → EXCEPTION: {ex.GetType().Name}: {ex.Message}");
-                            }
+                            var ok = ApplyParamAssignment(element, assignment, doc, diag);
+                            if (ok) changed = true;
                         }
 
                         if (changed) result.ElementsAssigned++;
@@ -209,6 +177,72 @@ namespace BIMPills.Revit.Commands.Seleccionar
             DiagLog(diag, $"=== Result: Assigned={result.ElementsAssigned}  Errors={result.Errors.Count} ===");
             FlushDiag(diag);
             OnCompleted?.Invoke(result);
+        }
+
+        /// <summary>
+        /// Aplica una asignación de parámetro a un elemento. Retorna true si el parámetro
+        /// fue modificado.
+        /// </summary>
+        private static bool ApplyParamAssignment(
+            Element element, ParameterAssignment assignment, Document doc, StringBuilder diag)
+        {
+            var param = element.LookupParameter(assignment.ParameterName);
+
+            if (param == null)
+            {
+                DiagLog(diag, $"    '{assignment.ParameterName}': NOT FOUND");
+                return false;
+            }
+
+            DiagLog(diag, $"    '{assignment.ParameterName}': StorageType={param.StorageType}  IsReadOnly={param.IsReadOnly}");
+
+            if (param.IsReadOnly)
+            {
+                DiagLog(diag, $"      → IsReadOnly=true — skip");
+                return false;
+            }
+
+            try
+            {
+                switch (param.StorageType)
+                {
+                    case StorageType.String:
+                        var r1 = param.Set(assignment.NewValue);
+                        DiagLog(diag, $"      → Set(string '{assignment.NewValue}') = {r1}");
+                        return r1;
+
+                    case StorageType.Integer:
+                        if (int.TryParse(assignment.NewValue, out var iv))
+                        {
+                            var r2 = param.Set(iv);
+                            DiagLog(diag, $"      → Set(int {iv}) = {r2}");
+                            return r2;
+                        }
+                        else
+                        {
+                            var r3 = param.SetValueString(assignment.NewValue);
+                            DiagLog(diag, $"      → SetValueString('{assignment.NewValue}') = {r3}");
+                            return r3;
+                        }
+
+                    case StorageType.Double:
+                        var r4 = param.SetValueString(assignment.NewValue);
+                        DiagLog(diag, $"      → SetValueString('{assignment.NewValue}') = {r4}");
+                        return r4;
+
+                    case StorageType.ElementId:
+                        return TrySetElementIdParam(param, assignment.NewValue, doc, diag);
+
+                    default:
+                        DiagLog(diag, $"      → StorageType desconocido — skip");
+                        return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                DiagLog(diag, $"      → EXCEPTION: {ex.GetType().Name}: {ex.Message}");
+                return false;
+            }
         }
 
         /// <summary>

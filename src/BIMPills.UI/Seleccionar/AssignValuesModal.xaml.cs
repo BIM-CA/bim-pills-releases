@@ -168,7 +168,8 @@ namespace BIMPills.UI.Seleccionar
                 .Select(r => new ParameterAssignment
                 {
                     ParameterName = r.ParameterName,
-                    NewValue      = r.NewValue.Trim()
+                    NewValue      = r.NewValue.Trim(),
+                    IsTypeParam   = r.IsTypeParam
                 })
                 .ToList();
 

@@ -185,7 +185,8 @@ namespace BIMPills.Core.Seleccionar
     public class ParameterAssignment
     {
         public string ParameterName { get; set; } = string.Empty;
-        public string NewValue { get; set; } = string.Empty;
+        public string NewValue      { get; set; } = string.Empty;
+        public bool   IsTypeParam   { get; set; } = false;
     }
 
     /// <summary>
