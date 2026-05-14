@@ -1,5 +1,5 @@
 {
-  "version": "1.0.0-beta.7.2",
-  "notes": "Tablas: nuevo checkbox para incluir elementos de vínculos Revit con color gris en preview y Excel. Leyenda de preview actualizada (Instancia/Tipo/Solo lectura/Vínculo). Dibujar Tabla: pestaña renombrada desde Leyenda Excel.",
-  "installer_url": "https://github.com/BIM-CA/bim-pills-releases/releases/download/v1.0.0-beta.7.2/BIMPills-beta-7.2-Setup.exe"
+  "version": "1.0.0-beta.7.3",
+  "notes": "Exportar Planos: nuevo botón MIX para combinar conjuntos de publicación. Seleccionar: etiquetas TIPO/EJEMPLAR con colores contrastantes. Auditar: purga muestra nombre y razón exacta de cada elemento que no se pudo eliminar. Correcciones en asignación de subproyectos.",
+  "installer_url": "https://github.com/BIM-CA/bim-pills-releases/releases/download/v1.0.0-beta.7.3/BIMPills-beta-7.3-Setup.exe"
 }
