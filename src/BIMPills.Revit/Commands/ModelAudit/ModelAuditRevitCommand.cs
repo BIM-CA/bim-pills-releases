@@ -37,20 +37,25 @@ namespace BIMPills.Revit.Commands.ModelAudit
                         trans.Start();
                         foreach (var id in ids)
                         {
+                            // SubTransaction por elemento: un fallo no contamina el resto
+                            using var sub = new SubTransaction(doc);
                             try
                             {
+                                sub.Start();
                                 var elementId = new ElementId(id);
                                 var elem = doc.GetElement(elementId);
-                                if (elem == null) continue;
+                                if (elem == null) { sub.RollBack(); continue; }
 
                                 if (elem.Pinned)
                                     elem.Pinned = false;
 
                                 doc.Delete(elementId);
+                                sub.Commit();
                                 deletedIds.Add(id);
                             }
                             catch (Exception ex)
                             {
+                                try { sub.RollBack(); } catch { }
                                 logger?.Warning($"[ModelAudit] No se pudo eliminar Id={id}: {ex.Message}");
                             }
                         }
