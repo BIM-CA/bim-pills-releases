@@ -1,47 +1,56 @@
 
  ____   ___   __  __    ____  ___ _     _     ____
 | __ ) |_ _| |  \/  |  |  _ \|_ _| |   | |   / ___|
-|  _ \  | |  | |\/| |  | |_) || || |   | |   \___ \
+|  _ \  | |  | |\/| |  | |_) || || |   | |    \___ \
 | |_) | | |  | |  | |  |  __/ | || |___|_|___ ___) |
 |____/ |___| |_|  |_|  |_|   |___|_____|_____|____/
 
   Herramientas de productividad para Autodesk Revit
   Desarrollado por BIM-CA | bim-ca.com
-  Version 1.0.0-beta.3.4
+  Version 1.0.0-beta.7.4
 
 ========================================================
 
 
-NOVEDADES EN ESTA VERSION (beta 3.4)
+NOVEDADES EN ESTA VERSION (beta 7.4)
 --------------------------------------
-* Importar datos movido al panel Datos (junto a Exportar)
-  para un flujo mas intuitivo.
+* Auditoria: purga mas eficiente con estrategia batch+
+  binary-split — una transaccion por lote en vez de una
+  por elemento. Mas rapido en modelos grandes.
 
-* Ventana de metodologia actualizada con referencias
-  normativas: ISO 19650-1/2, AEC UK BIM Protocol y
-  BIM Forum LOD Specification.
+* Auditoria: nuevos tipos de elementos purgables
+  detectados: plantillas de vista, filtros de vista,
+  estilos de texto, tipos de cota y regiones rellenas.
 
-* Actualizacion automatica rediseniada: nueva ventana
-  con logo, insignias de version, barra de progreso
-  de descarga y soporte markdown en notas de cambio.
+* Auditoria: ventana de progreso durante el analisis
+  con indicador de fase y barra de porcentaje.
 
-* Correccion de tamanio de archivo en modelos
-  colaborativos BIM 360 / ACC (estrategia
-  CollaborationCache para rutas en nube).
+* Auditoria: lista de exclusion ampliada para tipos
+  de sistema internos de Revit (menos falsos positivos
+  en elementos huerfanos).
 
-* Codigo de diagnostico interno eliminado de produccion.
+* Conjuntos (Exportar Planos): boton MIX para combinar
+  multiples conjuntos en una sola exportacion.
 
-* Obfuscacion integrada en el proceso de compilacion
-  Release (Core, Infrastructure, Commands).
+* Seleccionar: etiquetas TIPO/EJEMPLAR con texto completo
+  y colores diferenciados.
+
+
+NOVEDADES EN beta.7.3
+---------------------
+* Purga: si un elemento no puede eliminarse, el dialogo
+  muestra nombre y razon exacta de Revit.
+
+* Seleccionar: correcciones en asignacion de subproyectos.
 
 
 INSTALACION
 -----------
-1. Ejecuta "BIMPills-beta-3.4-Setup.exe"
+1. Ejecuta "BIMPills-beta-7.4-Setup.exe"
 2. Selecciona las versiones de Revit a instalar
    (2024, 2025, 2026 o 2027)
 3. Opcionalmente instala PDF24 Creator (recomendado
-   para exportacion PDF silenciosa — gratis)
+   para exportacion PDF silenciosa -- gratis)
 4. Abre Revit y busca la pestana "BIM Pills" en el ribbon
 
    TIP: Si ya tienes PDF24 instalado, el installer lo
@@ -55,40 +64,41 @@ FUNCIONES
   [ AUDITAR ]
   Auditoria de modelo BIM con puntuacion de salud.
   Analiza familias, advertencias, materiales y otros
-  indicadores de calidad. Exporta reportes HTML.
+  indicadores de calidad. Exporta reportes HTML y CSV.
+  Purga elementos no usados directamente desde la ventana.
 
-  [ EXPORTAR — Familias ]
+  [ EXPORTAR -- Familias ]
   Exportacion masiva de familias a archivos .rfa,
   organizadas por categoria.
 
-  [ EXPORTAR — Planos y Vistas ]
+  [ EXPORTAR -- Planos y Vistas ]
   Exportacion por lotes de planos y vistas a PDF y/o DWG.
   Motor PDF configurable (PDF24 o nativo Revit).
-  Conjuntos de publicacion guardables.
+  Conjuntos de publicacion guardables. Boton MIX.
 
-  [ EXPORTAR — Modelo ]
+  [ EXPORTAR -- Modelo ]
   Exportacion del modelo completo a NWC (Navisworks) con
   opciones de alcance, coordenadas y precision de
   facetado.
 
-  [ DOCUMENTAR — Acotado automatico ]
+  [ DOCUMENTAR -- Acotado automatico ]
   Dimensionamiento automatico de vanos interiores con
   esquemas de acotado personalizables.
 
-  [ GESTIONAR — Tablas ]
+  [ GESTIONAR -- Tablas ]
   Exportar tablas a Excel, editar en lote e importar
-  cambios de vuelta al modelo.
+  cambios de vuelta al modelo. Compatible con vinculos.
 
-  [ GESTIONAR — Notas Clave ]
+  [ GESTIONAR -- Notas Clave ]
   Editor visual de notas clave con jerarquia,
   drag-and-drop e importacion/exportacion Excel.
   Compatible con Autodesk Docs.
 
-  [ GESTIONAR — Subproyectos ]
+  [ GESTIONAR -- Subproyectos ]
   Crear y renombrar worksets. Generar vistas 3D por
   subproyecto con visibilidad automatica.
 
-  [ GESTIONAR — Trasladar Estandares ]
+  [ GESTIONAR -- Trasladar Estandares ]
   Transferencia selectiva de estandares desde otros
   modelos abiertos.
 
