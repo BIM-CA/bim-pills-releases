@@ -33,6 +33,12 @@ namespace BIMPills.Revit.Commands
         /// </summary>
         protected virtual void OnSuccess(IPluginCommand command) { }
 
+        /// <summary>
+        /// Override to inject services (e.g. progress callbacks) into the command context.
+        /// </summary>
+        protected virtual ICommandContext CreateContext(ExternalCommandData commandData)
+            => new RevitCommandContext(commandData);
+
         public Result Execute(
             ExternalCommandData commandData,
             ref string message,
@@ -109,7 +115,7 @@ namespace BIMPills.Revit.Commands
                     }
                 }
 
-                var context = new RevitCommandContext(commandData);
+                var context = CreateContext(commandData);
                 var command = CreateCommand();
                 var result  = command.Execute(context);
 

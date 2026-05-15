@@ -1,14 +1,21 @@
 using Autodesk.Revit.DB;
+using Autodesk.Revit.UI;
 using BIMPills.Commands.ModelAudit;
 using BIMPills.Core.Commands;
 using BIMPills.Core.Services;
 using BIMPills.Infrastructure.DI;
 using BIMPills.Revit.Commands;
+using BIMPills.Revit.Context;
 using BIMPills.UI.ModelAudit;
 using BIMPills.UI.Shared;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Media;
+using WpfColor = System.Windows.Media.Color;
+using System.Windows.Threading;
 
 namespace BIMPills.Revit.Commands.ModelAudit
 {
@@ -18,8 +25,29 @@ namespace BIMPills.Revit.Commands.ModelAudit
         protected override IPluginCommand CreateCommand()
             => new ModelAuditCommand();
 
+        // Progress window — kept alive during analysis, closed in OnSuccess / on error
+        private AuditProgressWindow? _progressWindow;
+
+        protected override ICommandContext CreateContext(ExternalCommandData commandData)
+        {
+            _progressWindow = new AuditProgressWindow();
+            _progressWindow.Show();
+            // Force initial render before heavy analysis begins
+            Dispatcher.CurrentDispatcher.Invoke(DispatcherPriority.Render, new Action(() => { }));
+
+            return new RevitCommandContext(commandData, (current, total, phase) =>
+            {
+                _progressWindow?.SetProgress(current, total, phase);
+                // Pump the WPF dispatcher so the window repaints during the Revit main-thread analysis
+                Dispatcher.CurrentDispatcher.Invoke(DispatcherPriority.Background, new Action(() => { }));
+            });
+        }
+
         protected override void OnSuccess(IPluginCommand command)
         {
+            _progressWindow?.Close();
+            _progressWindow = null;
+
             if (ModelAuditCommand.LastResult == null) return;
 
             var doc = CommandData?.Application.ActiveUIDocument.Document;
@@ -202,6 +230,114 @@ namespace BIMPills.Revit.Commands.ModelAudit
                 }
                 return FailureProcessingResult.Continue;
             }
+        }
+    }
+
+    /// <summary>
+    /// Ventana de progreso mostrada durante el análisis del modelo.
+    /// Se actualiza desde el hilo principal de Revit vía Dispatcher.Invoke.
+    /// </summary>
+    internal sealed class AuditProgressWindow : Window
+    {
+        private readonly ProgressBar _bar;
+        private readonly TextBlock   _phaseText;
+        private readonly TextBlock   _percentText;
+
+        public AuditProgressWindow()
+        {
+            Title                  = "BIM Pills";
+            Width                  = 380;
+            SizeToContent          = SizeToContent.Height;
+            ResizeMode             = ResizeMode.NoResize;
+            WindowStartupLocation  = WindowStartupLocation.CenterOwner;
+            WindowStyle            = WindowStyle.None;
+            AllowsTransparency     = true;
+            Background             = Brushes.Transparent;
+            ShowInTaskbar          = false;
+            Topmost                = true;
+
+            var outerBorder = new Border
+            {
+                Background    = Brushes.White,
+                CornerRadius  = new CornerRadius(12),
+                BorderBrush   = new SolidColorBrush(WpfColor.FromRgb(229, 229, 234)),
+                BorderThickness = new Thickness(1),
+                Margin        = new Thickness(12)
+            };
+            outerBorder.Effect = new System.Windows.Media.Effects.DropShadowEffect
+            {
+                Color = System.Windows.Media.Colors.Black, Opacity = 0.16, BlurRadius = 20, ShadowDepth = 3, Direction = 270
+            };
+
+            var stack = new StackPanel { Margin = new Thickness(24, 20, 24, 24) };
+
+            // Header row: icon + title
+            var headerRow = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 14) };
+            headerRow.Children.Add(new TextBlock
+            {
+                Text              = "⚙",
+                FontSize          = 20,
+                Foreground        = new SolidColorBrush(WpfColor.FromRgb(21, 101, 192)),
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin            = new Thickness(0, 0, 10, 0)
+            });
+            headerRow.Children.Add(new TextBlock
+            {
+                Text              = "Analizando modelo",
+                FontSize          = 14,
+                FontWeight        = FontWeights.SemiBold,
+                Foreground        = new SolidColorBrush(WpfColor.FromRgb(28, 28, 30)),
+                VerticalAlignment = VerticalAlignment.Center
+            });
+            stack.Children.Add(headerRow);
+
+            // Phase label
+            _phaseText = new TextBlock
+            {
+                Text       = "Iniciando...",
+                FontSize   = 12,
+                Foreground = new SolidColorBrush(WpfColor.FromRgb(110, 110, 115)),
+                Margin     = new Thickness(0, 0, 0, 8),
+                TextWrapping = TextWrapping.Wrap
+            };
+            stack.Children.Add(_phaseText);
+
+            // Progress bar
+            _bar = new ProgressBar
+            {
+                Minimum = 0,
+                Maximum = 100,
+                Value   = 0,
+                Height  = 6,
+                Margin  = new Thickness(0, 0, 0, 6),
+                Foreground = new SolidColorBrush(WpfColor.FromRgb(21, 101, 192)),
+                Background = new SolidColorBrush(WpfColor.FromRgb(229, 229, 234))
+            };
+            stack.Children.Add(_bar);
+
+            // Percent label (right-aligned)
+            _percentText = new TextBlock
+            {
+                Text              = "0 %",
+                FontSize          = 11,
+                Foreground        = new SolidColorBrush(WpfColor.FromRgb(110, 110, 115)),
+                HorizontalAlignment = HorizontalAlignment.Right
+            };
+            stack.Children.Add(_percentText);
+
+            outerBorder.Child = stack;
+            Content           = outerBorder;
+
+            // Drag to move
+            MouseLeftButtonDown += (s, e) => { try { DragMove(); } catch { } };
+        }
+
+        public void SetProgress(int current, int total, string phase)
+        {
+            var pct = total > 0 ? (int)((current / (double)total) * 100) : 0;
+            _bar.Value      = pct;
+            _phaseText.Text = phase;
+            _percentText.Text = $"{pct} %";
         }
     }
 }

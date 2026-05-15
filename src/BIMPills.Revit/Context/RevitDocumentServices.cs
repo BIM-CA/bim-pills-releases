@@ -18,11 +18,16 @@ namespace BIMPills.Revit.Context
     internal sealed class RevitDocumentServices : IDocumentServices
     {
         private readonly Document _doc;
+        private readonly Action<int, int, string>? _onProgress;
 
-        public RevitDocumentServices(Document doc)
+        public RevitDocumentServices(Document doc, Action<int, int, string>? onProgress = null)
         {
-            _doc = doc;
+            _doc        = doc;
+            _onProgress = onProgress;
         }
+
+        private void ReportProgress(int current, int total, string phase)
+            => _onProgress?.Invoke(current, total, phase);
 
         public string Title => _doc.Title;
         public bool IsWorkshared => _doc.IsWorkshared;
@@ -423,9 +428,13 @@ namespace BIMPills.Revit.Context
         {
             var purgeable = new List<PurgeableItem>();
 
+            ReportProgress(0, 100, "Escaneando referencias del modelo...");
+
             // ── Single-pass: build the complete "in-use type IDs" set.
             // This replaces per-family/per-symbol collector calls with O(1) HashSet lookups.
             var inUse = BuildInUseTypeIdSet();
+
+            ReportProgress(20, 100, "Verificando familias...");
 
             // ── Collect Revit default element type IDs.
             // Default types (e.g. the project's default dimension style) cannot be deleted —
@@ -463,6 +472,8 @@ namespace BIMPills.Revit.Context
                     "Familia",
                     EstimateFamilySize(family)));
             }
+
+            ReportProgress(40, 100, "Verificando tipos de familia...");
 
             // ── Tipos de familia sin uso (FamilySymbol con 0 instancias,
             //    en familias que sí tienen otros tipos usados)
@@ -504,6 +515,8 @@ namespace BIMPills.Revit.Context
                 }
             }
             catch { /* No crítico */ }
+
+            ReportProgress(60, 100, "Verificando vistas y estilos...");
 
             // Vistas no colocadas en planos (excluyendo plantillas y vistas del sistema)
             // Viewport cubre vistas normales (planos, secciones, alzados, 3D, leyendas).
@@ -693,7 +706,9 @@ namespace BIMPills.Revit.Context
             }
             catch { /* No crítico */ }
 
+            ReportProgress(90, 100, "Finalizando análisis...");
             WriteDiagnosticLog(inUse, families, purgeable);
+            ReportProgress(100, 100, "Análisis completado");
 
             return purgeable;
         }
