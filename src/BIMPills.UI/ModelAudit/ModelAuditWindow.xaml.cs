@@ -298,11 +298,10 @@ namespace BIMPills.UI.ModelAudit
                 }
                 else
                 {
-                    var detail = BuildFailedDetail(result.FailedItems);
-                    Shared.BimPillsDialog.Info(
-                        header: "Purga parcial",
-                        message: $"{purged.Count} elementos eliminados, {result.FailedItems.Count} no se pudieron eliminar.",
-                        detail: detail,
+                    ShowFailedItemsDialog(
+                        purged.Count, result.FailedItems,
+                        title: "Purga parcial",
+                        successLabel: "eliminados",
                         owner: this);
                 }
             }
@@ -416,11 +415,10 @@ namespace BIMPills.UI.ModelAudit
                 }
                 else
                 {
-                    var detail = BuildFailedDetail(result.FailedItems);
-                    Shared.BimPillsDialog.Info(
-                        header: "Eliminación parcial",
-                        message: $"{removed.Count} elementos eliminados, {result.FailedItems.Count} no se pudieron eliminar.",
-                        detail: detail,
+                    ShowFailedItemsDialog(
+                        removed.Count, result.FailedItems,
+                        title: "Eliminación parcial",
+                        successLabel: "eliminados",
                         owner: this);
                 }
             }
@@ -1115,20 +1113,225 @@ namespace BIMPills.UI.ModelAudit
 
         private void CloseButton_Click(object sender, RoutedEventArgs e) => Close();
 
-        private static string BuildFailedDetail(IReadOnlyList<(long Id, string Name, string Reason)> failed)
+        private static void ShowFailedItemsDialog(
+            int successCount,
+            IReadOnlyList<(long Id, string Name, string Reason)> failed,
+            string title,
+            string successLabel,
+            Window? owner)
         {
-            const int maxShown = 10;
-            var sb = new System.Text.StringBuilder("No se pudieron eliminar:\n");
-            foreach (var (_, name, reason) in failed.Take(maxShown))
+            // Group failures by reason, most frequent first
+            var groups = failed
+                .GroupBy(f => string.IsNullOrWhiteSpace(f.Reason) ? "Motivo desconocido" : f.Reason)
+                .OrderByDescending(g => g.Count())
+                .ToList();
+
+            var win = new Window
             {
-                sb.Append("• ").Append(name);
-                if (!string.IsNullOrWhiteSpace(reason))
-                    sb.Append(" — ").Append(reason);
-                sb.AppendLine();
+                Title = "BIM Pills",
+                Width = 460,
+                SizeToContent = SizeToContent.Height,
+                MaxHeight = 600,
+                ResizeMode = ResizeMode.NoResize,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                WindowStyle = WindowStyle.None,
+                AllowsTransparency = true,
+                Background = System.Windows.Media.Brushes.Transparent,
+                ShowInTaskbar = false
+            };
+            if (owner != null) win.Owner = owner;
+
+            // Outer shadow border
+            var outerBorder = new Border
+            {
+                Background = System.Windows.Media.Brushes.White,
+                CornerRadius = new CornerRadius(12),
+                BorderBrush = new System.Windows.Media.SolidColorBrush(
+                    (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#E5E5EA")),
+                BorderThickness = new Thickness(1),
+                Margin = new Thickness(16)
+            };
+            outerBorder.Effect = new System.Windows.Media.Effects.DropShadowEffect
+            {
+                Color = System.Windows.Media.Colors.Black,
+                Opacity = 0.18,
+                BlurRadius = 22,
+                ShadowDepth = 3,
+                Direction = 270
+            };
+
+            var root = new DockPanel();
+
+            // Title bar
+            var titleBar = new Border
+            {
+                Height = 40,
+                Background = System.Windows.Media.Brushes.Transparent,
+                Cursor = System.Windows.Input.Cursors.SizeAll
+            };
+            titleBar.MouseLeftButtonDown += (s, e) => win.DragMove();
+            var titleDock = new DockPanel();
+            var closeBtn = new Button
+            {
+                Width = 36,
+                Height = 32,
+                Background = System.Windows.Media.Brushes.Transparent,
+                BorderThickness = new Thickness(0),
+                Cursor = System.Windows.Input.Cursors.Hand,
+                Content = "✕",
+                FontSize = 14,
+                Foreground = new System.Windows.Media.SolidColorBrush(
+                    (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#6E6E73"))
+            };
+            closeBtn.Click += (s, e) => win.Close();
+            DockPanel.SetDock(closeBtn, Dock.Right);
+            var titleText = new TextBlock
+            {
+                Text = title,
+                FontSize = 13,
+                FontWeight = FontWeights.SemiBold,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(16, 0, 0, 0),
+                Foreground = new System.Windows.Media.SolidColorBrush(
+                    (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#1C1C1E"))
+            };
+            titleDock.Children.Add(closeBtn);
+            titleDock.Children.Add(titleText);
+            titleBar.Child = titleDock;
+            DockPanel.SetDock(titleBar, Dock.Top);
+            root.Children.Add(titleBar);
+
+            // Content
+            var content = new StackPanel { Margin = new Thickness(20, 4, 20, 20) };
+
+            // Icon + summary line
+            var summaryRow = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 12) };
+            summaryRow.Children.Add(new TextBlock
+            {
+                Text = "⚠",
+                FontSize = 22,
+                Foreground = new System.Windows.Media.SolidColorBrush(
+                    (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#FF9500")),
+                Margin = new Thickness(0, 0, 10, 0),
+                VerticalAlignment = VerticalAlignment.Top
+            });
+            summaryRow.Children.Add(new TextBlock
+            {
+                Text = $"{successCount} {successLabel}, {failed.Count} no se pudieron eliminar.",
+                FontSize = 14,
+                FontWeight = FontWeights.SemiBold,
+                TextWrapping = TextWrapping.Wrap,
+                Foreground = new System.Windows.Media.SolidColorBrush(
+                    (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#1C1C1E")),
+                VerticalAlignment = VerticalAlignment.Center
+            });
+            content.Children.Add(summaryRow);
+
+            // Scrollable groups area
+            var scroll = new ScrollViewer
+            {
+                MaxHeight = 380,
+                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled
+            };
+            var groupsPanel = new StackPanel { Margin = new Thickness(0) };
+
+            var groupBg = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#F5F5F7");
+            var groupBorder = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#E5E5EA");
+            var itemFg = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#3C3C43");
+
+            foreach (var group in groups)
+            {
+                var reason = group.Key;
+                var items = group.ToList();
+                bool multiItem = items.Count > 1;
+
+                var expander = new Expander
+                {
+                    IsExpanded = groups.Count == 1 || items.Count <= 3,
+                    Margin = new Thickness(0, 0, 0, 6),
+                    BorderThickness = new Thickness(1),
+                    BorderBrush = new System.Windows.Media.SolidColorBrush(groupBorder),
+                    Background = new System.Windows.Media.SolidColorBrush(groupBg),
+                    Padding = new Thickness(0)
+                };
+
+                // Header: reason + count badge
+                var headerPanel = new DockPanel { Margin = new Thickness(4, 2, 4, 2) };
+                var badge = new Border
+                {
+                    Background = new System.Windows.Media.SolidColorBrush(
+                        (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#FF9500")),
+                    CornerRadius = new CornerRadius(10),
+                    Padding = new Thickness(6, 1, 6, 1),
+                    Margin = new Thickness(6, 0, 0, 0),
+                    VerticalAlignment = VerticalAlignment.Center
+                };
+                badge.Child = new TextBlock
+                {
+                    Text = items.Count.ToString(),
+                    FontSize = 10,
+                    FontWeight = FontWeights.Bold,
+                    Foreground = System.Windows.Media.Brushes.White
+                };
+                DockPanel.SetDock(badge, Dock.Right);
+                headerPanel.Children.Add(badge);
+                headerPanel.Children.Add(new TextBlock
+                {
+                    Text = reason,
+                    FontSize = 12,
+                    FontWeight = FontWeights.Medium,
+                    TextWrapping = TextWrapping.Wrap,
+                    Foreground = new System.Windows.Media.SolidColorBrush(
+                        (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#1C1C1E")),
+                    VerticalAlignment = VerticalAlignment.Center
+                });
+                expander.Header = headerPanel;
+
+                // Items list
+                var itemsPanel = new StackPanel { Margin = new Thickness(12, 4, 12, 8) };
+                foreach (var (_, name, _) in items)
+                {
+                    itemsPanel.Children.Add(new TextBlock
+                    {
+                        Text = $"• {name}",
+                        FontSize = 12,
+                        Foreground = new System.Windows.Media.SolidColorBrush(itemFg),
+                        TextWrapping = TextWrapping.Wrap,
+                        Margin = new Thickness(0, 2, 0, 0)
+                    });
+                }
+                expander.Content = itemsPanel;
+                groupsPanel.Children.Add(expander);
             }
-            if (failed.Count > maxShown)
-                sb.Append($"… y {failed.Count - maxShown} más.");
-            return sb.ToString().TrimEnd();
+
+            scroll.Content = groupsPanel;
+            content.Children.Add(scroll);
+
+            // OK button
+            var okBtn = new Button
+            {
+                Content = "Entendido",
+                MinWidth = 100,
+                Height = 36,
+                Margin = new Thickness(0, 14, 0, 0),
+                HorizontalAlignment = HorizontalAlignment.Right,
+                FontSize = 13,
+                FontWeight = FontWeights.Medium,
+                Foreground = System.Windows.Media.Brushes.White,
+                Background = new System.Windows.Media.SolidColorBrush(
+                    (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#FF9500")),
+                BorderThickness = new Thickness(0),
+                Cursor = System.Windows.Input.Cursors.Hand,
+                Padding = new Thickness(16, 0, 16, 0)
+            };
+            okBtn.Click += (s, e) => win.Close();
+            content.Children.Add(okBtn);
+
+            root.Children.Add(content);
+            outerBorder.Child = root;
+            win.Content = outerBorder;
+            win.ShowDialog();
         }
     }
 

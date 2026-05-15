@@ -423,7 +423,16 @@ namespace BIMPills.Revit.Context
         {
             var purgeable = new List<PurgeableItem>();
 
-            // Familias sin instancias
+            // ── Single-pass: build the complete "in-use type IDs" set.
+            // This replaces per-family/per-symbol collector calls with O(1) HashSet lookups.
+            var inUse = BuildInUseTypeIdSet();
+
+            // ── Collect Revit default element type IDs.
+            // Default types (e.g. the project's default dimension style) cannot be deleted —
+            // Revit hangs instead of raising a failure when doc.Delete() is called on them.
+            var defaultTypeIds = BuildDefaultTypeIdSet();
+
+            // ── Familias sin instancias
             var families = new FilteredElementCollector(_doc)
                 .OfClass(typeof(Family))
                 .Cast<Family>()
@@ -431,31 +440,32 @@ namespace BIMPills.Revit.Context
 
             foreach (var family in families)
             {
-                var typeIds = family.GetFamilySymbolIds();
-                bool hasInstances = false;
+                if (family.IsInPlace) continue;
+                if (!family.IsEditable) continue;   // built-in system families (mullions, panels…) — not deletable
 
-                foreach (var typeId in typeIds)
-                {
-                    var count = new FilteredElementCollector(_doc)
-                        .WherePasses(new FamilyInstanceFilter(_doc, typeId))
-                        .GetElementCount();
-                    if (count > 0) { hasInstances = true; break; }
-                }
+                // Annotation symbol families (section heads, elevation marks, callout heads) are
+                // always referenced by ViewFamilyType / ElevationMarkerType system elements.
+                // Revit stores those references in complex/nested ways our parameter scan may miss.
+                // These families are purgeable by Revit's native tool when truly unused —
+                // we defer to that tool rather than risk deleting ones that ARE in use.
+                if (IsAnnotationSymbolFamily(family)) continue;
 
-                if (!hasInstances)
-                {
-                    var category = family.FamilyCategory?.Name ?? "Sin categoría";
-                    var size = EstimateFamilySize(family);
-                    purgeable.Add(new PurgeableItem(
-                        GetElementIdValue(family.Id),
-                        family.Name,
-                        category,
-                        "Familia",
-                        size));
-                }
+                // Some Revit parameters store the Family.Id directly (not a FamilySymbol.Id).
+                // Check both the family itself and its symbols against the inUse set.
+                if (inUse.Contains(family.Id)) continue;
+                if (family.GetFamilySymbolIds().Any(tid => inUse.Contains(tid))) continue;
+
+                var category = family.FamilyCategory?.Name ?? "Sin categoría";
+                purgeable.Add(new PurgeableItem(
+                    GetElementIdValue(family.Id),
+                    family.Name,
+                    category,
+                    "Familia",
+                    EstimateFamilySize(family)));
             }
 
-            // Tipos de familia sin uso (FamilySymbol con 0 instancias, en familias que sí tienen otros tipos usados)
+            // ── Tipos de familia sin uso (FamilySymbol con 0 instancias,
+            //    en familias que sí tienen otros tipos usados)
             try
             {
                 var allSymbols = new FilteredElementCollector(_doc)
@@ -469,24 +479,18 @@ namespace BIMPills.Revit.Context
                     {
                         var family = symbol.Family;
                         if (family == null) continue;
+                        if (family.IsInPlace) continue;
+                        if (!family.IsEditable) continue;
+                        if (IsAnnotationSymbolFamily(family)) continue;
 
                         var allTypeIds = family.GetFamilySymbolIds();
-
-                        // No se puede borrar el último tipo de una familia
                         if (allTypeIds.Count < 2) continue;
 
-                        // Usar FamilyInstanceFilter (mismo enfoque que "Familia") — más fiable que HashSet manual
-                        var instanceCount = new FilteredElementCollector(_doc)
-                            .WherePasses(new FamilyInstanceFilter(_doc, symbol.Id))
-                            .GetElementCount();
-                        if (instanceCount > 0) continue;
+                        // This symbol is in use
+                        if (inUse.Contains(symbol.Id)) continue;
 
-                        // Si NINGÚN tipo de la familia tiene instancias, la familia entera ya aparece como "Familia"
-                        bool familyHasAnyInstance = allTypeIds.Any(tid =>
-                            new FilteredElementCollector(_doc)
-                                .WherePasses(new FamilyInstanceFilter(_doc, tid))
-                                .GetElementCount() > 0);
-                        if (!familyHasAnyInstance) continue;
+                        // If the ENTIRE family is unused, it already appears as "Familia" above
+                        if (!allTypeIds.Any(tid => inUse.Contains(tid))) continue;
 
                         var category = family.FamilyCategory?.Name ?? "Sin categoría";
                         purgeable.Add(new PurgeableItem(
@@ -502,11 +506,46 @@ namespace BIMPills.Revit.Context
             catch { /* No crítico */ }
 
             // Vistas no colocadas en planos (excluyendo plantillas y vistas del sistema)
+            // Viewport cubre vistas normales (planos, secciones, alzados, 3D, leyendas).
+            // ScheduleSheetInstance cubre tablas de planificación — no crean Viewport.
             var placedViewIds = new FilteredElementCollector(_doc)
                 .OfClass(typeof(Viewport))
                 .Cast<Viewport>()
                 .Select(vp => vp.ViewId)
                 .ToHashSet();
+
+            try
+            {
+                var scheduledIds = new FilteredElementCollector(_doc)
+                    .OfClass(typeof(ScheduleSheetInstance))
+                    .Cast<ScheduleSheetInstance>()
+                    .Select(ssi => ssi.ScheduleId);
+                foreach (var id in scheduledIds) placedViewIds.Add(id);
+            }
+            catch { /* Non-critical */ }
+
+            // Views included in any publication set (ViewSheetSet) must not be purged
+            try
+            {
+                foreach (ViewSheetSet vss in new FilteredElementCollector(_doc)
+                    .OfClass(typeof(ViewSheetSet)).Cast<ViewSheetSet>())
+                    foreach (View v in vss.Views)
+                        placedViewIds.Add(v.Id);
+            }
+            catch { /* Non-critical */ }
+
+            // Dependent views (crop-region sub-views) and callout targets — single pass over all views.
+            try
+            {
+                foreach (View v in new FilteredElementCollector(_doc).OfClass(typeof(View)).Cast<View>())
+                {
+                    if (v.GetPrimaryViewId() != ElementId.InvalidElementId)
+                        placedViewIds.Add(v.Id);
+                    foreach (var refId in v.GetReferenceCallouts())
+                        placedViewIds.Add(refId);
+                }
+            }
+            catch { /* Non-critical */ }
 
             var views = new FilteredElementCollector(_doc)
                 .OfClass(typeof(View))
@@ -541,7 +580,8 @@ namespace BIMPills.Revit.Context
                 var textTypes = new FilteredElementCollector(_doc)
                     .OfClass(typeof(TextNoteType))
                     .Cast<TextNoteType>()
-                    .Where(t => !usedTextTypeIds.Contains(t.Id))
+                    .Where(t => !usedTextTypeIds.Contains(t.Id) && !defaultTypeIds.Contains(t.Id))
+                    .Where(t => { try { return t.GetDependentElements(null).Count == 0; } catch { return true; } })
                     .ToList();
 
                 foreach (var t in textTypes)
@@ -563,7 +603,8 @@ namespace BIMPills.Revit.Context
                 var dimTypes = new FilteredElementCollector(_doc)
                     .OfClass(typeof(DimensionType))
                     .Cast<DimensionType>()
-                    .Where(t => !usedDimTypeIds.Contains(t.Id))
+                    .Where(t => !usedDimTypeIds.Contains(t.Id) && !defaultTypeIds.Contains(t.Id))
+                    .Where(t => { try { return t.GetDependentElements(null).Count == 0; } catch { return true; } })
                     .ToList();
 
                 foreach (var t in dimTypes)
@@ -585,7 +626,7 @@ namespace BIMPills.Revit.Context
                 var filledRegionTypes = new FilteredElementCollector(_doc)
                     .OfClass(typeof(FilledRegionType))
                     .Cast<FilledRegionType>()
-                    .Where(t => !usedFilledRegionTypeIds.Contains(t.Id))
+                    .Where(t => !usedFilledRegionTypeIds.Contains(t.Id) && !defaultTypeIds.Contains(t.Id))
                     .ToList();
 
                 foreach (var t in filledRegionTypes)
@@ -651,6 +692,8 @@ namespace BIMPills.Revit.Context
                         0));
             }
             catch { /* No crítico */ }
+
+            WriteDiagnosticLog(inUse, families, purgeable);
 
             return purgeable;
         }
@@ -1506,6 +1549,343 @@ namespace BIMPills.Revit.Context
             }
 
             return new ParameterUpdateResult { Updated = updated, Skipped = skipped, Errors = errors };
+        }
+
+        // Returns the set of IDs of all Revit project-default element types.
+        // Default types (default dimension style, text style, etc.) cannot be deleted —
+        // Revit hangs instead of raising a FailureMessage when doc.Delete() is called on them.
+        private HashSet<ElementId> BuildDefaultTypeIdSet()
+        {
+            var ids = new HashSet<ElementId>();
+            foreach (ElementTypeGroup group in Enum.GetValues(typeof(ElementTypeGroup)))
+            {
+                try
+                {
+                    var id = _doc.GetDefaultElementTypeId(group);
+                    if (id != ElementId.InvalidElementId) ids.Add(id);
+                }
+                catch { }
+            }
+            return ids;
+        }
+
+        // Builds the complete set of "in-use" FamilySymbol IDs in a single pass.
+        // Sources:
+        //   A) Type IDs of ALL placed FamilyInstance elements (doors, windows, furniture, equipment…)
+        //   B) Type IDs of ALL IndependentTag elements (annotation tags — NOT FamilyInstance)
+        //   C) Type IDs of ALL curtain wall mullions (Mullion may not inherit FamilyInstance)
+        //   D) Type IDs of ALL curtain wall panels (system panels / custom panel families)
+        //   E) ElementId parameter values on every ElementType (grid heads, section marks,
+        //      level heads, profile families in sweeps, etc.)
+        //
+        // The per-family/per-symbol check is then a simple O(1) HashSet.Contains() call.
+        private HashSet<ElementId> BuildInUseTypeIdSet()
+        {
+            var ids = new HashSet<ElementId>();
+
+            static void AddTypeId(HashSet<ElementId> set, ElementId id)
+            {
+                if (id != ElementId.InvalidElementId) set.Add(id);
+            }
+
+            // A) FamilyInstance elements (one collector call covers all model element types)
+            try
+            {
+                foreach (var fi in new FilteredElementCollector(_doc)
+                    .OfClass(typeof(FamilyInstance)).Cast<FamilyInstance>())
+                    AddTypeId(ids, fi.GetTypeId());
+            }
+            catch { }
+
+            // B) IndependentTag (annotation tags are not FamilyInstance)
+            try
+            {
+                foreach (var tag in new FilteredElementCollector(_doc)
+                    .OfClass(typeof(IndependentTag)).Cast<IndependentTag>())
+                    AddTypeId(ids, tag.GetTypeId());
+            }
+            catch { }
+
+            // B2) SpatialElementTag — AreaTag, RoomTag, SpaceTag; these are NOT IndependentTag
+            try
+            {
+                foreach (var tag in new FilteredElementCollector(_doc)
+                    .OfClass(typeof(SpatialElementTag)).Cast<SpatialElementTag>())
+                    AddTypeId(ids, tag.GetTypeId());
+            }
+            catch { }
+
+            // C) Curtain wall mullions
+            try
+            {
+                foreach (var m in new FilteredElementCollector(_doc)
+                    .OfCategory(BuiltInCategory.OST_CurtainWallMullions)
+                    .WhereElementIsNotElementType().ToElements())
+                    AddTypeId(ids, m.GetTypeId());
+            }
+            catch { }
+
+            // D) Curtain wall panels (system panel + custom panel families)
+            try
+            {
+                foreach (var p in new FilteredElementCollector(_doc)
+                    .OfCategory(BuiltInCategory.OST_CurtainWallPanels)
+                    .WhereElementIsNotElementType().ToElements())
+                    AddTypeId(ids, p.GetTypeId());
+            }
+            catch { }
+
+            // E) Targeted parameter scans on small, specific element type collections.
+            //    Covers families referenced by system types without direct FamilyInstance
+            //    placements — both annotation families and model families.
+            //    Each collection is deliberately small (never "all element types").
+            void ScanParams(IEnumerable<Element> elements)
+            {
+                foreach (var elem in elements)
+                    foreach (Parameter param in elem.Parameters)
+                    {
+                        if (param.StorageType != StorageType.ElementId || !param.HasValue) continue;
+                        var id = param.AsElementId();
+                        if (id == ElementId.InvalidElementId) continue;
+                        ids.Add(id);
+                        // If the parameter points to a Family (not a FamilySymbol), also mark all its
+                        // symbols as in-use. Some Revit parameters store Family.Id, not FamilySymbol.Id.
+                        try
+                        {
+                            if (_doc.GetElement(id) is Family fam)
+                                foreach (var symId in fam.GetFamilySymbolIds())
+                                    ids.Add(symId);
+                        }
+                        catch { }
+                    }
+            }
+
+            // Deep scan: like ScanParams but also resolves StorageType.Integer values as potential
+            // element IDs. Used for ViewFamilyType and ElevationMarkerType because Revit stores
+            // section head and elevation mark symbol references as raw integer element IDs,
+            // not as proper StorageType.ElementId parameters.
+            void ScanParamsDeep(IEnumerable<Element> elements)
+            {
+                ScanParams(elements); // catch all normal ElementId params first
+                foreach (var elem in elements)
+                    foreach (Parameter param in elem.Parameters)
+                    {
+                        if (param.StorageType != StorageType.Integer || !param.HasValue) continue;
+                        var intVal = param.AsInteger();
+                        if (intVal <= 0) continue;
+                        try
+                        {
+#if REVIT2024
+#pragma warning disable CS0618
+                            var id = new ElementId(intVal);
+#pragma warning restore CS0618
+#else
+                            var id = new ElementId((long)intVal);
+#endif
+                            var referenced = _doc.GetElement(id);
+                            if (referenced is FamilySymbol sym)
+                            {
+                                ids.Add(id);
+                                ids.Add(sym.Family.Id);
+                                foreach (var symId in sym.Family.GetFamilySymbolIds())
+                                    ids.Add(symId);
+                            }
+                            else if (referenced is Family fam)
+                            {
+                                ids.Add(id);
+                                foreach (var symId in fam.GetFamilySymbolIds())
+                                    ids.Add(symId);
+                            }
+                        }
+                        catch { }
+                    }
+            }
+
+            // ── Annotation family references ──────────────────────────────────────
+            // Grid types → grid head/tail symbols
+            try { ScanParams(new FilteredElementCollector(_doc).OfCategory(BuiltInCategory.OST_Grids).WhereElementIsElementType().ToElements()); }
+            catch { }
+            // Level types → level head symbols
+            try { ScanParams(new FilteredElementCollector(_doc).OfCategory(BuiltInCategory.OST_Levels).WhereElementIsElementType().ToElements()); }
+            catch { }
+            // ViewFamilyType → section heads, elevation marks, callout heads.
+            // Revit stores some symbol references as StorageType.Integer (raw element ID value),
+            // not StorageType.ElementId — standard ScanParams misses them.
+            try { ScanParamsDeep(new FilteredElementCollector(_doc).OfClass(typeof(ViewFamilyType)).ToElements()); }
+            catch { }
+            // ElevationMarker types (resolved from instances) → marker bubble family references
+            try
+            {
+                var markerTypeElems = new FilteredElementCollector(_doc)
+                    .OfClass(typeof(ElevationMarker)).Cast<ElevationMarker>()
+                    .Select(em => em.GetTypeId())
+                    .Where(id => id != ElementId.InvalidElementId)
+                    .Distinct()
+                    .Select(id => _doc.GetElement(id))
+                    .Where(e => e != null)
+                    .ToList();
+                ScanParamsDeep(markerTypeElems!);
+            }
+            catch { }
+            // DimensionType → arrowhead / tick-mark symbols
+            try { ScanParams(new FilteredElementCollector(_doc).OfClass(typeof(DimensionType)).ToElements()); }
+            catch { }
+            // Spot elevation / coordinate types
+            try { ScanParams(new FilteredElementCollector(_doc).OfCategory(BuiltInCategory.OST_SpotElevations).WhereElementIsElementType().ToElements()); }
+            catch { }
+            try { ScanParams(new FilteredElementCollector(_doc).OfCategory(BuiltInCategory.OST_SpotCoordinates).WhereElementIsElementType().ToElements()); }
+            catch { }
+
+            // ── Model family references in system types ───────────────────────────
+            // WallType → profile families in compound structure sweeps/reveals
+            try { ScanParams(new FilteredElementCollector(_doc).OfClass(typeof(WallType)).ToElements()); }
+            catch { }
+            // FloorType → profile families in compound structure
+            try { ScanParams(new FilteredElementCollector(_doc).OfClass(typeof(FloorType)).ToElements()); }
+            catch { }
+            // RoofType → profile families
+            try { ScanParams(new FilteredElementCollector(_doc).OfClass(typeof(RoofType)).ToElements()); }
+            catch { }
+            // SlabEdgeType → profile families for slab edges (borde de losa)
+            try { ScanParams(new FilteredElementCollector(_doc).OfClass(typeof(SlabEdgeType)).ToElements()); }
+            catch { }
+            // Railing types → post, rail and profile families (barandillas)
+            try { ScanParams(new FilteredElementCollector(_doc).OfClass(typeof(Autodesk.Revit.DB.Architecture.RailingType)).ToElements()); }
+            catch { }
+            // Stair run/landing types → profile families
+            try { ScanParams(new FilteredElementCollector(_doc).OfClass(typeof(Autodesk.Revit.DB.Architecture.StairsRunType)).ToElements()); }
+            catch { }
+            try { ScanParams(new FilteredElementCollector(_doc).OfClass(typeof(Autodesk.Revit.DB.Architecture.StairsLandingType)).ToElements()); }
+            catch { }
+
+            // ── Instance-level type scan for elements that reference families
+            //    but are NOT FamilyInstance (e.g. WallSweep, SlabEdge instances).
+            //    Collects the GetTypeId() from all such instances.
+            try
+            {
+                foreach (var e in new FilteredElementCollector(_doc)
+                    .OfClass(typeof(WallSweep)).Cast<WallSweep>())
+                    AddTypeId(ids, e.GetTypeId());
+            }
+            catch { }
+            try
+            {
+                foreach (var e in new FilteredElementCollector(_doc)
+                    .OfClass(typeof(SlabEdge)).Cast<SlabEdge>())
+                    AddTypeId(ids, e.GetTypeId());
+            }
+            catch { }
+
+            return ids;
+        }
+
+        // Annotation symbol families are ALWAYS referenced by system types (ViewFamilyType,
+        // ElevationMarkerType, GridType, LevelType…). Revit stores those references in ways
+        // our parameter scan may miss (nested params, integer-stored IDs, etc.).
+        // These categories are handled correctly by Revit's own native Purge Unused —
+        // we exclude them here to avoid false positives.
+        private static bool IsAnnotationSymbolFamily(Family family)
+        {
+            try
+            {
+                var catId = family.FamilyCategory?.Id;
+                if (catId == null) return false;
+
+                long val;
+#if REVIT2024
+#pragma warning disable CS0618
+                val = catId.IntegerValue;
+#pragma warning restore CS0618
+#else
+                val = catId.Value;
+#endif
+                // BuiltInCategory values are negative longs stable across Revit versions.
+                return val == (long)BuiltInCategory.OST_SectionHeads
+                    || val == (long)BuiltInCategory.OST_ElevationMarks
+                    || val == (long)BuiltInCategory.OST_CalloutHeads
+                    || val == (long)BuiltInCategory.OST_GridHeads
+                    || val == (long)BuiltInCategory.OST_LevelHeads
+                    || val == (long)BuiltInCategory.OST_SpotElevSymbols;
+            }
+            catch { return false; }
+        }
+
+        private void WriteDiagnosticLog(
+            HashSet<ElementId> inUse,
+            IReadOnlyList<Family> allFamilies,
+            IReadOnlyList<PurgeableItem> purgeable)
+        {
+            try
+            {
+                var path = Path.Combine(
+                    Path.GetTempPath(),
+                    $"BIMPills_DiagAudit_{DateTime.Now:yyyyMMdd_HHmmss}.txt");
+
+                var sb = new System.Text.StringBuilder();
+                sb.AppendLine($"=== BIMPills Model Audit Diagnostics ===");
+                sb.AppendLine($"Fecha   : {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
+                sb.AppendLine($"Modelo  : {_doc.Title}");
+                sb.AppendLine($"inUse IDs count: {inUse.Count}");
+                sb.AppendLine();
+
+                // 1. All families evaluated and outcome
+                sb.AppendLine("── FAMILIAS EVALUADAS ──────────────────────────────────────────");
+                sb.AppendLine($"{"Estado",-12} {"FamilyId",-10} {"Categoria",-30} {"Nombre"}");
+                sb.AppendLine(new string('-', 90));
+                foreach (var fam in allFamilies.OrderBy(f => f.FamilyCategory?.Name).ThenBy(f => f.Name))
+                {
+                    try
+                    {
+                        if (fam.IsInPlace) continue;
+                        if (!fam.IsEditable) continue;
+
+                        var famIdVal = GetElementIdValue(fam.Id);
+                        var cat = fam.FamilyCategory?.Name ?? "Sin categoría";
+                        var symIds = fam.GetFamilySymbolIds();
+                        bool byFamId   = inUse.Contains(fam.Id);
+                        bool bySymId   = symIds.Any(tid => inUse.Contains(tid));
+                        string status  = (byFamId || bySymId) ? "EN USO" : "PURGABLE";
+                        string reason  = byFamId ? "(by family.Id)"
+                                       : bySymId ? $"(by symbolId: {symIds.First(tid => inUse.Contains(tid))})"
+                                       : "";
+                        sb.AppendLine($"{status,-12} {famIdVal,-10} {cat,-30} {fam.Name} {reason}");
+
+                        // For purgeable families: list all symbol IDs (none were in inUse)
+                        if (status == "PURGABLE")
+                        {
+                            foreach (var sid in symIds)
+                                sb.AppendLine($"{"  sym",-12} {GetElementIdValue(sid),-10}");
+                        }
+                    }
+                    catch { }
+                }
+
+                sb.AppendLine();
+                sb.AppendLine("── PURGABLES FINALES ───────────────────────────────────────────");
+                foreach (var p in purgeable.Where(p => p.ItemType == "Familia").OrderBy(p => p.Category))
+                    sb.AppendLine($"  [{p.Id}] {p.Category} — {p.Name}");
+
+                sb.AppendLine();
+                sb.AppendLine("── inUse SET (primeros 200 IDs resueltos) ──────────────────────");
+                int count = 0;
+                foreach (var id in inUse.Take(200))
+                {
+                    try
+                    {
+                        var elem = _doc.GetElement(id);
+                        var name = elem?.Name ?? "(null)";
+                        var cls  = elem?.GetType().Name ?? "?";
+                        sb.AppendLine($"  {GetElementIdValue(id),-10} {cls,-35} {name}");
+                    }
+                    catch { sb.AppendLine($"  {GetElementIdValue(id),-10} (error)"); }
+                    if (++count >= 200) break;
+                }
+                if (inUse.Count > 200)
+                    sb.AppendLine($"  ... y {inUse.Count - 200} más");
+
+                File.WriteAllText(path, sb.ToString(), System.Text.Encoding.UTF8);
+            }
+            catch { /* diagnóstico no crítico */ }
         }
 
         private long EstimateFamilySize(Family family)

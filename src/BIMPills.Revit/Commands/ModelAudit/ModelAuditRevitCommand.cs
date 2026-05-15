@@ -8,6 +8,7 @@ using BIMPills.UI.ModelAudit;
 using BIMPills.UI.Shared;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace BIMPills.Revit.Commands.ModelAudit
 {
@@ -31,74 +32,140 @@ namespace BIMPills.Revit.Commands.ModelAudit
                 purgeCallback = ids =>
                 {
                     logger?.Info($"[ModelAudit] Iniciando purga de {ids.Count} elementos...");
+
+                    // ── Fast path: delete everything in one batch transaction.
+                    // One transaction vs N transactions = dramatically less overhead.
+                    var batchResult = TryBatchDelete(doc, ids, logger);
+                    if (batchResult != null)
+                    {
+                        logger?.Info($"[ModelAudit] Purga batch: {batchResult.DeletedIds.Count} eliminados.");
+                        return batchResult;
+                    }
+
+                    // ── Fallback: batch failed — use binary-split strategy.
+                    // Split the list in half, retry each half as a batch.
+                    // Recursively isolates blocked elements in O(log N) batches
+                    // instead of N individual transactions.
+                    logger?.Info("[ModelAudit] Batch rechazado — binary-split fallback...");
                     var deletedIds = new List<long>();
                     var failedItems = new List<(long Id, string Name, string Reason)>();
+                    BinarySplitDelete(doc, ids, deletedIds, failedItems, logger);
 
-                    foreach (var id in ids)
-                    {
-                        Transaction? trans = null;
-                        var preprocessor = new SilentFailuresPreprocessor(logger, id);
-                        try
-                        {
-                            var elementId = new ElementId(id);
-                            var elem = doc.GetElement(elementId);
-                            if (elem == null) continue;
-
-                            var elemName = elem.Name ?? $"Id {id}";
-
-                            trans = new Transaction(doc, "BIMPills - Purgar elemento");
-
-                            var failOpts = trans.GetFailureHandlingOptions();
-                            failOpts.SetFailuresPreprocessor(preprocessor);
-                            failOpts.SetClearAfterRollback(true);
-                            trans.SetFailureHandlingOptions(failOpts);
-
-                            var startStatus = trans.Start();
-                            if (startStatus != TransactionStatus.Started)
-                            {
-                                logger?.Warning($"[ModelAudit] No se pudo iniciar transacción para Id={id}");
-                                failedItems.Add((id, elemName, "No se pudo iniciar la transacción"));
-                                continue;
-                            }
-
-                            if (elem.Pinned)
-                                elem.Pinned = false;
-
-                            doc.Delete(elementId);
-
-                            var commitStatus = trans.Commit();
-                            if (commitStatus == TransactionStatus.Committed)
-                                deletedIds.Add(id);
-                            else
-                            {
-                                var reason = preprocessor.FailureReason ?? $"Commit: {commitStatus}";
-                                logger?.Warning($"[ModelAudit] Commit rechazado para Id={id}: {reason}");
-                                failedItems.Add((id, elemName, reason));
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            try
-                            {
-                                if (trans?.GetStatus() == TransactionStatus.Started)
-                                    trans.RollBack();
-                            }
-                            catch { }
-                            var elemName = $"Id {id}";
-                            logger?.Warning($"[ModelAudit] No se pudo eliminar Id={id}: {ex.Message}");
-                            failedItems.Add((id, elemName, ex.Message));
-                        }
-                        finally
-                        {
-                            trans?.Dispose();
-                        }
-                    }
                     logger?.Info($"[ModelAudit] Purga: {deletedIds.Count} eliminados, {failedItems.Count} omitidos.");
                     return new PurgeCallbackResult(deletedIds, failedItems);
                 };
             }
 
             new ModelAuditWindow(ModelAuditCommand.LastResult, purgeCallback).ShowDialogOverRevit();
+        }
+
+        // Recursively splits the list and attempts batch deletes on each half.
+        // When a sub-list reaches size 1 and still fails, records it as a failed item.
+        // This achieves O(log N) transactions in the best case vs O(N) one-by-one.
+        private static void BinarySplitDelete(
+            Document doc,
+            IReadOnlyList<long> ids,
+            List<long> deletedIds,
+            List<(long Id, string Name, string Reason)> failedItems,
+            ILogger? logger)
+        {
+            if (ids.Count == 0) return;
+
+            // Single element — must go individual to capture failure reason
+            if (ids.Count == 1)
+            {
+                var id = ids[0];
+                var elementId = new ElementId(id);
+                var elem = doc.GetElement(elementId);
+                if (elem == null) return;
+
+                var elemName = elem.Name ?? $"Id {id}";
+                var preprocessor = new SilentFailuresPreprocessor(logger, id);
+                Transaction? trans = null;
+                try
+                {
+                    trans = new Transaction(doc, "BIMPills - Purgar elemento");
+                    var fo = trans.GetFailureHandlingOptions();
+                    fo.SetFailuresPreprocessor(preprocessor);
+                    fo.SetClearAfterRollback(true);
+                    trans.SetFailureHandlingOptions(fo);
+
+                    if (trans.Start() != TransactionStatus.Started)
+                    {
+                        failedItems.Add((id, elemName, "No se pudo iniciar la transacción"));
+                        return;
+                    }
+                    if (elem.Pinned) elem.Pinned = false;
+                    doc.Delete(elementId);
+
+                    if (trans.Commit() == TransactionStatus.Committed)
+                        deletedIds.Add(id);
+                    else
+                        failedItems.Add((id, elemName, preprocessor.FailureReason ?? "Commit rechazado"));
+                }
+                catch (Exception ex)
+                {
+                    try { if (trans?.GetStatus() == TransactionStatus.Started) trans.RollBack(); } catch { }
+                    failedItems.Add((id, elemName, ex.Message));
+                }
+                finally { trans?.Dispose(); }
+                return;
+            }
+
+            // Try the whole sub-list as a batch first
+            var batchResult = TryBatchDelete(doc, ids, logger);
+            if (batchResult != null)
+            {
+                deletedIds.AddRange(batchResult.DeletedIds);
+                return;
+            }
+
+            // Batch failed — split and recurse
+            int mid = ids.Count / 2;
+            var left  = ids.Take(mid).ToList();
+            var right = ids.Skip(mid).ToList();
+            BinarySplitDelete(doc, left,  deletedIds, failedItems, logger);
+            BinarySplitDelete(doc, right, deletedIds, failedItems, logger);
+        }
+
+        // Attempts to delete all elements in a single transaction.
+        // Returns a successful PurgeCallbackResult on commit, or null if the batch rolled back.
+        private static PurgeCallbackResult? TryBatchDelete(Document doc, IReadOnlyList<long> ids, ILogger? logger)
+        {
+            var preprocessor = new SilentFailuresPreprocessor(logger, -1);
+            using var trans = new Transaction(doc, "BIMPills - Purgar (lote)");
+            try
+            {
+                var fo = trans.GetFailureHandlingOptions();
+                fo.SetFailuresPreprocessor(preprocessor);
+                fo.SetClearAfterRollback(true);
+                trans.SetFailureHandlingOptions(fo);
+
+                if (trans.Start() != TransactionStatus.Started) return null;
+
+                var toDelete = new List<ElementId>(ids.Count);
+                foreach (var id in ids)
+                {
+                    var elementId = new ElementId(id);
+                    var elem = doc.GetElement(elementId);
+                    if (elem == null) continue;
+                    if (elem.Pinned) elem.Pinned = false;
+                    toDelete.Add(elementId);
+                }
+
+                doc.Delete(toDelete);
+
+                if (trans.Commit() == TransactionStatus.Committed)
+                    return new PurgeCallbackResult(ids, Array.Empty<(long, string, string)>());
+
+                return null;
+            }
+            catch
+            {
+                try { if (trans.GetStatus() == TransactionStatus.Started) trans.RollBack(); }
+                catch { }
+                return null;
+            }
         }
 
         private sealed class SilentFailuresPreprocessor : IFailuresPreprocessor
