@@ -1,4 +1,5 @@
 using Autodesk.Revit.DB;
+using Autodesk.Revit.DB.Architecture;
 using BIMPills.Core.Audit;
 using BIMPills.Core.Documentacion;
 using BIMPills.Core.Gestion;
@@ -452,12 +453,12 @@ namespace BIMPills.Revit.Context
                 if (family.IsInPlace) continue;
                 if (!family.IsEditable) continue;   // built-in system families (mullions, panels…) — not deletable
 
-                // Annotation symbol families (section heads, elevation marks, callout heads) are
-                // always referenced by ViewFamilyType / ElevationMarkerType system elements.
-                // Revit stores those references in complex/nested ways our parameter scan may miss.
-                // These families are purgeable by Revit's native tool when truly unused —
-                // we defer to that tool rather than risk deleting ones that ARE in use.
-                if (IsAnnotationSymbolFamily(family)) continue;
+                // Profile families (OST_ProfileFamilies) are referenced by TopRailType,
+                // HandRailType, ContinuousRailType, WallSweepType, StairsStringerType, etc.
+                // Revit stores those references via internal data structures that are NOT
+                // exposed in elem.Parameters — ScanParamsDeep cannot see them regardless
+                // of how broadly we scan. Excluding by category is the only reliable guard.
+                if (IsProfileFamily(family)) continue;
 
                 // Some Revit parameters store the Family.Id directly (not a FamilySymbol.Id).
                 // Check both the family itself and its symbols against the inUse set.
@@ -470,7 +471,9 @@ namespace BIMPills.Revit.Context
                     family.Name,
                     category,
                     "Familia",
-                    EstimateFamilySize(family)));
+                    EstimateFamilySize(family),
+                    DetectionConfidence.Heuristic,
+                    RiskLevel.High));
             }
 
             ReportProgress(40, 100, "Verificando tipos de familia...");
@@ -492,8 +495,7 @@ namespace BIMPills.Revit.Context
                         if (family == null) continue;
                         if (family.IsInPlace) continue;
                         if (!family.IsEditable) continue;
-                        if (IsAnnotationSymbolFamily(family)) continue;
-
+                        if (IsProfileFamily(family)) continue;
                         var allTypeIds = family.GetFamilySymbolIds();
                         if (allTypeIds.Count < 2) continue;
 
@@ -509,7 +511,9 @@ namespace BIMPills.Revit.Context
                             $"{family.Name} : {symbol.Name}",
                             category,
                             "Tipo familia",
-                            0));
+                            0,
+                            DetectionConfidence.Heuristic,
+                            RiskLevel.High));
                     }
                     catch { /* símbolo individual no crítico */ }
                 }
@@ -578,7 +582,9 @@ namespace BIMPills.Revit.Context
                     view.Name,
                     view.ViewType.ToString(),
                     "Vista",
-                    0));
+                    0,
+                    DetectionConfidence.Exact,
+                    RiskLevel.Low));
             }
 
             // Estilos de texto sin uso (TextNoteType)
@@ -600,7 +606,8 @@ namespace BIMPills.Revit.Context
                 foreach (var t in textTypes)
                     purgeable.Add(new PurgeableItem(
                         GetElementIdValue(t.Id), t.Name,
-                        "Estilos de texto", "Estilo texto", 0));
+                        "Estilos de texto", "Estilo texto", 0,
+                        DetectionConfidence.Exact, RiskLevel.Medium));
             }
             catch { /* No crítico */ }
 
@@ -623,7 +630,8 @@ namespace BIMPills.Revit.Context
                 foreach (var t in dimTypes)
                     purgeable.Add(new PurgeableItem(
                         GetElementIdValue(t.Id), t.Name,
-                        "Tipos de cota", "Tipo cota", 0));
+                        "Tipos de cota", "Tipo cota", 0,
+                        DetectionConfidence.Exact, RiskLevel.Medium));
             }
             catch { /* No crítico */ }
 
@@ -645,7 +653,8 @@ namespace BIMPills.Revit.Context
                 foreach (var t in filledRegionTypes)
                     purgeable.Add(new PurgeableItem(
                         GetElementIdValue(t.Id), t.Name,
-                        "Regiones rellenas", "Patron relleno", 0));
+                        "Regiones rellenas", "Patron relleno", 0,
+                        DetectionConfidence.Exact, RiskLevel.Medium));
             }
             catch { /* No crítico */ }
 
@@ -672,7 +681,9 @@ namespace BIMPills.Revit.Context
                         t.Name,
                         MapViewTypeToSpanish(t.ViewType),
                         "Plantilla vista",
-                        0));
+                        0,
+                        DetectionConfidence.Exact,
+                        RiskLevel.Low));
             }
             catch { /* No crítico */ }
 
@@ -702,7 +713,9 @@ namespace BIMPills.Revit.Context
                         f.Name,
                         "Filtros de vista",
                         "Filtro vista",
-                        0));
+                        0,
+                        DetectionConfidence.Exact,
+                        RiskLevel.Low));
             }
             catch { /* No crítico */ }
 
@@ -948,17 +961,25 @@ namespace BIMPills.Revit.Context
         {
             try
             {
+                var projectParams = GetProjectParameterValues();
                 return new FilteredElementCollector(_doc)
                     .OfClass(typeof(ViewSheet))
                     .Cast<ViewSheet>()
                     .Where(s => !s.IsPlaceholder)
-                    .Select(s => new SheetExportInfo(
-                        GetElementIdValue(s.Id),
-                        s.SheetNumber,
-                        s.Name,
-                        s.get_Parameter(BuiltInParameter.SHEET_CURRENT_REVISION)?.AsString() ?? "",
-                        s.LookupParameter("Discipline")?.AsString() ?? "",
-                        GetAllParameterValues(s)))
+                    .Select(s =>
+                    {
+                        var values = GetAllParameterValues(s);
+                        // Merge project parameters (sheet params take precedence on name collision)
+                        foreach (var kv in projectParams)
+                            if (!values.ContainsKey(kv.Key)) values[kv.Key] = kv.Value;
+                        return new SheetExportInfo(
+                            GetElementIdValue(s.Id),
+                            s.SheetNumber,
+                            s.Name,
+                            s.get_Parameter(BuiltInParameter.SHEET_CURRENT_REVISION)?.AsString() ?? "",
+                            s.LookupParameter("Discipline")?.AsString() ?? "",
+                            values);
+                    })
                     .OrderBy(s => s.SheetNumber)
                     .ToList();
             }
@@ -977,20 +998,28 @@ namespace BIMPills.Revit.Context
                     ViewType.Undefined
                 };
 
+                var projectParams = GetProjectParameterValues();
+
                 // Sheets
                 var sheets = new FilteredElementCollector(_doc)
                     .OfClass(typeof(ViewSheet))
                     .Cast<ViewSheet>()
                     .Where(s => !s.IsPlaceholder)
-                    .Select(s => new ExportableViewInfo(
-                        GetElementIdValue(s.Id),
-                        s.UniqueId,
-                        s.Name,
-                        ExportableItemType.Sheet,
-                        s.SheetNumber,
-                        s.get_Parameter(BuiltInParameter.SHEET_CURRENT_REVISION)?.AsString() ?? "",
-                        s.LookupParameter("Discipline")?.AsString() ?? "",
-                        GetAllParameterValues(s)))
+                    .Select(s =>
+                    {
+                        var values = GetAllParameterValues(s);
+                        foreach (var kv in projectParams)
+                            if (!values.ContainsKey(kv.Key)) values[kv.Key] = kv.Value;
+                        return new ExportableViewInfo(
+                            GetElementIdValue(s.Id),
+                            s.UniqueId,
+                            s.Name,
+                            ExportableItemType.Sheet,
+                            s.SheetNumber,
+                            s.get_Parameter(BuiltInParameter.SHEET_CURRENT_REVISION)?.AsString() ?? "",
+                            s.LookupParameter("Discipline")?.AsString() ?? "",
+                            values);
+                    })
                     .OrderBy(s => s.SheetNumber)
                     .ToList();
 
@@ -1092,9 +1121,33 @@ namespace BIMPills.Revit.Context
                 if (firstView != null)
                     CollectParameterNames(firstView, names);
 
+                // Collect from ProjectInformation (project parameters: client, number, name, etc.)
+                try
+                {
+                    if (_doc.ProjectInformation != null)
+                        CollectParameterNames(_doc.ProjectInformation, names);
+                }
+                catch { }
+
                 return names.ToList();
             }
             catch { return new List<string>(); }
+        }
+
+        /// <summary>
+        /// Returns all parameter values from Document.ProjectInformation.
+        /// These are merged into each sheet/view's ParameterValues so that
+        /// project parameters can be used in file naming patterns.
+        /// </summary>
+        private Dictionary<string, string> GetProjectParameterValues()
+        {
+            try
+            {
+                return _doc.ProjectInformation != null
+                    ? GetAllParameterValues(_doc.ProjectInformation)
+                    : new Dictionary<string, string>();
+            }
+            catch { return new Dictionary<string, string>(); }
         }
 
         private static void CollectParameterNames(Element element, SortedSet<string> names)
@@ -1716,66 +1769,35 @@ namespace BIMPills.Revit.Context
                     }
             }
 
-            // ── Annotation family references ──────────────────────────────────────
-            // Grid types → grid head/tail symbols
-            try { ScanParams(new FilteredElementCollector(_doc).OfCategory(BuiltInCategory.OST_Grids).WhereElementIsElementType().ToElements()); }
-            catch { }
-            // Level types → level head symbols
-            try { ScanParams(new FilteredElementCollector(_doc).OfCategory(BuiltInCategory.OST_Levels).WhereElementIsElementType().ToElements()); }
-            catch { }
-            // ViewFamilyType → section heads, elevation marks, callout heads.
-            // Revit stores some symbol references as StorageType.Integer (raw element ID value),
-            // not StorageType.ElementId — standard ScanParams misses them.
-            try { ScanParamsDeep(new FilteredElementCollector(_doc).OfClass(typeof(ViewFamilyType)).ToElements()); }
-            catch { }
-            // ElevationMarker types (resolved from instances) → marker bubble family references
+            // ── Comprehensive deep element type parameter scan ────────────────────
+            // Scan ALL non-FamilySymbol element types with ScanParamsDeep, which checks
+            // BOTH StorageType.ElementId AND StorageType.Integer parameters in one pass.
+            // This covers every system type that can reference a family:
+            //   · WallType, FloorType, RoofType, CeilingType → panel/edge profiles
+            //   · RailingType, TopRailType, HandRailType, ContinuousRailType → baluster/profile families
+            //   · ViewFamilyType → section head, elevation mark, callout head symbols
+            //   · DimensionType, SpotElevationType → arrowhead symbols
+            //   · GridType, LevelType → head symbols
+            //   · MullionType, CurtainWallType → mullion/panel families
+            //   · StairsRunType, StairsLandingType → stringer/component families
+            //   · PipeType, DuctType, CableTrayType, ConduitType → segment/fitting refs
+            //   · Any other type added in future Revit versions
+            // Integer-stored references (e.g. section heads, railing profiles) are caught
+            // because ScanParamsDeep checks both storage types.
+            // FamilySymbol is excluded to avoid false positives from nested-family params.
             try
             {
-                var markerTypeElems = new FilteredElementCollector(_doc)
-                    .OfClass(typeof(ElevationMarker)).Cast<ElevationMarker>()
-                    .Select(em => em.GetTypeId())
-                    .Where(id => id != ElementId.InvalidElementId)
-                    .Distinct()
-                    .Select(id => _doc.GetElement(id))
-                    .Where(e => e != null)
+                var allTypes = new FilteredElementCollector(_doc)
+                    .WhereElementIsElementType()
+                    .Where(e => e is not FamilySymbol)
                     .ToList();
-                ScanParamsDeep(markerTypeElems!);
+                ScanParamsDeep(allTypes);
             }
             catch { }
-            // DimensionType → arrowhead / tick-mark symbols
-            try { ScanParams(new FilteredElementCollector(_doc).OfClass(typeof(DimensionType)).ToElements()); }
-            catch { }
-            // Spot elevation / coordinate types
-            try { ScanParams(new FilteredElementCollector(_doc).OfCategory(BuiltInCategory.OST_SpotElevations).WhereElementIsElementType().ToElements()); }
-            catch { }
-            try { ScanParams(new FilteredElementCollector(_doc).OfCategory(BuiltInCategory.OST_SpotCoordinates).WhereElementIsElementType().ToElements()); }
-            catch { }
 
-            // ── Model family references in system types ───────────────────────────
-            // WallType → profile families in compound structure sweeps/reveals
-            try { ScanParams(new FilteredElementCollector(_doc).OfClass(typeof(WallType)).ToElements()); }
-            catch { }
-            // FloorType → profile families in compound structure
-            try { ScanParams(new FilteredElementCollector(_doc).OfClass(typeof(FloorType)).ToElements()); }
-            catch { }
-            // RoofType → profile families
-            try { ScanParams(new FilteredElementCollector(_doc).OfClass(typeof(RoofType)).ToElements()); }
-            catch { }
-            // SlabEdgeType → profile families for slab edges (borde de losa)
-            try { ScanParams(new FilteredElementCollector(_doc).OfClass(typeof(SlabEdgeType)).ToElements()); }
-            catch { }
-            // Railing types → post, rail and profile families (barandillas)
-            try { ScanParams(new FilteredElementCollector(_doc).OfClass(typeof(Autodesk.Revit.DB.Architecture.RailingType)).ToElements()); }
-            catch { }
-            // Stair run/landing types → profile families
-            try { ScanParams(new FilteredElementCollector(_doc).OfClass(typeof(Autodesk.Revit.DB.Architecture.StairsRunType)).ToElements()); }
-            catch { }
-            try { ScanParams(new FilteredElementCollector(_doc).OfClass(typeof(Autodesk.Revit.DB.Architecture.StairsLandingType)).ToElements()); }
-            catch { }
-
-            // ── Instance-level type scan for elements that reference families
-            //    but are NOT FamilyInstance (e.g. WallSweep, SlabEdge instances).
-            //    Collects the GetTypeId() from all such instances.
+            // ── Instance GetTypeId scan for non-FamilyInstance placed elements ────
+            // Marks type IDs as in-use for elements whose types are not captured
+            // by WhereElementIsElementType alone (e.g. WallSweep, SlabEdge).
             try
             {
                 foreach (var e in new FilteredElementCollector(_doc)
@@ -1791,21 +1813,63 @@ namespace BIMPills.Revit.Context
             }
             catch { }
 
+            // ── Railing & stair sub-categories: balusters, posts, rails, stringers ─────────
+            // These FamilyInstances are sub-components of railing/stair systems. They appear
+            // in their own sub-categories rather than as top-level elements, so a plain
+            // FamilyInstance collector may miss them on some Revit versions.
+            // Scanning by sub-category ensures we mark their families as in-use.
+            var railingStairSubcats = new[]
+            {
+                BuiltInCategory.OST_StairsRailing,          // railing systems (host)
+                BuiltInCategory.OST_RailingSystemBaluster,  // individual baluster FamilyInstances
+                BuiltInCategory.OST_RailingSystemRail,      // rail caps, hand rails, etc.
+                BuiltInCategory.OST_Stairs,                 // stair runs (system family instances)
+                BuiltInCategory.OST_StairsStringerCarriage, // stringer FamilyInstances
+            };
+            foreach (var cat in railingStairSubcats)
+            {
+                try
+                {
+                    foreach (var elem in new FilteredElementCollector(_doc)
+                        .OfCategory(cat)
+                        .WhereElementIsNotElementType()
+                        .ToElements())
+                    {
+                        try
+                        {
+                            var typeId = elem.GetTypeId();
+                            if (typeId == ElementId.InvalidElementId) continue;
+                            ids.Add(typeId);
+                            // Also mark the owning family so family-level check passes
+                            var sym = _doc.GetElement(typeId) as FamilySymbol;
+                            if (sym?.Family?.Id != null) ids.Add(sym.Family.Id);
+                        }
+                        catch { /* individual element non-critical */ }
+                    }
+                }
+                catch { /* category may not exist in this project */ }
+            }
+
+            // ── MEP routing preferences: pipe, duct, cable tray, conduit types ──────────────
+            // PipeType / DuctType / CableTrayType / ConduitType store their default fitting
+            // families (elbows, tees, transitions, unions, etc.) via RoutingPreferenceManager.
+            // These references are NOT exposed as standard Parameters — we must read them
+            // through the dedicated API so that configured-but-unplaced fittings are detected.
+            ScanMepRoutingPreferences(ids);
+
             return ids;
         }
 
-        // Annotation symbol families are ALWAYS referenced by system types (ViewFamilyType,
-        // ElevationMarkerType, GridType, LevelType…). Revit stores those references in ways
-        // our parameter scan may miss (nested params, integer-stored IDs, etc.).
-        // These categories are handled correctly by Revit's own native Purge Unused —
-        // we exclude them here to avoid false positives.
-        private static bool IsAnnotationSymbolFamily(Family family)
+        // Profile families are referenced by railing component types (TopRailType, HandRailType,
+        // ContinuousRailType), wall sweep types, stair stringer types, etc. Revit stores those
+        // references internally — they are NOT accessible via elem.Parameters, so no amount
+        // of parameter scanning can detect them. Excluding by category is the only safe guard.
+        private static bool IsProfileFamily(Family family)
         {
             try
             {
                 var catId = family.FamilyCategory?.Id;
                 if (catId == null) return false;
-
                 long val;
 #if REVIT2024
 #pragma warning disable CS0618
@@ -1814,15 +1878,145 @@ namespace BIMPills.Revit.Context
 #else
                 val = catId.Value;
 #endif
-                // BuiltInCategory values are negative longs stable across Revit versions.
-                return val == (long)BuiltInCategory.OST_SectionHeads
-                    || val == (long)BuiltInCategory.OST_ElevationMarks
-                    || val == (long)BuiltInCategory.OST_CalloutHeads
-                    || val == (long)BuiltInCategory.OST_GridHeads
-                    || val == (long)BuiltInCategory.OST_LevelHeads
-                    || val == (long)BuiltInCategory.OST_SpotElevSymbols;
+                return val == (long)BuiltInCategory.OST_ProfileFamilies;
             }
             catch { return false; }
+        }
+
+        private void ScanMepRoutingPreferences(HashSet<ElementId> ids)
+        {
+            // MEP system type class names — loaded via reflection to avoid compile-time
+            // dependencies on MEP assemblies that may not exist in all Revit installations.
+            var mepTypeClassNames = new[]
+            {
+                "Autodesk.Revit.DB.Plumbing.PipeType",
+                "Autodesk.Revit.DB.Mechanical.DuctType",
+                "Autodesk.Revit.DB.Electrical.CableTrayType",
+                "Autodesk.Revit.DB.Electrical.ConduitType",
+            };
+
+            foreach (var className in mepTypeClassNames)
+            {
+                try
+                {
+                    // Resolve the type from loaded assemblies
+                    var typeClass = AppDomain.CurrentDomain.GetAssemblies()
+                        .Select(a => { try { return a.GetType(className); } catch { return null; } })
+                        .FirstOrDefault(t => t != null);
+                    if (typeClass == null) continue;
+
+                    foreach (var elem in new FilteredElementCollector(_doc).OfClass(typeClass).ToElements())
+                    {
+                        try { ScanRoutingPreferenceManagerViaReflection(elem, ids); }
+                        catch { }
+                    }
+                }
+                catch { }
+            }
+        }
+
+        private void ScanRoutingPreferenceManagerViaReflection(Element elem, HashSet<ElementId> ids)
+        {
+            // Get RoutingPreferenceManager via reflection
+            var rpmProp = elem.GetType().GetProperty("RoutingPreferenceManager");
+            if (rpmProp == null) return;
+            var rpm = rpmProp.GetValue(elem);
+            if (rpm == null) return;
+
+            var rpmType = rpm.GetType();
+            var getNumberOfRules = rpmType.GetMethod("GetNumberOfRules");
+            var getRule          = rpmType.GetMethod("GetRule");
+            if (getNumberOfRules == null || getRule == null) return;
+
+            // Get the RoutingPreferenceRuleGroupType enum values
+            var groupTypeProp = rpmType.GetMethod("GetNumberOfRules")?.GetParameters().FirstOrDefault()?.ParameterType;
+            if (groupTypeProp == null || !groupTypeProp.IsEnum) return;
+            var allGroups = Enum.GetValues(groupTypeProp);
+
+            foreach (var group in allGroups)
+            {
+                try
+                {
+                    var ruleCount = (int)getNumberOfRules.Invoke(rpm, new[] { group })!;
+                    for (int i = 0; i < ruleCount; i++)
+                    {
+                        try
+                        {
+                            var rule    = getRule.Invoke(rpm, new object[] { group, i });
+                            if (rule == null) continue;
+                            var partId  = rule.GetType().GetProperty("MEPPartId")?.GetValue(rule) as ElementId;
+                            if (partId == null || partId == ElementId.InvalidElementId) continue;
+
+                            ids.Add(partId);
+                            if (_doc.GetElement(partId) is FamilySymbol sym)
+                            {
+                                ids.Add(sym.Family.Id);
+                                foreach (var sid in sym.Family.GetFamilySymbolIds())
+                                    ids.Add(sid);
+                            }
+                        }
+                        catch { }
+                    }
+                }
+                catch { }
+            }
+        }
+
+        /// <summary>
+        /// Dry-run: tries to delete each candidate inside a SubTransaction that is always rolled back.
+        /// Returns only the IDs whose deletion Revit accepted — zero permanent changes to the model.
+        /// </summary>
+        public IReadOnlyList<long> VerifyPurgeable(IReadOnlyList<long> candidateIds, Action<int, int>? onProgress = null)
+        {
+            var verified = new List<long>(candidateIds.Count);
+            if (candidateIds.Count == 0) return verified;
+
+            using var outerTx = new Transaction(_doc, "BIMPills - Verificación (dry-run)");
+            try
+            {
+                var fo = outerTx.GetFailureHandlingOptions();
+                fo.SetClearAfterRollback(true);
+                outerTx.SetFailureHandlingOptions(fo);
+                if (outerTx.Start() != TransactionStatus.Started) return verified;
+
+                int done = 0;
+                foreach (var id in candidateIds)
+                {
+                    var elementId = new ElementId(id);
+                    if (_doc.GetElement(elementId) == null) { done++; onProgress?.Invoke(done, candidateIds.Count); continue; }
+
+                    using var subTx = new SubTransaction(_doc);
+                    try
+                    {
+                        if (subTx.Start() != TransactionStatus.Started) { done++; onProgress?.Invoke(done, candidateIds.Count); continue; }
+                        _doc.Delete(elementId);
+                        var status = subTx.Commit();
+
+                        if (status == TransactionStatus.Committed)
+                            verified.Add(id);
+                        // else: SubTransaction rolled back — element has live dependencies
+                    }
+                    catch
+                    {
+                        try { subTx.RollBack(); } catch { }
+                        // not verified — element has dependencies or can't be deleted
+                    }
+                    done++;
+                    onProgress?.Invoke(done, candidateIds.Count);
+                }
+            }
+            catch { /* dry-run failure — return whatever we have */ }
+            finally
+            {
+                try
+                {
+                    if (outerTx.GetStatus() == TransactionStatus.Started)
+                        outerTx.RollBack(); // ALWAYS — zero permanent changes
+                }
+                catch { }
+            }
+
+            return verified;
         }
 
         private void WriteDiagnosticLog(

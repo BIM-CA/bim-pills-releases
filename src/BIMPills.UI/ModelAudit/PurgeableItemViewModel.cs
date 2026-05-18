@@ -13,12 +13,32 @@ namespace BIMPills.UI.ModelAudit
 
         public PurgeableItem Item { get; }
 
-        public long Id => Item.Id;
-        public string Name => Item.Name;
-        public string Category => Item.Category;
-        public string ItemType => Item.ItemType;
-        public long SizeBytes => Item.SizeBytes;
-        public string SizeLabel => Item.SizeLabel;
+        public long   Id         => Item.Id;
+        public string Name       => Item.Name;
+        public string Category   => Item.Category;
+        public string ItemType   => Item.ItemType;
+        public long   SizeBytes  => Item.SizeBytes;
+        public string SizeLabel  => Item.SizeLabel;
+
+        // ── Risk / confidence ──────────────────────────────────────────
+        public DetectionConfidence Confidence => Item.Confidence;
+        public RiskLevel           Risk       => Item.Risk;
+
+        /// <summary>Colored dot emoji for the risk column.</summary>
+        public string RiskDot => Item.Risk switch
+        {
+            RiskLevel.Low    => "🟢",
+            RiskLevel.Medium => "🟡",
+            _                => "🔴"
+        };
+
+        /// <summary>Tooltip text describing risk.</summary>
+        public string RiskLabel => Item.Risk switch
+        {
+            RiskLevel.Low    => "Bajo — detección exacta",
+            RiskLevel.Medium => "Medio — detección exacta",
+            _                => "Alto — detección heurística"
+        };
 
         public bool IsSelected
         {

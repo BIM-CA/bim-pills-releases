@@ -61,26 +61,72 @@ namespace BIMPills.Revit.Commands.ModelAudit
                 {
                     logger?.Info($"[ModelAudit] Iniciando purga de {ids.Count} elementos...");
 
-                    // ── Fast path: delete everything in one batch transaction.
-                    // One transaction vs N transactions = dramatically less overhead.
-                    var batchResult = TryBatchDelete(doc, ids, logger);
-                    if (batchResult != null)
+                    // Show purge progress window
+                    var purgeProgress = new AuditProgressWindow("Purgando elementos");
+                    purgeProgress.SetProgress(0, ids.Count, $"Eliminando {ids.Count} elementos...");
+                    purgeProgress.Show();
+                    Dispatcher.CurrentDispatcher.Invoke(DispatcherPriority.Render, new Action(() => { }));
+
+                    void ReportPurgeProgress(int done, int total, string phase)
                     {
-                        logger?.Info($"[ModelAudit] Purga batch: {batchResult.DeletedIds.Count} eliminados.");
-                        return batchResult;
+                        purgeProgress.SetProgress(done, total, phase);
+                        Dispatcher.CurrentDispatcher.Invoke(DispatcherPriority.Background, new Action(() => { }));
                     }
 
-                    // ── Fallback: batch failed — use binary-split strategy.
-                    // Split the list in half, retry each half as a batch.
-                    // Recursively isolates blocked elements in O(log N) batches
-                    // instead of N individual transactions.
-                    logger?.Info("[ModelAudit] Batch rechazado — binary-split fallback...");
-                    var deletedIds = new List<long>();
-                    var failedItems = new List<(long Id, string Name, string Reason)>();
-                    BinarySplitDelete(doc, ids, deletedIds, failedItems, logger);
+                    try
+                    {
+                        // ── Dry-run: let Revit's own dependency graph decide what's safe to delete.
+                        ReportPurgeProgress(0, ids.Count, "Verificando elementos con Revit...");
+                        var docServices = new RevitDocumentServices(doc);
+                        var verified = docServices.VerifyPurgeable(ids, (done, total) =>
+                            ReportPurgeProgress(done, total, $"Verificando... ({done}/{total})"));
 
-                    logger?.Info($"[ModelAudit] Purga: {deletedIds.Count} eliminados, {failedItems.Count} omitidos.");
-                    return new PurgeCallbackResult(deletedIds, failedItems);
+                        var verifiedSet = verified.ToHashSet();
+                        var skippedFailures = ids
+                            .Where(id => !verifiedSet.Contains(id))
+                            .Select(id =>
+                            {
+                                var name = doc.GetElement(new ElementId(id))?.Name ?? $"Id {id}";
+                                return (id, name, "Revit detectó dependencias — elemento en uso");
+                            })
+                            .ToList();
+
+                        logger?.Info($"[ModelAudit] Dry-run: {verified.Count} verificados, {skippedFailures.Count} con dependencias.");
+
+                        if (verified.Count == 0)
+                        {
+                            // Nothing to delete — all have dependencies
+                            ReportPurgeProgress(ids.Count, ids.Count, "Sin elementos seguros para eliminar");
+                            return new PurgeCallbackResult(Array.Empty<long>(), skippedFailures);
+                        }
+
+                        ReportPurgeProgress(verified.Count, ids.Count, $"Eliminando {verified.Count} elementos...");
+
+                        // ── Fast path: delete verified set in one batch transaction.
+                        var batchResult = TryBatchDelete(doc, verified, logger);
+                        if (batchResult != null)
+                        {
+                            logger?.Info($"[ModelAudit] Purga batch: {batchResult.DeletedIds.Count} eliminados.");
+                            var allFailed = batchResult.FailedItems.Concat(skippedFailures).ToList();
+                            ReportPurgeProgress(ids.Count, ids.Count, $"✓ {batchResult.DeletedIds.Count} elementos eliminados");
+                            return new PurgeCallbackResult(batchResult.DeletedIds, allFailed);
+                        }
+
+                        // ── Fallback: binary-split strategy with progress tracking.
+                        logger?.Info("[ModelAudit] Batch rechazado — binary-split fallback...");
+                        var deletedIds = new List<long>();
+                        var failedItems = new List<(long Id, string Name, string Reason)>(skippedFailures);
+                        BinarySplitDelete(doc, verified, deletedIds, failedItems, logger,
+                            onElementDone: done => ReportPurgeProgress(done, ids.Count,
+                                $"Eliminando... ({done}/{ids.Count})"));
+
+                        logger?.Info($"[ModelAudit] Purga: {deletedIds.Count} eliminados, {failedItems.Count} omitidos.");
+                        return new PurgeCallbackResult(deletedIds, failedItems);
+                    }
+                    finally
+                    {
+                        purgeProgress.Close();
+                    }
                 };
             }
 
@@ -95,7 +141,8 @@ namespace BIMPills.Revit.Commands.ModelAudit
             IReadOnlyList<long> ids,
             List<long> deletedIds,
             List<(long Id, string Name, string Reason)> failedItems,
-            ILogger? logger)
+            ILogger? logger,
+            Action<int>? onElementDone = null)
         {
             if (ids.Count == 0) return;
 
@@ -105,7 +152,7 @@ namespace BIMPills.Revit.Commands.ModelAudit
                 var id = ids[0];
                 var elementId = new ElementId(id);
                 var elem = doc.GetElement(elementId);
-                if (elem == null) return;
+                if (elem == null) { onElementDone?.Invoke(deletedIds.Count + failedItems.Count + 1); return; }
 
                 var elemName = elem.Name ?? $"Id {id}";
                 var preprocessor = new SilentFailuresPreprocessor(logger, id);
@@ -137,6 +184,8 @@ namespace BIMPills.Revit.Commands.ModelAudit
                     failedItems.Add((id, elemName, ex.Message));
                 }
                 finally { trans?.Dispose(); }
+
+                onElementDone?.Invoke(deletedIds.Count + failedItems.Count);
                 return;
             }
 
@@ -145,6 +194,7 @@ namespace BIMPills.Revit.Commands.ModelAudit
             if (batchResult != null)
             {
                 deletedIds.AddRange(batchResult.DeletedIds);
+                onElementDone?.Invoke(deletedIds.Count + failedItems.Count);
                 return;
             }
 
@@ -152,8 +202,8 @@ namespace BIMPills.Revit.Commands.ModelAudit
             int mid = ids.Count / 2;
             var left  = ids.Take(mid).ToList();
             var right = ids.Skip(mid).ToList();
-            BinarySplitDelete(doc, left,  deletedIds, failedItems, logger);
-            BinarySplitDelete(doc, right, deletedIds, failedItems, logger);
+            BinarySplitDelete(doc, left,  deletedIds, failedItems, logger, onElementDone);
+            BinarySplitDelete(doc, right, deletedIds, failedItems, logger, onElementDone);
         }
 
         // Attempts to delete all elements in a single transaction.
@@ -242,9 +292,11 @@ namespace BIMPills.Revit.Commands.ModelAudit
         private readonly ProgressBar _bar;
         private readonly TextBlock   _phaseText;
         private readonly TextBlock   _percentText;
+        private readonly string      _headerTitle;
 
-        public AuditProgressWindow()
+        public AuditProgressWindow(string headerTitle = "Analizando modelo")
         {
+            _headerTitle = headerTitle;
             Title                  = "BIM Pills";
             Width                  = 380;
             SizeToContent          = SizeToContent.Height;
@@ -277,13 +329,13 @@ namespace BIMPills.Revit.Commands.ModelAudit
             {
                 Text              = "⚙",
                 FontSize          = 20,
-                Foreground        = new SolidColorBrush(WpfColor.FromRgb(21, 101, 192)),
+                Foreground        = new SolidColorBrush(WpfColor.FromRgb(239, 99, 55)),
                 VerticalAlignment = VerticalAlignment.Center,
                 Margin            = new Thickness(0, 0, 10, 0)
             });
             headerRow.Children.Add(new TextBlock
             {
-                Text              = "Analizando modelo",
+                Text              = _headerTitle,
                 FontSize          = 14,
                 FontWeight        = FontWeights.SemiBold,
                 Foreground        = new SolidColorBrush(WpfColor.FromRgb(28, 28, 30)),
@@ -310,7 +362,7 @@ namespace BIMPills.Revit.Commands.ModelAudit
                 Value   = 0,
                 Height  = 6,
                 Margin  = new Thickness(0, 0, 0, 6),
-                Foreground = new SolidColorBrush(WpfColor.FromRgb(21, 101, 192)),
+                Foreground = new SolidColorBrush(WpfColor.FromRgb(239, 99, 55)),
                 Background = new SolidColorBrush(WpfColor.FromRgb(229, 229, 234))
             };
             stack.Children.Add(_bar);

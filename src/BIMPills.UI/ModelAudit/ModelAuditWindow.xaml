@@ -613,6 +613,7 @@
                                         <!-- Barra de acción: búsqueda, filtros y botones -->
                                         <Border Grid.Row="0" Background="#F9F9FB" CornerRadius="6"
                                                 Padding="10,8" Margin="0,8,0,4">
+                                            <StackPanel>
 
                                             <!-- Fila única: búsqueda + filtro dropdown + selección + acciones -->
                                             <Grid>
@@ -694,6 +695,7 @@
                                                         Click="PurgeSelected_Click"/>
                                             </Grid>
 
+                                            </StackPanel>
                                         </Border>
 
                                         <!-- Grid con DataGrid + scroll hints -->

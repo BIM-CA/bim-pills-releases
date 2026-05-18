@@ -197,6 +197,7 @@ namespace BIMPills.UI.ModelAudit
             UpdatePurgeSelection();
         }
 
+
         private void PurgeTypeFilter_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (PurgeTypeFilter.SelectedItem is string selected && selected != "Todos los tipos")
@@ -260,10 +261,15 @@ namespace BIMPills.UI.ModelAudit
             double totalMB = totalBytes / 1_048_576.0;
             string sizeInfo = totalMB >= 0.1 ? $" (~{totalMB:F1} MB)" : "";
 
+            var nameLines = selectedItems.Take(8).Select(vm => $"• {vm.Name}  [{vm.ItemType}]");
+            var overflow  = selectedItems.Count > 8 ? $"\n  ...y {selectedItems.Count - 8} más" : "";
+            var purgeDetail = string.Join("\n", nameLines) + overflow
+                + "\n\nPuede deshacerse con Ctrl+Z en Revit mientras el modelo no se haya guardado.";
+
             bool confirmed = Shared.BimPillsDialog.Confirm(
                 "Confirmar purga",
                 $"Se eliminarán {selectedItems.Count} elementos del modelo{sizeInfo}.",
-                detail: "Esta acción no se puede deshacer.",
+                detail: purgeDetail,
                 owner: this,
                 yesText: "Eliminar",
                 noText: "Cancelar",
@@ -383,7 +389,7 @@ namespace BIMPills.UI.ModelAudit
                 "Confirmar eliminación",
                 $"Se eliminarán {selected.Count} elementos sin categoría del modelo.",
                 detail:
-                    $"{detalle}\n\nEsta acción no se puede deshacer. " +
+                    $"{detalle}\n\nPuede deshacerse con Ctrl+Z en Revit mientras el modelo no se haya guardado. " +
                     "Solo se permiten eliminar elementos marcados como purgables.",
                 owner: this,
                 yesText: "Eliminar",
