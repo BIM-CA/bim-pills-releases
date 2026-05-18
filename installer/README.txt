@@ -7,46 +7,58 @@
 
   Herramientas de productividad para Autodesk Revit
   Desarrollado por BIM-CA | bim-ca.com
-  Version 1.0.0-beta.7.4
+  Version 1.0.0-beta.7.5
 
 ========================================================
 
 
-NOVEDADES EN ESTA VERSION (beta 7.4)
+NOVEDADES EN ESTA VERSION (beta 7.5)
 --------------------------------------
-* Auditoria: purga mas eficiente con estrategia batch+
-  binary-split — una transaccion por lote en vez de una
-  por elemento. Mas rapido en modelos grandes.
+* Auditoria: deteccion exhaustiva de familias en uso.
+  Escanea parametros entero Y ElementId en todos los
+  tipos de elemento: secciones, alzados, cotas,
+  barandillas, muros cortina y cualquier tipo presente
+  o futuro en Revit.
 
-* Auditoria: nuevos tipos de elementos purgables
-  detectados: plantillas de vista, filtros de vista,
-  estilos de texto, tipos de cota y regiones rellenas.
+* Auditoria: uniones MEP (tuberia, ducto, bandeja,
+  conduit) configuradas en preferencias de enrutamiento
+  ya no aparecen como purgables aunque no tengan
+  instancias colocadas en el modelo.
 
-* Auditoria: ventana de progreso durante el analisis
-  con indicador de fase y barra de porcentaje.
+* Auditoria: familias de perfil excluidas permanentemente
+  — sus referencias son internas de Revit y no
+  detectables via parametros estandar.
 
-* Auditoria: lista de exclusion ampliada para tipos
-  de sistema internos de Revit (menos falsos positivos
-  en elementos huerfanos).
+* Auditoria: dialogo de confirmacion muestra nombres
+  de elementos a eliminar (max 8). Mensaje de deshacer
+  corregido: Ctrl+Z en Revit funciona mientras el
+  modelo no se haya guardado.
 
-* Conjuntos (Exportar Planos): boton MIX para combinar
-  multiples conjuntos en una sola exportacion.
+* Auditoria: ventanas de progreso en color naranja,
+  coherente con la identidad visual del plugin.
 
-* Seleccionar: etiquetas TIPO/EJEMPLAR con texto completo
-  y colores diferenciados.
+* Exportar Planos: parametros de proyecto disponibles
+  como tokens en la nomenclatura de archivos exportados.
+
+
+NOVEDADES EN beta.7.4
+---------------------
+* Auditoria: purga batch+binary-split mas eficiente.
+* Auditoria: nuevos purgables (plantillas de vista,
+  filtros, estilos de texto, tipos de cota).
+* Auditoria: ventana de progreso durante el analisis.
 
 
 NOVEDADES EN beta.7.3
 ---------------------
-* Purga: si un elemento no puede eliminarse, el dialogo
-  muestra nombre y razon exacta de Revit.
-
-* Seleccionar: correcciones en asignacion de subproyectos.
+* Conjuntos (Exportar Planos): boton MIX.
+* Seleccionar: etiquetas TIPO/EJEMPLAR mejoradas.
+* Purga: dialogo muestra razon exacta de Revit.
 
 
 INSTALACION
 -----------
-1. Ejecuta "BIMPills-beta-7.4-Setup.exe"
+1. Ejecuta "BIMPills-beta-7.5-Setup.exe"
 2. Selecciona las versiones de Revit a instalar
    (2024, 2025, 2026 o 2027)
 3. Opcionalmente instala PDF24 Creator (recomendado

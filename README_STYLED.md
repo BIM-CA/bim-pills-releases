@@ -11,16 +11,30 @@
   ─────────────────────────────────────────────────────────────────
 ```
 
-**Versión**: 1.0.0-beta.7.3 &nbsp;·&nbsp; **Desarrollador**: BIM-CA
+**Versión**: 1.0.0-beta.7.5 &nbsp;·&nbsp; **Desarrollador**: BIM-CA
 
 ---
+
+## Novedades en beta.7.5
+
+- **Auditar — Purga segura**: detección exhaustiva de familias en uso. Escanea parámetros de tipo entero Y ElementId en todos los tipos de elemento — cubre secciones, alzados, cotas, barandillas, muros cortina y cualquier tipo presente o futuro en Revit.
+- **Auditar — Uniones MEP**: las familias de uniones de tubería, ducto, bandeja y conduit configuradas en preferencias de enrutamiento (`PipeType`, `DuctType`, etc.) ya no aparecen como purgables aunque no tengan instancias colocadas.
+- **Auditar — Perfiles de barandilla**: las familias de perfil (`OST_ProfileFamilies`) están excluidas permanentemente — sus referencias son internas de Revit y no detectables vía parámetros.
+- **Auditar — Confirmación mejorada**: el diálogo de purga muestra los nombres de los elementos a eliminar (máx. 8) y el mensaje de deshacer es ahora correcto: Ctrl+Z en Revit funciona mientras el modelo no se haya guardado.
+- **Auditar — Ventanas de progreso**: color actualizado a naranja (#EF6337) coherente con la identidad visual del plugin.
+- **Exportar Planos — Nomenclatura**: los parámetros de proyecto (nombre de proyecto, cliente, etc.) están disponibles como tokens en la nomenclatura de archivos exportados.
+
+## Novedades en beta.7.4
+
+- **Auditar — Purga batch+binary-split**: una transacción por lote en vez de una por elemento. Más rápido en modelos grandes.
+- **Auditar — Nuevos purgables**: plantillas de vista, filtros de vista, estilos de texto, tipos de cota y regiones rellenas.
+- **Auditar — Ventana de progreso** durante el análisis con indicador de fase y barra de porcentaje.
 
 ## Novedades en beta.7.3
 
 - **Exportar Planos — Conjuntos**: los conjuntos de publicación ahora aparecen en un ComboBox. Nuevo botón **MIX** para combinar múltiples conjuntos en una sola exportación.
 - **Seleccionar — parámetros TIPO/EJEMPLAR**: las etiquetas ahora muestran el texto completo "TIPO" y "EJEMPLAR" con colores contrastantes (púrpura y azul) en lugar de solo la letra.
-- **Auditar — Purga mejorada**: la purga de elementos es ahora más robusta. Si algún elemento no puede eliminarse, el diálogo muestra el nombre y la razón exacta de Revit para cada fallo en lugar de un mensaje genérico.
-- **Correcciones en Seleccionar**: varios bugs en la asignación de subproyectos y el modal de valores.
+- **Auditar — Purga mejorada**: si algún elemento no puede eliminarse, el diálogo muestra el nombre y la razón exacta de Revit para cada fallo.
 
 ## Novedades en beta.7.2
 
