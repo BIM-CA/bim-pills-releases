@@ -1,0 +1,5 @@
+{
+  "version": "1.0.0-beta.7.5",
+  "notes": "Auditar: detección exhaustiva de familias en uso — escanea todos los tipos de elemento (secciones, alzados, cotas, barandillas, muros cortina, MEP). Uniones MEP configuradas en preferencias de enrutamiento ya no aparecen como purgables. Perfiles de barandilla excluidos permanentemente. Confirmación muestra nombres de elementos a eliminar. Ctrl+Z funciona después de purgar. Exportar Planos: parámetros de proyecto disponibles en nomenclatura de archivos.",
+  "installer_url": "https://github.com/BIM-CA/bim-pills-releases/releases/download/v1.0.0-beta.7.5/BIMPills-beta-7.5-Setup.exe"
+}
