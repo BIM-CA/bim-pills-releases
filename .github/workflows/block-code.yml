@@ -1,0 +1,41 @@
+name: Block source code
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect source code in changes
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE="${{ github.event.pull_request.base.sha }}"
+            HEAD="${{ github.event.pull_request.head.sha }}"
+          else
+            BASE="${{ github.event.before }}"
+            HEAD="${{ github.event.after }}"
+          fi
+
+          # On first commit, before is all-zeros — scan full tree instead
+          if [[ "$BASE" =~ ^0+$ ]]; then
+            FILES=$(git ls-tree -r --name-only HEAD)
+          else
+            FILES=$(git diff --name-only "$BASE" "$HEAD")
+          fi
+
+          BANNED=$(echo "$FILES" | grep -E '\.(cs|csproj|sln|xaml|ps1|nsi|cake|targets|props)$|^(src|build|tests|tools|installer)/|^CLAUDE\.md$|^\.gitignore$' || true)
+
+          if [ -n "$BANNED" ]; then
+            echo "::error::Source code detected in push to public repo!"
+            echo "$BANNED"
+            exit 1
+          fi
+          echo "OK — no source code in this change."
