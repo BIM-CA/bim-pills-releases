@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="assets/logo.png" alt="BIM Pills" width="220"/>
+  <img src="assets/logo.png?v=2" alt="BIM Pills" width="160"/>
   <h3>Plugin de Productividad para Autodesk Revit</h3>
   <p>
     <a href="../../releases/latest"><img src="https://img.shields.io/badge/versi%C3%B3n-beta%207.7-EF6337?style=for-the-badge" alt="Versión"/></a>
