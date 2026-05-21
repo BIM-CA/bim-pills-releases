@@ -19,34 +19,41 @@ BIM Pills es un plugin para Autodesk Revit que reúne en un solo lugar las herra
 ## Funcionalidades
 
 ### 🔍 Auditar
-Auditoría completa del modelo BIM con puntuación de salud. Analiza familias, advertencias, materiales y otros indicadores de calidad del modelo. Incluye:
-- Purga segura con detección exhaustiva de familias en uso
-- Ventana de progreso con fases e indicadores
-- Reporte HTML exportable
+Auditoría del modelo BIM con puntuación de salud. Analiza familias, advertencias, materiales y otros indicadores de calidad. Incluye:
+- **Purga segura** — detección exhaustiva de familias en uso (parámetros enteros, ElementId, uniones MEP, perfiles de barandilla)
+- **Confirmación con nombres** — el diálogo muestra los elementos a eliminar antes de purgar
+- **Ventana de progreso** con fases e indicadores
+- **Reporte HTML** exportable
 
 ### 📤 Exportar
 Ventana unificada con tres pestañas:
-- **Planos y Vistas** — Exportación por lotes a PDF y/o DWG. Conjuntos de publicación guardables. PDF combinado con nombre configurable (tokens `{ProjectName}`, `{Date}`)
-- **Modelo** — Exportación a NWC (Navisworks) con opciones de alcance y coordenadas
-- **Familias** — Exportación masiva de familias `.rfa` organizadas por categoría
+- **Planos y Vistas** — Exportación por lotes a PDF y/o DWG. Motor PDF configurable (nativo Revit o impresora del sistema). Conjuntos de publicación guardables con multi-selección (botón **MIX** para combinar conjuntos). PDF combinado con nombre configurable (tokens `{ProjectName}`, `{Date}`). Presets de exportación con import/export XML.
+- **Modelo** — Exportación a NWC (Navisworks) con opciones de alcance, coordenadas, parámetros y precisión de facetado.
+- **Familias** — Exportación masiva de familias `.rfa` organizadas por categoría.
 
 ### 📐 Documentar
-- **Acotado automático** — Dimensionamiento de vanos interiores con esquemas personalizables por disciplina
+- **Acotado automático** — Dimensionamiento de vanos interiores y exteriores con esquemas de acotado personalizables por disciplina (guardables en JSON).
+- **Dibujar Tabla** — Inserta tablas estilizadas en planos a partir de un Excel.
+
+### 🎯 Organizar (Seleccionar)
+Tres herramientas para selección y edición masiva de elementos:
+- **Encontrar y Seleccionar** — Filtra por categoría, parámetro (TIPO/EJEMPLAR) o subproyecto. Modelo completo o vista activa.
+- **Asignar Valores** — Edición masiva de parámetros con vista previa y resumen de cambios.
+- **Secuenciador** — Numeración incremental interactiva con prefijos, pasos y sufijos configurables.
+- **Cuentagotas** — Copia parámetros entre elementos seleccionables.
 
 ### 🗂️ Gestionar
-- **Tablas** — Exportar tablas de planificación a Excel, editar en lote e importar cambios al modelo
-- **Notas Clave** — Editor visual con jerarquía, drag-and-drop, importación/exportación Excel. Compatible con Autodesk Docs
-- **Subproyectos** — Crear y renombrar worksets. Generar vistas 3D por subproyecto
-- **Trasladar Estándares** — Transferencia selectiva de estándares desde otros modelos abiertos
-
-### 🔢 Ordenar
-Numeración incremental interactiva con prefijos, pasos y sufijos configurables.
-
-### 💬 Soporte
-Chat en vivo con el equipo de BIM-CA directamente desde Revit.
+- **Tablas** — Exportar tablas de planificación a Excel, editar en lote e importar cambios de vuelta al modelo. Soporte para elementos de vínculos Revit.
+- **Notas Clave** — Editor visual con jerarquía, drag-and-drop, import/export Excel. Codificación ANSI (Windows-1252) compatible con caracteres en español. Compatible con archivos locales y Autodesk Docs (Desktop Connector).
+- **Subproyectos** — Crear y renombrar worksets. Generar vistas 3D por subproyecto con visibilidad automática.
+- **Trasladar Estándares** — Transferencia selectiva desde otros modelos abiertos (estilos de cota, notas de texto, estilos de línea, tipos de muro/piso/techo, patrones de relleno, cotas puntuales).
+- **Gestionar Datos** — Conexión con fuentes externas y actualización masiva de parámetros.
 
 ### 🔗 Conectar (MCP)
-Integración con servidores MCP para conectar Revit con herramientas de IA.
+Integración con servidores MCP para conectar Revit con herramientas de IA y servicios externos.
+
+### 💬 Soporte
+Chat en vivo con el equipo de BIM-CA directamente desde Revit. Accede desde **BIM Pills → Soporte** en el ribbon.
 
 ---
 
