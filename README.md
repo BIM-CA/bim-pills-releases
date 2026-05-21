@@ -1,10 +1,10 @@
 <div align="center">
-  <img src="assets/logo.png" alt="BIM Pills" width="200"/>
+  <img src="assets/logo.png" alt="BIM Pills" width="220"/>
   <h3>Plugin de Productividad para Autodesk Revit</h3>
   <p>
-    <a href="../../releases/latest"><img src="https://img.shields.io/github/v/release/BIM-CA/bim-pills-releases?label=versión&color=EF6337" alt="Latest Release"/></a>
-    <img src="https://img.shields.io/badge/Revit-2024%20%7C%202025%20%7C%202026%20%7C%202027-0696D7" alt="Revit Versions"/>
-    <img src="https://img.shields.io/badge/plataforma-Windows-informational" alt="Windows"/>
+    <a href="../../releases/latest"><img src="https://img.shields.io/badge/versi%C3%B3n-beta%207.7-EF6337?style=for-the-badge" alt="Versión"/></a>
+    <img src="https://img.shields.io/badge/Revit-2024%20%7C%202025%20%7C%202026%20%7C%202027-0696D7?style=for-the-badge" alt="Revit Versions"/>
+    <img src="https://img.shields.io/badge/plataforma-Windows-1A1A2E?style=for-the-badge" alt="Windows"/>
   </p>
 </div>
 
