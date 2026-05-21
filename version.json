@@ -1,0 +1,5 @@
+{
+  "version": "1.0.0-beta.7.7",
+  "notes": "Exportar PDF combinado: nombre del archivo se define en Paso 3 con tokens de proyecto ({ProjectName}, {Date}); la sección de nombramiento individual se oculta al combinar; la sección de nombre combinado desaparece si se desactiva PDF.",
+  "installer_url": "https://github.com/BIM-CA/bim-pills-releases/releases/download/v1.0.0-beta.7.7/BIMPills-beta-7.7-Setup.exe"
+}
