@@ -2,7 +2,7 @@
   <img src="assets/logo.png?v=2" alt="BIM Pills" width="160"/>
   <h3>Plugin de Productividad para Autodesk Revit</h3>
   <p>
-    <a href="../../releases/latest"><img src="https://img.shields.io/badge/versi%C3%B3n-beta%207.7-EF6337?style=for-the-badge" alt="Versión"/></a>
+    <a href="../../releases/latest"><img src="https://img.shields.io/badge/versi%C3%B3n-beta%207.9-EF6337?style=for-the-badge" alt="Versión"/></a>
     <img src="https://img.shields.io/badge/Revit-2024%20%7C%202025%20%7C%202026%20%7C%202027-0696D7?style=for-the-badge" alt="Revit Versions"/>
     <img src="https://img.shields.io/badge/plataforma-Windows-1A1A2E?style=for-the-badge" alt="Windows"/>
   </p>
@@ -45,7 +45,7 @@ Tres herramientas para selección y edición masiva de elementos:
 ### 🗂️ Gestionar
 - **Tablas** — Exportar tablas de planificación a Excel, editar en lote e importar cambios de vuelta al modelo. Soporte para elementos de vínculos Revit.
 - **Notas Clave** — Editor visual con jerarquía, drag-and-drop, import/export Excel. Codificación ANSI (Windows-1252) compatible con caracteres en español. Compatible con archivos locales y Autodesk Docs (Desktop Connector).
-- **Subproyectos** — Crear y renombrar worksets. Generar vistas 3D por subproyecto con visibilidad automática.
+- **Subproyectos** — Crear y renombrar worksets, con selección masiva ("seleccionar todo"). Generar vistas 3D por subproyecto con visibilidad automática.
 - **Trasladar Estándares** — Transferencia selectiva desde otros modelos abiertos (estilos de cota, notas de texto, estilos de línea, tipos de muro/piso/techo, patrones de relleno, cotas puntuales).
 - **Gestionar Datos** — Conexión con fuentes externas y actualización masiva de parámetros.
 
