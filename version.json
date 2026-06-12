@@ -1,5 +1,5 @@
 {
-  "version": "1.0.0-beta.7.9",
-  "notes": "Estandarizar — Subproyectos: nuevo selector \"seleccionar todo\" en el encabezado de la lista. Gestionar — Tablas: corregido el congelamiento al abrir el panel en modelos grandes (ya no se regeneran gráficos por cada tabla) y filtrado de tablas internas de Revit que no aparecen en el navegador de proyectos. Gestionar — Importar Excel: la renumeración de planos ahora resuelve conflictos de orden mediante un proceso en dos pasos, evitando el error \"el número de plano ya está en uso\" al intercambiar numeraciones dentro del mismo lote.",
-  "installer_url": "https://github.com/BIM-CA/bim-pills-releases/releases/download/v1.0.0-beta.7.9/BIMPills-beta-7.9-Setup.exe"
+  "version": "1.0.0-beta.8",
+  "notes": "Exportar Planos — Filtros estilo Notion: filtra planos por cualquier parámetro con chips combinables (disciplina, revisión, estado…) y guarda filtros como presets. Columnas dinámicas: añade parámetros como columnas a la tabla desde el botón + Columnas. Ruta de exportación recordada por proyecto. Notas Clave — ruta del archivo recordada por proyecto; corregido el botón Recargar en Revit que fallaba silenciosamente.",
+  "installer_url": "https://github.com/BIM-CA/bim-pills-releases/releases/download/v1.0.0-beta.8/BIMPills-beta-8-Setup.exe"
 }
