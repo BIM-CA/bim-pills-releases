@@ -1,5 +1,5 @@
 {
-  "version": "1.0.0-beta.8.0",
-  "notes": "Exportar Planos — Filtros estilo Notion: filtra planos por cualquier parámetro con chips combinables (disciplina, revisión, estado…) y guarda filtros como presets. Columnas dinámicas: añade parámetros como columnas a la tabla desde el botón + Columnas. Ruta de exportación recordada por proyecto. Notas Clave — ruta del archivo recordada por proyecto; corregido el botón Recargar en Revit que fallaba silenciosamente.",
-  "installer_url": "https://github.com/BIM-CA/bim-pills-releases/releases/download/v1.0.0-beta.8.0/BIMPills-beta-8.0-Setup.exe"
+  "version": "1.0.0-beta.9",
+  "notes": "Sprint 19 — Unir/Desunir en lote: une o desune la geometría de todos los pares de la selección activa desde Organizar. Paletas de colores: crea paletas personalizadas y expórtalas como libros de colores .acb directamente al selector nativo de Revit. Galería BIM-CA: explora, descarga e inserta familias del catálogo BIM-CA. Soporte para Revit 2027.",
+  "installer_url": "https://github.com/BIM-CA/bim-pills-releases/releases/download/v1.0.0-beta.9/BIMPills-beta-9-Setup.exe"
 }
