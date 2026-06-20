@@ -2,7 +2,7 @@
   <img src="assets/logo.png?v=2" alt="BIM Pills" width="160"/>
   <h3>Plugin de Productividad para Autodesk Revit</h3>
   <p>
-    <a href="../../releases/latest"><img src="https://img.shields.io/badge/versi%C3%B3n-beta%209-EF6337?style=for-the-badge" alt="Versión"/></a>
+    <a href="../../releases/latest"><img src="https://img.shields.io/badge/versi%C3%B3n-beta%209.0-EF6337?style=for-the-badge" alt="Versión"/></a>
     <img src="https://img.shields.io/badge/Revit-2024%20%7C%202025%20%7C%202026%20%7C%202027-0696D7?style=for-the-badge" alt="Revit Versions"/>
     <img src="https://img.shields.io/badge/plataforma-Windows-1A1A2E?style=for-the-badge" alt="Windows"/>
   </p>
