@@ -2,7 +2,7 @@
   <img src="assets/logo.png?v=2" alt="BIM Pills" width="160"/>
   <h3>Plugin de Productividad para Autodesk Revit</h3>
   <p>
-    <a href="../../releases/latest"><img src="https://img.shields.io/badge/versi%C3%B3n-beta%209.0-EF6337?style=for-the-badge" alt="Versión"/></a>
+    <a href="../../releases/latest"><img src="https://img.shields.io/badge/versi%C3%B3n-1.0.0%20%C2%ABAspirina%C2%BB-EF6337?style=for-the-badge" alt="Versión"/></a>
     <img src="https://img.shields.io/badge/Revit-2024%20%7C%202025%20%7C%202026%20%7C%202027-0696D7?style=for-the-badge" alt="Revit Versions"/>
     <img src="https://img.shields.io/badge/plataforma-Windows-1A1A2E?style=for-the-badge" alt="Windows"/>
   </p>
@@ -74,11 +74,11 @@ Chat en vivo con el equipo de BIM-CA directamente desde Revit. Accede desde **BI
 
 1. Descarga el instalador desde [**Releases →**](../../releases/latest)
 2. Cierra Revit si está abierto
-3. Ejecuta `BIMPills-beta-X.X-Setup.exe` como administrador
+3. Ejecuta `BIMPills-1-0-0-Setup.exe` como administrador
 4. Selecciona las versiones de Revit instaladas
 5. Abre Revit — BIM Pills aparecerá en la cinta de opciones
 
-> **PDF24 Creator** — necesario para exportación PDF silenciosa. El installer lo detecta y configura automáticamente si ya está instalado.
+> **PDF24 Creator** (gratuito) — necesario para la exportación de planos a PDF. El instalador verifica que esté instalado y, si falta, te lleva a la página oficial de descarga antes de continuar.
 
 ### Actualizaciones automáticas
 El plugin detecta nuevas versiones al arrancar Revit y ofrece descargar e instalar la actualización sin salir de la aplicación.
