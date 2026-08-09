@@ -2,7 +2,7 @@
   <img src="assets/logo.png?v=2" alt="BIM Pills" width="160"/>
   <h3>Plugin de Productividad para Autodesk Revit</h3>
   <p>
-    <a href="../../releases/latest"><img src="https://img.shields.io/badge/versi%C3%B3n-1.0.2%20%C2%ABCafe%C3%ADna%C2%BB-EF6337?style=for-the-badge" alt="Versión"/></a>
+    <a href="../../releases/latest"><img src="https://img.shields.io/badge/versi%C3%B3n-1.2.0%20%C2%ABCafe%C3%ADna%C2%BB-EF6337?style=for-the-badge" alt="Versión"/></a>
     <img src="https://img.shields.io/badge/Revit-2024%20%7C%202025%20%7C%202026%20%7C%202027-0696D7?style=for-the-badge" alt="Revit Versions"/>
     <img src="https://img.shields.io/badge/plataforma-Windows-1A1A2E?style=for-the-badge" alt="Windows"/>
   </p>
@@ -20,7 +20,7 @@ BIM Pills es un plugin para Autodesk Revit que reúne en un solo lugar las herra
 
 ### 🔍 Auditar
 Auditoría del modelo BIM con puntuación de salud. Analiza familias, advertencias, materiales y otros indicadores de calidad. Incluye:
-- **Purga segura** — detección exhaustiva de familias en uso (parámetros enteros, ElementId, uniones MEP, perfiles de barandilla)
+- **Purga segura y rápida** — detección exhaustiva de familias en uso (parámetros enteros, ElementId, uniones MEP, perfiles de barandilla); eliminación en lote en segundos, con reporte fiel de lo eliminado y el motivo de cada elemento omitido
 - **Confirmación con nombres** — el diálogo muestra los elementos a eliminar antes de purgar
 - **Ventana de progreso** con fases e indicadores
 - **Reporte HTML** exportable
@@ -29,17 +29,19 @@ Auditoría del modelo BIM con puntuación de salud. Analiza familias, advertenci
 Ventana unificada con tres pestañas:
 - **Planos y Vistas** — Exportación por lotes a PDF y/o DWG. Motor PDF configurable (nativo Revit o impresora del sistema). Conjuntos de publicación guardables con multi-selección (botón **MIX** para combinar conjuntos). PDF combinado con nombre configurable (tokens `{ProjectName}`, `{Date}`). Presets de exportación con import/export XML.
 - **Modelo** — Exportación a NWC (Navisworks) con opciones de alcance, coordenadas, parámetros y precisión de facetado.
-- **Familias** — Exportación masiva de familias `.rfa` organizadas por categoría.
+- **Familias** — Exportación masiva de familias `.rfa` organizadas por categoría, con búsqueda por nombre, filtro por categoría, selección múltiple con Shift y cancelación del proceso.
 
 ### 📐 Documentar
 - **Acotado automático** — Dimensionamiento de vanos interiores y exteriores con esquemas de acotado personalizables por disciplina (guardables en JSON).
 - **Dibujar Tabla** — Inserta tablas estilizadas en planos a partir de un Excel.
 
 ### 🎯 Organizar (Seleccionar)
-Tres herramientas para selección y edición masiva de elementos:
+Herramientas para selección, edición masiva y organización visual de elementos:
+- **Filtros** ★ NUEVO — Creador de filtros de vista **nativos** de Revit en 4 pasos: categorías, reglas Y/O anidadas (o un filtro por cada valor de un parámetro, en lote), aplicación masiva a vistas o plantillas y colorización automática (aleatoria, gradiente o paleta) sobre proyección y corte, con patrón y visibilidad por canal. Genera leyendas de colores personalizables (estilos de texto, escala, tamaño de muestra en mm). Lee modelos vinculados y advierte parámetros no compatibles. Todo queda como filtros reales: visibles en V/G, editables y reutilizables en plantillas.
 - **Encontrar y Seleccionar** — Filtra por categoría, parámetro (TIPO/EJEMPLAR) o subproyecto. Modelo completo o vista activa.
 - **Asignar Valores** — Edición masiva de parámetros con vista previa y resumen de cambios.
 - **Secuenciador** — Numeración incremental interactiva con prefijos, pasos y sufijos configurables.
+- **Unir / Desunir** — Une o desune en lote la geometría de la selección.
 - **Cuentagotas** — Copia parámetros entre elementos seleccionables.
 
 ### 🗂️ Gestionar
