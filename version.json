@@ -1,5 +1,8 @@
 {
-    "version":  "1.2.0",
-    "notes":  "**BIM Pills 1.2.0 «Cafeína»** Nueva herramienta Filtros: crea filtros nativos de Revit por categorías y reglas Y/O, genera un filtro por cada valor de un parámetro y colorízalos en lote (aleatorio, gradiente o paleta) sobre proyección y corte, con leyenda de colores. Aplícalos a vistas y plantillas de forma masiva. Además: purga de Auditoría mucho más rápida y Exportar Familias con búsqueda, filtro por categoría, selección con Shift y cancelación. Compatible con Revit 2024–2027.",
-    "installer_url":  "https://github.com/BIM-CA/bim-pills-releases/releases/download/v1.2.0/BIMPills-1-2-0-Setup.exe"
+  "version": "1.2.1",
+  "notes": "**BIM Pills 1.2.1 «Cafeína»** — Actualización de seguridad. Las actualizaciones del plugin ahora se verifican con huella SHA-256 antes de instalarse, y la validación de licencias pasa por un servidor propio de BIM-CA en lugar de conectarse directamente a la base de datos. Las herramientas no cambian respecto a 1.2.0. Compatible con Revit 2024–2027.",
+  "installer_url": "https://github.com/BIM-CA/bim-pills-releases/releases/download/v1.2.1/BIMPills-1-2-1-Setup.exe",
+  "installer_sha256": "2fec5ead1dca63f5fde3c497a781646ec092de8502629a1c50ec204f2f7727ee",
+  "installer_size": 8955429,
+  "installer_signed": false
 }
