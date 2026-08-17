@@ -1,8 +1,8 @@
 {
-  "version": "1.2.1",
-  "notes": "**BIM Pills 1.2.1 «Cafeína»** — Actualización de seguridad. Las actualizaciones del plugin ahora se verifican con huella SHA-256 antes de instalarse, y la validación de licencias pasa por un servidor propio de BIM-CA en lugar de conectarse directamente a la base de datos. Las herramientas no cambian respecto a 1.2.0. Compatible con Revit 2024–2027.",
-  "installer_url": "https://github.com/BIM-CA/bim-pills-releases/releases/download/v1.2.1/BIMPills-1-2-1-Setup.exe",
-  "installer_sha256": "2fec5ead1dca63f5fde3c497a781646ec092de8502629a1c50ec204f2f7727ee",
-  "installer_size": 8955429,
+  "version": "1.2.2",
+  "notes": "**BIM Pills 1.2.2 «Cafeína»** — Galería de Familias reparada y mejoras en Tablas.\n\n- **Galería de Familias reparada.** La galería volvió a funcionar: se comunicaba con Airtable usando un acceso que fue revocado en la actualización de seguridad v1.2.1. Ahora pasa por el mismo servidor de BIM-CA que ya usan las licencias.\n- **Exportar tablas respeta los filtros.** Si ocultas elementos con los filtros de una tabla de Revit, esos elementos ya no aparecen en el Excel. Antes se exportaba la tabla completa, y con «incluir vínculos» activo salía la categoría entera del modelo vinculado.\n- **Portada en el Excel.** El archivo abre con una portada con el proyecto, el modelo, el alcance de lo exportado, la fecha, el usuario de Revit y las versiones.\n- **Encabezados más claros.** El color de las columnas dejó de repetirse en los encabezados, donde se confundía con la leyenda de tipos de parámetro.\n- Compatible con Revit 2024, 2025, 2026 y 2027.",
+  "installer_url": "https://github.com/BIM-CA/bim-pills-releases/releases/download/v1.2.2/BIMPills-1-2-2-Setup.exe",
+  "installer_sha256": "e5718226a8eccf882c96e99f0661d8aa4ee5ab849cc52f11e699b9e4f5d552b9",
+  "installer_size": 9094612,
   "installer_signed": false
 }
