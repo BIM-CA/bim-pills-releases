@@ -1,8 +1,8 @@
 {
-  "version": "1.2.2",
-  "notes": "**BIM Pills 1.2.2 «Cafeína»** — Galería de Familias reparada y mejoras en Tablas.\n\n- **Galería de Familias reparada.** La galería volvió a funcionar: se comunicaba con Airtable usando un acceso que fue revocado en la actualización de seguridad v1.2.1. Ahora pasa por el mismo servidor de BIM-CA que ya usan las licencias.\n- **Exportar tablas respeta los filtros.** Si ocultas elementos con los filtros de una tabla de Revit, esos elementos ya no aparecen en el Excel. Antes se exportaba la tabla completa, y con «incluir vínculos» activo salía la categoría entera del modelo vinculado.\n- **Portada en el Excel.** El archivo abre con una portada con el proyecto, el modelo, el alcance de lo exportado, la fecha, el usuario de Revit y las versiones.\n- **Encabezados más claros.** El color de las columnas dejó de repetirse en los encabezados, donde se confundía con la leyenda de tipos de parámetro.\n- Compatible con Revit 2024, 2025, 2026 y 2027.",
-  "installer_url": "https://github.com/BIM-CA/bim-pills-releases/releases/download/v1.2.2/BIMPills-1-2-2-Setup.exe",
-  "installer_sha256": "e5718226a8eccf882c96e99f0661d8aa4ee5ab849cc52f11e699b9e4f5d552b9",
-  "installer_size": 9094612,
+  "version": "1.2.3",
+  "notes": "**BIM Pills 1.2.3 «Cafeína»** — Corrección importante en la purga.\n\n- **La purga ya no borra familias que solo se usan en leyendas.** Una familia colocada únicamente en una leyenda se declaraba «sin usar» y, al purgarla, Revit se llevaba por delante el componente de la leyenda sin avisar de nada.\n- **Una segunda red al purgar.** Antes de eliminar cada elemento se hace un borrado de prueba que se deshace en el acto: si arrastra consigo algo dibujado o colocado que no le pertenece, ese elemento se descarta y se queda en el modelo.\n- **El aviso de purga incompleta se entiende.** Ahora dice cuántos elementos quedaron y por qué en lenguaje claro, con la respuesta original de Revit a mano y un botón para copiar el detalle. Y aclara lo importante: lo que no se pudo borrar sigue en el modelo, intacto.\n- Compatible con Revit 2024, 2025, 2026 y 2027.",
+  "installer_url": "https://github.com/BIM-CA/bim-pills-releases/releases/download/v1.2.3/BIMPills-1-2-3-Setup.exe",
+  "installer_sha256": "ca3e8a8b12e642f153afe32f6a4d38e0e0f9aeffaca4a95418efcae6b7d28343",
+  "installer_size": 9100248,
   "installer_signed": false
 }
