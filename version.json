@@ -1,8 +1,8 @@
 {
-  "version": "1.2.3",
-  "notes": "**BIM Pills 1.2.3 «Cafeína»** — Correcciones en la purga, el aviso de actualización y el chat de soporte.\n\n- **La purga ya no borra familias que solo se usan en leyendas.** Una familia colocada únicamente en una leyenda se declaraba «sin usar» y, al purgarla, Revit se llevaba por delante el componente de la leyenda sin avisar de nada.\n- **Una segunda red al purgar.** Antes de eliminar cada elemento se hace un borrado de prueba que se deshace en el acto: si arrastra consigo algo dibujado o colocado que no le pertenece, ese elemento se descarta y se queda en el modelo.\n- **El aviso de purga incompleta se entiende.** Ahora dice cuántos elementos quedaron y por qué en lenguaje claro, con la respuesta original de Revit a mano y un botón para copiar el detalle. Y aclara lo importante: lo que no se pudo borrar sigue en el modelo, intacto.\n- **El aviso de actualización llega también si empiezas con un proyecto nuevo.** Antes solo aparecía al abrir un archivo existente, así que quien arranca Revit y le da a «Nuevo» no se enteraba nunca de que había versión disponible.\n- **El chat de soporte vuelve a funcionar.** Decía «Sin conexión» con el chat perfectamente cargado detrás, y así llevaba meses. Además ahora reconoce a quien escribe: quien atiende ve el plan, la licencia y la versión de Revit sin tener que preguntarlas.\n- Compatible con Revit 2024, 2025, 2026 y 2027.",
-  "installer_url": "https://github.com/BIM-CA/bim-pills-releases/releases/download/v1.2.3/BIMPills-1-2-3-Setup.exe",
-  "installer_sha256": "872ebb4cd5e88f38a90c3809006c6e9e88dcd9c3ecb214b2fd200e7a9f0e2739",
-  "installer_size": 9115615,
+  "version": "1.2.4",
+  "notes": "**BIM Pills 1.2.4 «Cafeína»** — Mantenimiento interno.\n\n- **Los datos de tu licencia dejan de perderse en silencio.** Si alguno de los campos que BIM Pills lee de la base de licencias deja de estar disponible, ahora queda registrado en el diario del plugin en lugar de llegar vacío sin más. Es lo que provocó que el chat de soporte no reconociera a nadie por correo durante meses, y esto evita que vuelva a pasar desapercibido.\n\nNo cambia ninguna herramienta respecto a la 1.2.3. Si acabas de instalarla, puedes esperar sin problema a la próxima versión.\n\nCompatible con Revit 2024, 2025, 2026 y 2027.",
+  "installer_url": "https://github.com/BIM-CA/bim-pills-releases/releases/download/v1.2.4/BIMPills-1-2-4-Setup.exe",
+  "installer_sha256": "b259454811ed45f1383e5d4161d3fb058b789f5096d2d2f4180ac7c97078d615",
+  "installer_size": 9116714,
   "installer_signed": false
 }
