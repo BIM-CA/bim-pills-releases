@@ -1,8 +1,8 @@
 {
-  "version": "1.2.4",
-  "notes": "**BIM Pills 1.2.4 «Cafeína»** — Mantenimiento interno.\n\n- **Los datos de tu licencia dejan de perderse en silencio.** Si alguno de los campos que BIM Pills lee de la base de licencias deja de estar disponible, ahora queda registrado en el diario del plugin en lugar de llegar vacío sin más. Es lo que provocó que el chat de soporte no reconociera a nadie por correo durante meses, y esto evita que vuelva a pasar desapercibido.\n\nNo cambia ninguna herramienta respecto a la 1.2.3. Si acabas de instalarla, puedes esperar sin problema a la próxima versión.\n\nCompatible con Revit 2024, 2025, 2026 y 2027.",
-  "installer_url": "https://github.com/BIM-CA/bim-pills-releases/releases/download/v1.2.4/BIMPills-1-2-4-Setup.exe",
-  "installer_sha256": "b259454811ed45f1383e5d4161d3fb058b789f5096d2d2f4180ac7c97078d615",
-  "installer_size": 9116714,
+  "version": "1.2.5",
+  "notes": "**BIM Pills 1.2.5 «Cafeína»** — El acotado ahora trabaja con modelos vinculados.\n\n- **Acota contra tus vínculos.** Marca «Incluir modelos vinculados» y los seis esquemas de Acotado toman muros, puertas, ejes y niveles de los modelos vinculados.\n- **Acota solo lo que ves.** Respeta el rango de vista y la forma del recorte, también si es poligonal; sin recorte, se limita a lo que tienes en pantalla. Y ya no duplica cotas si lo ejecutas dos veces.\n- **Espacios interiores más certeros**, con cotas alineadas a la habitación en vistas giradas y en formas irregulares.\n- **Nuevos ajustes:** ignorar los muros bajos y acotar contra el de detrás, y tener en cuenta los azulejos modelados aparte. Solo aparecen donde sirven, y la ventana recuerda cómo la dejaste.\n- **Gestionar → Tablas, más robusto.** Dos tablas con el mismo nombre en distintas mayúsculas ya no se confunden, y renombrar encabezados ya no impide cargar los datos de vuelta. Vuelve a exportar tus tablas para aprovecharlo.\n\nCompatible con Revit 2024, 2025, 2026 y 2027.",
+  "installer_url": "https://github.com/BIM-CA/bim-pills-releases/releases/download/v1.2.5/BIMPills-1-2-5-Setup.exe",
+  "installer_sha256": "c16c28c9c873a7e6d506acbf177c25baeab8485699f4dbc80ae565f0154a5c0c",
+  "installer_size": 9193219,
   "installer_signed": false
 }
