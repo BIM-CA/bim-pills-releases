@@ -2,7 +2,7 @@
   <img src="assets/logo.png?v=2" alt="BIM Pills" width="160"/>
   <h3>Plugin de Productividad para Autodesk Revit</h3>
   <p>
-    <a href="../../releases/latest"><img src="https://img.shields.io/badge/versi%C3%B3n-1.2.5-EF6337?style=for-the-badge" alt="Versión"/></a>
+    <a href="../../releases/latest"><img src="https://img.shields.io/badge/versi%C3%B3n-1.3.0-EF6337?style=for-the-badge" alt="Versión"/></a>
     <img src="https://img.shields.io/badge/Revit-2024%20%7C%202025%20%7C%202026%20%7C%202027-0696D7?style=for-the-badge" alt="Revit Versions"/>
     <img src="https://img.shields.io/badge/plataforma-Windows-1A1A2E?style=for-the-badge" alt="Windows"/>
   </p>
@@ -27,7 +27,7 @@ Auditoría del modelo BIM con puntuación de salud. Analiza familias, advertenci
 
 ### 📤 Exportar
 Ventana unificada con tres pestañas:
-- **Planos y Vistas** — Exportación por lotes a PDF y/o DWG. Motor PDF configurable (nativo Revit o impresora del sistema). Conjuntos de publicación guardables con multi-selección (botón **MIX** para combinar conjuntos). PDF combinado con nombre configurable (tokens `{ProjectName}`, `{Date}`). Presets de exportación con import/export XML.
+- **Planos y Vistas** — Exportación por lotes a PDF y/o DWG. Motor PDF configurable (nativo Revit o impresora del sistema). Conjuntos de publicación guardables con multi-selección (botón **MIX** para combinar conjuntos). PDF combinado con nombre configurable (tokens `{ProjectName}`, `{Date}`). Presets de exportación con import/export XML. En DWG, casilla **«Fusionar los vínculos en un solo DWG por plano»**: los perfiles de Revit sacan cada vínculo como referencia externa, y en un plano que enseña el conjunto eso son decenas de archivos por hoja.
 - **Modelo** — Exportación a NWC (Navisworks) con opciones de alcance, coordenadas, parámetros y precisión de facetado.
 - **Familias** — Exportación masiva de familias `.rfa` organizadas por categoría.
 
@@ -50,7 +50,16 @@ Tres herramientas para selección y edición masiva de elementos:
 - **Gestionar Datos** — Conexión con fuentes externas y actualización masiva de parámetros.
 
 ### 🤖 Conector IA (MCP)
-Servidor MCP nativo que conecta Revit con cualquier agente de IA compatible (Claude, Cursor, GitHub Copilot…). Consulta elementos, edita parámetros en lote, numera planos, gestiona vistas, valida documentos IDS y gestiona familias BIM-CA, todo desde el chat del agente. El servidor arranca automáticamente con BIM Pills.
+Conecta Revit con cualquier agente de IA compatible (Claude, Cursor, GitHub Copilot…) y trabaja sobre el modelo desde el chat. **70 herramientas**:
+- **Consultar** — elementos por categoría, nivel o subproyecto, advertencias, habitaciones y áreas, tablas, familias cargadas, y lo que hay dentro de los modelos vinculados.
+- **Documentar** — crear vistas, secciones y alzados, numerar y renombrar planos, etiquetar, replicar la maqueta de un plano en una serie entera, y leer o mover la posición de las vistas dentro del cajetín.
+- **Editar y crear** — parámetros en lote, subproyectos, filtros de vista, y regiones rellenadas sobre el contorno de habitaciones y áreas.
+- **Permisos** — cinco niveles, del solo lectura al que permite borrar, con la opción de apagar herramientas o categorías concretas. Lo que borra pide confirmación en dos pasos, y cada acción entra como una sola entrada de deshacer.
+
+El servidor viene **apagado**: se enciende desde **BIM Pills → Conectar IA**, que además configura Claude Desktop por ti.
+
+### ✅ Revisar
+Validador IDS. Carga un archivo `.ids` y comprueba el modelo contra él: el informe se organiza por especificación, lista los elementos que incumplen con el motivo, y despliega solo las que fallan.
 
 ### 🎨 Paletas de Color
 - **Paletas propias** — Crea y gestiona libros de colores `.acb` compatibles con Revit.
