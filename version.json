@@ -1,8 +1,8 @@
 {
-  "version": "1.4.0",
-  "notes": "**BIM Pills 1.4.0 «Cafeína»** — Duplicar y renombrar en lote, y las tablas de vínculos al Excel.\n\n- **Duplicar vistas (Organizar).** Duplica varias vistas a la vez, tantas copias como necesites, con las tres formas de Revit: normal, con detalle o como dependiente. Los nombres salen de un patrón con correlativo o de **tu propia lista**: pégala o cárgala de un CSV y cada copia toma el suyo. Siempre con vista previa antes de aplicar.\n\n- **Renombrar en lote (Organizar).** Cambia los nombres de vistas, planos y tablas con reglas —buscar y reemplazar, prefijo, sufijo, mayúsculas y un correlativo— en vez de uno por uno. Antes de tocar nada ves la lista de «antes → después», con lo que no cambia y lo que chocaría con un nombre ya existente.\n\n- **Tablas de vínculos al Excel.** Una tabla de categoría «Vínculos RVT» se exportaba vacía. Ahora salen sus filas, y el nombre del tipo del vínculo —el que le pones en tu archivo, no el del disco— se exporta correctamente.\n\n- **Importar más rápido.** Con muchos proyectos abiertos, el documento fuente ahora se busca escribiendo, en las tres pestañas.\n\nCompatible con Revit 2024, 2025, 2026 y 2027.",
-  "installer_url": "https://github.com/BIM-CA/bim-pills-releases/releases/download/v1.4.0/BIMPills-1-4-0-Setup.exe",
-  "installer_sha256": "6d101580f20c63c2491ce9349a9b92a6b4f2a6e9bef40096d4c526ef573d3240",
-  "installer_size": 10281117,
-  "installer_signed": false
+    "version":  "1.4.0",
+    "notes":  "**BIM Pills 1.4.0 «Cafeína»**\n\n- **Duplicar vistas (Organizar).** Varias vistas a la vez, con las tres formas de Revit. Los nombres salen de un patrón con correlativo o de tu propia lista, pegada o cargada de un CSV.\n- **Renombrar en lote (Organizar).** Vistas, planos y tablas con reglas: buscar y reemplazar, prefijo, sufijo, mayúsculas y correlativo, con vista previa antes de aplicar.\n- **Tablas de vínculos al Excel.** Las de categoría «Vínculos RVT» ya no se exportan vacías.\n- **Importar.** El documento fuente se busca escribiendo.\n\nCompatible con Revit 2024-2027.",
+    "installer_url":  "https://github.com/BIM-CA/bim-pills-releases/releases/download/v1.4.0/BIMPills-1-4-0-Setup.exe",
+    "installer_sha256":  "6d101580f20c63c2491ce9349a9b92a6b4f2a6e9bef40096d4c526ef573d3240",
+    "installer_size":  10281117,
+    "installer_signed":  false
 }
