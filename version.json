@@ -1,8 +1,8 @@
 {
-    "version":  "1.4.0",
-    "notes":  "**BIM Pills 1.4.0 «Cafeína»**\n\n- **Duplicar vistas (Organizar).** Varias vistas a la vez, con las tres formas de Revit. Los nombres salen de un patrón con correlativo o de tu propia lista, pegada o cargada de un CSV.\n- **Renombrar en lote (Organizar).** Vistas, planos y tablas con reglas: buscar y reemplazar, prefijo, sufijo, mayúsculas y correlativo, con vista previa antes de aplicar.\n- **Tablas de vínculos al Excel.** Las de categoría «Vínculos RVT» ya no se exportan vacías.\n- **Importar.** El documento fuente se busca escribiendo.\n\nCompatible con Revit 2024-2027.",
-    "installer_url":  "https://github.com/BIM-CA/bim-pills-releases/releases/download/v1.4.0/BIMPills-1-4-0-Setup.exe",
-    "installer_sha256":  "6d101580f20c63c2491ce9349a9b92a6b4f2a6e9bef40096d4c526ef573d3240",
-    "installer_size":  10281117,
+    "version":  "1.4.1",
+    "notes":  "**BIM Pills 1.4.1 «Cafeína»**\n\n- **Revit 2025.5 y 2026.5.** Autodesk las pasó a .NET 10; el instalador deja en cada Revit la versión que le toca.\n- **Duplicar vistas** creaba las copias pero no les ponía el nombre configurado si el comodín llevaba mayúscula.\n- **Importar:** el buscador del documento fuente ya busca; escribe y la lista se reduce.\n- **Renombrar en lote:** un solo paso, con la vista previa siempre delante, quitar el número de fábrica y correlativos en letras.\n- **Tablas:** el nombre del archivo exportado ya no se corta.\n\nCompatible con Revit 2024-2027.",
+    "installer_url":  "https://github.com/BIM-CA/bim-pills-releases/releases/download/v1.4.1/BIMPills-1-4-1-Setup.exe",
+    "installer_sha256":  "ccf71bb6db503d52952a31e1cf4d1d18f139249a230253835796dddbc21f9c19",
+    "installer_size":  12756025,
     "installer_signed":  false
 }
