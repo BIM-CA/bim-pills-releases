@@ -1,8 +1,8 @@
 {
     "version":  "1.5.0",
-    "notes":  "**BIM Pills 1.5.0 «Cafeína»**\n\n- **Panel «Subproyectos»:** apaga, aísla o enciende subproyectos señalando un elemento en la vista, sin abrir Visibilidad/Gráficos.\n- **Panel «Vínculos»:** lo mismo para los vínculos de Revit. Lo que se apaga es el emplazamiento, no el archivo.\n- **Plantillas de vista:** si una plantilla manda sobre los subproyectos, el primer clic te dice cuál es y a cuántas vistas afecta; repítelo y el cambio va a la plantilla.\n- **Sin ventanas:** todo se cuenta en un aviso flotante que se desvanece solo, y cada pulsación se deshace entera con Ctrl+Z.\n- Los botones pequeños de la cinta ya enseñan su icono completo, y su tooltip trae las instrucciones de uso.\n\nCompatible con Revit 2024-2027.",
+    "notes":  "**BIM Pills 1.5.0 «Cafeína»**\n\n- **Panel «Subproyectos»:** apaga, aísla o enciende subproyectos señalando un elemento en la vista, sin abrir Visibilidad/Gráficos.\n- **Panel «Vínculos»:** lo mismo para los vínculos de Revit. Lo que se apaga es el emplazamiento, no el archivo.\n- **Plantillas de vista:** si una plantilla manda sobre los subproyectos, el primer clic te dice cuál es y a cuántas vistas afecta; repítelo y el cambio va a la plantilla.\n- **Sin ventanas:** todo se cuenta en un aviso flotante que se desvanece solo, y cada pulsación se deshace entera con Ctrl+Z.\n- Los botones pequeños de la cinta ya enseñan su icono completo, y su tooltip trae las instrucciones de uso.\n- Los avisos se quedan en pantalla el tiempo que cuesta leerlos, no un tiempo fijo.\n\nCompatible con Revit 2024-2027.",
     "installer_url":  "https://github.com/BIM-CA/bim-pills-releases/releases/download/v1.5.0/BIMPills-1-5-0-Setup.exe",
-    "installer_sha256":  "0646415f4849b0fd95e20c46fe0d82b24e17ab0793060223d20be0a0015e4482",
-    "installer_size":  12870675,
+    "installer_sha256":  "e15148254401ca047df2238f3473d108341201f55b75e03056c7e3f0fb6c9941",
+    "installer_size":  12871586,
     "installer_signed":  false
 }
