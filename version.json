@@ -1,8 +1,8 @@
 {
-    "version":  "1.4.1",
-    "notes":  "**BIM Pills 1.4.1 «Cafeína»**\n\n- **Revit 2025.5 y 2026.5.** Autodesk las pasó a .NET 10; el instalador deja en cada Revit la versión que le toca.\n- **Duplicar vistas** creaba las copias pero no les ponía el nombre configurado si el comodín llevaba mayúscula.\n- **Importar:** el buscador del documento fuente ya busca; escribe y la lista se reduce.\n- **Renombrar en lote:** un solo paso, con la vista previa siempre delante, quitar el número de fábrica y correlativos en letras.\n- **Tablas:** el nombre del archivo exportado ya no se corta.\n\nCompatible con Revit 2024-2027.",
-    "installer_url":  "https://github.com/BIM-CA/bim-pills-releases/releases/download/v1.4.1/BIMPills-1-4-1-Setup.exe",
-    "installer_sha256":  "ccf71bb6db503d52952a31e1cf4d1d18f139249a230253835796dddbc21f9c19",
-    "installer_size":  12756025,
+    "version":  "1.5.0",
+    "notes":  "**BIM Pills 1.5.0 «Cafeína»**\n\n- **Panel «Subproyectos»:** apaga, aísla o enciende subproyectos señalando un elemento en la vista, sin abrir Visibilidad/Gráficos.\n- **Panel «Vínculos»:** lo mismo para los vínculos de Revit. Lo que se apaga es el emplazamiento, no el archivo.\n- **Plantillas de vista:** si una plantilla manda sobre los subproyectos, el primer clic te dice cuál es y a cuántas vistas afecta; repítelo y el cambio va a la plantilla.\n- **Sin ventanas:** todo se cuenta en un aviso flotante que se desvanece solo, y cada pulsación se deshace entera con Ctrl+Z.\n- Los botones pequeños de la cinta ya enseñan su icono completo, y su tooltip trae las instrucciones de uso.\n\nCompatible con Revit 2024-2027.",
+    "installer_url":  "https://github.com/BIM-CA/bim-pills-releases/releases/download/v1.5.0/BIMPills-1-5-0-Setup.exe",
+    "installer_sha256":  "0646415f4849b0fd95e20c46fe0d82b24e17ab0793060223d20be0a0015e4482",
+    "installer_size":  12870675,
     "installer_signed":  false
 }
