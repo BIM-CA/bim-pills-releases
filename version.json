@@ -1,8 +1,8 @@
 {
-    "version":  "1.5.1",
-    "notes":  "**BIM Pills 1.5.1 «Cafeína»**\n\n- **Filtros con subcategorías:** ya puedes filtrar bordes de losa, barridos de muro, impostas, canalones, cielos rasos de cubierta, tramos, descansillos y soportes de escalera, pasamanos y barandales, entre otras. Salen las mismas que en el diálogo de filtros de Revit.\n- Aparecen con su categoría delante («Suelos › Bordes de losa») para distinguir las que se llaman igual, y el buscador las encuentra escribiendo solo una parte.\n- **Conector IA:** las categorías incluyen las subcategorías con su categoría padre, y los filtros y consultas las aceptan.\n- El diario del plugin registra lo que hace Filtros para diagnosticar rápido si algo no aparece.\n\nCompatible con Revit 2024-2027.",
-    "installer_url":  "https://github.com/BIM-CA/bim-pills-releases/releases/download/v1.5.1/BIMPills-1-5-1-Setup.exe",
-    "installer_sha256":  "8c71477d1e28bc50c8e21e63e390e787301d3c1c90c0c3e17366031da529278e",
-    "installer_size":  12885851,
+    "version":  "1.5.2",
+    "notes":  "**BIM Pills 1.5.2 «Cafeína»**\n\n- **Filtros, valores comunes:** al crear filtros por valor con varias categorías, puedes quedarte solo con los valores que aparecen en todas (por ejemplo, las molduras MOL-XX de muros, bordes de losa y barridos).\n- **Buscador y casillas:** busca valores, marca uno por uno o todos los que estás viendo; solo se crean los filtros marcados.\n- La columna Categorías dice en cuántas aparece cada valor, y el contador avisa si pasas de 50 filtros en una tanda.\n- **Leyenda de colores:** cada filtro tiene su tipo de región rellenada con su nombre y su color, en vez de sobrescrituras de la vista.\n- Filtros lee hasta 1000 valores distintos por parámetro (antes, 50).\n\nCompatible con Revit 2024-2027.",
+    "installer_url":  "https://github.com/BIM-CA/bim-pills-releases/releases/download/v1.5.2/BIMPills-1-5-2-Setup.exe",
+    "installer_sha256":  "1487850d13c6cfe1f58eb56d766f04d1c33683e53d13d95ced14d083a74d16a7",
+    "installer_size":  12907756,
     "installer_signed":  false
 }
