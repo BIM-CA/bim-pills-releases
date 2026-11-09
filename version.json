@@ -1,8 +1,8 @@
 {
-    "version":  "1.5.0",
-    "notes":  "**BIM Pills 1.5.0 «Cafeína»**\n\n- **Panel «Subproyectos»:** apaga, aísla o enciende subproyectos señalando un elemento en la vista, sin abrir Visibilidad/Gráficos.\n- **Panel «Vínculos»:** lo mismo para los vínculos de Revit. Lo que se apaga es el emplazamiento, no el archivo.\n- **Plantillas de vista:** si una plantilla manda sobre los subproyectos, el primer clic te dice cuál es y a cuántas vistas afecta; repítelo y el cambio va a la plantilla.\n- **Sin ventanas:** todo se cuenta en un aviso flotante que se desvanece solo, y cada pulsación se deshace entera con Ctrl+Z.\n- Los botones pequeños de la cinta ya enseñan su icono completo, y su tooltip trae las instrucciones de uso.\n- Los avisos se quedan en pantalla el tiempo que cuesta leerlos, no un tiempo fijo.\n\nCompatible con Revit 2024-2027.",
-    "installer_url":  "https://github.com/BIM-CA/bim-pills-releases/releases/download/v1.5.0/BIMPills-1-5-0-Setup.exe",
-    "installer_sha256":  "e15148254401ca047df2238f3473d108341201f55b75e03056c7e3f0fb6c9941",
-    "installer_size":  12871586,
+    "version":  "1.5.1",
+    "notes":  "**BIM Pills 1.5.1 «Cafeína»**\n\n- **Filtros con subcategorías:** ya puedes filtrar bordes de losa, barridos de muro, impostas, canalones, cielos rasos de cubierta, tramos, descansillos y soportes de escalera, pasamanos y barandales, entre otras. Salen las mismas que en el diálogo de filtros de Revit.\n- Aparecen con su categoría delante («Suelos › Bordes de losa») para distinguir las que se llaman igual, y el buscador las encuentra escribiendo solo una parte.\n- **Conector IA:** las categorías incluyen las subcategorías con su categoría padre, y los filtros y consultas las aceptan.\n- El diario del plugin registra lo que hace Filtros para diagnosticar rápido si algo no aparece.\n\nCompatible con Revit 2024-2027.",
+    "installer_url":  "https://github.com/BIM-CA/bim-pills-releases/releases/download/v1.5.1/BIMPills-1-5-1-Setup.exe",
+    "installer_sha256":  "8c71477d1e28bc50c8e21e63e390e787301d3c1c90c0c3e17366031da529278e",
+    "installer_size":  12885851,
     "installer_signed":  false
 }
