@@ -1,8 +1,8 @@
 {
-    "version":  "1.5.2",
-    "notes":  "**BIM Pills 1.5.2 «Cafeína»**\n\n- **Filtros, valores comunes:** al crear filtros por valor con varias categorías, puedes quedarte solo con los valores que aparecen en todas (por ejemplo, las molduras MOL-XX de muros, bordes de losa y barridos).\n- **Buscador y casillas:** busca valores, marca uno por uno o todos los que estás viendo; solo se crean los filtros marcados.\n- La columna Categorías dice en cuántas aparece cada valor, y el contador avisa si pasas de 50 filtros en una tanda.\n- **Leyenda de colores:** cada filtro tiene su tipo de región rellenada con su nombre y su color, en vez de sobrescrituras de la vista.\n- Filtros lee hasta 1000 valores distintos por parámetro (antes, 50).\n\nCompatible con Revit 2024-2027.",
-    "installer_url":  "https://github.com/BIM-CA/bim-pills-releases/releases/download/v1.5.2/BIMPills-1-5-2-Setup.exe",
-    "installer_sha256":  "1487850d13c6cfe1f58eb56d766f04d1c33683e53d13d95ced14d083a74d16a7",
-    "installer_size":  12907756,
+    "version":  "1.5.3",
+    "notes":  "**BIM Pills 1.5.3 «Cafeína»**\n\n- **Notas Clave, guardar ya no borra líneas:** si alguna carpeta estaba contraída al pulsar «Guardar .txt», sus notas desaparecían del archivo. Ahora se guarda siempre el archivo completo.\n- Los comentarios (líneas con #) se conservan al guardar.\n- Las notas con una clave padre inexistente se muestran y se guardan con todo lo que tienen debajo.\n- Las claves repetidas ya no pueden dejar la herramienta colgada.\n\nActualiza cuanto antes si usas Notas Clave. Compatible con Revit 2024-2027.",
+    "installer_url":  "https://github.com/BIM-CA/bim-pills-releases/releases/download/v1.5.3/BIMPills-1-5-3-Setup.exe",
+    "installer_sha256":  "6a7b1488eaca9cf7cb965d1604cb403cef2a0c4cafd4d63bf2803e51c4fb8b53",
+    "installer_size":  12911347,
     "installer_signed":  false
 }
