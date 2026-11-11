@@ -1,8 +1,8 @@
 {
-    "version":  "1.5.3",
-    "notes":  "**BIM Pills 1.5.3 «Cafeína»**\n\n- **Notas Clave, guardar ya no borra líneas:** si alguna carpeta estaba contraída al pulsar «Guardar .txt», sus notas desaparecían del archivo. Ahora se guarda siempre el archivo completo.\n- Los comentarios (líneas con #) se conservan al guardar.\n- Las notas con una clave padre inexistente se muestran y se guardan con todo lo que tienen debajo.\n- Las claves repetidas ya no pueden dejar la herramienta colgada.\n\nActualiza cuanto antes si usas Notas Clave. Compatible con Revit 2024-2027.",
-    "installer_url":  "https://github.com/BIM-CA/bim-pills-releases/releases/download/v1.5.3/BIMPills-1-5-3-Setup.exe",
-    "installer_sha256":  "6a7b1488eaca9cf7cb965d1604cb403cef2a0c4cafd4d63bf2803e51c4fb8b53",
-    "installer_size":  12911347,
+    "version":  "1.5.4",
+    "notes":  "**BIM Pills 1.5.4 «Cafeína»**\n\n- **Conector IA con Claude Desktop recién instalado:** «Instalar en Claude Desktop» decía que no lo encontraba si Claude aún no se había abierto nunca o usaba la carpeta de la versión de Microsoft Store. Ahora lo busca en los dos sitios.\n- Si Claude Desktop está instalado pero nunca se ha abierto, el aviso explica qué hacer, sin cerrar Revit.\n- Tras instalar, recuerda salir de Claude desde la bandeja del sistema para que aparezcan las herramientas.\n\nCompatible con Revit 2024-2027.",
+    "installer_url":  "https://github.com/BIM-CA/bim-pills-releases/releases/download/v1.5.4/BIMPills-1-5-4-Setup.exe",
+    "installer_sha256":  "d77ea30da9e3b9b1b97390f21b1b53ff111ae6a67f6e99640d9f75518f9aeb2c",
+    "installer_size":  12916229,
     "installer_signed":  false
 }
