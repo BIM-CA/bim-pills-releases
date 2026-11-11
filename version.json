@@ -1,0 +1,8 @@
+{
+    "version":  "1.5.4",
+    "notes":  "**BIM Pills 1.5.4 «Cafeína»**\n\n- **Conector IA con Claude Desktop recién instalado:** «Instalar en Claude Desktop» decía que no lo encontraba si Claude aún no se había abierto nunca o usaba la carpeta de la versión de Microsoft Store. Ahora lo busca en los dos sitios.\n- Si Claude Desktop está instalado pero nunca se ha abierto, el aviso explica qué hacer, sin cerrar Revit.\n- Tras instalar, recuerda salir de Claude desde la bandeja del sistema para que aparezcan las herramientas.\n\nCompatible con Revit 2024-2027.",
+    "installer_url":  "https://github.com/BIM-CA/bim-pills-releases/releases/download/v1.5.4/BIMPills-1-5-4-Setup.exe",
+    "installer_sha256":  "d77ea30da9e3b9b1b97390f21b1b53ff111ae6a67f6e99640d9f75518f9aeb2c",
+    "installer_size":  12916229,
+    "installer_signed":  false
+}
