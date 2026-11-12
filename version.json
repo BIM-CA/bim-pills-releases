@@ -1,8 +1,8 @@
 {
-    "version":  "1.5.5",
-    "notes":  "**BIM Pills 1.5.5 «Cafeína»**\n\n- **Conector IA con Claude Desktop recién instalado:** BIM Pills no aparecía en Claude porque Claude guarda ahora su configuración en otra carpeta. «Instalar en Claude Desktop» registra BIM Pills en todas las carpetas de Claude del equipo.\n- Si el servidor de BIM Pills está apagado, al instalar pregunta si encenderlo y dejarlo encendiéndose solo con Revit.\n- La ventana del Conector IA se puede agrandar.\n\nTras actualizar, pulsa «Instalar» en el Conector IA y reinicia Claude desde la bandeja del sistema. Compatible con Revit 2024-2027.",
-    "installer_url":  "https://github.com/BIM-CA/bim-pills-releases/releases/download/v1.5.5/BIMPills-1-5-5-Setup.exe",
-    "installer_sha256":  "d20e6b4639693bdfc22042eca77b19e678264d75f221c5c97908ddb5cd207065",
-    "installer_size":  12918532,
+    "version":  "1.5.6",
+    "notes":  "**BIM Pills 1.5.6 «Cafeína»**\n\n- **Conector IA: vínculos en Visibilidad/Gráficos.** Claude puede revisar y cambiar la configuración de visualización de los vínculos en muchas vistas a la vez, sin abrirlas una a una: por vista anfitriona, por vista vinculada o personalizado, en el ejemplar o en el tipo.\n- Lista las vistas de cada modelo vinculado para elegir cuál usar.\n- Si la plantilla de la vista manda sobre los vínculos, lo avisa y puede aplicar el cambio en la plantilla.\n- Previsualización antes de aplicar y una sola entrada de deshacer.\n\nCompatible con Revit 2024-2027.",
+    "installer_url":  "https://github.com/BIM-CA/bim-pills-releases/releases/download/v1.5.6/BIMPills-1-5-6-Setup.exe",
+    "installer_sha256":  "030c49b96ac422e8a52f89f3fe64604ac05a30f786bcbdeea676321329a5804d",
+    "installer_size":  12991908,
     "installer_signed":  false
 }
