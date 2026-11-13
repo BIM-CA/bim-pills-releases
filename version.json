@@ -1,8 +1,8 @@
 {
-    "version":  "1.5.6",
-    "notes":  "**BIM Pills 1.5.6 «Cafeína»**\n\n- **Conector IA: vínculos en Visibilidad/Gráficos.** Claude puede revisar y cambiar la configuración de visualización de los vínculos en muchas vistas a la vez, sin abrirlas una a una: por vista anfitriona, por vista vinculada o personalizado, en el ejemplar o en el tipo.\n- Lista las vistas de cada modelo vinculado para elegir cuál usar.\n- Si la plantilla de la vista manda sobre los vínculos, lo avisa y puede aplicar el cambio en la plantilla.\n- Previsualización antes de aplicar y una sola entrada de deshacer.\n\nCompatible con Revit 2024-2027.",
-    "installer_url":  "https://github.com/BIM-CA/bim-pills-releases/releases/download/v1.5.6/BIMPills-1-5-6-Setup.exe",
-    "installer_sha256":  "030c49b96ac422e8a52f89f3fe64604ac05a30f786bcbdeea676321329a5804d",
-    "installer_size":  12991908,
+    "version":  "1.5.7",
+    "notes":  "**BIM Pills 1.5.7 «Cafeína»**\n\n- **Soporte nuevo, nativo y más seguro.** El chat de Soporte es ahora una ventana propia de BIM Pills: abre al instante, recibe las respuestas en tiempo real y avisa con una notificación si la ventana está cerrada. Permite adjuntar capturas, PDF, registros o zip. Es para usuarios con licencia, incluida la de prueba.\n- **Reporte de exportación de planos.** Al exportar planos puedes generar un reporte en HTML y Excel con una fila por archivo: si se exportó, si falló y por qué, o si Revit lo dio por bueno pero el archivo no está en la carpeta. Incluye los parámetros del plano que elijas.\n- **Exportar más cómodo.** Las secciones del último paso empiezan plegadas y recuerdan cómo las dejaste, y la carpeta de destino se recuerda también entre modelos.\n- **Ventanas de progreso que no se congelan.** En Exportar, Auditoría y Purga, la ventana de progreso ya no se queda «No responde» mientras Revit trabaja: se puede mover y cancelar, y queda detrás si cambias a otra aplicación.\n- El instalador ya no necesita WebView2.\n\nCompatible con Revit 2024-2027.",
+    "installer_url":  "https://github.com/BIM-CA/bim-pills-releases/releases/download/v1.5.7/BIMPills-1-5-7-Setup.exe",
+    "installer_sha256":  "5454c567c5d0b140390698eed7c3529ac2d9f8d262fe0b24e0cc20a2e9dbe395",
+    "installer_size":  12888461,
     "installer_signed":  false
 }
