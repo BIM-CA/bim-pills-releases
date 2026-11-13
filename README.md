@@ -2,7 +2,7 @@
   <img src="assets/logo.png?v=2" alt="BIM Pills" width="160"/>
   <h3>Plugin de Productividad para Autodesk Revit</h3>
   <p>
-    <a href="../../releases/latest"><img src="https://img.shields.io/badge/versi%C3%B3n-1.5.6-EF6337?style=for-the-badge" alt="Versión"/></a>
+    <a href="../../releases/latest"><img src="https://img.shields.io/badge/versi%C3%B3n-1.5.7-EF6337?style=for-the-badge" alt="Versión"/></a>
     <img src="https://img.shields.io/badge/Revit-2024%20%7C%202025%20%7C%202026%20%7C%202027-0696D7?style=for-the-badge" alt="Revit Versions"/>
     <img src="https://img.shields.io/badge/plataforma-Windows-1A1A2E?style=for-the-badge" alt="Windows"/>
   </p>
@@ -27,7 +27,7 @@ Auditoría del modelo BIM con puntuación de salud. Analiza familias, advertenci
 
 ### 📤 Exportar
 Ventana unificada con tres pestañas:
-- **Planos y Vistas** — Exportación por lotes a PDF y/o DWG. Motor PDF configurable (nativo Revit o impresora del sistema). Conjuntos de publicación guardables con multi-selección (botón **MIX** para combinar conjuntos). PDF combinado con nombre configurable (tokens `{ProjectName}`, `{Date}`). Presets de exportación con import/export XML. En DWG, casilla **«Fusionar los vínculos en un solo DWG por plano»**: los perfiles de Revit sacan cada vínculo como referencia externa, y en un plano que enseña el conjunto eso son decenas de archivos por hoja.
+- **Planos y Vistas** — Exportación por lotes a PDF y/o DWG. Motor PDF configurable (nativo Revit o impresora del sistema). Conjuntos de publicación guardables con multi-selección (botón **MIX** para combinar conjuntos). PDF combinado con nombre configurable (tokens `{ProjectName}`, `{Date}`). Presets de exportación con import/export XML. En DWG, casilla **«Fusionar los vínculos en un solo DWG por plano»**: los perfiles de Revit sacan cada vínculo como referencia externa, y en un plano que enseña el conjunto eso son decenas de archivos por hoja. **Reporte de exportación** en HTML y Excel: una fila por archivo con si se exportó, si falló y por qué, o si falta en la carpeta, más los parámetros del plano que elijas.
 - **Modelo** — Exportación a NWC (Navisworks) con opciones de alcance, coordenadas, parámetros y precisión de facetado.
 - **Familias** — Exportación masiva de familias `.rfa` organizadas por categoría.
 
@@ -66,7 +66,7 @@ Validador IDS. Carga un archivo `.ids` y comprueba el modelo contra él: el info
 - **Importar desde el modelo** — Lee los esquemas de color (ColorFillScheme) del modelo abierto y los convierte en paletas reutilizables.
 
 ### 💬 Soporte
-Chat en vivo con el equipo de BIM-CA directamente desde Revit. Accede desde **BIM Pills → Soporte** en el ribbon.
+Chat en vivo con el equipo de BIM-CA directamente desde Revit, en una ventana propia con respuestas en tiempo real y adjuntos (capturas, PDF, registros). Disponible con licencia, incluida la de prueba. Accede desde **BIM Pills → Soporte** en el ribbon.
 
 ---
 
