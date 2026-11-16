@@ -2,7 +2,7 @@
   <img src="assets/logo.png?v=2" alt="BIM Pills" width="160"/>
   <h3>Plugin de Productividad para Autodesk Revit</h3>
   <p>
-    <a href="../../releases/latest"><img src="https://img.shields.io/badge/versi%C3%B3n-1.5.7-EF6337?style=for-the-badge" alt="Versión"/></a>
+    <a href="../../releases/latest"><img src="https://img.shields.io/badge/versi%C3%B3n-1.6.0-EF6337?style=for-the-badge" alt="Versión"/></a>
     <img src="https://img.shields.io/badge/Revit-2024%20%7C%202025%20%7C%202026%20%7C%202027-0696D7?style=for-the-badge" alt="Revit Versions"/>
     <img src="https://img.shields.io/badge/plataforma-Windows-1A1A2E?style=for-the-badge" alt="Windows"/>
   </p>
@@ -36,11 +36,18 @@ Ventana unificada con tres pestañas:
 - **Dibujar Tabla** — Inserta tablas estilizadas en planos a partir de un Excel.
 
 ### 🎯 Organizar (Seleccionar)
-Tres herramientas para selección y edición masiva de elementos:
+Herramientas para selección y edición masiva de elementos y vistas:
 - **Encontrar y Seleccionar** — Filtra por categoría, parámetro (TIPO/EJEMPLAR) o subproyecto. Modelo completo o vista activa.
 - **Asignar Valores** — Edición masiva de parámetros con vista previa y resumen de cambios.
 - **Secuenciador** — Numeración incremental interactiva con prefijos, pasos y sufijos configurables.
 - **Cuentagotas** — Copia parámetros entre elementos seleccionables.
+- **Duplicar y Renombrar** — Duplica vistas y planos (con los cinco modos de Revit para planos) y renombra en lote vistas, planos y tablas con reglas.
+
+### 🔧 MEP
+- **Dividir tramos** — Corta tuberías, tubos, bandejas de cables y conductos en piezas del largo que se compra (por ejemplo, tubería de 6 m) y pone una unión en cada corte. **Pintar pendientes** muestra en naranja los tramos que aún faltan por cortar.
+
+### 🧊 Vista
+- **Caja de sección** — Ajusta la caja de sección a la selección, también a elementos de modelos vinculados elegidos con Tab, algo que Revit no permite.
 
 ### 🗂️ Gestionar
 - **Tablas** — Exportar tablas de planificación a Excel, editar en lote e importar cambios de vuelta al modelo. Soporte para elementos de vínculos Revit.
@@ -50,13 +57,14 @@ Tres herramientas para selección y edición masiva de elementos:
 - **Gestionar Datos** — Conexión con fuentes externas y actualización masiva de parámetros.
 
 ### 🤖 Conector IA (MCP)
-Conecta Revit con cualquier agente de IA compatible (Claude, Cursor, GitHub Copilot…) y trabaja sobre el modelo desde el chat. **86 herramientas**:
+Conecta Revit con cualquier agente de IA compatible (Claude, Cursor, GitHub Copilot…) y trabaja sobre el modelo desde el chat. **88 herramientas**:
 - **Consultar** — elementos por categoría, nivel o subproyecto, advertencias, habitaciones y áreas, tablas, familias cargadas, y lo que hay dentro de los modelos vinculados.
 - **Documentar** — crear vistas, secciones y alzados, numerar y renombrar planos, etiquetar, replicar la maqueta de un plano en una serie entera, y leer o mover la posición de las vistas dentro del cajetín.
 - **Editar y crear** — parámetros en lote, subproyectos, filtros de vista, la configuración de los vínculos en Visibilidad/Gráficos de muchas vistas a la vez, y regiones rellenadas sobre el contorno de habitaciones y áreas.
+- **Informe interactivo** — pide «hazme un informe de los suelos» y aparece en el chat una tabla con gráfico: selecciona en Revit, edita parámetros, busca, ordena y exporta a HTML o CSV, también con elementos de modelos vinculados.
 - **Permisos** — cinco niveles, del solo lectura al que permite borrar, con la opción de apagar herramientas o categorías concretas. Lo que borra pide confirmación en dos pasos, y cada acción entra como una sola entrada de deshacer.
 
-El servidor viene **apagado**: se enciende desde **BIM Pills → Conectar IA**, que además configura Claude Desktop por ti.
+El servidor viene **apagado**: se enciende desde **BIM Pills → Conectar IA**, que además instala BIM Pills como extensión de Claude Desktop, con su nombre y su logo.
 
 ### ✅ Revisar
 Validador IDS. Carga un archivo `.ids` y comprueba el modelo contra él: el informe se organiza por especificación, lista los elementos que incumplen con el motivo, y despliega solo las que fallan.
