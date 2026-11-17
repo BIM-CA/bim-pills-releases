@@ -1,0 +1,8 @@
+{
+    "version": "1.6.1",
+    "notes": "**BIM Pills 1.6.1 «Cafeína»**\n\n- **Arreglo: la licencia vuelve a activarse en Revit 2025 y 2026 hasta la actualización .4.** Con la 1.6.0, en esas versiones de Revit BIM Pills pedía activar la licencia en cada arranque y la activación fallaba aunque la licencia estuviera vigente. Con la 1.6.1 vuelve a funcionar sin hacer nada más.\n\nSi vienes de una versión anterior a la 1.6.0, también recibes:\n\n- **Nuevo panel MEP › Dividir tramos.** Corta tuberías, tubos, bandejas de cables y conductos en piezas del largo que se compra (por ejemplo, tubería de 6 m) y pone una unión en cada corte.\n- **Nuevo panel Vista › Caja de sección.** Ajusta la caja de sección a lo que tengas seleccionado, también a elementos de modelos vinculados elegidos con Tab.\n- **Duplicar también duplica planos**, con número y nombre por patrón.\n- **BIM Pills con nombre y logo en Claude Desktop**, e **informe interactivo** en el chat de Claude.\n\nCompatible con Revit 2024-2027.",
+    "installer_url": "https://github.com/BIM-CA/bim-pills-releases/releases/download/v1.6.1/BIMPills-1-6-1-Setup.exe",
+    "installer_sha256": "9c72ad83b375f6604907853c0f7e683b6f91f5c82abbec8e19a1ded9d1706836",
+    "installer_size": 13836590,
+    "installer_signed": false
+}
