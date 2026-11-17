@@ -1,8 +1,0 @@
-{
-    "version": "1.6.0",
-    "notes": "**BIM Pills 1.6.0 «Cafeína»**\n\n- **Nuevo panel MEP › Dividir tramos.** Corta tuberías, tubos, bandejas de cables y conductos en piezas del largo que se compra (por ejemplo, tubería de 6 m) y pone una unión en cada corte. Escribe el largo por tipo, pulsa «Cortar tramos en piezas» y haz clic en los tramos. «Pintar pendientes» muestra en naranja los que aún faltan por cortar.\n- **Nuevo panel Vista › Caja de sección.** Ajusta la caja de sección a lo que tengas seleccionado, también a elementos de modelos vinculados elegidos con Tab, algo que Revit no permite.\n- **Duplicar también duplica planos.** En Organizar › Duplicar puedes elegir planos y duplicarlos con los cinco modos de Revit, con número y nombre por patrón.\n- **BIM Pills con nombre y logo en Claude Desktop.** El Conector IA se instala como extensión desde Conectar › «Instalar en Claude Desktop», y las versiones siguientes la actualizan solas.\n- **Informe interactivo en el chat de Claude.** Pide «hazme un informe de los suelos» y aparece una tabla con gráfico: selecciona en Revit, edita parámetros, busca, ordena y exporta a HTML o CSV. Incluye elementos de modelos vinculados.\n- **Arreglos:** el Conector IA ya no se queda mudo con Revit abierto, y el chat de Soporte vuelve a conectar si su conversación se había borrado.\n\nCompatible con Revit 2024-2027.",
-    "installer_url": "https://github.com/BIM-CA/bim-pills-releases/releases/download/v1.6.0/BIMPills-1-6-0-Setup.exe",
-    "installer_sha256": "958f85bf6274592110ed2a3da38b0ee80e99d64cea9ffcd7182803e77f58e623",
-    "installer_size": 13837606,
-    "installer_signed": false
-}
