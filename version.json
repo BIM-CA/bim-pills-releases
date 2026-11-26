@@ -1,8 +1,8 @@
 {
-    "version": "1.6.1",
-    "notes": "**BIM Pills 1.6.1 «Cafeína»**\n\n- **Arreglo: la licencia vuelve a activarse en Revit 2025 y 2026 hasta la actualización .4.** Con la 1.6.0, en esas versiones de Revit BIM Pills pedía activar la licencia en cada arranque y la activación fallaba aunque la licencia estuviera vigente. Con la 1.6.1 vuelve a funcionar sin hacer nada más.\n\nSi vienes de una versión anterior a la 1.6.0, también recibes:\n\n- **Nuevo panel MEP › Dividir tramos.** Corta tuberías, tubos, bandejas de cables y conductos en piezas del largo que se compra (por ejemplo, tubería de 6 m) y pone una unión en cada corte.\n- **Nuevo panel Vista › Caja de sección.** Ajusta la caja de sección a lo que tengas seleccionado, también a elementos de modelos vinculados elegidos con Tab.\n- **Duplicar también duplica planos**, con número y nombre por patrón.\n- **BIM Pills con nombre y logo en Claude Desktop**, e **informe interactivo** en el chat de Claude.\n\nCompatible con Revit 2024-2027.",
-    "installer_url": "https://github.com/BIM-CA/bim-pills-releases/releases/download/v1.6.1/BIMPills-1-6-1-Setup.exe",
-    "installer_sha256": "9c72ad83b375f6604907853c0f7e683b6f91f5c82abbec8e19a1ded9d1706836",
-    "installer_size": 13836590,
+    "version": "1.6.2",
+    "notes": "**BIM Pills 1.6.2 «Cafeína»**\n\n- **F1 abre la ayuda de cada herramienta.** Con el cursor sobre un botón de BIM Pills, F1 abre su artículo en ayuda.bim-ca.com.\n- **Conector IA: filtros de vista completos.** Claude crea filtros con varias condiciones unidas por Y u O y todos los operadores de Revit, con los números en tus unidades; les da cualquier gráfico de Visibilidad/Gráficos, los edita, los ajusta en muchas vistas o plantillas, los quita, los borra con tu confirmación y crea filtros de selección.\n- **Conector IA más simple.** Abre directo en Servidor MCP, sin las pestañas Claude AI y MCP Personalizado, que no se usaban.\n\nSi vienes de una versión anterior a la 1.6.1, también recibes el arreglo de la licencia en Revit 2025/2026, Dividir tramos MEP, Caja de sección, Duplicar planos y la extensión de Claude Desktop.\n\nCompatible con Revit 2024-2027.",
+    "installer_url": "https://github.com/BIM-CA/bim-pills-releases/releases/download/v1.6.2/BIMPills-1-6-2-Setup.exe",
+    "installer_sha256": "c748e9e16d8f0e28dd300c05cec3069aa4250be45ee498cfe5b0ff6c6fe23881",
+    "installer_size": 13854413,
     "installer_signed": false
 }
